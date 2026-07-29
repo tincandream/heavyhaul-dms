@@ -146,10 +146,8 @@ async function start() {
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href = 'index.html'; return; }
 
-  const me = await db.from('app_users').select('full_name, role');
-  if (me.error) { fail('Cannot read profile: ' + me.error.message); return; }
-  if (!me.data.length) { fail('No app_users row linked to this login.'); return; }
-  $('me').textContent = me.data[0].full_name + ' (' + me.data[0].role + ')';
+ const t = await buildNav(db, 'Fleet Board');
+  if (!t) { fail('No app_users row linked to this login.'); return; }
 
   load();
   setInterval(load, 60000);
