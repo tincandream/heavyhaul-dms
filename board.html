@@ -3,75 +3,222 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fleet Board — Heavy Haul Dispatch</title>
+<title>Fleet Board — Dispatch</title>
 <style>
-  :root {
-    --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c; --faint:#9c9a92;
-    --line:#e2e0da; --accent:#185fa5; --accent-bg:#e8f0f8;
-    --danger:#a32d2d; --danger-bg:#fcebeb;
-    --warn:#8a5a12;   --warn-bg:#fdf2e0;
-    --ok:#0f6e56;     --ok-bg:#e1f5ee;
-  }
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; --accentbg:#e7f0f9; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink);
          font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
   header { background:var(--card); border-bottom:1px solid var(--line);
-           padding:14px 20px; display:flex; align-items:center;
+           padding:12px 18px; display:flex; align-items:center;
            gap:14px; flex-wrap:wrap; }
   header h1 { font-size:16px; font-weight:600; margin:0; }
   .who { font-size:12.5px; color:var(--muted); margin-left:auto; }
-  .who button { margin-left:10px; padding:5px 11px; font-size:12.5px;
-                border:1px solid var(--line); background:var(--card);
-                color:var(--muted); border-radius:6px; cursor:pointer; }
-  main { padding:18px 20px 40px; max-width:1500px; margin:0 auto; }
+  .lnk { color:var(--accent); font-size:12.5px; cursor:pointer;
+         background:none; border:0; padding:0; text-decoration:underline; }
+  main { padding:18px; max-width:1400px; margin:0 auto; }
 
-  .widgets { display:grid; gap:10px; margin-bottom:18px;
-             grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
-  .w { background:var(--card); border:1px solid var(--line);
-       border-radius:10px; padding:12px 14px; }
-  .w .n { font-size:22px; font-weight:600; line-height:1.2; }
-  .w .l { font-size:11.5px; color:var(--muted); text-transform:uppercase;
-          letter-spacing:.4px; margin-top:2px; }
-  .w.alert .n { color:var(--danger); }
-  .w.warn  .n { color:var(--warn); }
+  .tiles { display:grid; gap:10px; margin-bottom:18px;
+           grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  .tile .n { font-size:22px; font-weight:600; line-height:1.2; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+  .tile.alert .n { color:var(--danger); }
 
   .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-         margin-bottom:14px; }
-  .bar input, .bar select {
-    padding:7px 10px; font-size:13px; border:1px solid var(--line);
-    border-radius:7px; background:var(--card); color:var(--ink); }
-  .bar input { min-width:190px; }
-  .bar .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+         margin-bottom:12px; }
+  select, .search { padding:7px 10px; border:1px solid var(--line2);
+                    border-radius:7px; font-size:13px; background:var(--card);
+                    color:var(--ink); }
+  .search { min-width:190px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
 
-  .tablewrap { background:var(--card); border:1px solid var(--line);
-               border-radius:10px; overflow-x:auto; }
+  .wrap { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; overflow-x:auto; }
   table { width:100%; border-collapse:collapse; min-width:1080px; }
-  th { text-align:left; font-size:11px; font-weight:500; color:var(--faint);
-       text-transform:uppercase; letter-spacing:.4px;
-       padding:11px 12px; border-bottom:1px solid var(--line);
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line);
        white-space:nowrap; cursor:pointer; user-select:none; }
   th:hover { color:var(--ink); }
-  th .arrow { color:var(--accent); }
   td { padding:11px 12px; border-bottom:1px solid var(--line);
-       vertical-align:top; }
+       vertical-align:top; font-size:13px; }
   tr:last-child td { border-bottom:0; }
-  tbody tr { cursor:pointer; }
-  tbody tr:hover { background:#faf9f6; }
-
+  tr.row:hover { background:#faf9f6; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
   .unit { font-weight:600; }
-  .sub { font-size:12px; color:var(--muted); margin-top:1px; }
-  .lnum { color:var(--accent); font-weight:500; }
-  .pill { display:inline-block; padding:2px 9px; border-radius:11px;
-          font-size:12px; white-space:nowrap; }
-  .pill.ok     { background:var(--ok-bg);     color:var(--ok); }
-  .pill.go     { background:var(--accent-bg); color:var(--accent); }
-  .pill.warn   { background:var(--warn-bg);   color:var(--warn); }
-  .pill.bad    { background:var(--danger-bg); color:var(--danger); }
-  .pill.idle   { background:var(--bg); color:var(--muted);
-                 border:1px solid var(--line); }
+  .ldnum { color:var(--accent); font-weight:500; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px;
+          font-size:11.5px; white-space:nowrap; }
+  .p-red { background:var(--dangerbg); color:var(--danger); }
+  .p-amb { background:var(--warnbg); color:var(--warn); }
+  .p-blu { background:var(--accentbg); color:var(--accent); }
+  .p-grn { background:var(--okbg); color:var(--ok); }
+  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
+
   .frac { font-variant-numeric:tabular-nums; font-size:13px; }
-  .frac.ok   { color:var(--ok); }
-  .frac.warn { color:var(--warn); }
-  .frac.bad  { color:var(--danger); }
-  .frac.none { color:var(--faint); }
-  .stale {
+  .f-ok { color:var(--ok); } .f-warn { color:var(--warn); }
+  .f-bad { color:var(--danger); } .f-non { color:var(--muted); }
+  .stale { color:var(--warn); } .verystale { color:var(--danger); }
+  .act { font-size:12.5px; }
+  .act.need { color:var(--danger); }
+  .crit { border-left:3px solid var(--danger); }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fleet Board</h1>
+  <span class="sub2" id="stamp"></span>
+  <span class="who"><span id="me">…</span> · <button class="lnk" id="out">Sign out</button></span>
+</header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar">
+    <input class="search" id="q" placeholder="Search truck, driver, load…">
+    <select id="fstatus"><option value="">All statuses</option></select>
+    <select id="fdriver"><option value="">All drivers</option></select>
+    <select id="fbroker"><option value="">All brokers</option></select>
+    <select id="fstate"><option value="">All states</option></select>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr>
+        <th data-k="truck_number">Truck</th>
+        <th data-k="driver_name">Driver</th>
+        <th data-k="load_number">Load</th>
+        <th data-k="display_status">Status</th>
+        <th data-k="current_location_text">Location</th>
+        <th data-k="destination">Destination</th>
+        <th data-k="next_event_at">Next event</th>
+        <th data-k="permits_open">Prm</th>
+        <th data-k="escorts_total">Esc</th>
+        <th data-k="next_action">Next action</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="10" class="msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
+// ====================================
+
+const $ = id => document.getElementById(id);
+let db = null, rows = [], sortKey = null, sortDir = 1;
+
+function fail(text) {
+  $('body').innerHTML = '<tr><td colspan="10" class="msg bad">' + text + '</td></tr>';
+}
+
+window.onerror = m => fail('JS error: ' + m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load. Check your connection and reload.');
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID') !== -1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR') !== -1) {
+  fail('Edit board.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start() {
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
+
+  const me = await db.from('app_users').select('full_name, role');
+  if (me.error) { fail('Cannot read profile: ' + me.error.message); return; }
+  if (!me.data.length) { fail('No app_users row linked to this login.'); return; }
+  $('me').textContent = me.data[0].full_name + ' (' + me.data[0].role + ')';
+
+  load();
+  setInterval(load, 60000);
+}
+
+async function load() {
+  const r = await db.from('v_fleet_board')
+    .select('*')
+    .order('attention_rank')
+    .order('next_event_at', { nullsFirst: false });
+
+  if (r.error) { fail('Fleet board query failed: ' + r.error.message); return; }
+
+  rows = r.data || [];
+  $('stamp').textContent = 'updated ' +
+    new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  fillFilters();
+  tiles();
+  render();
+}
+
+function uniq(key) {
+  return [...new Set(rows.map(r => r[key]).filter(Boolean))].sort();
+}
+
+function fillFilters() {
+  const map = { fstatus:'display_status', fdriver:'driver_name',
+                fbroker:'broker_name', fstate:'current_state' };
+  for (const id in map) {
+    const sel = $(id), keep = sel.value, first = sel.options[0].textContent;
+    sel.innerHTML = '<option value="">' + first + '</option>';
+    uniq(map[id]).forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = pretty(v);
+      sel.appendChild(o);
+    });
+    sel.value = keep;
+  }
+}
+
+function pretty(s) {
+  if (!s) return '';
+  return String(s).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+}
+
+function tiles() {
+  const active = rows.filter(r => r.load_id);
+  const t = [
+    ['Active loads', active.length, false],
+    ['Available trucks', rows.filter(r => !r.load_id).length, false],
+    ['On hold', rows.filter(r => r.hold_reason).length,
+      rows.some(r => r.hold_reason)],
+    ['Waiting on permits', rows.filter(r => r.permits_open > 0).length,
+      rows.some(r => r.permits_open > 0)],
+    ['Escorts unbooked',
+      rows.filter(r => r.escorts_total > r.escorts_confirmed).length, false],
+    ['Stale check-ins',
+      rows.filter(r => r.check_in_age_min > 480).length,
+      rows.some(r => r.check_in_age_min > 480)]
+  ];
+  $('tiles').innerHTML = t.map(([label, n, alert]) =>
+    '<div class="tile' + (alert && n > 0 ? ' alert' : '') + '">' +
+    '<div class="n">' + n + '</div><div class="l">' + label + '</div></div>'
+  ).join('');
+}
+
+function statusPill(r) {
+  const s = r.display_status || '';
+  let cls = 'p-gry';
+  if (['breakdown','accident','road_closure'].includes(s)) cls = 'p-red';
+  else if (r.hold_reason) cls = 'p-amb';
+  else if (['in_transit','loaded','dispatched','en_route_to_pickup'].includes(s)) cls = 'p-blu';
+  else if (['delivered','pod_pending','unloading'].includes(s)) cls = 'p-grn';
+  else if (['loading','at_shipper','at_receiver','at_weigh_station',
+            'under_inspection'].includes(s)) cls = 'p-amb';
+  let html = '<span class="pill ' + cls + '">' + pretty(s) + '</span>';
+  if (r.hold_reason && r.load_status)
+    html += '<div
