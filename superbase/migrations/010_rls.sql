@@ -1,3 +1,30 @@
+-- ------------------------------------------------------------
+-- BASE TABLE GRANTS
+-- Supabase normally sets these up automatically, but they are
+-- attached to the schema — so `drop schema public cascade`
+-- strips them and the new schema does not inherit them.
+-- Without these, every query fails with "permission denied for
+-- table X" even though RLS policies are correct.
+--
+-- These grants only say the role MAY attempt to read a table.
+-- RLS policies still decide which rows come back. Both layers
+-- are required.
+--
+-- Note: no DELETE anywhere. Soft delete via archived_at only.
+-- ------------------------------------------------------------
+grant usage on schema public to anon, authenticated;
+
+grant select, insert, update on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+
+grant usage, select on all sequences in schema public to authenticated;
+grant execute on all functions in schema public to authenticated;
+
+alter default privileges in schema public
+  grant select, insert, update on tables to authenticated;
+alter default privileges in schema public
+  grant usage, select on sequences to authenticated;
+
 -- ============================================================
 -- 010_rls.sql
 -- Tenant isolation, role permissions, view security,
