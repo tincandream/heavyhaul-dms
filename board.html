@@ -221,4 +221,113 @@ function statusPill(r) {
             'under_inspection'].includes(s)) cls = 'p-amb';
   let html = '<span class="pill ' + cls + '">' + pretty(s) + '</span>';
   if (r.hold_reason && r.load_status)
-    html += '<div
+    html += '<div class="sub2">was ' + pretty(r.load_status) + '</div>';
+  return html;
+}
+
+function frac(done, total) {
+  if (!total) return '<span class="frac f-non">—</span>';
+  const cls = done === total ? 'f-ok' : (done === 0 ? 'f-bad' : 'f-warn');
+  return '<span class="frac ' + cls + '">' + done + '/' + total + '</span>';
+}
+
+function when(iso) {
+  if (!iso) return '<span class="sub2">—</span>';
+  const d = new Date(iso);
+  return d.toLocaleDateString([], {month:'numeric', day:'numeric'}) + ' ' +
+         d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+}
+
+function age(min) {
+  if (min == null) return '';
+  const m = Math.round(min);
+  const txt = m < 60 ? m + 'm ago' : Math.round(m/60) + 'h ago';
+  const cls = m > 480 ? 'verystale' : (m > 240 ? 'stale' : 'sub2');
+  return '<div class="' + cls + '">' + txt + '</div>';
+}
+
+function render() {
+  const q = $('q').value.toLowerCase().trim();
+  let list = rows.filter(r => {
+    if ($('fstatus').value && r.display_status !== $('fstatus').value) return false;
+    if ($('fdriver').value && r.driver_name !== $('fdriver').value) return false;
+    if ($('fbroker').value && r.broker_name !== $('fbroker').value) return false;
+    if ($('fstate').value && r.current_state !== $('fstate').value) return false;
+    if (q) {
+      const hay = [r.truck_number, r.driver_name, r.load_number, r.broker_name,
+                   r.current_location_text, r.destination]
+                  .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (sortKey) {
+    list.sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (x > y ? 1 : x < y ? -1 : 0) * sortDir;
+    });
+  }
+
+  $('count').textContent = list.length + ' of ' + rows.length + ' trucks';
+
+  if (!list.length) {
+    $('body').innerHTML = '<tr><td colspan="10" class="msg">No trucks match.</td></tr>';
+    return;
+  }
+
+  $('body').innerHTML = list.map(r => {
+    const needs = r.next_action && r.next_action !== 'On track';
+    return '<tr class="row' + (r.priority === 'critical' ? ' crit' : '') + '"' +
+      (r.load_id ? ' data-load="' + r.load_id + '"' : '') + '>' +
+      '<td><span class="unit">' + (r.truck_number || '') + '</span>' +
+        (r.trailer_type ? '<div class="sub2">' + pretty(r.trailer_type) +
+          (r.trailer_number ? ' ' + r.trailer_number : '') + '</div>' : '') + '</td>' +
+      '<td>' + (r.driver_name || '<span class="sub2">unassigned</span>') +
+        (r.driver_hours_remaining_min != null
+          ? '<div class="sub2">' + Math.floor(r.driver_hours_remaining_min/60) +
+            'h ' + (r.driver_hours_remaining_min%60) + 'm HOS</div>' : '') + '</td>' +
+      '<td>' + (r.load_number
+          ? '<span class="ldnum">' + r.load_number + '</span>' +
+            (r.broker_name ? '<div class="sub2">' + r.broker_name + '</div>' : '')
+          : '<span class="sub2">—</span>') + '</td>' +
+      '<td>' + statusPill(r) + '</td>' +
+      '<td>' + (r.current_location_text || '<span class="sub2">—</span>') +
+        age(r.check_in_age_min) + '</td>' +
+      '<td>' + (r.destination || '<span class="sub2">—</span>') + '</td>' +
+      '<td>' + when(r.next_event_at) +
+        (r.next_event_label ? '<div class="sub2">' + r.next_event_label + '</div>' : '') +
+        '</td>' +
+      '<td>' + frac(r.permits_issued, r.permits_total) +
+        (r.has_window_conflict ? '<div class="sub2 verystale">window</div>' : '') + '</td>' +
+      '<td>' + frac(r.escorts_confirmed, r.escorts_total) + '</td>' +
+      '<td><span class="act' + (needs ? ' need' : '') + '">' +
+        (r.next_action || '') + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+['q','fstatus','fdriver','fbroker','fstate'].forEach(id => {
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+
+document.querySelectorAll('th[data-k]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+    render();
+  });
+});
+
+$('out').addEventListener('click', async () => {
+  await db.auth.signOut();
+  location.href = 'index.html';
+});
+</script>
+</body>
+</html>
+
+
