@@ -194,6 +194,7 @@ if (typeof window.supabase === 'undefined') {
 async function start(){
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href='index.html'; return; }
+  await buildNav(db, 'State Permit Rules');
   $('state').innerHTML = STATES.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
   $('verified').value = new Date().toISOString().slice(0,10);
   refresh();
