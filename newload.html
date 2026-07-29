@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New Load — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10;
+          --warnbg:#fdf3e3; --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { background:var(--card); border-bottom:1px solid var(--line);
+           padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; font-weight:600; margin:0; }
+  .nav { margin-left:auto; font-size:13px; }
+  .nav a { color:var(--accent); text-decoration:none; margin-left:14px; }
+  main { padding:18px; max-width:980px; margin:0 auto 60px; }
+
+  .card { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:18px; margin-bottom:14px; }
+  .card h2 { font-size:14px; font-weight:600; margin:0 0 3px; }
+  .card .hint { font-size:12px; color:var(--muted); margin:0 0 14px; }
+
+  .grid { display:grid; gap:12px;
+          grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .req label::after { content:' *'; color:var(--danger); }
+  input, select, textarea { width:100%; padding:8px 10px;
+    border:1px solid var(--line2); border-radius:7px; font-size:14px;
+    background:#fff; color:var(--ink); font-family:inherit; }
+  textarea { min-height:56px; resize:vertical; }
+  .full { grid-column:1/-1; }
+  .half { grid-column:span 2; }
+
+  .dims { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .dimbox { border:1px solid var(--line2); border-radius:7px; padding:8px 10px; }
+  .dimbox input { border:0; padding:0; font-size:16px;
+                  font-variant-numeric:tabular-nums; }
+  .dimbox .u { font-size:11px; color:var(--muted); }
+  .conv { font-size:11.5px; color:var(--accent); margin-top:4px; min-height:15px; }
+
+  .legal { margin-top:10px; padding:10px 12px; border-radius:7px;
+           font-size:12.5px; display:none; }
+  .legal.over { display:block; background:var(--warnbg); color:var(--warn); }
+  .legal.ok { display:block; background:var(--okbg); color:var(--ok); }
+
+  .states { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .st { padding:4px 10px; border:1px solid var(--line2); border-radius:14px;
+        font-size:12.5px; background:var(--card); cursor:pointer; }
+  .st.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .route { font-size:12.5px; color:var(--muted); margin-top:8px; }
+
+  .pref { background:var(--warnbg); border:1px solid #e8d5ac; color:var(--warn);
+          padding:10px 12px; border-radius:7px; font-size:12.5px;
+          margin-top:10px; display:none; }
+  .pref.show { display:block; }
+
+  button { padding:10px 20px; border:0; border-radius:7px; background:var(--accent);
+           color:#fff; font-size:14px; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .bar { position:sticky; bottom:0; background:var(--card);
+         border-top:1px solid var(--line); padding:12px 18px;
+         display:flex; align-items:center; gap:12px; }
+  .msg { font-size:13px; padding:8px 12px; border-radius:7px; display:none; }
+  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
+  .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>New Load</h1>
+  <span class="nav">
+    <a href="board.html">Fleet Board</a>
+    <a href="fleet.html">Fleet Setup</a>
+  </span>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Parties</h2>
+    <p class="hint">Carrier first — their preferences will flag anything out of range.</p>
+    <div class="grid">
+      <div class="req"><label>Carrier</label><select id="carrier"></select></div>
+      <div><label>Broker</label><select id="broker"></select></div>
+      <div><label>Broker load number</label><input id="brokerload"></div>
+      <div><label>Driver</label><select id="driver"></select></div>
+      <div><label>Truck</label><select id="tractor"></select></div>
+      <div><label>Trailer</label><select id="trailer"></select></div>
+    </div>
+    <div class="pref" id="prefbox"></div>
+  </div>
+
+  <div class="card">
+    <h2>Freight</h2>
+    <div class="grid">
+      <div class="half req"><label>Commodity</label>
+        <input id="commodity" placeholder="Caterpillar 336 excavator"></div>
+      <div><label>Pieces</label><input id="pieces" type="number" value="1"></div>
+      <div><label>Declared value</label><input id="value" type="number"></div>
+    </div>
+
+    <p class="hint" style="margin-top:14px">
+      Dimensions in inches — what permit offices use. Type feet and inches
+      like <b>13'6</b> and it converts.</p>
+    <div class="dims">
+      <div>
+        <div class="dimbox"><label>Length</label>
+          <input id="len" placeholder="0"><span class="u">inches</span></div>
+        <div class="conv" id="clen"></div>
+      </div>
+      <div>
+        <div class="dimbox"><label>Width</label>
+          <input id="wid" placeholder="0"><span class="u">inches</span></div>
+        <div class="conv" id="cwid"></div>
+      </div>
+      <div>
+        <div class="dimbox"><label>Height</label>
+          <input id="hgt" placeholder="0"><span class="u">inches</span></div>
+        <div class="conv" id="chgt"></div>
+      </div>
+      <div>
+        <div class="dimbox"><label>Weight</label>
+          <input id="wgt" placeholder="0"><span class="u">pounds</span></div>
+        <div class="conv" id="cwgt"></div>
+      </div>
+    </div>
+    <div class="legal" id="legal"></div>
+
+    <div class="grid" style="margin-top:14px">
+      <div><label>Overhang front (in)</label><input id="ohf" type="number" value="0"></div>
+      <div><label>Overhang rear (in)</label><input id="ohr" type="number" value="0"></div>
+      <div><label>Axle count</label><input id="axles" type="number"></div>
+      <div class="full"><label>Axle spacings</label>
+        <input id="spacings" placeholder="3+3+3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Route and appointments</h2>
+    <div class="grid">
+      <div class="req"><label>Origin</label><select id="origin"></select></div>
+      <div class="req"><label>Destination</label><select id="dest"></select></div>
