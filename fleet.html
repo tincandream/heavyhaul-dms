@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet Setup — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { background:var(--card); border-bottom:1px solid var(--line);
+           padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; font-weight:600; margin:0; }
+  .nav { margin-left:auto; font-size:13px; }
+  .nav a { color:var(--accent); text-decoration:none; margin-left:14px; }
+  main { padding:18px; max-width:900px; margin:0 auto; }
+
+  .tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap; }
+  .tab { padding:7px 14px; border:1px solid var(--line2); background:var(--card);
+         border-radius:7px; font-size:13px; cursor:pointer; color:var(--muted); }
+  .tab.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .panel { display:none; }
+  .panel.on { display:block; }
+
+  .card { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:18px; margin-bottom:16px; }
+  .card h2 { font-size:14px; font-weight:600; margin:0 0 14px; }
+
+  .grid { display:grid; gap:12px;
+          grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .req label::after { content:' *'; color:var(--danger); }
+  input, select, textarea { width:100%; padding:8px 10px;
+    border:1px solid var(--line2); border-radius:7px; font-size:14px;
+    background:#fff; color:var(--ink); font-family:inherit; }
+  textarea { min-height:60px; resize:vertical; }
+  .full { grid-column:1/-1; }
+
+  button { padding:9px 18px; border:0; border-radius:7px; background:var(--accent);
+           color:#fff; font-size:14px; cursor:pointer; margin-top:14px; }
+  button:disabled { opacity:.5; cursor:default; }
+  button.sec { background:var(--card); color:var(--ink);
+               border:1px solid var(--line2); }
+
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:7px;
+         font-size:13px; display:none; }
+  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
+  .msg.ok  { display:block; background:var(--okbg); color:var(--ok); }
+
+  table { width:100%; border-collapse:collapse; margin-top:6px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:8px 10px; border-bottom:1px solid var(--line); }
+  td { padding:9px 10px; border-bottom:1px solid var(--line); font-size:13px; }
+  tr:last-child td { border-bottom:0; }
+  .empty { color:var(--muted); font-size:13px; padding:10px 0; }
+  .warn { background:#fdf3e3; border:1px solid #e8d5ac; color:#8a5a10;
+          padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fleet Setup</h1>
+  <span class="nav">
+    <a href="board.html">Fleet Board</a>
+    <a href="#" id="out">Sign out</a>
+  </span>
+</header>
+
+<main>
+  <div class="warn" id="step1" style="display:none">
+    Add your carrier first — drivers and equipment both belong to a carrier.
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="carrier">Carrier</button>
+    <button class="tab" data-p="driver">Drivers</button>
+    <button class="tab" data-p="truck">Trucks</button>
+    <button class="tab" data-p="trailer">Trailers</button>
+  </div>
+
+  <!-- CARRIER -->
+  <div class="panel on" id="p-carrier">
+    <div class="card">
+      <h2>Add carrier</h2>
+      <div class="grid">
+        <div class="req"><label>Legal name</label><input id="c_legal"></div>
+        <div><label>DBA name</label><input id="c_dba"></div>
+        <div><label>MC number</label><input id="c_mc" placeholder="MC-123456"></div>
+        <div><label>DOT number</label><input id="c_dot"></div>
+        <div><label>Phone</label><input id="c_phone"></div>
+        <div><label>After hours phone</label><input id="c_ah"></div>
+        <div><label>Email</label><input id="c_email" type="email"></div>
+        <div class="full"><label>Address</label><input id="c_addr"></div>
+        <div><label>City</label><input id="c_city"></div>
+        <div><label>State</label><input id="c_state" maxlength="2" placeholder="AR"></div>
+        <div><label>ZIP</label><input id="c_zip"></div>
+        <div class="full"><label>Notes</label><textarea id="c_notes"></textarea></div>
+      </div>
+      <button id="c_save">Save carrier</button>
+      <div class="msg" id="c_msg"></div>
+    </div>
+    <div class="card">
+      <h2>Carriers on file</h2>
+      <div id="c_list" class="empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- DRIVER -->
+  <div class="panel" id="p-driver">
+    <div class="card">
+      <h2>Add driver</h2>
+      <div class="grid">
+        <div class="req"><label>Carrier</label><select id="d_carrier"></select></div>
+        <div class="req"><label>First name</label><input id="d_first"></div>
+        <div class="req"><label>Last name</label><input id="d_last"></div>
+        <div><label>Phone</label><input id="d_phone"></div>
+        <div><label>Email</label><input id="d_email" type="email"></div>
+        <div><label>CDL number</label><input id="d_cdl"></div>
+        <div><label>CDL state</label><input id="d_cdlst" maxlength="2"></div>
+        <div><label>Endorsements</label><input id="d_end" placeholder="T, X"></div>
+        <div><label>Hire date</label><input id="d_hire" type="date"></div>
+        <div><label>Oversize experienced</label>
+          <select id="d_over"><option value="false">No</option>
+          <option value="true">Yes</option></select></div>
+        <div class="full"><label>Notes</label><textarea id="d_notes"></textarea></div>
+      </div>
+      <button id="d_save">Save driver</button>
+      <div class="msg" id="d_msg"></div>
+    </div>
+    <div class="card">
+      <h2>Drivers on file</h2>
+      <div id="d_list" class="empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- TRUCK -->
+  <div class="panel" id="p-truck">
+    <div class="card">
+      <h2>Add truck (tractor)</h2>
+      <div class="grid">
+        <div class="req"><label>Carrier</label><select id="t_carrier"></select></div>
+        <div class="req"><label>Unit number</label><input id="t_unit" placeholder="T-104"></div>
+        <div><label>Assigned driver</label><select id="t_driver"></select></div>
+        <div><label>Make</label><input id="t_make"></div>
+        <div><label>Model</label><input id="t_model"></div>
+        <div><label>Year</label><input id="t_year" type="number"></div>
+        <div><label>VIN</label><input id="t_vin"></div>
+        <div><label>Plate</label><input id="t_plate"></div>
+        <div><label>Plate state</label><input id="t_plst" maxlength="2"></div>
+        <div><label>Axles</label><input id="t_axles" type="number"></div>
+        <div><label>Empty weight (lb)</label><input id="t_empty" type="number"></div>
+        <div><label>Status</label>
+          <select id="t_op">
+            <option value="available">Available</option>
+            <option value="assigned">Assigned</option>
+            <option value="out_of_service">Out of service</option>
+            <option value="in_maintenance">In maintenance</option>
+          </select></div>
+        <div class="full"><label>Notes</label><textarea id="t_notes"></textarea></div>
+      </div>
+      <button id="t_save">Save truck</button>
+      <div class="msg" id="t_msg"></div>
+    </div>
+    <div class="card">
+      <h2>Trucks on file</h2>
+      <div id="t_list" class="empty">Loading…</div>
+    </div>
+  </div>
+
+  <!-- TRAILER -->
+  <div class="panel" id="p-trailer">
+    <div class="card">
+      <h2>Add trailer</h2>
+      <div class="grid">
+        <div class="req"><label>Carrier</label><select id="r_carrier"></select></div>
+        <div class="req"><label>Unit number</label><input id="r_unit" placeholder="R-204"></div>
+        <div class="req"><label>Type</label>
+          <select id="r_type">
+            <option value="rgn">RGN</option>
+            <option value="lowboy">Lowboy</option>
+            <option value="step_deck">Step deck</option>
+            <option value="double_drop">Double drop</option>
+            <option value="flatbed">Flatbed</option>
+            <option value="stretch_rgn">Stretch RGN</option>
+            <option value="jeep">Jeep</option>
+            <option value="booster">Booster</option>
+            <option value="dolly">Dolly</option>
+          </select></div>
+        <div><label>Make</label><input id="r_make"></div>
+        <div><label>Year</label><input id="r_year" type="number"></div>
+        <div><label>Axles</label><input id="r_axles" type="number"></div>
+        <div><label>Deck length (inches)</label><input id="r_dlen" type="number"></div>
+        <div><label>Deck height (inches)</label><input id="r_dht" type="number"></div>
+        <div><label>Empty weight (lb)</label><input id="r_empty" type="number"></div>
+        <div><label>Max payload (lb)</label><input id="r_pay" type="number"></div>
+        <div><label>Plate</label><input id="r_plate"></div>
+        <div class="full"><label>Notes</label><textarea id="r_notes"></textarea></div>
+      </div>
+      <button id="r_save">Save trailer</button>
+      <div class="msg" id="r_msg"></div>
+      <div class="note">Deck dimensions in inches, not feet. 26 ft = 312 in.</div>
+    </div>
+    <div class="card">
+      <h2>Trailers on file</h2>
+      <div id="r_list" class="empty">Loading…</div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
+// ====================================
+
+const $ = id => document.getElementById(id);
+let db = null, tenant = null;
+
+const TRAILERS = ['rgn','lowboy','step_deck','double_drop','flatbed',
+                  'stretch_rgn','jeep','booster','dolly','other'];
+
+function say(el, text, kind) {
+  const m = $(el); m.textContent = text; m.className = 'msg ' + kind;
+  if (kind === 'ok') setTimeout(() => { m.className = 'msg'; }, 4000);
+}
+function val(id) { const v = $(id).value.trim(); return v === '' ? null : v; }
+function num(id) { const v = val(id); return v === null ? null : Number(v); }
+
+window.onerror = m => alert('JS error: ' + m);
+
+if (typeof window.supabase === 'undefined') {
+  alert('Supabase library failed to load.');
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID') !== -1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR') !== -1) {
+  alert('Edit fleet.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start() {
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
+
+  const me = await db.from('app_users').select('tenant_id');
+  if (me.error || !me.data.length) { alert('No profile linked to this login.'); return; }
+  tenant = me.data[0].tenant_id;
+
+  refresh();
+}
+
+async function refresh() {
+  const c = await db.from('carriers').select('*')
+    .is('archived_at', null).order('legal_name');
+  const carriers = c.data || [];
+
+  $('step1').style.display = carriers.length ? 'none' : 'block';
+
+  ['d_carrier','t_carrier','r_carrier'].forEach(id => {
+    const keep = $(id).value;
+    $(id).innerHTML = carriers.map(x =>
+      '<option value="' + x.id + '">' + esc(x.legal_name) + '</option>').join('')
+      || '<option value="">— add a carrier first —</option>';
+    if (keep) $(id).value = keep;
+  });
+
+  $('c_list').innerHTML = carriers.length
+    ? rowsTable(['Name','MC','DOT','Location'], carriers.map(x =>
+        [x.legal_name, x.mc_number || '—', x.dot_number || '—',
+         [x.city, x.state].filter(Boolean).join(', ') || '—']))
+    : '<div class="empty">None yet.</div>';
+
+  const d = await db.from('drivers').select('*, carriers(legal_name)')
+    .is('archived_at', null).order('last_name');
+  const drivers = d.data || [];
+
+  const keepD = $('t_driver').value;
+  $('t_driver').innerHTML = '<option value="">— none —</option>' +
+    drivers.map(x => '<option value="' + x.id + '">' +
+      esc(x.first_name + ' ' + x.last_name) + '</option>').join('');
+  if (keepD) $('t_driver').value = keepD;
+
+  $('d_list').innerHTML = drivers.length
+    ? rowsTable(['Name','Phone','CDL','Oversize'], drivers.map(x =>
+        [x.first_name + ' ' + x.last_name, x.phone || '—',
+         (x.cdl_number || '—') + (x.cdl_state ? ' (' + x.cdl_state + ')' : ''),
+         x.oversize_experienced ? 'Yes' : 'No']))
+    : '<div class="empty">None yet.</div>';
+
+  const e = await db.from('equipment').select('*, drivers(first_name, last_name)')
+    .is('archived_at', null).order('unit_number');
+  const eq = e.data || [];
+
+  const trucks = eq.filter(x => x.equipment_type === 'tractor');
+  $('t_list').innerHTML = trucks.length
+    ? rowsTable(['Unit','Make/Model','Driver','Status'], trucks.map(x =>
+        [x.unit_number, [x.make, x.model, x.year].filter(Boolean).join(' ') || '—',
+         x.drivers ? x.drivers.first_name + ' ' + x.drivers.last_name : '—',
+         pretty(x.operational_status)]))
+    : '<div class="empty">None yet.</div>';
+
+  const trl = eq.filter(x => TRAILERS.includes(x.equipment_type));
+  $('r_list').innerHTML = trl.length
+    ? rowsTable(['Unit','Type','Axles','Max payload'], trl.map(x =>
+        [x.unit_number, pretty(x.equipment_type), x.axle_count || '—',
+         x.max_payload_lb ? x.max_payload_lb.toLocaleString() + ' lb' : '—']))
+    : '<div class="empty">None yet.</div>';
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function pretty(s) {
+  return String(s || '').replace(/_/g,' ').replace(/^./, c => c.toUpperCase());
+}
+function rowsTable(heads, rows) {
+  return '<table><thead><tr>' + heads.map(h => '<th>' + h + '</th>').join('') +
+    '</tr></thead><tbody>' + rows.map(r => '<tr>' +
+    r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') +
+    '</tbody></table>';
+}
+
+// --- Save carrier ---
+$('c_save').addEventListener('click', async () => {
+  if (!val('c_legal')) { say('c_msg','Legal name is required.','err'); return; }
+  $('c_save').disabled = true;
+  const r = await db.from('carriers').insert({
+    tenant_id: tenant, legal_name: val('c_legal'), dba_name: val('c_dba'),
+    mc_number: val('c_mc'), dot_number: val('c_dot'), phone: val('c_phone'),
+    after_hours_phone: val('c_ah'), email: val('c_email'),
+    address_line1: val('c_addr'), city: val('c_city'),
+    state: val('c_state') ? val('c_state').toUpperCase() : null,
+    postal_code: val('c_zip'), notes: val('c_notes')
+  });
+  $('c_save').disabled = false;
+  if (r.error) { say('c_msg', r.error.message, 'err'); return; }
+  say('c_msg', 'Carrier saved.', 'ok');
+  ['c_legal','c_dba','c_mc','c_dot','c_phone','c_ah','c_email','c_addr',
+   'c_city','c_state','c_zip','c_notes'].forEach(i => $(i).value = '');
+  refresh();
+});
+
+// --- Save driver ---
+$('d_save').addEventListener('click', async () => {
+  if (!val('d_carrier')) { say('d_msg','Add a carrier first.','err'); return; }
+  if (!val('d_first') || !val('d_last')) {
+    say('d_msg','First and last name are required.','err'); return; }
+  $('d_save').disabled = true;
+  const ends = val('d_end');
+  const r = await db.from('drivers').insert({
+    tenant_id: tenant, carrier_id: val('d_carrier'),
+    first_name: val('d_first'), last_name: val('d_last'),
+    phone: val('d_phone'), email: val('d_email'),
+    cdl_number: val('d_cdl'),
+    cdl_state: val('d_cdlst') ? val('d_cdlst').toUpperCase() : null,
+    endorsements: ends ? ends.split(',').map(x => x.trim().toUpperCase()) : [],
+    hire_date: val('d_hire'),
+    oversize_experienced: $('d_over').value === 'true',
+    notes: val('d_notes')
+  });
+  $('d_save').disabled = false;
+  if (r.error) { say('d_msg', r.error.message, 'err'); return; }
+  say('d_msg', 'Driver saved.', 'ok');
+  ['d_first','d_last','d_phone','d_email','d_cdl','d_cdlst','d_end',
+   'd_hire','d_notes'].forEach(i => $(i).value = '');
+  refresh();
+});
+
+// --- Save truck ---
+$('t_save').addEventListener('click', async () => {
+  if (!val('t_carrier')) { say('t_msg','Add a carrier first.','err'); return; }
+  if (!val('t_unit')) { say('t_msg','Unit number is required.','err'); return; }
+  $('t_save').disabled = true;
+  const r = await db.from('equipment').insert({
+    tenant_id: tenant, carrier_id: val('t_carrier'),
+    unit_number: val('t_unit'), equipment_type: 'tractor',
+    default_driver_id: val('t_driver'),
+    make: val('t_make'), model: val('t_model'), year: num('t_year'),
+    vin: val('t_vin'), plate_number: val('t_plate'),
+    plate_state: val('t_plst') ? val('t_plst').toUpperCase() : null,
+    axle_count: num('t_axles'), empty_weight_lb: num('t_empty'),
+    operational_status: $('t_op').value, notes: val('t_notes')
+  });
+  $('t_save').disabled = false;
+  if (r.error) { say('t_msg', r.error.message, 'err'); return; }
+  say('t_msg', 'Truck saved. It will appear on the Fleet Board.', 'ok');
+  ['t_unit','t_make','t_model','t_year','t_vin','t_plate','t_plst',
+   't_axles','t_empty','t_notes'].forEach(i => $(i).value = '');
+  refresh();
+});
+
+// --- Save trailer ---
+$('r_save').addEventListener('click', async () => {
+  if (!val('r_carrier')) { say('r_msg','Add a carrier first.','err'); return; }
+  if (!val('r_unit')) { say('r_msg','Unit number is required.','err'); return; }
+  $('r_save').disabled = true;
+  const r = await db.from('equipment').insert({
+    tenant_id: tenant, carrier_id: val('r_carrier'),
+    unit_number: val('r_unit'), equipment_type: $('r_type').value,
+    make: val('r_make'), year: num('r_year'), axle_count: num('r_axles'),
+    deck_length_in: num('r_dlen'), deck_height_in: num('r_dht'),
+    empty_weight_lb: num('r_empty'), max_payload_lb: num('r_pay'),
+    plate_number: val('r_plate'), notes: val('r_notes')
+  });
+  $('r_save').disabled = false;
+  if (r.error) { say('r_msg', r.error.message, 'err'); return; }
+  say('r_msg', 'Trailer saved.', 'ok');
+  ['r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
+   'r_pay','r_plate','r_notes'].forEach(i => $(i).value = '');
+  refresh();
+});
+
+// --- Tabs ---
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    $('p-' + t.dataset.p).classList.add('on');
+  });
+});
+
+$('out').addEventListener('click', async e => {
+  e.preventDefault();
+  await db.auth.signOut();
+  location.href = 'index.html';
+});
+</script>
+</body>
+</html>
