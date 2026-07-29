@@ -1,84 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Heavy Haul DMS</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 40px 20px;
-            color: #1f2933;
-        }
-
-        .page-box {
-            max-width: 650px;
-            margin: 0 auto;
-            background: white;
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            margin-top: 0;
-        }
-
-        #connectionStatus {
-            margin-top: 24px;
-            padding: 16px;
-            background: #eef2f5;
-            border-radius: 8px;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch — Sign in</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --accent:#185fa5; --danger:#a32d2d; --ok:#0f6e56; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
+         font:15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+         display:flex; align-items:center; justify-content:center; padding:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:28px; width:100%; max-width:420px; }
+  h1 { font-size:19px; font-weight:600; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 22px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:14px 0 5px; }
+  input { width:100%; padding:10px 12px; border:1px solid var(--line);
+          border-radius:8px; font-size:15px; background:#fff; color:var(--ink); }
+  input:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+  button { width:100%; margin-top:20px; padding:11px; border:0; border-radius:8px;
+           background:var(--accent); color:#fff; font-size:15px; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  .msg { margin-top:16px; font-size:13px; padding:10px 12px; border-radius:8px; display:none; }
+  .msg.err { display:block; background:#fcebeb; color:var(--danger); }
+  .msg.ok  { display:block; background:#e1f5ee; color:var(--ok); }
+  .diag { margin-top:20px; padding-top:16px; border-top:1px solid var(--line);
+          font-size:12.5px; color:var(--muted); display:none; }
+  .diag.show { display:block; }
+  .diag div { padding:3px 0; }
+  .go { display:inline-block; margin-top:14px; color:var(--accent); font-size:14px; }
+</style>
 </head>
-
 <body>
-    <main class="page-box">
-        <h1>Heavy Haul DMS</h1>
+<div class="card">
+  <h1>Heavy Haul Dispatch</h1>
+  <p class="sub">Sign in to the command center</p>
 
-        <p>Heavy-haul dispatch management system.</p>
+  <label for="email">Email</label>
+  <input id="email" type="email" autocomplete="username">
 
-        <div id="connectionStatus">
-            Checking the Supabase connection...
-        </div>
-    </main>
+  <label for="password">Password</label>
+  <input id="password" type="password" autocomplete="current-password">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <button id="signin">Sign in</button>
 
-    <script src="config.js"></script>
+  <div id="msg" class="msg"></div>
+  <div id="diag" class="diag"></div>
+</div>
 
-    <script>
-        async function checkConnection() {
-            const statusBox = document.getElementById("connectionStatus");
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
 
-            try {
-                const {
-                    data,
-                    error
-                } = await db.auth.getSession();
+function say(text, kind) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + kind; }
+function line(text) { const d = $('diag'); d.classList.add('show');
+                      const el = document.createElement('div'); el.textContent = text; d.appendChild(el); }
 
-                if (error) {
-                    throw error;
-                }
+async function runDiagnostics() {
+  $('diag').innerHTML = '';
 
-                statusBox.textContent =
-                    "Supabase is connected successfully.";
-            } catch (error) {
-                statusBox.textContent =
-                    "Supabase connection failed: " + error.message;
-            }
-        }
+  const { data: u } = await db.auth.getUser();
+  line('Signed in as: ' + (u.user ? u.user.email : 'nobody'));
 
-        checkConnection();
-    </script>
+  const { data: me, error: meErr } = await db
+    .from('app_users').select('full_name, role, tenant_id');
+
+  if (meErr) { line('app_users error: ' + meErr.message); return; }
+
+  if (!me || me.length === 0) {
+    line('PROBLEM: no app_users row is linked to this login.');
+    line('Every RLS policy will return zero rows until you fix this.');
+    line('Run the bootstrap INSERT in the SQL Editor.');
+    return;
+  }
+
+  line('Profile: ' + me[0].full_name + ' (' + me[0].role + ')');
+  line('Tenant: ' + me[0].tenant_id);
+
+  const { count, error: cErr } = await db
+    .from('loads').select('*', { count: 'exact', head: true });
+  line(cErr ? ('loads error: ' + cErr.message) : ('Loads visible: ' + count));
+
+  const { count: tCount } = await db
+    .from('equipment').select('*', { count: 'exact', head: true })
+    .eq('equipment_type', 'tractor');
+  line('Trucks visible: ' + (tCount ?? 0));
+
+  const a = document.createElement('a');
+  a.href = 'board.html'; a.className = 'go'; a.textContent = 'Open Fleet Board →';
+  $('diag').appendChild(a);
+}
+
+$('signin').addEventListener('click', async () => {
+  const btn = $('signin');
+  btn.disabled = true;
+  say('Signing in…', 'ok');
+
+  const { error } = await db.auth.signInWithPassword({
+    email: $('email').value.trim(),
+    password: $('password').value
+  });
+
+  btn.disabled = false;
+
+  if (error) { say(error.message, 'err'); return; }
+  say('Signed in.', 'ok');
+  runDiagnostics();
+});
+
+$('password').addEventListener('keydown', e => { if (e.key === 'Enter') $('signin').click(); });
+
+db.auth.getSession().then(({ data }) => { if (data.session) runDiagnostics(); });
+</script>
 </body>
 </html>
