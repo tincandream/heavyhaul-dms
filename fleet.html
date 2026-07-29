@@ -253,9 +253,8 @@ async function start() {
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href = 'index.html'; return; }
 
-  const me = await db.from('app_users').select('tenant_id');
-  if (me.error || !me.data.length) { alert('No profile linked to this login.'); return; }
-  tenant = me.data[0].tenant_id;
+  tenant = await buildNav(db, 'Fleet Setup');
+  if (!tenant) { alert('No profile linked to this login.'); return; }
 
   refresh();
 }
