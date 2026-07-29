@@ -1,1 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State Permit Rules — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10;
+          --warnbg:#fdf3e3; --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { background:var(--card); border-bottom:1px solid var(--line);
+           padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; font-weight:600; margin:0; }
+  .nav { margin-left:auto; font-size:13px; }
+  .nav a { color:var(--accent); text-decoration:none; margin-left:14px; }
+  main { padding:18px; max-width:1000px; margin:0 auto 40px; }
 
+  .caution { background:var(--warnbg); border:1px solid #e8d5ac; color:var(--warn);
+             padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:18px; margin-bottom:14px; }
+  .card h2 { font-size:14px; font-weight:600; margin:0 0 3px; }
+  .card .hint { font-size:12px; color:var(--muted); margin:0 0 14px; }
+
+  .grid { display:grid; gap:12px;
+          grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .req label::after { content:' *'; color:var(--danger); }
+  input, select, textarea { width:100%; padding:8px 10px;
+    border:1px solid var(--line2); border-radius:7px; font-size:14px;
+    background:#fff; color:var(--ink); font-family:inherit; }
+  textarea { min-height:54px; resize:vertical; }
+  .full { grid-column:1/-1; }
+  .conv { font-size:11.5px; color:var(--accent); margin-top:3px; min-height:14px; }
+  .sect { font-size:12.5px; font-weight:600; color:var(--muted);
+          margin:18px 0 8px; text-transform:uppercase; letter-spacing:.4px; }
+
+  button { padding:9px 18px; border:0; border-radius:7px; background:var(--accent);
+           color:#fff; font-size:14px; cursor:pointer; margin-top:14px; }
+  button:disabled { opacity:.5; cursor:default; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:7px;
+         font-size:13px; display:none; }
+  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
+  .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
+
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:8px 10px; border-bottom:1px solid var(--line); }
+  td { padding:9px 10px; border-bottom:1px solid var(--line); font-size:13px; }
+  tr:last-child td { border-bottom:0; }
+  tr.stale td { background:#fdf9f0; }
+  .edit { color:var(--accent); cursor:pointer; text-decoration:underline; }
+  .empty { color:var(--muted); font-size:13px; padding:10px 0; }
+  .badge { font-size:11px; padding:2px 7px; border-radius:10px; }
+  .b-ok { background:var(--okbg); color:var(--ok); }
+  .b-old { background:var(--warnbg); color:var(--warn); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>State Permit Rules</h1>
+  <span class="nav">
+    <a href="board.html">Fleet Board</a>
+    <a href="newload.html">New Load</a>
+    <a href="fleet.html">Fleet Setup</a>
+  </span>
+</header>
+
+<main>
+  <div class="caution">
+    Verify every number against that state's official permit office before saving.
+    These thresholds decide whether a permit gets pulled and whether escorts get
+    booked — a wrong entry means a truck moving illegally. Nothing here is
+    pre-filled for that reason.
+  </div>
+
+  <div class="card">
+    <h2 id="formtitle">Add a state</h2>
+    <p class="hint">Leave a field blank if that requirement doesn't apply or you
+       haven't confirmed it. Blank means "no rule," not "no limit."</p>
+
+    <div class="grid">
+      <div class="req"><label>State</label><select id="state"></select></div>
+      <div class="req"><label>Verified on</label><input id="verified" type="date"></div>
+      <div><label>Permit office name</label><input id="office"></div>
+      <div><label>Office phone</label><input id="phone"></div>
+      <div class="full"><label>Permit portal URL</label><input id="portal"></div>
+      <div class="full"><label>Office hours</label><input id="hours"></div>
+    </div>
+
+    <div class="sect">Legal maximums — above these, a permit is required</div>
+    <div class="grid">
+      <div><label>Max width</label><input id="mw" placeholder="102">
+        <div class="conv" id="cmw"></div></div>
+      <div><label>Max height</label><input id="mh" placeholder="162">
+        <div class="conv" id="cmh"></div></div>
+      <div><label>Max length</label><input id="ml" placeholder="636">
+        <div class="conv" id="cml"></div></div>
+      <div><label>Max weight (lb)</label><input id="mwt" type="number" placeholder="80000"></div>
+    </div>
+
+    <div class="sect">Escort thresholds — at or above these, escorts required</div>
+    <div class="grid">
+      <div><label>Front/rear escort at width</label><input id="ew">
+        <div class="conv" id="cew"></div></div>
+      <div><label>Rear escort at length</label><input id="el">
+        <div class="conv" id="cel"></div></div>
+      <div><label>High pole at height</label><input id="hp">
+        <div class="conv" id="chp"></div></div>
+      <div><label>Police escort at width</label><input id="pw">
+        <div class="conv" id="cpw"></div></div>
+    </div>
+
+    <div class="sect">Superload thresholds</div>
+    <div class="grid">
+      <div><label>Superload at width</label><input id="sw">
+        <div class="conv" id="csw"></div></div>
+      <div><label>Superload at weight (lb)</label><input id="swt" type="number"></div>
+    </div>
+
+    <div class="sect">Travel restrictions</div>
+    <div class="grid">
+      <div class="full"><label>Travel time notes</label>
+        <textarea id="travel" placeholder="Sunrise to sunset only. No travel through metro areas 7-9am or 4-6pm."></textarea></div>
+      <div class="full"><label>Holiday restrictions</label>
+        <textarea id="holiday" placeholder="No oversize movement on legal holidays or the weekend preceding."></textarea></div>
+      <div class="full"><label>Other notes</label><textarea id="notes"></textarea></div>
+    </div>
+
+    <button id="save">Save state</button>
+    <button id="cancel" style="background:var(--card);color:var(--ink);border:1px solid var(--line2);display:none">Cancel edit</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <h2>States on file</h2>
+    <p class="hint">Rows shaded amber haven't been verified in over a year.</p>
+    <div id="list" class="empty">Loading…</div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
+// ====================================
+
+const $ = id => document.getElementById(id);
+let db=null, editing=null;
+
+const STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL',
+ 'IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH',
+ 'NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+ 'VA','WA','WV','WI','WY','DC'];
+
+function say(t,k){ const m=$('msg'); m.textContent=t; m.className='msg '+k;
+  if(k==='ok') setTimeout(()=>{m.className='msg';},4000); }
+function val(id){ const v=$(id).value.trim(); return v===''?null:v; }
+function num(id){ const v=val(id); return v===null?null:Number(v); }
+
+function toInches(raw){
+  if (!raw) return null;
+  const s=String(raw).trim();
+  const m=s.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+  if (m) return Math.round(Number(m[1])*12 + Number(m[2]||0));
+  const n=Number(s.replace(/[^0-9.]/g,''));
+  return isNaN(n)?null:Math.round(n);
+}
+function ftin(i){ return i==null?'':Math.floor(i/12)+"' "+(i%12)+'"'; }
+
+window.onerror = m => say('JS error: '+m,'err');
+
+if (typeof window.supabase === 'undefined') {
+  say('Supabase library failed to load.','err');
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
+  say('Edit states.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.','err');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href='index.html'; return; }
+  $('state').innerHTML = STATES.map(x=>'<option value="'+x+'">'+x+'</option>').join('');
+  $('verified').value = new Date().toISOString().slice(0,10);
+  refresh();
+}
+
+const DIMS = [['mw','cmw'],['mh','cmh'],['ml','cml'],['ew','cew'],
+              ['el','cel'],['hp','chp'],['pw','cpw'],['sw','csw']];
+DIMS.forEach(([i,o]) => $(i).addEventListener('input', () => {
+  const v = toInches($(i).value);
+  $(o).textContent = v ? ftin(v) : '';
+}));
+
+async function refresh(){
+  const r = await db.from('state_permit_rules').select('*').order('state');
+  if (r.error) { $('list').textContent = 'Error: '+r.error.message; return; }
+  const rows = r.data || [];
+  if (!rows.length) {
+    $('list').innerHTML = '<div class="empty">No states entered yet. '+
+      'Every load will flag "no permit rules on file" until you add the states '+
+      'you run.</div>';
+    return;
+  }
+  const yearAgo = new Date(Date.now() - 365*864e5).toISOString().slice(0,10);
+  $('list').innerHTML = '<table><thead><tr>'+
+    '<th>State</th><th>Legal max W×H×L</th><th>Max weight</th>'+
+    '<th>Escort at</th><th>High pole</th><th>Verified</th><th></th>'+
+    '</tr></thead><tbody>'+
+    rows.map(x => {
+      const stale = !x.verified_on || x.verified_on < yearAgo;
+      return '<tr'+(stale?' class="stale"':'')+'>'+
+        '<td><b>'+x.state+'</b></td>'+
+        '<td>'+ftin(x.max_width_in)+' × '+ftin(x.max_height_in)+
+          ' × '+ftin(x.max_length_in)+'</td>'+
+        '<td>'+(x.max_legal_weight_lb?x.max_legal_weight_lb.toLocaleString():'—')+'</td>'+
+        '<td>'+(x.escort_width_in?ftin(x.escort_width_in):'—')+'</td>'+
+        '<td>'+(x.high_pole_height_in?ftin(x.high_pole_height_in):'—')+'</td>'+
+        '<td><span class="badge '+(stale?'b-old':'b-ok')+'">'+
+          (x.verified_on||'never')+'</span></td>'+
+        '<td><span class="edit" data-s="'+x.state+'">Edit</span></td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+
+  document.querySelectorAll('.edit').forEach(el =>
+    el.addEventListener('click', () => loadState(el.dataset.s)));
+}
+
+async function loadState(st){
+  const r = await db.from('state_permit_rules').select('*').eq('state',st).single();
+  if (r.error) { say(r.error.message,'err'); return; }
+  const x = r.data;
+  editing = st;
+  $('formtitle').textContent = 'Editing ' + st;
+  $('state').value = st;
+  $('state').disabled = true;
+  $('cancel').style.display = 'inline-block';
+
+  $('verified').value = x.verified_on || '';
+  $('office').value = x.office_name || '';
+  $('phone').value = x.office_phone || '';
+  $('portal').value = x.portal_url || '';
+  $('hours').value = x.office_hours || '';
+  $('mw').value = x.max_width_in ?? '';
+  $('mh').value = x.max_height_in ?? '';
+  $('ml').value = x.max_legal_length_in ?? '';
+  $('mwt').value = x.max_legal_weight_lb ?? '';
+  $('ew').value = x.escort_width_in ?? '';
+  $('el').value = x.escort_length_in ?? '';
+  $('hp').value = x.high_pole_height_in ?? '';
+  $('pw').value = x.police_width_in ?? '';
+  $('sw').value = x.superload_width_in ?? '';
+  $('swt').value = x.superload_weight_lb ?? '';
+  $('travel').value = x.travel_time_notes || '';
+  $('holiday').value = x.holiday_restrictions || '';
+  $('notes').value = x.notes || '';
+
+  DIMS.forEach(([i,o]) => { const v=toInches($(i).value);
+    $(o).textContent = v?ftin(v):''; });
+  window.scrollTo(0,0);
+}
+
+$('cancel').addEventListener('click', () => {
+  editing = null;
+  $('formtitle').textContent = 'Add a state';
+  $('state').disabled = false;
+  $('cancel').style.display = 'none';
+  ['office','phone','portal','hours','mw','mh','ml','mwt','ew','el','hp','pw',
+   'sw','swt','travel','holiday','notes'].forEach(i => $(i).value='');
+  DIMS.forEach(([,o]) => $(o).textContent='');
+  $('verified').value = new Date().toISOString().slice(0,10);
+});
+
+$('save').addEventListener('click', async () => {
+  if (!val('verified')) {
+    say('Verified date is required — it records when you last confirmed these numbers.','err');
+    return;
+  }
+  $('save').disabled = true;
+
+  const rec = {
+    state: $('state').value,
+    office_name: val('office'),
+    office_phone: val('phone'),
+    portal_url: val('portal'),
+    office_hours: val('hours'),
+    max_width_in: toInches($('mw').value),
+    max_height_in: toInches($('mh').value),
+    max_legal_length_in: toInches($('ml').value),
+    max_legal_weight_lb: num('mwt'),
+    escort_width_in: toInches($('ew').value),
+    escort_length_in: toInches($('el').value),
+    high_pole_height_in: toInches($('hp').value),
+    police_width_in: toInches($('pw').value),
+    superload_width_in: toInches($('sw').value),
+    superload_weight_lb: num('swt'),
+    travel_time_notes: val('travel'),
+    holiday_restrictions: val('holiday'),
+    notes: val('notes'),
+    verified_on: val('verified')
+  };
+
+  const r = editing
+    ? await db.from('state_permit_rules').update(rec).eq('state', editing)
+    : await db.from('state_permit_rules').insert(rec);
+
+  $('save').disabled = false;
+  if (r.error) { say(r.error.message,'err'); return; }
+  say($('state').value + ' saved.','ok');
+  if (editing) $('cancel').click();
+  else ['office','phone','portal','hours','mw','mh','ml','mwt','ew','el','hp',
+        'pw','sw','swt','travel','holiday','notes'].forEach(i => $(i).value='');
+  DIMS.forEach(([,o]) => $(o).textContent='');
+  refresh();
+});
+</script>
+</body>
+</html>
