@@ -1,9 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Heavy Haul DMS</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 40px 20px;
+            color: #1f2933;
+        }
+
+        .page-box {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        #connectionStatus {
+            margin-top: 24px;
+            padding: 16px;
+            background: #eef2f5;
+            border-radius: 8px;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Heavy Haul DMS</h1>
+    <main class="page-box">
+        <h1>Heavy Haul DMS</h1>
+
+        <p>Heavy-haul dispatch management system.</p>
+
+        <div id="connectionStatus">
+            Checking the Supabase connection...
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="config.js"></script>
+
+    <script>
+        async function checkConnection() {
+            const statusBox = document.getElementById("connectionStatus");
+
+            try {
+                const {
+                    data,
+                    error
+                } = await db.auth.getSession();
+
+                if (error) {
+                    throw error;
+                }
+
+                statusBox.textContent =
+                    "Supabase is connected successfully.";
+            } catch (error) {
+                statusBox.textContent =
+                    "Supabase connection failed: " + error.message;
+            }
+        }
+
+        checkConnection();
+    </script>
 </body>
 </html>
