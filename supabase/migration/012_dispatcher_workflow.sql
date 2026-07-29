@@ -264,3 +264,145 @@ from loads l
 left join carriers c on c.id = l.carrier_id
 left join v_load_permit_status ps on ps.load_id = l.id
 where l.archived_at is null;
+
+alter table carriers add column min_load_revenue numeric(10,2);
+alter table carriers add column target_rate_per_mile numeric(6,2);
+alter table carriers add column max_width_in int;
+alter table carriers add column max_height_in int;
+alter table carriers add column max_weight_lb int;
+alter table carriers add column trailer_capacity_tons int;
+alter table carriers add column freight_preferred text[] default '{}';
+alter table carriers add column freight_refused text[] default '{}';
+alter table carriers add column preferred_states char(2)[] default '{}';
+alter table carriers add column avoided_states char(2)[] default '{}';
+alter table carriers add column uses_factoring boolean;
+alter table carriers add column factoring_company text;
+alter table carriers add column accepts_quickpay boolean;
+alter table carriers add column max_payment_terms_days int;
+alter table carriers add column requires_approval_before_booking boolean not null default true;
+alter table carriers add column permit_responsibility_default text
+  check (permit_responsibility_default in ('carrier','permit_service','broker','dispatcher','varies'));
+alter table carriers add column escort_responsibility_default text
+  check (escort_responsibility_default in ('carrier','escort_company','broker','dispatcher','permit_service','varies'));
+alter table carriers add column preferred_permit_service_id uuid references permit_services(id);
+alter table carriers add column preferred_escort_company_id uuid references escort_companies(id);
+
+alter table loads add column permit_contact_company text;
+alter table loads add column permit_contact_name text;
+alter table loads add column permit_contact_phone text;
+alter table loads add column permit_contact_email text;
+alter table loads add column escort_contact_company text;
+alter table loads add column escort_contact_name text;
+alter table loads add column escort_contact_phone text;
+alter table loads add column detention_free_hours numeric(4,1);
+alter table loads add column detention_rate_per_hour numeric(10,2);
+alter table loads add column layover_rate numeric(10,2);
+alter table loads add column layover_requires_approval boolean default true;
+alter table loads add column tonu_rate numeric(10,2);
+alter table loads add column accessorial_notes text;
+alter table loads add column rate_con_matches_agreement boolean;
+alter table loads add column carrier_approved_at timestamptz;
+alter table loads add column carrier_approved_by text;
+
+alter table escort_assignments add column meeting_location text;
+alter table escort_assignments add column meeting_time timestamptz;
+alter table escort_assignments add column contacts_exchanged boolean not null default false;
+alter table escort_assignments add column confirmed_day_before boolean not null default false;
+
+alter table permits add column daylight_only boolean not null default false;
+alter table permits add column wind_limit_mph int;
+alter table permits add column curfew_notes text;
+alter table permits add column weekend_travel_allowed boolean;
+alter table permits add column holiday_travel_allowed boolean;
+alter table permits add column driver_has_permit boolean not null default false;
+alter table permits add column driver_briefed_at timestamptz;
+
+
+
+create or replace function generate_load_checklist(p_load_id uuid)
+returns int
+language plpgsql
+as $$
+declare v_load loads%rowtype; v_oversize boolean; n int;
+begin
+  select * into v_load from loads where id = p_load_id;
+  if not found then raise exception 'Load % not found', p_load_id; end if;
+
+  v_oversize := coalesce(v_load.width_in,0)  > 102
+             or coalesce(v_load.height_in,0) > 162
+             or coalesce(v_load.length_in,0) > 636
+             or coalesce(v_load.weight_lb,0) > 80000;
+
+  insert into load_checklist_items (tenant_id, load_id, phase, seq, item)
+  select v_load.tenant_id, p_load_id, t.phase, t.seq, t.item
+    from checklist_templates t
+   where t.active
+     and (v_oversize or not t.oversize_only)
+  on conflict do nothing;
+
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+
+grant execute on function generate_load_checklist(uuid) to authenticated;
+
+create or replace view v_load_red_flags
+with (security_invoker = on) as
+select
+  l.id as load_id,
+  l.load_number,
+  array_remove(array[
+    case when l.width_in is null or l.height_in is null
+           or l.length_in is null            then 'Missing dimensions' end,
+    case when l.weight_lb is null            then 'Missing weight' end,
+    case when l.trailer_id is null
+          and l.status <> 'quoted'           then 'No trailer assigned' end,
+    case when l.driver_id is null
+          and l.status <> 'quoted'           then 'No driver assigned' end,
+    case when l.driver_hours_remaining_min is not null
+          and l.driver_hours_remaining_min < 240
+                                             then 'Driver under 4 hours HOS' end,
+    case when (coalesce(l.width_in,0)  > 102 or coalesce(l.height_in,0) > 162
+            or coalesce(l.length_in,0) > 636 or coalesce(l.weight_lb,0) > 80000)
+          and not exists (select 1 from permits p where p.load_id = l.id)
+                                             then 'Oversize with no permit plan' end,
+    case when exists (select 1 from permits p
+                       where p.load_id = l.id and p.status = 'issued'
+                         and not p.driver_has_permit)
+                                             then 'Driver does not have issued permit' end,
+    case when ps.has_window_conflict         then 'Permit window conflicts with travel date' end,
+    case when exists (select 1 from escort_assignments e
+                       where e.load_id = l.id
+                         and e.status in ('needed','quoted')
+                         and l.status not in ('quoted','booked'))
+                                             then 'Escorts not arranged' end,
+    case when exists (select 1 from escort_assignments e
+                       where e.load_id = l.id
+                         and e.status in ('confirmed','booked')
+                         and not e.contacts_exchanged)
+                                             then 'Escort and driver contacts not exchanged' end,
+    case when l.rate_con_matches_agreement is false
+                                             then 'Rate confirmation does not match agreement' end,
+    case when c.requires_approval_before_booking
+          and l.carrier_approved_at is null
+          and l.status <> 'quoted'            then 'Carrier approval required and not obtained' end,
+    case when c.min_load_revenue is not null
+          and coalesce(l.linehaul_rate,0) + coalesce(l.fuel_surcharge,0)
+              < c.min_load_revenue            then 'Below carrier minimum revenue' end,
+    case when c.max_width_in is not null
+          and coalesce(l.width_in,0) > c.max_width_in
+                                             then 'Exceeds carrier maximum width' end,
+    case when l.status in ('delivered','pod_pending')
+          and not exists (select 1 from documents d
+                          join document_links dl on dl.document_id = d.id
+                          where dl.entity_type='load' and dl.entity_id = l.id
+                            and d.doc_type='pod')
+                                             then 'Delivered with no POD on file' end
+  ], null) as flags
+from loads l
+left join carriers c on c.id = l.carrier_id
+left join v_load_permit_status ps on ps.load_id = l.id
+where l.archived_at is null;
+
+grant select on v_load_red_flags to authenticated;
