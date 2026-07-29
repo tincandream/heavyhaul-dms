@@ -312,9 +312,9 @@ function ftin(inches){
 async function start(){
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href='index.html'; return; }
-  const me = await db.from('app_users').select('tenant_id');
-  if (me.error || !me.data.length) { say('No profile linked to this login.','err'); return; }
-  tenant = me.data[0].tenant_id;
+
+  tenant = await buildNav(db, 'New Load');
+  if (!tenant) { alert('No profile linked to this login.'); return; }
 
   $('statepicker').innerHTML = STATES.map(s =>
     '<span class="st" data-s="'+s+'">'+s+'</span>').join('');
