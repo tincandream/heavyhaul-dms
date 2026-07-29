@@ -1,0 +1,23 @@
+001_initial_schema.sql
+→ verify app_users exists
+
+002_entities.sql
+→ verify entity table count
+
+003_documents.sql
+→ verify documents/document_links
+
+...
+
+010_rls.sql
+→ verify grants restored
+→ verify RLS enabled
+→ browser login should work
+
+011_seed_data.sql
+→ verify:
+1 carrier
+4 drivers
+4 tractors
+4 trailers
+4 loads
