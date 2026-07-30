@@ -18,6 +18,7 @@
 
 const NAV_LINKS = [
   ['board.html',   'Fleet Board'],
+  ['loads.html',   'All Loads'],
   ['newload.html', 'New Load'],
   ['fleet.html',   'Fleet Setup'],
   ['states.html',  'State Rules']
