@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Loads — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1400px; margin:0 auto 40px; }
 
+  .tiles { display:grid; gap:10px; margin-bottom:16px;
+           grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  .tile .n { font-size:21px; font-weight:600; line-height:1.2; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+         margin-bottom:12px; }
+  select, input { padding:7px 10px; border:1px solid var(--line2);
+                  border-radius:7px; font-size:13px; background:var(--card);
+                  color:var(--ink); font-family:inherit; }
+  .search { min-width:210px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+
+  .wrap { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:1080px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line);
+       white-space:nowrap; cursor:pointer; user-select:none; }
+  th:hover { color:var(--ink); }
+  td { padding:11px 12px; border-bottom:1px solid var(--line);
+       font-size:13px; vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  tr.row { cursor:pointer; }
+  tr.row:hover { background:#faf9f6; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
+  .ldnum { color:var(--accent); font-weight:500; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px;
+          font-size:11.5px; white-space:nowrap; }
+  .p-red { background:var(--dangerbg); color:var(--danger); }
+  .p-amb { background:var(--warnbg); color:var(--warn); }
+  .p-blu { background:var(--accentbg); color:var(--accent); }
+  .p-grn { background:var(--okbg); color:var(--ok); }
+  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
+
+  .num { font-variant-numeric:tabular-nums; text-align:right; }
+  .pos { color:var(--ok); } .neg { color:var(--danger); }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
+</style>
+</head>
+<body>
+
+<header></header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar">
+    <input class="search" id="q" placeholder="Search load, commodity, broker…">
+    <select id="fgroup">
+      <option value="active">Active loads</option>
+      <option value="pipeline">Pipeline (quoted &amp; booked)</option>
+      <option value="closed">Completed</option>
+      <option value="all">Everything</option>
+    </select>
+    <select id="fstatus"><option value="">All statuses</option></select>
+    <select id="fcarrier"><option value="">All carriers</option></select>
+    <select id="fbroker"><option value="">All brokers</option></select>
+    <select id="fdriver"><option value="">All drivers</option></select>
+    <input id="from" type="date" title="Pickup from">
+    <input id="to" type="date" title="Pickup to">
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr>
+        <th data-k="load_number">Load</th>
+        <th data-k="status">Status</th>
+        <th data-k="commodity">Commodity</th>
+        <th data-k="carrier_name">Carrier</th>
+        <th data-k="broker_name">Broker</th>
+        <th data-k="driver_name">Driver</th>
+        <th data-k="route">Route</th>
+        <th data-k="pickup_appt_start">Pickup</th>
+        <th data-k="delivery_appt_start">Delivery</th>
+        <th data-k="linehaul_rate">Rate</th>
+        <th data-k="margin">Margin</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="11" class="msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
+// ====================================
+
+const $ = id => document.getElementById(id);
+let db=null, rows=[], sortKey='pickup_appt_start', sortDir=-1;
+
+const ACTIVE = ['dispatched','en_route_to_pickup','at_shipper','loading','loaded',
+  'in_transit','at_weigh_station','under_inspection','at_receiver','unloading'];
+const PIPELINE = ['quoted','booked','permits_pending'];
+const CLOSED = ['delivered','pod_pending','paperwork','invoiced','paid',
+                'cancelled','tonu'];
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pretty(s){ return String(s||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); }
+function money(n){ return n==null?'—':'$'+Math.round(Number(n)).toLocaleString(); }
+function day(iso){ if(!iso) return '—'; const d=new Date(iso);
+  return d.toLocaleDateString([],{month:'numeric',day:'numeric',year:'2-digit'}); }
+function fail(t){ $('body').innerHTML='<tr><td colspan="11" class="msg bad">'+esc(t)+'</td></tr>'; }
+
+window.onerror = m => fail('JS error: '+m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load.');
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
+  fail('Edit loads.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href='index.html'; return; }
+  const t = await buildNav(db, 'All Loads');
+  if (!t) { fail('No profile linked to this login.'); return; }
+  await load();
+}
+
+async function load(){
+  const r = await db.from('loads').select(
+    'id, load_number, broker_load_number, status, commodity, priority,'+
+    'width_in, height_in, weight_lb, linehaul_rate, fuel_surcharge, total_miles,'+
+    'pickup_appt_start, delivery_appt_start, actual_pickup_at, actual_delivery_at,'+
+    'hold_reason, created_at,'+
+    'carriers(legal_name), brokers(name), drivers(first_name,last_name),'+
+    'origin:origin_facility_id(city,state), dest:dest_facility_id(city,state)'
+  ).is('archived_at', null).order('created_at', { ascending:false });
+
+  if (r.error) { fail('Query failed: '+r.error.message); return; }
+
+  // margins come from the view, matched by id
+  const m = await db.from('v_load_margin').select('load_id,total_revenue,total_cost');
+  const marg = {};
+  (m.data||[]).forEach(x => { marg[x.load_id] = x.total_revenue - x.total_cost; });
+
+  rows = (r.data||[]).map(x => ({
+    ...x,
+    carrier_name: x.carriers ? x.carriers.legal_name : null,
+    broker_name: x.brokers ? x.brokers.name : null,
+    driver_name: x.drivers ? x.drivers.first_name+' '+x.drivers.last_name : null,
+    route: (x.origin && x.dest)
+      ? (x.origin.city||'')+', '+(x.origin.state||'')+' → '+
+        (x.dest.city||'')+', '+(x.dest.state||'')
+      : null,
+    margin: marg[x.id] != null ? marg[x.id] : null
+  }));
+
+  fillFilters();
+  render();
+}
+
+function uniq(k){ return [...new Set(rows.map(r=>r[k]).filter(Boolean))].sort(); }
+
+function fillFilters(){
+  const map = { fstatus:'status', fcarrier:'carrier_name',
+                fbroker:'broker_name', fdriver:'driver_name' };
+  for (const id in map) {
+    const sel=$(id), keep=sel.value, first=sel.options[0].textContent;
+    sel.innerHTML = '<option value="">'+first+'</option>' +
+      uniq(map[id]).map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+    sel.value = keep;
+  }
+}
+
+function statusClass(r){
+  if (r.hold_reason) return 'p-amb';
+  const s = r.status;
+  if (['cancelled','tonu'].includes(s)) return 'p-red';
+  if (['paid','invoiced'].includes(s)) return 'p-grn';
+  if (['delivered','pod_pending','paperwork'].includes(s)) return 'p-grn';
+  if (ACTIVE.includes(s)) return 'p-blu';
+  return 'p-gry';
+}
+
+function tiles(list){
+  const rev = list.reduce((a,r)=>a+(Number(r.linehaul_rate)||0)+(Number(r.fuel_surcharge)||0),0);
+  const marg = list.reduce((a,r)=>a+(r.margin||0),0);
+  const mi = list.reduce((a,r)=>a+(Number(r.total_miles)||0),0);
+  const t = [
+    ['Loads shown', list.length],
+    ['Revenue', money(rev)],
+    ['Margin', money(marg)],
+    ['Miles', mi ? mi.toLocaleString() : '—'],
+    ['Avg $/mi', mi ? '$'+(rev/mi).toFixed(2) : '—']
+  ];
+  $('tiles').innerHTML = t.map(([l,n]) =>
+    '<div class="tile"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'
+  ).join('');
+}
+
+function render(){
+  const q = $('q').value.toLowerCase().trim();
+  const grp = $('fgroup').value;
+  const from = $('from').value, to = $('to').value;
+
+  let list = rows.filter(r => {
+    if (grp==='active'   && !ACTIVE.includes(r.status)) return false;
+    if (grp==='pipeline' && !PIPELINE.includes(r.status)) return false;
+    if (grp==='closed'   && !CLOSED.includes(r.status)) return false;
+    if ($('fstatus').value  && r.status !== $('fstatus').value) return false;
+    if ($('fcarrier').value && r.carrier_name !== $('fcarrier').value) return false;
+    if ($('fbroker').value  && r.broker_name !== $('fbroker').value) return false;
+    if ($('fdriver').value  && r.driver_name !== $('fdriver').value) return false;
+    if (from && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) < from)) return false;
+    if (to   && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) > to)) return false;
+    if (q) {
+      const hay = [r.load_number, r.broker_load_number, r.commodity, r.carrier_name,
+                   r.broker_name, r.driver_name, r.route]
+                  .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  list.sort((a,b) => {
+    const x=a[sortKey], y=b[sortKey];
+    if (x==null) return 1;
+    if (y==null) return -1;
+    return (x>y?1:x<y?-1:0)*sortDir;
+  });
+
+  tiles(list);
+  $('count').textContent = list.length + ' of ' + rows.length + ' loads';
+
+  if (!list.length) {
+    $('body').innerHTML = '<tr><td colspan="11" class="msg">No loads match.</td></tr>';
+    return;
+  }
+
+  $('body').innerHTML = list.map(r => {
+    const over = (r.width_in>102)||(r.height_in>162)||(r.weight_lb>80000);
+    const mg = r.margin;
+    return '<tr class="row" data-id="'+r.id+'">'+
+      '<td><span class="ldnum">'+esc(r.load_number)+'</span>'+
+        (r.broker_load_number?'<div class="sub2">'+esc(r.broker_load_number)+'</div>':'')+
+        '</td>'+
+      '<td><span class="pill '+statusClass(r)+'">'+
+        pretty(r.hold_reason || r.status)+'</span></td>'+
+      '<td>'+esc(r.commodity||'—')+
+        (over?'<div class="sub2">oversize</div>':'')+'</td>'+
+      '<td>'+esc(r.carrier_name||'—')+'</td>'+
+      '<td>'+esc(r.broker_name||'—')+'</td>'+
+      '<td>'+esc(r.driver_name||'—')+'</td>'+
+      '<td>'+esc(r.route||'—')+
+        (r.total_miles?'<div class="sub2">'+r.total_miles.toLocaleString()+' mi</div>':'')+
+        '</td>'+
+      '<td>'+day(r.pickup_appt_start)+
+        (r.actual_pickup_at?'<div class="sub2">act '+day(r.actual_pickup_at)+'</div>':'')+
+        '</td>'+
+      '<td>'+day(r.delivery_appt_start)+
+        (r.actual_delivery_at?'<div class="sub2">act '+day(r.actual_delivery_at)+'</div>':'')+
+        '</td>'+
+      '<td class="num">'+money((Number(r.linehaul_rate)||0)+(Number(r.fuel_surcharge)||0))+'</td>'+
+      '<td class="num '+(mg==null?'':mg>=0?'pos':'neg')+'">'+money(mg)+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+['q','fgroup','fstatus','fcarrier','fbroker','fdriver','from','to'].forEach(id => {
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+
+document.querySelectorAll('th[data-k]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=1; }
+    render();
+  });
+});
+
+$('body').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) location.href = 'load.html?id=' + tr.dataset.id;
+});
+</script>
+</body>
+</html>
