@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1100px; margin:0 auto 50px; }
+
+  .hero { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:16px 18px; margin-bottom:14px; }
+  .heroTop { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .lnum { font-size:19px; font-weight:600; }
+  .comm { color:var(--muted); font-size:13px; }
+  .pill { padding:3px 10px; border-radius:12px; font-size:12px; white-space:nowrap; }
+  .p-red { background:var(--dangerbg); color:var(--danger); }
+  .p-amb { background:var(--warnbg); color:var(--warn); }
+  .p-blu { background:var(--accentbg); color:var(--accent); }
+  .p-grn { background:var(--okbg); color:var(--ok); }
+  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
+
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .chip { font-size:12px; padding:3px 9px; border-radius:6px;
+          background:#faf9f6; border:1px solid var(--line); color:var(--muted); }
+  .chip.over { background:var(--warnbg); border-color:#e8d5ac; color:var(--warn); }
+
+  .next { margin-top:12px; padding:9px 12px; border-radius:7px; font-size:13px;
+          background:var(--accentbg); color:var(--accent); }
+  .next.need { background:var(--dangerbg); color:var(--danger); }
+
+  .flags { margin-top:10px; }
+  .flag { font-size:12.5px; padding:7px 11px; border-radius:6px; margin-bottom:5px;
+          background:var(--dangerbg); color:var(--danger); }
+
+  .acts { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:14px 18px; margin-bottom:14px; }
+  .acts h3 { font-size:12px; font-weight:600; color:var(--muted); margin:0 0 9px;
+             text-transform:uppercase; letter-spacing:.4px; }
+  .btnrow { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+  button { padding:7px 14px; border:1px solid var(--line2); border-radius:7px;
+           background:var(--card); color:var(--ink); font-size:13px;
+           cursor:pointer; font-family:inherit; margin:0; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+  button.pri { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.warn { background:var(--warnbg); color:var(--warn); border-color:#e8d5ac; }
+  button.dgr { background:var(--dangerbg); color:var(--danger); border-color:#eecccc; }
+  button:disabled { opacity:.45; cursor:default; }
+
+  .tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab { padding:7px 13px; border:1px solid var(--line2); background:var(--card);
+         border-radius:7px; font-size:13px; cursor:pointer; color:var(--muted); }
+  .tab.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .tab .ct { font-size:11px; opacity:.8; margin-left:3px; }
+  .panel { display:none; } .panel.on { display:block; }
+
+  .card { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:16px 18px; margin-bottom:14px; }
+  .card h2 { font-size:13px; font-weight:600; margin:0 0 12px;
+             text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
+
+  .info { display:grid; gap:10px 18px;
+          grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+  .info div span { display:block; font-size:11.5px; color:var(--muted); }
+  .info div b { font-weight:500; font-size:13.5px; }
+
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:7px 9px; border-bottom:1px solid var(--line); }
+  td { padding:8px 9px; border-bottom:1px solid var(--line); font-size:13px;
+       vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+
+  .tl { border-left:2px solid var(--line); padding-left:14px; margin-left:4px; }
+  .ev { padding:0 0 14px; position:relative; }
+  .ev::before { content:''; position:absolute; left:-19px; top:5px; width:7px;
+                height:7px; border-radius:50%; background:var(--line2); }
+  .ev.mile::before { background:var(--accent); }
+  .ev .t { font-size:11.5px; color:var(--muted); }
+  .ev .s { font-weight:500; font-size:13.5px; }
+  .ev .b { font-size:13px; color:var(--muted); }
+
+  .ck { display:flex; align-items:flex-start; gap:9px; padding:6px 0;
+        font-size:13px; }
+  .ck input { margin-top:3px; width:15px; height:15px; }
+  .ck.done label { color:var(--muted); text-decoration:line-through; }
+  .phase { font-size:11.5px; font-weight:600; color:var(--muted); margin:16px 0 4px;
+           text-transform:uppercase; letter-spacing:.4px; }
+  .phase:first-child { margin-top:0; }
+
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  input, select, textarea { width:100%; padding:8px 10px; border:1px solid var(--line2);
+    border-radius:7px; font-size:14px; background:#fff; color:var(--ink);
+    font-family:inherit; }
+  textarea { min-height:54px; resize:vertical; }
+  .grid { display:grid; gap:11px;
+          grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+  .full { grid-column:1/-1; }
+
+  dialog { border:1px solid var(--line); border-radius:12px; padding:20px;
+           max-width:460px; width:92%; }
+  dialog::backdrop { background:rgba(0,0,0,.35); }
+  dialog h3 { margin:0 0 14px; font-size:15px; }
+
+  .msg { margin-top:11px; padding:9px 12px; border-radius:7px; font-size:13px;
+         display:none; }
+  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
+  .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
+  .empty { color:var(--muted); font-size:13px; padding:8px 0; }
+</style>
+</head>
+<body>
+
+<header></header>
+
+<main>
+  <div id="hero" class="hero"><div class="empty">Loading…</div></div>
+  <div id="acts" class="acts" style="display:none"></div>
+
+  <div class="tabs" id="tabs" style="display:none">
+    <button class="tab on" data-p="overview">Overview</button>
+    <button class="tab" data-p="timeline">Timeline<span class="ct" id="ct-tl"></span></button>
+    <button class="tab" data-p="permits">Permits<span class="ct" id="ct-pm"></span></button>
+    <button class="tab" data-p="escorts">Escorts<span class="ct" id="ct-es"></span></button>
+    <button class="tab" data-p="checklist">Checklist<span class="ct" id="ct-ck"></span></button>
+    <button class="tab" data-p="notes">Notes</button>
+  </div>
+
+  <div class="panel on" id="p-overview">
+    <div class="card"><h2>General information</h2><div class="info" id="info"></div></div>
+    <div class="card"><h2>Route</h2><div id="route"></div></div>
+    <div class="card"><h2>Recent activity</h2><div id="recent"></div></div>
+  </div>
+
+  <div class="panel" id="p-timeline">
+    <div class="card">
+      <h2>Add a note to the timeline</h2>
+      <div class="grid">
+        <div class="full"><label>What happened</label>
+          <textarea id="note_body" placeholder="Shipper says crane operator is running late"></textarea></div>
+        <div><label>Type</label>
+          <select id="note_type">
+            <option value="note">Note</option>
+            <option value="call">Phone call</option>
+            <option value="email">Email</option>
+            <option value="sms">Text message</option>
+            <option value="issue">Issue</option>
+          </select></div>
+        <div><label>Direction</label>
+          <select id="note_dir">
+            <option value="internal">Internal</option>
+            <option value="inbound">Inbound</option>
+            <option value="outbound">Outbound</option>
+          </select></div>
+      </div>
+      <button class="pri" id="note_save" style="margin-top:12px">Add to timeline</button>
+      <div class="msg" id="note_msg"></div>
+    </div>
+    <div class="card"><h2>Full history</h2><div class="tl" id="timeline"></div></div>
+  </div>
+
+  <div class="panel" id="p-permits">
+    <div class="card"><h2>Permits by state</h2><div id="permits"></div></div>
+  </div>
+
+  <div class="panel" id="p-escorts">
+    <div class="card"><h2>Escort assignments</h2><div id="escorts"></div></div>
+  </div>
+
+  <div class="panel" id="p-checklist">
+    <div class="card"><h2>Compliance checklist</h2><div id="checklist"></div></div>
+  </div>
+
+  <div class="panel" id="p-notes">
+    <div class="card">
+      <h2>Load notes</h2>
+      <textarea id="lnotes" style="min-height:150px"></textarea>
+      <button class="pri" id="notes_save" style="margin-top:12px">Save notes</button>
+      <div class="msg" id="notes_msg"></div>
+    </div>
+  </div>
+</main>
+
+<dialog id="dlg_ci">
+  <h3>Log a check-in</h3>
+  <div class="grid">
+    <div class="full"><label>Location</label>
+      <input id="ci_loc" placeholder="Salina, KS"></div>
+    <div><label>State</label><input id="ci_st" maxlength="2"></div>
+    <div><label>ETA</label><input id="ci_eta" type="datetime-local"></div>
+    <div><label>Hours remaining</label><input id="ci_h" type="number" step="0.5" placeholder="6.5"></div>
+    <div><label>Source</label>
+      <select id="ci_src">
+        <option value="driver_sms">Driver text</option>
+        <option value="dispatcher">Phone call</option>
+        <option value="driver_app">Driver app</option>
+        <option value="eld">ELD</option>
+      </select></div>
+    <div class="full"><label>Note</label><textarea id="ci_note"></textarea></div>
+  </div>
+  <div class="btnrow" style="margin-top:14px">
+    <button class="pri" id="ci_save">Save check-in</button>
+    <button onclick="document.getElementById('dlg_ci').close()">Cancel</button>
+  </div>
+  <div class="msg" id="ci_msg"></div>
+</dialog>
+
+<dialog id="dlg_hold">
+  <h3>Put this load on hold</h3>
+  <div class="grid">
+    <div class="full"><label>Reason</label>
+      <select id="h_reason">
+        <option value="breakdown">Mechanical breakdown</option>
+        <option value="awaiting_permits">Awaiting permits</option>
+        <option value="awaiting_escort">Awaiting escort</option>
+        <option value="weather">Weather</option>
+        <option value="traffic">Traffic</option>
+        <option value="road_closure">Road closure</option>
+        <option value="hos_shutdown">HOS shutdown</option>
+        <option value="detention_shipper">Detention at shipper</option>
+        <option value="detention_receiver">Detention at receiver</option>
+        <option value="curfew">Curfew</option>
+        <option value="holiday_restriction">Holiday restriction</option>
+        <option value="other">Other</option>
+      </select></div>
+    <div class="full"><label>What's happening</label>
+      <textarea id="h_note" placeholder="Air line blew on the trailer. Tow dispatched."></textarea></div>
+    <div class="full"><label>Expected to clear</label>
+      <input id="h_clear" type="datetime-local"></div>
+  </div>
+  <div class="btnrow" style="margin-top:14px">
+    <button class="dgr" id="h_save">Put on hold</button>
+    <button onclick="document.getElementById('dlg_hold').close()">Cancel</button>
+  </div>
+  <div class="msg" id="h_msg"></div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
+// ====================================
+
+const $ = id => document.getElementById(id);
+let db=null, tenant=null, loadId=null, L=null, me=null;
+
+const FLOW = {
+  quoted:['booked'], booked:['permits_pending','dispatched'],
+  permits_pending:['dispatched'], dispatched:['en_route_to_pickup'],
+  en_route_to_pickup:['at_shipper'], at_shipper:['loading'],
+  loading:['loaded'], loaded:['in_transit'],
+  in_transit:['at_weigh_station','under_inspection','at_receiver'],
+  at_weigh_station:['in_transit'], under_inspection:['in_transit'],
+  at_receiver:['unloading'], unloading:['delivered'],
+  delivered:['pod_pending','paperwork'], pod_pending:['paperwork'],
+  paperwork:['invoiced'], invoiced:['paid'], paid:[], cancelled:[], tonu:[]
+};
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pretty(s){ return String(s||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); }
+function ftin(i){ return i==null?'—':Math.floor(i/12)+"' "+(i%12)+'"'; }
+function money(n){ return n==null?'—':'$'+Number(n).toLocaleString(); }
+function when(iso){ if(!iso) return '—'; const d=new Date(iso);
+  return d.toLocaleDateString([],{month:'numeric',day:'numeric'})+' '+
+         d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); }
+function say(el,t,k){ const m=$(el); m.textContent=t; m.className='msg '+k;
+  if(k==='ok') setTimeout(()=>{m.className='msg';},3500); }
+function val(id){ const v=$(id).value.trim(); return v===''?null:v; }
+
+window.onerror = m => { $('hero').innerHTML='<div class="flag">JS error: '+esc(m)+'</div>'; };
+
+loadId = new URLSearchParams(location.search).get('id');
+
+if (typeof window.supabase === 'undefined') {
+  $('hero').innerHTML = '<div class="flag">Supabase library failed to load.</div>';
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
+  $('hero').innerHTML = '<div class="flag">Edit load.html and fill in your Supabase URL and anon key.</div>';
+} else if (!loadId) {
+  $('hero').innerHTML = '<div class="flag">No load specified. Open this page by clicking a row on the Fleet Board.</div>';
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href='index.html'; return; }
+  tenant = await buildNav(db, 'Load');
+  if (!tenant) { $('hero').innerHTML='<div class="flag">No profile linked to this login.</div>'; return; }
+  const u = await db.from('app_users').select('id').limit(1);
+  me = u.data && u.data.length ? u.data[0].id : null;
+  await refresh();
+}
+
+async function refresh(){
+  const r = await db.from('loads').select(
+    '*, carriers(legal_name), brokers(name), drivers(first_name,last_name,phone),'+
+    'tractor:tractor_id(unit_number), trailer:trailer_id(unit_number,equipment_type),'+
+    'origin:origin_facility_id(name,city,state), dest:dest_facility_id(name,city,state)'
+  ).eq('id', loadId).single();
+
+  if (r.error) { $('hero').innerHTML='<div class="flag">'+esc(r.error.message)+'</div>'; return; }
+  L = r.data;
+
+  drawHero(); drawActions(); drawInfo();
+  await Promise.all([drawRoute(), drawTimeline(), drawPermits(),
+                     drawEscorts(), drawChecklist()]);
+  $('lnotes').value = L.notes || '';
+  $('acts').style.display=''; $('tabs').style.display='';
+}
+
+function statusClass(s){
+  if (['breakdown','accident','road_closure'].includes(s)) return 'p-red';
+  if (L.hold_reason) return 'p-amb';
+  if (['in_transit','loaded','dispatched','en_route_to_pickup'].includes(s)) return 'p-blu';
+  if (['delivered','pod_pending','paid','invoiced'].includes(s)) return 'p-grn';
+  if (['loading','at_shipper','at_receiver','unloading'].includes(s)) return 'p-amb';
+  return 'p-gry';
+}
+
+async function drawHero(){
+  const disp = L.hold_reason || L.status;
+  let h = '<div class="heroTop">'+
+    '<span class="lnum">'+esc(L.load_number)+'</span>'+
+    '<span class="pill '+statusClass(disp)+'">'+pretty(disp)+'</span>';
+  if (L.hold_reason)
+    h += '<span class="comm">was '+pretty(L.status)+'</span>';
+  if (L.priority && L.priority!=='normal')
+    h += '<span class="pill p-amb">'+pretty(L.priority)+'</span>';
+  h += '<span class="comm" style="margin-left:auto">'+esc(L.commodity||'')+'</span></div>';
+
+  const over = [];
+  if (L.width_in>102) over.push('w'); if (L.height_in>162) over.push('h');
+  if (L.length_in>636) over.push('l'); if (L.weight_lb>80000) over.push('wt');
+  h += '<div class="chips">'+
+    '<span class="chip'+(over.includes('w')?' over':'')+'">'+ftin(L.width_in)+' wide</span>'+
+    '<span class="chip'+(over.includes('h')?' over':'')+'">'+ftin(L.height_in)+' high</span>'+
+    '<span class="chip'+(over.includes('l')?' over':'')+'">'+ftin(L.length_in)+' long</span>'+
+    '<span class="chip'+(over.includes('wt')?' over':'')+'">'+
+      (L.weight_lb?L.weight_lb.toLocaleString()+' lb':'—')+'</span>';
+  if (L.current_location_text)
+    h += '<span class="chip">'+esc(L.current_location_text)+
+         (L.last_check_in_at?' · '+when(L.last_check_in_at):'')+'</span>';
+  if (L.driver_hours_remaining_min!=null)
+    h += '<span class="chip">'+Math.floor(L.driver_hours_remaining_min/60)+'h '+
+         (L.driver_hours_remaining_min%60)+'m HOS</span>';
+  h += '</div>';
+
+  if (L.hold_note) h += '<div class="next need">'+esc(L.hold_note)+'</div>';
+
+  $('hero').innerHTML = h;
+
+  const na = await db.rpc('load_next_action', { p_load_id: loadId });
+  if (!na.error && na.data) {
+    const need = na.data !== 'On track';
+    $('hero').insertAdjacentHTML('beforeend',
+      '<div class="next'+(need?' need':'')+'">Next: '+esc(na.data)+'</div>');
+  }
+
+  const fl = await db.from('v_load_red_flags').select('flags').eq('load_id',loadId).single();
+  if (!fl.error && fl.data && fl.data.flags && fl.data.flags.length) {
+    $('hero').insertAdjacentHTML('beforeend', '<div class="flags">'+
+      fl.data.flags.map(f=>'<div class="flag">'+esc(f)+'</div>').join('')+'</div>');
+  }
+}
+
+function drawActions(){
+  let h = '<h3>Actions</h3><div class="btnrow">';
+  h += '<button class="pri" onclick="openCheckIn()">Log check-in</button>';
+
+  (FLOW[L.status]||[]).forEach(s => {
+    h += '<button onclick="setStatus(\''+s+'\')">→ '+pretty(s)+'</button>';
+  });
+
+  if (L.hold_reason)
+    h += '<button class="warn" onclick="clearHold()">Clear hold</button>';
+  else
+    h += '<button class="dgr" onclick="document.getElementById(\'dlg_hold\').showModal()">Put on hold</button>';
+
+  h += '<a href="board.html" style="margin-left:auto;color:var(--accent);'+
+       'text-decoration:none;font-size:13px;align-self:center">← Fleet Board</a>';
+  h += '</div>';
+  $('acts').innerHTML = h;
+}
+
+function drawInfo(){
+  const f = (label, v) => '<div><span>'+label+'</span><b>'+(v||'—')+'</b></div>';
+  const loc = x => x ? esc(x.name)+' ('+esc(x.city||'')+', '+esc(x.state||'')+')' : '—';
+  $('info').innerHTML =
+    f('Carrier', L.carriers ? esc(L.carriers.legal_name) : null) +
+    f('Broker', L.brokers ? esc(L.brokers.name) : null) +
+    f('Broker load #', esc(L.broker_load_number)) +
+    f('Driver', L.drivers ? esc(L.drivers.first_name+' '+L.drivers.last_name) : null) +
+    f('Driver phone', L.drivers ? esc(L.drivers.phone) : null) +
+    f('Truck', L.tractor ? esc(L.tractor.unit_number) : null) +
+    f('Trailer', L.trailer ? esc(L.trailer.unit_number)+' ('+pretty(L.trailer.equipment_type)+')' : null) +
