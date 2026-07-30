@@ -302,7 +302,7 @@ document.querySelectorAll('th[data-k]').forEach(th => {
 
 $('body').addEventListener('click', e => {
   const tr = e.target.closest('tr[data-id]');
-  if (tr) location.href = 'load.html?id=' + tr.dataset.id;
+  if (tr) location.href = 'workspace.html?id=' + tr.dataset.id;
 });
 </script>
 </body>
