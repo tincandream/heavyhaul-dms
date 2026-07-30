@@ -226,8 +226,8 @@ async function refresh(){
       const stale = !x.verified_on || x.verified_on < yearAgo;
       return '<tr'+(stale?' class="stale"':'')+'>'+
         '<td><b>'+x.state+'</b></td>'+
-        '<td>'+ftin(x.max_width_in)+' × '+ftin(x.max_height_in)+
-          ' × '+ftin(x.max_length_in)+'</td>'+
+        $('mw').value = x.max_legal_width_in ?? '';
+  $('mh').value = x.max_legal_height_in ?? '';
         '<td>'+(x.max_legal_weight_lb?x.max_legal_weight_lb.toLocaleString():'—')+'</td>'+
         '<td>'+(x.escort_width_in?ftin(x.escort_width_in):'—')+'</td>'+
         '<td>'+(x.high_pole_height_in?ftin(x.high_pole_height_in):'—')+'</td>'+
