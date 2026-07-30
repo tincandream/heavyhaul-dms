@@ -118,7 +118,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="nav.js"></script>
+<script src="nav.js">
+
+  document.getElementById('body').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-load]');
+  if (tr) location.href = 'load.html?id=' + tr.dataset.load;
+});
+  
+</script>
 <script>
 // ===== FILL IN THESE TWO VALUES =====
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
