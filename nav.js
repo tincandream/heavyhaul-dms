@@ -72,9 +72,10 @@ async function buildNav(dbClient, title) {
 
   const outBtn = document.createElement('button');
   outBtn.textContent = 'Sign out';
-  outBtn.style.cssText =
-    'background:none;border:0;padding:0;color:#185fa5;font-size:13px;' +
-    'cursor:pointer;text-decoration:underline;font-family:inherit';
+outBtn.style.cssText =
+    'background:none;border:0;padding:0;margin:0;color:#185fa5;font-size:13px;' +
+    'cursor:pointer;text-decoration:underline;font-family:inherit;' +
+    'line-height:1;vertical-align:baseline';
   outBtn.addEventListener('click', async function () {
     await dbClient.auth.signOut();
     location.href = 'index.html';
