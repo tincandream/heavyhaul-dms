@@ -256,8 +256,8 @@ async function loadState(st){
   $('phone').value = x.office_phone || '';
   $('portal').value = x.portal_url || '';
   $('hours').value = x.office_hours || '';
-  $('mw').value = x.max_width_in ?? '';
-  $('mh').value = x.max_height_in ?? '';
+ $('mw').value = x.max_legal_width_in ?? '';
+  $('mh').value = x.max_legal_height_in ?? '';
   $('ml').value = x.max_legal_length_in ?? '';
   $('mwt').value = x.max_legal_weight_lb ?? '';
   $('ew').value = x.escort_width_in ?? '';
