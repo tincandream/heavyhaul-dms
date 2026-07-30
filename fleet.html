@@ -86,6 +86,7 @@
     <button class="tab" data-p="driver">Drivers</button>
     <button class="tab" data-p="truck">Trucks</button>
     <button class="tab" data-p="trailer">Trailers</button>
+    <button class="tab" data-p="trailer">Facilities</button>
   </div>
 
   <!-- CARRIER -->
@@ -213,6 +214,45 @@
     <div class="card">
       <h2>Trailers on file</h2>
       <div id="r_list" class="empty">Loading…</div>
+    </div>
+  </div>
+  <!-- FACILITY -->
+  <div class="panel" id="p-facility">
+    <div class="card">
+      <h2>Add facility</h2>
+      <p class="hint" style="font-size:12px;color:var(--muted);margin:0 0 14px">
+        Shippers and receivers live in one list — the same yard is often both.</p>
+      <div class="grid">
+        <div class="req"><label>Name</label><input id="f_name"></div>
+        <div><label>Role</label>
+          <select id="f_role">
+            <option value="both">Both shipper and receiver</option>
+            <option value="shipper">Shipper</option>
+            <option value="receiver">Receiver</option>
+            <option value="yard">Yard</option>
+            <option value="port">Port</option>
+            <option value="rail">Rail</option>
+          </select></div>
+        <div class="full"><label>Address</label><input id="f_addr"></div>
+        <div><label>City</label><input id="f_city"></div>
+        <div><label>State</label><input id="f_state" maxlength="2" placeholder="AR"></div>
+        <div><label>ZIP</label><input id="f_zip"></div>
+        <div><label>Appointment required</label>
+          <select id="f_appt"><option value="false">No</option>
+          <option value="true">Yes</option></select></div>
+        <div><label>Overhead clearance (in)</label><input id="f_clear" type="number"></div>
+        <div class="full"><label>Hours</label>
+          <input id="f_hours" placeholder="Mon-Fri 6a-4p, no weekend loading"></div>
+        <div class="full"><label>Yard access notes</label>
+          <textarea id="f_access" placeholder="Enter through Gate 3, check in at receiving"></textarea></div>
+        <div class="full"><label>Notes</label><textarea id="f_notes"></textarea></div>
+      </div>
+      <button id="f_save">Save facility</button>
+      <div class="msg" id="f_msg"></div>
+    </div>
+    <div class="card">
+      <h2>Facilities on file</h2>
+      <div id="f_list" class="empty">Loading…</div>
     </div>
   </div>
 </main>
@@ -422,7 +462,30 @@ $('r_save').addEventListener('click', async () => {
    'r_pay','r_plate','r_notes'].forEach(i => $(i).value = '');
   refresh();
 });
-
+$('f_save').addEventListener('click', async () => {
+  if (!val('f_name')) { say('f_msg','Name is required.','err'); return; }
+  $('f_save').disabled = true;
+  const r = await db.from('facilities').insert({
+    tenant_id: tenant,
+    name: val('f_name'),
+    role_hint: $('f_role').value,
+    address_line1: val('f_addr'),
+    city: val('f_city'),
+    state: val('f_state') ? val('f_state').toUpperCase() : null,
+    postal_code: val('f_zip'),
+    appointment_required: $('f_appt').value === 'true',
+    overhead_clearance_in: num('f_clear'),
+    hours_notes: val('f_hours'),
+    yard_access_notes: val('f_access'),
+    notes: val('f_notes')
+  });
+  $('f_save').disabled = false;
+  if (r.error) { say('f_msg', r.error.message, 'err'); return; }
+  say('f_msg', 'Facility saved.', 'ok');
+  ['f_name','f_addr','f_city','f_state','f_zip','f_clear','f_hours',
+   'f_access','f_notes'].forEach(i => $(i).value = '');
+  refresh();
+});
 // --- Tabs ---
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
