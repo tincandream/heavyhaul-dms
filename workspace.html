@@ -428,7 +428,10 @@ async function drawTimeline(){
     '<div class="ev'+(x.is_milestone?' mile':'')+'">'+
     '<div class="t">'+when(x.occurred_at)+' · '+pretty(x.event_type)+'</div>'+
     '<div class="s">'+esc(x.subject||'')+'</div>'+
-    (x.body?'<div class="b">'+esc(x.body)+'</div>':'')+
+    (x.body?'<div class="b">'+
+      (x.event_type==='status_change'
+        ? '<i>'+esc(x.subject)+':</i> <b>'+esc(x.body)+'</b>'
+        : esc(x.body))+'</div>':'')+(x.body?'<div class="b">'+esc(x.body)+'</div>':'')+
     '</div>').join('') : '<div class="empty">Nothing logged yet.</div>';
   $('timeline').innerHTML = render(ev);
   $('recent').innerHTML = '<div class="tl">'+render(ev.slice(0,5))+'</div>';
