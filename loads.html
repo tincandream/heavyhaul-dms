@@ -131,8 +131,8 @@ window.onerror = m => fail('JS error: '+m);
 
 if (typeof window.supabase === 'undefined') {
   fail('Supabase library did not load.');
-} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
-           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
+} else if (SUPABASE_URL.indexOf('zyhdatteglxozsgnjhrm')!==-1 ||
+           SUPABASE_ANON_KEY.indexOf('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y')!==-1) {
   fail('Edit loads.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
 } else {
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
