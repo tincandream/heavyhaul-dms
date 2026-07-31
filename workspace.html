@@ -303,11 +303,22 @@ async function start(){
 }
 
 async function refresh(){
-  const r = await db.from('loads').select(
-    '*, carriers(legal_name), brokers(name), drivers(first_name,last_name,phone),'+
-    'tractor:tractor_id(unit_number), trailer:trailer_id(unit_number,equipment_type),'+
-    'origin:origin_facility_id(name,city,state), dest:dest_facility_id(name,city,state)'
-  ).eq('id', loadId).single();
+  const r = await db.from('loads').select('*').eq('id', loadId).single();
+  if (!r.error && r.data) {
+    const d = r.data;
+    const [c,b,dr,tr,trl,og,de] = await Promise.all([
+      d.carrier_id ? db.from('carriers').select('legal_name').eq('id',d.carrier_id).single() : {data:null},
+      d.broker_id ? db.from('brokers').select('name').eq('id',d.broker_id).single() : {data:null},
+      d.driver_id ? db.from('drivers').select('first_name,last_name,phone').eq('id',d.driver_id).single() : {data:null},
+      d.tractor_id ? db.from('equipment').select('unit_number').eq('id',d.tractor_id).single() : {data:null},
+      d.trailer_id ? db.from('equipment').select('unit_number,equipment_type').eq('id',d.trailer_id).single() : {data:null},
+      d.origin_facility_id ? db.from('facilities').select('name,city,state').eq('id',d.origin_facility_id).single() : {data:null},
+      d.dest_facility_id ? db.from('facilities').select('name,city,state').eq('id',d.dest_facility_id).single() : {data:null}
+    ]);
+    d.carriers = c.data; d.brokers = b.data; d.drivers = dr.data;
+    d.tractor = tr.data; d.trailer = trl.data;
+    d.origin = og.data; d.dest = de.data;
+  }
 
   if (r.error) { $('hero').innerHTML='<div class="flag">'+esc(r.error.message)+'</div>'; return; }
   L = r.data;
