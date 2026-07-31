@@ -106,8 +106,8 @@
 <script src="nav.js"></script>
 <script>
 // ===== FILL IN THESE TWO VALUES =====
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
 // ====================================
 
 const $ = id => document.getElementById(id);
@@ -131,8 +131,8 @@ window.onerror = m => fail('JS error: '+m);
 
 if (typeof window.supabase === 'undefined') {
   fail('Supabase library did not load.');
-} else if (SUPABASE_URL.indexOf('zyhdatteglxozsgnjhrm')!==-1 ||
-           SUPABASE_ANON_KEY.indexOf('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y')!==-1) {
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
   fail('Edit loads.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
 } else {
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -148,31 +148,42 @@ async function start(){
 }
 
 async function load(){
-  const r = await db.from('loads').select(
-    'id, load_number, broker_load_number, status, commodity, priority,'+
-    'width_in, height_in, weight_lb, linehaul_rate, fuel_surcharge, total_miles,'+
-    'pickup_appt_start, delivery_appt_start, actual_pickup_at, actual_delivery_at,'+
-    'hold_reason, created_at,'+
-    'carriers(legal_name), brokers(name), drivers(first_name,last_name),'+
-    'origin:origin_facility_id(city,state), dest:dest_facility_id(city,state)'
-  ).is('archived_at', null).order('created_at', { ascending:false });
+  const r = await db.from('loads')
+    .select('id, load_number, broker_load_number, status, commodity, priority,'+
+            'width_in, height_in, weight_lb, linehaul_rate, fuel_surcharge,'+
+            'total_miles, pickup_appt_start, delivery_appt_start,'+
+            'actual_pickup_at, actual_delivery_at, hold_reason, created_at,'+
+            'carrier_id, broker_id, driver_id, origin_facility_id, dest_facility_id')
+    .is('archived_at', null)
+    .order('created_at', { ascending:false });
 
   if (r.error) { fail('Query failed: '+r.error.message); return; }
+  const base = r.data || [];
 
-  // margins come from the view, matched by id
-  const m = await db.from('v_load_margin').select('load_id,total_revenue,total_cost');
-  const marg = {};
-  (m.data||[]).forEach(x => { marg[x.load_id] = x.total_revenue - x.total_cost; });
+  // Look up the related names separately — avoids PostgREST relationship
+  // ambiguity, and there are few enough of each to fetch them all at once.
+  const [cs, bs, ds, fs, ms] = await Promise.all([
+    db.from('carriers').select('id, legal_name'),
+    db.from('brokers').select('id, name'),
+    db.from('drivers').select('id, first_name, last_name'),
+    db.from('facilities').select('id, city, state'),
+    db.from('v_load_margin').select('load_id, total_revenue, total_cost')
+  ]);
 
-  rows = (r.data||[]).map(x => ({
+  const carrier = {}, broker = {}, driver = {}, fac = {}, marg = {};
+  (cs.data||[]).forEach(x => carrier[x.id] = x.legal_name);
+  (bs.data||[]).forEach(x => broker[x.id] = x.name);
+  (ds.data||[]).forEach(x => driver[x.id] = x.first_name+' '+x.last_name);
+  (fs.data||[]).forEach(x => fac[x.id] = (x.city||'')+', '+(x.state||''));
+  (ms.data||[]).forEach(x => marg[x.load_id] = x.total_revenue - x.total_cost);
+
+  rows = base.map(x => ({
     ...x,
-    carrier_name: x.carriers ? x.carriers.legal_name : null,
-    broker_name: x.brokers ? x.brokers.name : null,
-    driver_name: x.drivers ? x.drivers.first_name+' '+x.drivers.last_name : null,
-    route: (x.origin && x.dest)
-      ? (x.origin.city||'')+', '+(x.origin.state||'')+' → '+
-        (x.dest.city||'')+', '+(x.dest.state||'')
-      : null,
+    carrier_name: carrier[x.carrier_id] || null,
+    broker_name:  broker[x.broker_id] || null,
+    driver_name:  driver[x.driver_id] || null,
+    route: (fac[x.origin_facility_id] && fac[x.dest_facility_id])
+      ? fac[x.origin_facility_id] + ' → ' + fac[x.dest_facility_id] : null,
     margin: marg[x.id] != null ? marg[x.id] : null
   }));
 
@@ -197,8 +208,7 @@ function statusClass(r){
   if (r.hold_reason) return 'p-amb';
   const s = r.status;
   if (['cancelled','tonu'].includes(s)) return 'p-red';
-  if (['paid','invoiced'].includes(s)) return 'p-grn';
-  if (['delivered','pod_pending','paperwork'].includes(s)) return 'p-grn';
+  if (['paid','invoiced','delivered','pod_pending','paperwork'].includes(s)) return 'p-grn';
   if (ACTIVE.includes(s)) return 'p-blu';
   return 'p-gry';
 }
