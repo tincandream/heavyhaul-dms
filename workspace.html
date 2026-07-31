@@ -530,30 +530,7 @@ function openCheckIn(){
   $('dlg_ci').showModal();
 }
 
-$('ci_save').addEventListener('click', async () => {
-  const hrs = val('ci_h');
-  const r = await db.from('check_ins').insert({
-    tenant_id: tenant, load_id: loadId, driver_id: L.driver_id,
-    location_text: val('ci_loc'),
-    state: val('ci_st') ? val('ci_st').toUpperCase() : null,
-    eta: val('ci_eta') || null,
-    hos_remaining_min: hrs ? Math.round(Number(hrs)*60) : null,
-    source: $('ci_src').value, note: val('ci_note'), created_by: me
-  });
-  if (r.error) { say('ci_msg', r.error.message, 'err'); return; }
-  $('dlg_ci').close();
-  ['ci_eta','ci_h','ci_note'].forEach(i=>$(i).value='');
-  refresh();
-});
 
-$('h_save').addEventListener('click', async () => {
-  const r = await db.from('loads').update({
-    hold_reason: $('h_reason').value,
-    hold_since: new Date().toISOString(),
-    hold_note: val('h_note'),
-    hold_expected_clear_at: val('h_clear') || null
-  }).eq('id', loadId);
-  if (r.error) { say('h_msg',
   
 </script>
 </body>
