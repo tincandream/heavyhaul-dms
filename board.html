@@ -12,14 +12,7 @@
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink);
          font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  header { background:var(--card); border-bottom:1px solid var(--line);
-           padding:12px 18px; display:flex; align-items:center;
-           gap:14px; flex-wrap:wrap; }
-  header h1 { font-size:16px; font-weight:600; margin:0; }
-  .who { font-size:12.5px; color:var(--muted); margin-left:auto; }
-  .lnk { color:var(--accent); font-size:12.5px; cursor:pointer;
-         background:none; border:0; padding:0; text-decoration:underline; }
-  main { padding:18px; max-width:1400px; margin:0 auto; }
+  main { padding:18px; max-width:1400px; margin:0 auto 40px; }
 
   .tiles { display:grid; gap:10px; margin-bottom:18px;
            grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
@@ -33,7 +26,7 @@
          margin-bottom:12px; }
   select, .search { padding:7px 10px; border:1px solid var(--line2);
                     border-radius:7px; font-size:13px; background:var(--card);
-                    color:var(--ink); }
+                    color:var(--ink); font-family:inherit; }
   .search { min-width:190px; }
   .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
 
@@ -47,6 +40,7 @@
   td { padding:11px 12px; border-bottom:1px solid var(--line);
        vertical-align:top; font-size:13px; }
   tr:last-child td { border-bottom:0; }
+  tr.row { cursor:pointer; }
   tr.row:hover { background:#faf9f6; }
   .sub2 { font-size:11.5px; color:var(--muted); }
   .unit { font-weight:600; }
@@ -63,7 +57,8 @@
   .frac { font-variant-numeric:tabular-nums; font-size:13px; }
   .f-ok { color:var(--ok); } .f-warn { color:var(--warn); }
   .f-bad { color:var(--danger); } .f-non { color:var(--muted); }
-  .stale { color:var(--warn); } .verystale { color:var(--danger); }
+  .stale { color:var(--warn); font-size:11.5px; }
+  .verystale { color:var(--danger); font-size:11.5px; }
   .act { font-size:12.5px; }
   .act.need { color:var(--danger); }
   .crit { border-left:3px solid var(--danger); }
@@ -73,18 +68,8 @@
 </head>
 <body>
 
-<header>
-  <h1>Fleet Board</h1>
-  <span class="sub2" id="stamp"></span>
-<span class="nav">
-    <a href="board.html">Fleet Board</a>
-    <a href="newload.html">New Load</a>
-    <a href="fleet.html">Fleet Setup</a>
-    <a href="states.html">State Rules</a>
-    <span id="me" style="color:var(--muted);margin-left:14px"></span>
-    <a href="#" id="out">Sign out</a>
-  </span>
-</header>
+<header></header>
+
 <main>
   <div class="tiles" id="tiles"></div>
 
@@ -117,19 +102,11 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="nav.js">
-
-  document.getElementById('body').addEventListener('click', e => {
-  const tr = e.target.closest('tr[data-load]');
-  if (tr) location.href = 'workspace.html?id=' + tr.dataset.load;
-});
-
-</script>
+<script src="nav.js"></script>
 <script>
 // ===== FILL IN THESE TWO VALUES =====
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
 // ====================================
 
 const $ = id => document.getElementById(id);
@@ -138,6 +115,8 @@ let db = null, rows = [], sortKey = null, sortDir = 1;
 function fail(text) {
   $('body').innerHTML = '<tr><td colspan="10" class="msg bad">' + text + '</td></tr>';
 }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 window.onerror = m => fail('JS error: ' + m);
 
@@ -155,7 +134,7 @@ async function start() {
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href = 'index.html'; return; }
 
- const t = await buildNav(db, 'Fleet Board');
+  const t = await buildNav(db, 'Fleet Board');
   if (!t) { fail('No app_users row linked to this login.'); return; }
 
   load();
@@ -171,7 +150,8 @@ async function load() {
   if (r.error) { fail('Fleet board query failed: ' + r.error.message); return; }
 
   rows = r.data || [];
-  $('stamp').textContent = 'updated ' +
+  const st = $('stamp');
+  if (st) st.textContent = 'updated ' +
     new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
   fillFilters();
   tiles();
@@ -187,12 +167,9 @@ function fillFilters() {
                 fbroker:'broker_name', fstate:'current_state' };
   for (const id in map) {
     const sel = $(id), keep = sel.value, first = sel.options[0].textContent;
-    sel.innerHTML = '<option value="">' + first + '</option>';
-    uniq(map[id]).forEach(v => {
-      const o = document.createElement('option');
-      o.value = v; o.textContent = pretty(v);
-      sel.appendChild(o);
-    });
+    sel.innerHTML = '<option value="">' + first + '</option>' +
+      uniq(map[id]).map(v =>
+        '<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
     sel.value = keep;
   }
 }
@@ -203,9 +180,8 @@ function pretty(s) {
 }
 
 function tiles() {
-  const active = rows.filter(r => r.load_id);
   const t = [
-    ['Active loads', active.length, false],
+    ['Active loads', rows.filter(r => r.load_id).length, false],
     ['Available trucks', rows.filter(r => !r.load_id).length, false],
     ['On hold', rows.filter(r => r.hold_reason).length,
       rows.some(r => r.hold_reason)],
@@ -295,29 +271,30 @@ function render() {
     const needs = r.next_action && r.next_action !== 'On track';
     return '<tr class="row' + (r.priority === 'critical' ? ' crit' : '') + '"' +
       (r.load_id ? ' data-load="' + r.load_id + '"' : '') + '>' +
-      '<td><span class="unit">' + (r.truck_number || '') + '</span>' +
+      '<td><span class="unit">' + esc(r.truck_number || '') + '</span>' +
         (r.trailer_type ? '<div class="sub2">' + pretty(r.trailer_type) +
-          (r.trailer_number ? ' ' + r.trailer_number : '') + '</div>' : '') + '</td>' +
-      '<td>' + (r.driver_name || '<span class="sub2">unassigned</span>') +
+          (r.trailer_number ? ' ' + esc(r.trailer_number) : '') + '</div>' : '') + '</td>' +
+      '<td>' + (r.driver_name ? esc(r.driver_name) : '<span class="sub2">unassigned</span>') +
         (r.driver_hours_remaining_min != null
           ? '<div class="sub2">' + Math.floor(r.driver_hours_remaining_min/60) +
             'h ' + (r.driver_hours_remaining_min%60) + 'm HOS</div>' : '') + '</td>' +
       '<td>' + (r.load_number
-          ? '<span class="ldnum">' + r.load_number + '</span>' +
-            (r.broker_name ? '<div class="sub2">' + r.broker_name + '</div>' : '')
+          ? '<span class="ldnum">' + esc(r.load_number) + '</span>' +
+            (r.broker_name ? '<div class="sub2">' + esc(r.broker_name) + '</div>' : '')
           : '<span class="sub2">—</span>') + '</td>' +
       '<td>' + statusPill(r) + '</td>' +
-      '<td>' + (r.current_location_text || '<span class="sub2">—</span>') +
+      '<td>' + (r.current_location_text ? esc(r.current_location_text)
+                                        : '<span class="sub2">—</span>') +
         age(r.check_in_age_min) + '</td>' +
-      '<td>' + (r.destination || '<span class="sub2">—</span>') + '</td>' +
+      '<td>' + (r.destination ? esc(r.destination) : '<span class="sub2">—</span>') + '</td>' +
       '<td>' + when(r.next_event_at) +
         (r.next_event_label ? '<div class="sub2">' + r.next_event_label + '</div>' : '') +
         '</td>' +
       '<td>' + frac(r.permits_issued, r.permits_total) +
-        (r.has_window_conflict ? '<div class="sub2 verystale">window</div>' : '') + '</td>' +
+        (r.has_window_conflict ? '<div class="verystale">window</div>' : '') + '</td>' +
       '<td>' + frac(r.escorts_confirmed, r.escorts_total) + '</td>' +
       '<td><span class="act' + (needs ? ' need' : '') + '">' +
-        (r.next_action || '') + '</span></td>' +
+        esc(r.next_action || '') + '</span></td>' +
       '</tr>';
   }).join('');
 }
@@ -335,12 +312,10 @@ document.querySelectorAll('th[data-k]').forEach(th => {
   });
 });
 
-$('out').addEventListener('click', async () => {
-  await db.auth.signOut();
-  location.href = 'index.html';
+$('body').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-load]');
+  if (tr) location.href = 'workspace.html?id=' + tr.dataset.load;
 });
 </script>
 </body>
 </html>
-
-
