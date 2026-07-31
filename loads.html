@@ -82,12 +82,14 @@ function tiles(){
     ['pipeline','Pipeline'],
     ['closed','Completed']
   ];
-  $('tiles').innerHTML = defs.map(([k,label]) =>
-    '<div class="tile'+(group===k?' on':'')+'" data-g="'+k+'" style="cursor:pointer">'+
-    '<div class="n">'+counts[k]+'</div><div class="l">'+label+'</div></div>'
-  ).join('');
-  document.querySelectorAll('.tile[data-g]').forEach(t =>
-    t.addEventListener('click', () => { group = t.dataset.g; render(); }));
+  $('tiles').innerHTML = defs.map(function(d){
+    const k = d[0], label = d[1];
+    return '<div class="tile'+(group===k?' on':'')+'" data-g="'+k+'" style="cursor:pointer">'+
+      '<div class="n">'+counts[k]+'</div><div class="l">'+label+'</div></div>';
+  }).join('');
+  document.querySelectorAll('.tile[data-g]').forEach(function(t){
+    t.addEventListener('click', function(){ group = t.dataset.g; render(); });
+  });
 }
 
     
