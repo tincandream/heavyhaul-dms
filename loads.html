@@ -248,13 +248,14 @@ function tiles(list){
 
 function render(){
   const q = $('q').value.toLowerCase().trim();
-  const grp = $('fgroup').value;
+
+  
   const from = $('from').value, to = $('to').value;
 
   let list = rows.filter(r => {
-    if (grp==='active'   && !ACTIVE.includes(r.status)) return false;
-    if (grp==='pipeline' && !PIPELINE.includes(r.status)) return false;
-    if (grp==='closed'   && !CLOSED.includes(r.status)) return false;
+if (group==='active'   && !ACTIVE.includes(r.status)) return false;
+    if (group==='pipeline' && !PIPELINE.includes(r.status)) return false;
+    if (group==='closed'   && !CLOSED.includes(r.status)) return false;
     if ($('fstatus').value  && r.status !== $('fstatus').value) return false;
     if ($('fcarrier').value && r.carrier_name !== $('fcarrier').value) return false;
     if ($('fbroker').value  && r.broker_name !== $('fbroker').value) return false;
@@ -314,7 +315,7 @@ function render(){
   }).join('');
 }
 
-['q','fgroup','fstatus','fcarrier','fbroker','fdriver','from','to'].forEach(id => {
+['q','fstatus','fcarrier','fbroker','fdriver','from','to'].forEach(id => {
   $(id).addEventListener('input', render);
   $(id).addEventListener('change', render);
 });
