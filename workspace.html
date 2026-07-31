@@ -369,6 +369,244 @@ function drawActions(){
        'text-decoration:none;font-size:13px;align-self:center">← Fleet Board</a></div>';
   $('acts').innerHTML = h;
 }
+
+function drawInfo(){
+  const f = (label, v) => '<div><span>'+label+'</span><b>'+(v||'—')+'</b></div>';
+  const loc = x => x ? esc(x.name)+' ('+esc(x.city||'')+', '+esc(x.state||'')+')' : '—';
+  $('info').innerHTML =
+    f('Carrier', L.carriers ? esc(L.carriers.legal_name) : null) +
+    f('Broker', L.brokers ? esc(L.brokers.name) : null) +
+    f('Broker load #', esc(L.broker_load_number)) +
+    f('Driver', L.drivers ? esc(L.drivers.first_name+' '+L.drivers.last_name) : null) +
+    f('Driver phone', L.drivers ? esc(L.drivers.phone) : null) +
+    f('Truck', L.tractor ? esc(L.tractor.unit_number) : null) +
+    f('Trailer', L.trailer ? esc(L.trailer.unit_number)+' ('+pretty(L.trailer.equipment_type)+')' : null) +
+    f('Origin', loc(L.origin)) +
+    f('Destination', loc(L.dest)) +
+    f('Pickup appt', when(L.pickup_appt_start)) +
+    f('Delivery appt', when(L.delivery_appt_start)) +
+    f('Current ETA', when(L.current_eta)) +
+    f('Rate', money(L.linehaul_rate)) +
+    f('Fuel surcharge', money(L.fuel_surcharge)) +
+    f('Miles', L.total_miles) +
+    f('Rate per mile', L.rate_per_mile ? '$'+L.rate_per_mile : null) +
+    f('Permits handled by', pretty(L.permit_responsibility)) +
+    f('Permit contact', [L.permit_contact_name, L.permit_contact_phone]
+        .filter(Boolean).map(esc).join(' · ')) +
+    f('Escorts handled by', pretty(L.escort_responsibility)) +
+    f('Escort contact', [L.escort_contact_name, L.escort_contact_phone]
+        .filter(Boolean).map(esc).join(' · ')) +
+    f('Detention', L.detention_free_hours
+        ? L.detention_free_hours+'h free, '+money(L.detention_rate_per_hour)+'/h' : null) +
+    f('Customer ref', esc(L.customer_reference)) +
+    f('PO', esc(L.purchase_order));
+}
+
+async function drawRoute(){
+  const r = await db.from('load_legs').select('*').eq('load_id',loadId).order('seq');
+  const legs = r.data || [];
+  $('route').innerHTML = legs.length
+    ? '<table><thead><tr><th>#</th><th>State</th><th>Miles</th>'+
+      '<th>Planned entry</th></tr></thead><tbody>'+
+      legs.map(x=>'<tr><td>'+x.seq+'</td><td><b>'+x.state+'</b></td>'+
+        '<td>'+(x.miles||'—')+'</td><td>'+(x.planned_entry_date||'—')+'</td></tr>').join('')+
+      '</tbody></table>'
+    : '<div class="empty">No route states set on this load.</div>';
+}
+
+async function drawTimeline(){
+  const r = await db.from('events').select('*').eq('load_id',loadId)
+    .order('occurred_at',{ascending:false}).limit(100);
+  const ev = r.data || [];
+  $('ct-tl').textContent = ev.length ? ' '+ev.length : '';
+  const render = list => list.length ? list.map(x => {
+    const head = x.event_type === 'status_change'
+      ? esc(x.body || '')
+      : esc(x.subject || '');
+    const showBody = x.event_type !== 'status_change' && x.body;
+    return '<div class="ev'+(x.is_milestone?' mile':'')+'">'+
+      '<div class="t">'+when(x.occurred_at)+' · '+pretty(x.event_type)+'</div>'+
+      '<div class="s">'+head+'</div>'+
+      (showBody ? '<div class="b">'+esc(x.body)+'</div>' : '')+
+      '</div>';
+  }).join('') : '<div class="empty">Nothing logged yet.</div>';
+  $('timeline').innerHTML = render(ev);
+  $('recent').innerHTML = '<div class="tl">'+render(ev.slice(0,5))+'</div>';
+}
+
+async function drawPermits(){
+  const r = await db.from('permits').select('*').eq('load_id',loadId).order('state');
+  const p = r.data || [];
+  $('ct-pm').textContent = p.length ? ' '+p.filter(x=>x.status==='issued').length+'/'+p.length : '';
+  $('permits').innerHTML = p.length
+    ? '<table><thead><tr><th>State</th><th>Status</th><th>Number</th>'+
+      '<th>Valid</th><th>Escorts</th><th>Driver has it</th></tr></thead><tbody>'+
+      p.map(x=>{
+        const need = [x.escort_front&&'front', x.escort_rear&&'rear',
+                      x.escort_high_pole&&'high pole', x.escort_police&&'police']
+                     .filter(Boolean).join(', ') || '—';
+        return '<tr><td><b>'+x.state+'</b></td>'+
+          '<td><span class="pill '+(x.status==='issued'?'p-grn':
+            x.status==='rejected'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
+          '<td>'+(x.permit_number||'—')+'</td>'+
+          '<td>'+(x.valid_from?x.valid_from+' → '+(x.valid_to||'?'):'—')+'</td>'+
+          '<td>'+need+'</td>'+
+          '<td>'+(x.driver_has_permit?'Yes':'No')+'</td></tr>';
+      }).join('')+'</tbody></table>'
+    : '<div class="empty">No permits generated. Either the load is legal, or no '+
+      'rules are on file for its route states — check State Rules.</div>';
+}
+
+async function drawEscorts(){
+  const r = await db.from('escort_assignments').select('*')
+    .eq('load_id',loadId).order('role');
+  const e = r.data || [];
+  $('ct-es').textContent = e.length
+    ? ' '+e.filter(x=>['confirmed','en_route','completed'].includes(x.status)).length+'/'+e.length : '';
+  $('escorts').innerHTML = e.length
+    ? '<table><thead><tr><th>Role</th><th>Status</th><th>Escort driver</th>'+
+      '<th>Meeting</th><th>Contacts swapped</th></tr></thead><tbody>'+
+      e.map(x=>'<tr><td><b>'+pretty(x.role)+'</b></td>'+
+        '<td><span class="pill '+(['confirmed','en_route','completed'].includes(x.status)
+          ?'p-grn':x.status==='needed'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
+        '<td>'+([x.driver_name,x.driver_phone].filter(Boolean).map(esc).join(' · ')||'—')+'</td>'+
+        '<td>'+(x.meeting_location?esc(x.meeting_location):'—')+
+          (x.meeting_time?'<div class="t">'+when(x.meeting_time)+'</div>':'')+'</td>'+
+        '<td>'+(x.contacts_exchanged?'Yes':'No')+'</td></tr>').join('')+'</tbody></table>'
+    : '<div class="empty">No escorts required, or none generated yet.</div>';
+}
+
+async function drawChecklist(){
+  const r = await db.from('load_checklist_items').select('*')
+    .eq('load_id',loadId).order('phase').order('seq');
+  const items = r.data || [];
+  $('ct-ck').textContent = items.length
+    ? ' '+items.filter(x=>x.done_at||x.not_applicable).length+'/'+items.length : '';
+  if (!items.length) {
+    $('checklist').innerHTML = '<div class="empty">No checklist for this load. '+
+      '<button onclick="genChecklist()" style="margin-left:8px">Generate now</button></div>';
+    return;
+  }
+  const order = ['before_booking','before_dispatch','before_pickup','en_route',
+                 'before_delivery','after_delivery','oversize'];
+  let h = '';
+  order.forEach(ph => {
+    const list = items.filter(x=>x.phase===ph);
+    if (!list.length) return;
+    h += '<div class="phase">'+pretty(ph)+'</div>';
+    list.forEach(x => {
+      const isDone = !!(x.done_at || x.not_applicable);
+      h += '<div class="ck'+(isDone?' done':'')+'">'+
+        '<input type="checkbox" '+(isDone?'checked':'')+
+        ' onchange="toggleCk(\''+x.id+'\', this.checked)">'+
+        '<label>'+esc(x.item)+'</label></div>';
+    });
+  });
+  $('checklist').innerHTML = h;
+}
+
+async function genChecklist(){
+  await db.rpc('generate_load_checklist', { p_load_id: loadId });
+  drawChecklist();
+}
+
+async function toggleCk(id, on){
+  await db.from('load_checklist_items').update({
+    done_at: on ? new Date().toISOString() : null,
+    done_by: on ? me : null
+  }).eq('id', id);
+  drawChecklist();
+}
+
+async function setStatus(s){
+  const r = await db.from('loads').update({ status: s }).eq('id', loadId);
+  if (r.error) { alert(r.error.message); return; }
+  refresh();
+}
+
+function openCheckIn(){
+  $('ci_loc').value = L.current_location_text || '';
+  $('ci_st').value = L.current_state || '';
+  $('dlg_ci').showModal();
+}
+
+$('ci_save').addEventListener('click', async () => {
+  const hrs = val('ci_h');
+  const r = await db.from('check_ins').insert({
+    tenant_id: tenant, load_id: loadId, driver_id: L.driver_id,
+    location_text: val('ci_loc'),
+    state: val('ci_st') ? val('ci_st').toUpperCase() : null,
+    eta: val('ci_eta') || null,
+    hos_remaining_min: hrs ? Math.round(Number(hrs)*60) : null,
+    source: $('ci_src').value, note: val('ci_note'), created_by: me
+  });
+  if (r.error) { say('ci_msg', r.error.message, 'err'); return; }
+  $('dlg_ci').close();
+  ['ci_eta','ci_h','ci_note'].forEach(i=>$(i).value='');
+  refresh();
+});
+
+$('h_save').addEventListener('click', async () => {
+  const r = await db.from('loads').update({
+    hold_reason: $('h_reason').value,
+    hold_since: new Date().toISOString(),
+    hold_note: val('h_note'),
+    hold_expected_clear_at: val('h_clear') || null
+  }).eq('id', loadId);
+  if (r.error) { say('h_msg', r.error.message, 'err'); return; }
+  await db.from('events').insert({
+    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+    event_type:'hold_started', direction:'internal', is_milestone:true, user_id: me,
+    subject:'On hold — '+pretty($('h_reason').value), body: val('h_note')
+  });
+  $('dlg_hold').close();
+  $('h_note').value=''; $('h_clear').value='';
+  refresh();
+});
+
+async function clearHold(){
+  const was = L.hold_reason;
+  const r = await db.from('loads').update({
+    hold_reason:null, hold_since:null, hold_note:null, hold_expected_clear_at:null
+  }).eq('id', loadId);
+  if (r.error) { alert(r.error.message); return; }
+  await db.from('events').insert({
+    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+    event_type:'hold_cleared', direction:'internal', is_milestone:true, user_id: me,
+    subject:'Hold cleared', body: pretty(was)+' resolved, resuming '+pretty(L.status)
+  });
+  refresh();
+}
+
+$('note_save').addEventListener('click', async () => {
+  if (!val('note_body')) { say('note_msg','Write something first.','err'); return; }
+  const r = await db.from('events').insert({
+    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+    event_type: $('note_type').value, direction: $('note_dir').value,
+    is_manual:true, user_id: me,
+    subject: pretty($('note_type').value), body: val('note_body')
+  });
+  if (r.error) { say('note_msg', r.error.message, 'err'); return; }
+  $('note_body').value='';
+  say('note_msg','Added.','ok');
+  drawTimeline();
+});
+
+$('notes_save').addEventListener('click', async () => {
+  const r = await db.from('loads').update({ notes: $('lnotes').value }).eq('id', loadId);
+  if (r.error) { say('notes_msg', r.error.message, 'err'); return; }
+  say('notes_msg','Saved.','ok');
+});
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    $('p-'+t.dataset.p).classList.add('on');
+  });
+});
+  
 </script>
 </body>
 </html>
