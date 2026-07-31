@@ -111,7 +111,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ====================================
 
 const $ = id => document.getElementById(id);
-let db=null, rows=[], sortKey='pickup_appt_start', sortDir=-1;
+let db=null, rows=[], sortKey='pickup_appt_start', sortDir=-1, group='all';
 
 const ACTIVE = ['dispatched','en_route_to_pickup','at_shipper','loading','loaded',
   'in_transit','at_weigh_station','under_inspection','at_receiver','unloading'];
