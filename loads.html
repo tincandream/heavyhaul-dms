@@ -67,12 +67,29 @@
 
   <div class="bar">
     <input class="search" id="q" placeholder="Search load, commodity, broker…">
-    <select id="fgroup">
-      <option value="active">Active loads</option>
-      <option value="pipeline">Pipeline (quoted &amp; booked)</option>
-      <option value="closed">Completed</option>
-      <option value="all">Everything</option>
-    </select>
+
+function tiles(){
+  const counts = {
+    all: rows.length,
+    active: rows.filter(r=>ACTIVE.includes(r.status)).length,
+    pipeline: rows.filter(r=>PIPELINE.includes(r.status)).length,
+    closed: rows.filter(r=>CLOSED.includes(r.status)).length
+  };
+  const defs = [
+    ['all','Total loads'],
+    ['active','Active'],
+    ['pipeline','Pipeline'],
+    ['closed','Completed']
+  ];
+  $('tiles').innerHTML = defs.map(([k,label]) =>
+    '<div class="tile'+(group===k?' on':'')+'" data-g="'+k+'" style="cursor:pointer">'+
+    '<div class="n">'+counts[k]+'</div><div class="l">'+label+'</div></div>'
+  ).join('');
+  document.querySelectorAll('.tile[data-g]').forEach(t =>
+    t.addEventListener('click', () => { group = t.dataset.g; render(); }));
+}
+
+    
     <select id="fstatus"><option value="">All statuses</option></select>
     <select id="fcarrier"><option value="">All carriers</option></select>
     <select id="fbroker"><option value="">All brokers</option></select>
