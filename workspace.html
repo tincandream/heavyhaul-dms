@@ -629,21 +629,21 @@ function openPermit(id){
 $('pm_save').addEventListener('click', async () => {
   if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
   const id = val('pm_id');
-  const rec = {
+const rec = {
     tenant_id: tenant, load_id: loadId,
-    state: val('pm_state').toUpperCase(),
-    status: $('pm_status').value,
-    permit_number: val('pm_number'),
-    issuing_authority: val('pm_auth'),
-    valid_from: val('pm_from') || null,
-    valid_to: val('pm_to') || null,
-    fee: val('pm_fee') ? Number(val('pm_fee')) : null,
-    service_fee: val('pm_svc') ? Number(val('pm_svc')) : null,
-    driver_has_permit: $('pm_driver').value==='true',
-    issued_at: $('pm_status').value==='issued' ? new Date().toISOString() : null,
-    escort_front: $('pm_ef').checked, escort_rear: $('pm_er').checked,
-    escort_high_pole: $('pm_ehp').checked, escort_police: $('pm_ep').checked,
-    notes: val('pm_notes')
+    role: $('es_role').value,
+    status: $('es_status').value,
+    company_name: val('es_company'),
+    driver_name: val('es_dname'),
+    driver_phone: val('es_dphone'),
+    meeting_location: val('es_mloc'),
+    meeting_time: val('es_mtime') || null,
+    quoted_rate: val('es_quoted') ? Number(val('es_quoted')) : null,
+    confirmed_rate: val('es_confirmed') ? Number(val('es_confirmed')) : null,
+    actual_cost: val('es_actual') ? Number(val('es_actual')) : null,
+    contacts_exchanged: $('es_contacts').value==='true',
+    confirmed_day_before: $('es_dayb').value==='true',
+    notes: val('es_notes')
   };
   const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
   const r = id
