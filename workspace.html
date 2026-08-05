@@ -657,6 +657,78 @@ document.querySelectorAll('.tab').forEach(t => {
     $('p-'+t.dataset.p).classList.add('on');
   });
 });
+
+  async function drawExpenses(){
+  const m = await db.from('v_load_margin').select('*').eq('load_id',loadId).single();
+  if (!m.error && m.data) {
+    const rev = Number(m.data.total_revenue)||0;
+    const cost = Number(m.data.total_cost)||0;
+    const net = rev - cost;
+    const pct = rev ? Math.round(net/rev*100) : 0;
+    const f = (label, v, cls) => '<div><span>'+label+'</span><b'+
+      (cls?' style="color:'+cls+'"':'')+'>'+v+'</b></div>';
+    $('margin').innerHTML =
+      f('Revenue', money(rev)) +
+      f('Cost', money(cost)) +
+      f('Net margin', money(net), net>=0?'var(--ok)':'var(--danger)') +
+      f('Margin %', pct+'%', net>=0?'var(--ok)':'var(--danger)');
+  }
+
+  const r = await db.from('load_charges').select('*')
+    .eq('load_id',loadId).order('incurred_on',{nullsFirst:false})
+    .order('created_at',{ascending:false});
+  const ch = r.data || [];
+  $('ct-ex').textContent = ch.length ? ' '+ch.length : '';
+
+  $('charges').innerHTML = ch.length
+    ? '<table><thead><tr><th>Type</th><th>Category</th><th>Description</th>'+
+      '<th>Date</th><th>Billable</th><th class="num">Amount</th><th></th>'+
+      '</tr></thead><tbody>'+
+      ch.map(x=>'<tr>'+
+        '<td><span class="pill '+(x.kind==='revenue'?'p-grn':'p-amb')+'">'+
+          pretty(x.kind)+'</span></td>'+
+        '<td>'+pretty(x.category)+'</td>'+
+        '<td>'+esc(x.description||'—')+'</td>'+
+        '<td>'+(x.incurred_on||'—')+'</td>'+
+        '<td>'+(x.billable?'Yes':'No')+'</td>'+
+        '<td class="num">'+money(x.amount)+'</td>'+
+        '<td><span onclick="delCharge(\''+x.id+'\')" style="color:var(--danger);'+
+          'cursor:pointer;font-size:12px">remove</span></td>'+
+        '</tr>').join('')+'</tbody></table>'
+    : '<div class="empty">No charges recorded. Permit fees and escort costs from '+
+      'those tabs also count toward margin automatically.</div>';
+}
+
+$('ch_save').addEventListener('click', async () => {
+  const amt = val('ch_amt');
+  if (!amt) { say('ch_msg','Enter an amount.','err'); return; }
+  $('ch_save').disabled = true;
+  const r = await db.from('load_charges').insert({
+    tenant_id: tenant, load_id: loadId,
+    kind: $('ch_kind').value, category: $('ch_cat').value,
+    amount: Number(amt), description: val('ch_desc'),
+    incurred_on: val('ch_date') || null,
+    billable: $('ch_bill').value === 'true'
+  });
+  $('ch_save').disabled = false;
+  if (r.error) { say('ch_msg', r.error.message, 'err'); return; }
+
+  await db.from('events').insert({
+    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+    event_type:'charge_added', direction:'internal', is_manual:true, user_id: me,
+    subject: pretty($('ch_kind').value)+' — '+pretty($('ch_cat').value),
+    body: money(Number(amt))+(val('ch_desc')?' · '+val('ch_desc'):'')
+  });
+
+  say('ch_msg','Charge added.','ok');
+  ['ch_amt','ch_desc'].forEach(i=>$(i).value='');
+  drawExpenses();
+});
+
+async function delCharge(id){
+  await db.from('load_charges').delete().eq('id', id);
+  drawExpenses();
+}
   
 </script>
 </body>
