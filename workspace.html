@@ -3,981 +3,1021 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Load Workspace — Dispatch</title>
+<title>Load Workspace — Heavy Haul DMS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
-          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
-          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
-          --ok:#0f6e56; --okbg:#e4f4ee; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink);
-         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  main { padding:18px; max-width:1100px; margin:0 auto 50px; }
-  .hero { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; padding:16px 18px; margin-bottom:14px; }
-  .heroTop { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-  .lnum { font-size:19px; font-weight:600; }
-  .comm { color:var(--muted); font-size:13px; }
-  .pill { padding:3px 10px; border-radius:12px; font-size:12px; white-space:nowrap; }
-  .p-red { background:var(--dangerbg); color:var(--danger); }
-  .p-amb { background:var(--warnbg); color:var(--warn); }
-  .p-blu { background:var(--accentbg); color:var(--accent); }
-  .p-grn { background:var(--okbg); color:var(--ok); }
-  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
-  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
-  .chip { font-size:12px; padding:3px 9px; border-radius:6px;
-          background:#faf9f6; border:1px solid var(--line); color:var(--muted); }
-  .chip.over { background:var(--warnbg); border-color:#e8d5ac; color:var(--warn); }
-  .next { margin-top:12px; padding:9px 12px; border-radius:7px; font-size:13px;
-          background:var(--accentbg); color:var(--accent); }
-  .next.need { background:var(--dangerbg); color:var(--danger); }
-  .flags { margin-top:10px; }
-  .flag { font-size:12.5px; padding:7px 11px; border-radius:6px; margin-bottom:5px;
-          background:var(--dangerbg); color:var(--danger); }
-  .acts { background:var(--card); border:1px solid var(--line); border-radius:10px;
-          padding:14px 18px; margin-bottom:14px; }
-  .acts h3 { font-size:12px; font-weight:600; color:var(--muted); margin:0 0 9px;
-             text-transform:uppercase; letter-spacing:.4px; }
-  .btnrow { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
-  button { padding:7px 14px; border:1px solid var(--line2); border-radius:7px;
-           background:var(--card); color:var(--ink); font-size:13px;
-           cursor:pointer; font-family:inherit; margin:0; }
-  button:hover { border-color:var(--accent); color:var(--accent); }
-  button.pri { background:var(--accent); color:#fff; border-color:var(--accent); }
-  button.warn { background:var(--warnbg); color:var(--warn); border-color:#e8d5ac; }
-  button.dgr { background:var(--dangerbg); color:var(--danger); border-color:#eecccc; }
-  .tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
-  .tab { padding:7px 13px; border:1px solid var(--line2); background:var(--card);
-         border-radius:7px; font-size:13px; cursor:pointer; color:var(--muted); }
-  .tab.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-  .tab .ct { font-size:11px; opacity:.8; margin-left:3px; }
-  .panel { display:none; } .panel.on { display:block; }
-  .card { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; padding:16px 18px; margin-bottom:14px; }
-  .card h2 { font-size:13px; font-weight:600; margin:0 0 12px;
-             text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
-  .info { display:grid; gap:10px 18px;
-          grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
-  .info div span { display:block; font-size:11.5px; color:var(--muted); }
-  .info div b { font-weight:500; font-size:13.5px; }
-  table { width:100%; border-collapse:collapse; }
-  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
-       padding:7px 9px; border-bottom:1px solid var(--line); }
-  td { padding:8px 9px; border-bottom:1px solid var(--line); font-size:13px;
-       vertical-align:top; }
-  tr:last-child td { border-bottom:0; }
-  .tl { border-left:2px solid var(--line); padding-left:14px; margin-left:4px; }
-  .ev { padding:0 0 14px; position:relative; }
-  .ev::before { content:''; position:absolute; left:-19px; top:5px; width:7px;
-                height:7px; border-radius:50%; background:var(--line2); }
-  .ev.mile::before { background:var(--accent); }
-  .ev .t { font-size:11.5px; color:var(--muted); }
-  .ev .s { font-weight:500; font-size:13.5px; }
-  .ev .b { font-size:13px; color:var(--muted); }
-  .ck { display:flex; align-items:flex-start; gap:9px; padding:6px 0; font-size:13px; }
-  .ck input { margin-top:3px; width:15px; height:15px; }
-  .ck.done label { color:var(--muted); text-decoration:line-through; }
-  .phase { font-size:11.5px; font-weight:600; color:var(--muted); margin:16px 0 4px;
-           text-transform:uppercase; letter-spacing:.4px; }
-  .phase:first-child { margin-top:0; }
-  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
-  input, select, textarea { width:100%; padding:8px 10px; border:1px solid var(--line2);
-    border-radius:7px; font-size:14px; background:#fff; color:var(--ink);
-    font-family:inherit; }
-  textarea { min-height:54px; resize:vertical; }
-  .grid { display:grid; gap:11px;
-          grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
-  .full { grid-column:1/-1; }
-  dialog { border:1px solid var(--line); border-radius:12px; padding:20px;
-           max-width:520px; width:92%; }
-  dialog::backdrop { background:rgba(0,0,0,.35); }
-  dialog h3 { margin:0 0 14px; font-size:15px; }
-  .msg { margin-top:11px; padding:9px 12px; border-radius:7px; font-size:13px;
-         display:none; }
-  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
-  .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
-  .empty { color:var(--muted); font-size:13px; padding:8px 0; }
-  .addrow { display:flex; justify-content:flex-end; margin-bottom:12px; }
-  .rowclick { cursor:pointer; }
-  .rowclick:hover { background:#faf9f6; }
-  .cbrow label { display:inline-flex; align-items:center; gap:5px; font-size:13px;
-                 color:var(--ink); margin-right:14px; }
-  .cbrow input { width:auto; }
+:root{
+  --bg:#f4f5f7; --card:#fff; --ink:#16181d; --muted:#6b7280; --line:#e3e6ea;
+  --accent:#1d4ed8; --accent-soft:#eef2ff;
+  --ok:#15803d; --ok-soft:#e8f5ec;
+  --warn:#b45309; --warn-soft:#fdf3e3;
+  --bad:#b91c1c; --bad-soft:#fdeaea;
+  --radius:10px; --shadow:0 1px 3px rgba(16,20,30,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 64px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+h1,h2,h3{margin:0}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
+.hide{display:none !important}
+
+/* hero */
+.hero{padding:16px;margin-bottom:12px}
+.hero-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.hero-num{font-size:24px;font-weight:700;letter-spacing:.2px}
+.hero-route{color:var(--muted);margin-top:2px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.4px;background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.grey{background:#eef0f3;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.chip{background:#f0f2f5;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:12px}
+.chip b{font-weight:700}
+.chip.hot{background:var(--warn-soft);border-color:#f2dcae;color:var(--warn)}
+.chip.red{background:var(--bad-soft);border-color:#f3cccc;color:var(--bad)}
+.holdbar{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--bad-soft);
+  border:1px solid #f3cccc;color:var(--bad);font-weight:600}
+.nextbox{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--accent-soft);
+  border:1px solid #dbe2fb}
+.nextbox .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);font-weight:700}
+.flags{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.flag{padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid transparent}
+.flag.high{background:var(--bad-soft);border-color:#f3cccc;color:var(--bad)}
+.flag.med{background:var(--warn-soft);border-color:#f2dcae;color:var(--warn)}
+.flag.low{background:#eef0f3;border-color:var(--line);color:var(--muted)}
+
+/* actions */
+.actionbar{padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+  background:#fff;color:var(--ink);padding:8px 13px;font-weight:600}
+button:hover{background:#f7f8fa}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{background:#fff;border-color:#f0c2c2;color:var(--bad)}
+button.danger:hover{background:var(--bad-soft)}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+button.sm{padding:5px 10px;font-size:12px}
+.sep{width:1px;height:24px;background:var(--line)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tabs button{border:none;background:none;border-radius:0;padding:9px 14px;color:var(--muted);
+  border-bottom:2px solid transparent;font-weight:600}
+.tabs button:hover{background:transparent;color:var(--ink)}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs .cnt{display:inline-block;margin-left:6px;font-size:11px;background:#eef0f3;color:var(--muted);
+  border-radius:999px;padding:1px 6px;font-weight:700}
+.panel{display:none}
+.panel.on{display:block}
+
+/* tables */
+table{width:100%;border-collapse:collapse;background:#fff}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f0f2f4;vertical-align:top}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#f7f9fc}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
+.sechead{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.sechead h2{font-size:15px}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+
+/* grids / cards */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px}
+.kv dt{color:var(--muted);font-size:12px;padding-top:2px}
+.kv dd{margin:0}
+.box{padding:14px}
+.box h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+
+/* timeline */
+.tl{position:relative;padding-left:22px}
+.tl:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 18px 4px}
+.tl-item:before{content:"";position:absolute;left:-21px;top:5px;width:10px;height:10px;border-radius:50%;
+  background:#c7ccd4;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.tl-item.mile:before{background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tl-when{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tl-type{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;color:var(--muted);
+  background:#eef0f3;border-radius:4px;padding:1px 6px}
+.tl-head{font-weight:700;margin-top:2px}
+.tl-body{color:var(--muted);white-space:pre-wrap;margin-top:2px}
+.trans{font-weight:700}
+.trans .arrow{color:var(--muted);margin:0 6px;font-weight:400}
+
+/* forms + dialogs */
+dialog{border:none;border-radius:12px;padding:0;box-shadow:0 12px 40px rgba(10,14,25,.28);
+  width:min(720px,94vw);color:var(--ink)}
+dialog::backdrop{background:rgba(12,16,26,.45)}
+.dlg-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.dlg-head h3{font-size:15px}
+.dlg-body{padding:16px;max-height:66vh;overflow:auto}
+.dlg-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;background:#fbfcfd}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+label{font-size:12px;font-weight:600;color:var(--muted)}
+input,select,textarea{font:inherit;padding:8px 9px;border:1px solid var(--line);border-radius:7px;
+  background:#fff;color:var(--ink);width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+textarea{min-height:76px;resize:vertical}
+.checks{display:flex;gap:14px;flex-wrap:wrap;padding-top:4px}
+.checks label{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--ink);font-size:13px}
+.checks input{width:auto}
+.fs{border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px}
+.fs legend{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding:0 6px}
+.err{color:var(--bad);font-size:12px;font-weight:600}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+  background:#16181d;color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;
+  opacity:0;transition:.22s;z-index:9999;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.bad{background:var(--bad)}
 </style>
 </head>
 <body>
 
 <header></header>
 
-<main>
-  <div id="hero" class="hero"><div class="empty">Loading…</div></div>
-  <div id="acts" class="acts" style="display:none"></div>
+<div class="wrap">
 
-  <div class="tabs" id="tabs" style="display:none">
-    <button class="tab on" data-p="overview">Overview</button>
-    <button class="tab" data-p="timeline">Timeline<span class="ct" id="ct-tl"></span></button>
-    <button class="tab" data-p="permits">Permits<span class="ct" id="ct-pm"></span></button>
-    <button class="tab" data-p="escorts">Escorts<span class="ct" id="ct-es"></span></button>
-    <button class="tab" data-p="checklist">Checklist<span class="ct" id="ct-ck"></span></button>
-    <button class="tab" data-p="expenses">Expenses<span class="ct" id="ct-ex"></span></button>
-    <button class="tab" data-p="notes">Notes</button>
-  </div>
+  <div id="loadErr" class="card box hide" style="border-color:#f3cccc;background:var(--bad-soft);color:var(--bad)"></div>
 
-  <div class="panel on" id="p-overview">
-    <div class="card"><h2>General information</h2><div class="info" id="info"></div></div>
-    <div class="card"><h2>Route</h2><div id="route"></div></div>
-    <div class="card"><h2>Recent activity</h2><div id="recent"></div></div>
-  </div>
+  <!-- HERO -->
+  <section id="hero" class="card hero">
+    <div class="muted">Loading load…</div>
+  </section>
 
-  <div class="panel" id="p-timeline">
-    <div class="card">
-      <h2>Add a note to the timeline</h2>
-      <div class="grid">
-        <div class="full"><label>What happened</label>
-          <textarea id="note_body" placeholder="Shipper says crane operator is running late"></textarea></div>
-        <div><label>Type</label>
-          <select id="note_type">
-            <option value="note">Note</option>
-            <option value="call">Phone call</option>
-            <option value="email">Email</option>
-            <option value="sms">Text message</option>
-            <option value="issue">Issue</option>
-          </select></div>
-        <div><label>Direction</label>
-          <select id="note_dir">
-            <option value="internal">Internal</option>
-            <option value="inbound">Inbound</option>
-            <option value="outbound">Outbound</option>
-          </select></div>
+  <!-- ACTIONS -->
+  <section id="actions" class="card actionbar"></section>
+
+  <!-- TABS -->
+  <nav class="tabs" id="tabstrip">
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="timeline">Timeline <span class="cnt" id="cnt-timeline">0</span></button>
+    <button data-tab="permits">Permits <span class="cnt" id="cnt-permits">0</span></button>
+    <button data-tab="escorts">Escorts <span class="cnt" id="cnt-escorts">0</span></button>
+    <button data-tab="checklist">Checklist <span class="cnt" id="cnt-checklist">0</span></button>
+    <button data-tab="expenses">Expenses</button>
+    <button data-tab="notes">Notes <span class="cnt" id="cnt-notes">0</span></button>
+  </nav>
+
+  <section class="panel on" id="tab-overview"></section>
+  <section class="panel"    id="tab-timeline"></section>
+  <section class="panel"    id="tab-permits"></section>
+  <section class="panel"    id="tab-escorts"></section>
+  <section class="panel"    id="tab-checklist"></section>
+  <section class="panel"    id="tab-expenses"></section>
+  <section class="panel"    id="tab-notes"></section>
+
+</div>
+
+<!-- ============ CHECK-IN DIALOG ============ -->
+<dialog id="dlgCheckIn">
+  <div class="dlg-head"><h3>Driver Check-In</h3></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field"><label for="ci_type">Check-in type</label>
+        <select id="ci_type">
+          <option value="departure">Departure</option>
+          <option value="en_route" selected>En route</option>
+          <option value="fuel">Fuel stop</option>
+          <option value="overnight">Overnight / shutdown</option>
+          <option value="at_pickup">Arrived at pickup</option>
+          <option value="loaded">Loaded</option>
+          <option value="at_delivery">Arrived at delivery</option>
+          <option value="unloaded">Unloaded</option>
+          <option value="delay">Delay / problem</option>
+        </select>
       </div>
-      <button class="pri" id="note_save" style="margin-top:12px">Add to timeline</button>
-      <div class="msg" id="note_msg"></div>
+      <div class="field"><label for="ci_when">Occurred at</label>
+        <input type="datetime-local" id="ci_when"></div>
+      <div class="field"><label for="ci_city">City</label><input id="ci_city" placeholder="Birmingham"></div>
+      <div class="field"><label for="ci_state">State</label><input id="ci_state" maxlength="2" placeholder="AL" style="text-transform:uppercase"></div>
+      <div class="field"><label for="ci_miles">Odometer / miles remaining</label><input type="number" id="ci_miles" placeholder="240"></div>
+      <div class="field"><label for="ci_eta">Updated ETA</label><input type="datetime-local" id="ci_eta"></div>
+      <div class="field full"><label for="ci_notes">Notes</label>
+        <textarea id="ci_notes" placeholder="Fueled at Love's, weather clear, on schedule."></textarea></div>
     </div>
-    <div class="card"><h2>Full history</h2><div class="tl" id="timeline"></div></div>
+    <div id="ci_err" class="err"></div>
   </div>
+  <div class="dlg-foot">
+    <button class="primary" id="ci_save">Log Check-In</button>
+    <button onclick="dlgCheckIn.close()">Cancel</button>
+    <span class="spacer"></span>
+    <span class="small muted">Also posts a check_in event to the timeline.</span>
+  </div>
+</dialog>
 
-  <div class="panel" id="p-permits">
-    <div class="card">
-      <h2>Permits by state</h2>
-      <div class="addrow"><button class="pri" onclick="openPermit()">Add permit</button></div>
-      <div id="permits"></div>
+<!-- ============ HOLD DIALOG ============ -->
+<dialog id="dlgHold">
+  <div class="dlg-head"><h3>Place Load On Hold</h3></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field full"><label for="hd_reason">Reason</label>
+        <select id="hd_reason">
+          <option value="Awaiting permits">Awaiting permits</option>
+          <option value="Awaiting escorts">Awaiting escorts</option>
+          <option value="Route survey pending">Route survey pending</option>
+          <option value="Weather / wind">Weather / wind</option>
+          <option value="Curfew / travel restriction">Curfew / travel restriction</option>
+          <option value="Shipper not ready">Shipper not ready</option>
+          <option value="Consignee not ready">Consignee not ready</option>
+          <option value="Equipment issue">Equipment issue</option>
+          <option value="Credit / payment issue">Credit / payment issue</option>
+          <option value="Other">Other</option>
+        </select></div>
+      <div class="field full"><label for="hd_notes">Detail</label>
+        <textarea id="hd_notes" placeholder="TN permit rejected, reapplying Monday AM."></textarea></div>
     </div>
+    <div id="hd_err" class="err"></div>
   </div>
+  <div class="dlg-foot">
+    <button class="danger" id="hd_save">Place On Hold</button>
+    <button onclick="dlgHold.close()">Cancel</button>
+  </div>
+</dialog>
 
-  <div class="panel" id="p-escorts">
-    <div class="card">
-      <h2>Escort assignments</h2>
-      <div class="addrow"><button class="pri" onclick="openEscort()">Add escort</button></div>
-      <div id="escorts"></div>
+<!-- ============ STATUS DIALOG ============ -->
+<dialog id="dlgStatus">
+  <div class="dlg-head"><h3 id="st_title">Change Status</h3></div>
+  <div class="dlg-body">
+    <div class="field full"><label for="st_notes">Note (optional)</label>
+      <textarea id="st_notes" placeholder="Driver dispatched, permits in hand."></textarea></div>
+    <div id="st_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="st_save">Confirm</button>
+    <button onclick="dlgStatus.close()">Cancel</button>
+  </div>
+</dialog>
+
+<!-- ============ PERMIT DIALOG ============ -->
+<dialog id="dlgPermit">
+  <div class="dlg-head"><h3 id="pm_title">Permit</h3><span class="spacer"></span>
+    <span class="small muted mono" id="pm_idlabel"></span></div>
+  <div class="dlg-body">
+    <input type="hidden" id="pm_id">
+    <div class="fgrid">
+      <div class="field"><label for="pm_state">State *</label>
+        <input id="pm_state" maxlength="2" placeholder="TN" style="text-transform:uppercase"></div>
+      <div class="field"><label for="pm_status">Status *</label>
+        <select id="pm_status">
+          <option value="not_required">Not required</option>
+          <option value="needed" selected>Needed</option>
+          <option value="applied">Applied</option>
+          <option value="pending">Pending</option>
+          <option value="issued">Issued</option>
+          <option value="rejected">Rejected</option>
+          <option value="expired">Expired</option>
+          <option value="amended">Amended</option>
+          <option value="cancelled">Cancelled</option>
+        </select></div>
+      <div class="field"><label for="pm_permit_number">Permit number</label><input id="pm_permit_number"></div>
+      <div class="field"><label for="pm_issuing_authority">Issuing authority</label>
+        <input id="pm_issuing_authority" placeholder="TDOT"></div>
+      <div class="field"><label for="pm_permit_service_id">Permit service ID (uuid)</label>
+        <input id="pm_permit_service_id" class="mono" placeholder="optional"></div>
+      <div class="field"><label for="pm_fee">State fee ($)</label><input type="number" step="0.01" id="pm_fee"></div>
+      <div class="field"><label for="pm_service_fee">Service fee ($)</label><input type="number" step="0.01" id="pm_service_fee"></div>
     </div>
-  </div>
 
-  <div class="panel" id="p-checklist">
-    <div class="card"><h2>Compliance checklist</h2><div id="checklist"></div></div>
-  </div>
-
-  <div class="panel" id="p-expenses">
-    <div class="card"><h2>Margin</h2><div class="info" id="margin"></div></div>
-    <div class="card">
-      <h2>Record a charge</h2>
-      <div class="grid">
-        <div><label>Type</label>
-          <select id="ch_kind">
-            <option value="cost">Cost</option>
-            <option value="revenue">Revenue</option>
-          </select></div>
-        <div><label>Category</label>
-          <select id="ch_cat">
-            <option value="linehaul">Linehaul</option>
-            <option value="fuel">Fuel surcharge</option>
-            <option value="detention">Detention</option>
-            <option value="layover">Layover</option>
-            <option value="tarp">Tarp</option>
-            <option value="permit_fee">Permit fee</option>
-            <option value="permit_service_fee">Permit service fee</option>
-            <option value="escort">Escort</option>
-            <option value="pilot_car">Pilot car</option>
-            <option value="police">Police escort</option>
-            <option value="driver_pay">Driver pay</option>
-            <option value="fuel_purchase">Fuel purchase</option>
-            <option value="tolls">Tolls</option>
-            <option value="lumper">Lumper</option>
-            <option value="repair">Repair</option>
-            <option value="other">Other</option>
-          </select></div>
-        <div><label>Amount</label><input id="ch_amt" type="number" step="0.01"></div>
-        <div><label>Date incurred</label><input id="ch_date" type="date"></div>
-        <div class="full"><label>Description</label><input id="ch_desc"></div>
-        <div><label>Billable to broker</label>
-          <select id="ch_bill"><option value="false">No</option>
-          <option value="true">Yes</option></select></div>
+    <fieldset class="fs"><legend>Dates</legend>
+      <div class="fgrid">
+        <div class="field"><label for="pm_applied_at">Applied at</label><input type="datetime-local" id="pm_applied_at"></div>
+        <div class="field"><label for="pm_issued_at">Issued at</label><input type="datetime-local" id="pm_issued_at"></div>
+        <div class="field"><label for="pm_valid_from">Valid from</label><input type="date" id="pm_valid_from"></div>
+        <div class="field"><label for="pm_valid_to">Valid to</label><input type="date" id="pm_valid_to"></div>
       </div>
-      <button class="pri" id="ch_save" style="margin-top:12px">Add charge</button>
-      <div class="msg" id="ch_msg"></div>
+    </fieldset>
+
+    <fieldset class="fs"><legend>Escorts required by this permit</legend>
+      <div class="checks">
+        <label><input type="checkbox" id="pm_escort_front"> Front</label>
+        <label><input type="checkbox" id="pm_escort_rear"> Rear</label>
+        <label><input type="checkbox" id="pm_escort_police"> Police</label>
+        <label><input type="checkbox" id="pm_escort_high_pole"> High pole</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="fs"><legend>Travel restrictions</legend>
+      <div class="checks" style="margin-bottom:10px">
+        <label><input type="checkbox" id="pm_daylight_only"> Daylight only</label>
+        <label><input type="checkbox" id="pm_weekend_travel_allowed"> Weekend travel allowed</label>
+        <label><input type="checkbox" id="pm_holiday_travel_allowed"> Holiday travel allowed</label>
+      </div>
+      <div class="fgrid">
+        <div class="field"><label for="pm_wind_limit_mph">Wind limit (mph)</label>
+          <input type="number" id="pm_wind_limit_mph" placeholder="35"></div>
+        <div class="field full"><label for="pm_travel_time_restrictions">Travel time restrictions</label>
+          <textarea id="pm_travel_time_restrictions" placeholder="Sunrise to sunset. No travel 7-9am / 4-6pm in metro areas."></textarea></div>
+        <div class="field full"><label for="pm_curfew_notes">Curfew notes</label>
+          <textarea id="pm_curfew_notes" placeholder="No movement through Nashville during posted curfew hours."></textarea></div>
+        <div class="field full"><label for="pm_route_restrictions">Route restrictions</label>
+          <textarea id="pm_route_restrictions" placeholder="I-40 E to US-231 S. No SR-96 bridge."></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="fs"><legend>Driver</legend>
+      <div class="checks" style="margin-bottom:10px">
+        <label><input type="checkbox" id="pm_driver_has_permit"> Driver has permit copy</label>
+      </div>
+      <div class="fgrid">
+        <div class="field"><label for="pm_driver_briefed_at">Driver briefed at</label>
+          <input type="datetime-local" id="pm_driver_briefed_at"></div>
+      </div>
+    </fieldset>
+
+    <div class="field full" style="margin-top:12px"><label for="pm_notes">Notes</label>
+      <textarea id="pm_notes"></textarea></div>
+    <div id="pm_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="pm_savebtn">Save Permit</button>
+    <button onclick="dlgPermit.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger sm hide" id="pm_delbtn">Delete</button>
+  </div>
+</dialog>
+
+<!-- ============ ESCORT DIALOG ============ -->
+<dialog id="dlgEscort">
+  <div class="dlg-head"><h3 id="es_title">Escort Assignment</h3><span class="spacer"></span>
+    <span class="small muted mono" id="es_idlabel"></span></div>
+  <div class="dlg-body">
+    <input type="hidden" id="es_id">
+    <div class="fgrid">
+      <div class="field"><label for="es_role">Role *</label>
+        <select id="es_role">
+          <option value="front">Front / lead</option>
+          <option value="rear">Rear / chase</option>
+          <option value="high_pole">High pole</option>
+          <option value="police">Police</option>
+          <option value="steer_car">Steer car</option>
+          <option value="route_survey">Route survey</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="field"><label for="es_status">Status *</label>
+        <select id="es_status">
+          <option value="needed" selected>Needed</option>
+          <option value="quoted">Quoted</option>
+          <option value="booked">Booked</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="en_route">En route</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="no_show">No show</option>
+        </select></div>
+      <div class="field full"><label for="es_vehicle_info">Company / vehicle info</label>
+        <input id="es_vehicle_info" placeholder="Dixie Pilot Cars — white F-150, 18ft pole"></div>
+      <div class="field"><label for="es_driver_name">Driver name</label><input id="es_driver_name"></div>
+      <div class="field"><label for="es_driver_phone">Driver phone</label><input id="es_driver_phone" placeholder="(555) 123-4567"></div>
     </div>
-    <div class="card"><h2>Charges on this load</h2><div id="charges"></div></div>
-  </div>
 
-  <div class="panel" id="p-notes">
-    <div class="card">
-      <h2>Load notes</h2>
-      <textarea id="lnotes" style="min-height:150px"></textarea>
-      <button class="pri" id="notes_save" style="margin-top:12px">Save notes</button>
-      <div class="msg" id="notes_msg"></div>
+    <fieldset class="fs"><legend>Money</legend>
+      <div class="fgrid">
+        <div class="field"><label for="es_quoted_rate">Quoted rate ($)</label><input type="number" step="0.01" id="es_quoted_rate"></div>
+        <div class="field"><label for="es_confirmed_rate">Confirmed rate ($)</label><input type="number" step="0.01" id="es_confirmed_rate"></div>
+        <div class="field"><label for="es_actual_cost">Actual cost ($)</label><input type="number" step="0.01" id="es_actual_cost"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="fs"><legend>Schedule &amp; meet-up</legend>
+      <div class="fgrid">
+        <div class="field"><label for="es_scheduled_start">Scheduled start</label><input type="datetime-local" id="es_scheduled_start"></div>
+        <div class="field"><label for="es_scheduled_end">Scheduled end</label><input type="datetime-local" id="es_scheduled_end"></div>
+        <div class="field"><label for="es_meeting_time">Meeting time</label><input type="datetime-local" id="es_meeting_time"></div>
+        <div class="field full"><label for="es_meeting_location">Meeting location</label>
+          <input id="es_meeting_location" placeholder="Pilot #412, Exit 22 I-40, Jackson TN"></div>
+      </div>
+      <div class="checks" style="margin-top:10px">
+        <label><input type="checkbox" id="es_contacts_exchanged"> Contacts exchanged with driver</label>
+        <label><input type="checkbox" id="es_confirmed_day_before"> Confirmed day before</label>
+      </div>
+    </fieldset>
+
+    <div class="field full" style="margin-top:12px"><label for="es_notes">Notes</label>
+      <textarea id="es_notes"></textarea></div>
+    <div id="es_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="es_savebtn">Save Escort</button>
+    <button onclick="dlgEscort.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger sm hide" id="es_delbtn">Delete</button>
+  </div>
+</dialog>
+
+<!-- ============ CHARGE DIALOG ============ -->
+<dialog id="dlgCharge">
+  <div class="dlg-head"><h3 id="ch_title">Add Charge</h3></div>
+  <div class="dlg-body">
+    <input type="hidden" id="ch_id">
+    <div class="fgrid">
+      <div class="field"><label for="ch_kind">Kind *</label>
+        <select id="ch_kind">
+          <option value="revenue">Revenue</option>
+          <option value="cost" selected>Cost</option>
+        </select></div>
+      <div class="field"><label for="ch_category">Category *</label>
+        <select id="ch_category">
+          <option value="linehaul">Linehaul</option>
+          <option value="fuel">Fuel</option>
+          <option value="detention">Detention</option>
+          <option value="layover">Layover</option>
+          <option value="tarp">Tarp</option>
+          <option value="permit_fee">Permit fee</option>
+          <option value="permit_service_fee">Permit service fee</option>
+          <option value="escort">Escort</option>
+          <option value="pilot_car">Pilot car</option>
+          <option value="police">Police</option>
+          <option value="driver_pay">Driver pay</option>
+          <option value="fuel_purchase">Fuel purchase</option>
+          <option value="tolls">Tolls</option>
+          <option value="lumper">Lumper</option>
+          <option value="repair">Repair</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="field"><label for="ch_amount">Amount ($) *</label><input type="number" step="0.01" id="ch_amount"></div>
+      <div class="field"><label for="ch_incurred_on">Incurred on</label><input type="date" id="ch_incurred_on"></div>
+      <div class="field full"><label for="ch_description">Description</label>
+        <input id="ch_description" placeholder="AL oversize permit — 3 day"></div>
+      <div class="field full"><div class="checks">
+        <label><input type="checkbox" id="ch_billable"> Billable to customer</label>
+      </div></div>
     </div>
+    <div id="ch_err" class="err"></div>
   </div>
-</main>
-
-<dialog id="dlg_ci">
-  <h3>Log a check-in</h3>
-  <div class="grid">
-    <div class="full"><label>Location</label><input id="ci_loc" placeholder="Salina, KS"></div>
-    <div><label>State</label><input id="ci_st" maxlength="2"></div>
-    <div><label>ETA</label><input id="ci_eta" type="datetime-local"></div>
-    <div><label>Hours remaining</label><input id="ci_h" type="number" step="0.5"></div>
-    <div><label>Source</label>
-      <select id="ci_src">
-        <option value="driver_sms">Driver text</option>
-        <option value="dispatcher">Phone call</option>
-        <option value="driver_app">Driver app</option>
-        <option value="eld">ELD</option>
-      </select></div>
-    <div class="full"><label>Note</label><textarea id="ci_note"></textarea></div>
+  <div class="dlg-foot">
+    <button class="primary" id="ch_save">Save Charge</button>
+    <button onclick="dlgCharge.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger sm hide" id="ch_delbtn">Delete</button>
   </div>
-  <div class="btnrow" style="margin-top:14px">
-    <button class="pri" id="ci_save">Save check-in</button>
-    <button onclick="document.getElementById('dlg_ci').close()">Cancel</button>
-  </div>
-  <div class="msg" id="ci_msg"></div>
 </dialog>
 
-<dialog id="dlg_hold">
-  <h3>Put this load on hold</h3>
-  <div class="grid">
-    <div class="full"><label>Reason</label>
-      <select id="h_reason">
-        <option value="breakdown">Mechanical breakdown</option>
-        <option value="awaiting_permits">Awaiting permits</option>
-        <option value="awaiting_escort">Awaiting escort</option>
-        <option value="weather">Weather</option>
-        <option value="traffic">Traffic</option>
-        <option value="road_closure">Road closure</option>
-        <option value="hos_shutdown">HOS shutdown</option>
-        <option value="detention_shipper">Detention at shipper</option>
-        <option value="detention_receiver">Detention at receiver</option>
-        <option value="curfew">Curfew</option>
-        <option value="holiday_restriction">Holiday restriction</option>
-        <option value="other">Other</option>
-      </select></div>
-    <div class="full"><label>What's happening</label><textarea id="h_note"></textarea></div>
-    <div class="full"><label>Expected to clear</label><input id="h_clear" type="datetime-local"></div>
-  </div>
-  <div class="btnrow" style="margin-top:14px">
-    <button class="dgr" id="h_save">Put on hold</button>
-    <button onclick="document.getElementById('dlg_hold').close()">Cancel</button>
-  </div>
-  <div class="msg" id="h_msg"></div>
-</dialog>
-
-<dialog id="dlg_permit">
-  <h3 id="pm_title">Permit</h3>
-  <input type="hidden" id="pm_id">
-  <div class="grid">
-    <div><label>State</label><input id="pm_state" maxlength="2"></div>
-    <div><label>Status</label>
-      <select id="pm_status">
-        <option value="needed">Needed</option>
-        <option value="applied">Applied</option>
-        <option value="pending">Pending</option>
-        <option value="issued">Issued</option>
-        <option value="rejected">Rejected</option>
-        <option value="amended">Amended</option>
-        <option value="expired">Expired</option>
-        <option value="cancelled">Cancelled</option>
-        <option value="not_required">Not required</option>
-      </select></div>
-    <div><label>Permit number</label><input id="pm_number"></div>
-    <div><label>Issuing authority</label><input id="pm_auth"></div>
-    <div><label>Valid from</label><input id="pm_from" type="date"></div>
-    <div><label>Valid to</label><input id="pm_to" type="date"></div>
-    <div><label>Permit fee</label><input id="pm_fee" type="number" step="0.01"></div>
-    <div><label>Service fee</label><input id="pm_svc" type="number" step="0.01"></div>
-    <div><label>Driver has permit</label>
-      <select id="pm_driver"><option value="false">No</option>
-      <option value="true">Yes</option></select></div>
-  </div>
-  <div style="margin-top:12px">
-    <label>Escorts this permit requires</label>
-    <div class="cbrow">
-      <label><input type="checkbox" id="pm_ef"> Front</label>
-      <label><input type="checkbox" id="pm_er"> Rear</label>
-      <label><input type="checkbox" id="pm_ehp"> High pole</label>
-      <label><input type="checkbox" id="pm_ep"> Police</label>
+<!-- ============ NOTE DIALOG ============ -->
+<dialog id="dlgNote">
+  <div class="dlg-head"><h3>Add Note</h3></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field"><label for="nt_type">Type</label>
+        <select id="nt_type">
+          <option value="note">Note</option>
+          <option value="call">Call</option>
+          <option value="email">Email</option>
+          <option value="sms">Text / SMS</option>
+          <option value="issue">Issue</option>
+        </select></div>
+      <div class="field"><label for="nt_subject">Subject</label><input id="nt_subject"></div>
+      <div class="field full"><label for="nt_body">Body *</label><textarea id="nt_body"></textarea></div>
+      <div class="field full"><div class="checks">
+        <label><input type="checkbox" id="nt_milestone"> Mark as milestone</label>
+      </div></div>
     </div>
+    <div id="nt_err" class="err"></div>
   </div>
-  <div style="margin-top:12px"><label>Notes</label><textarea id="pm_notes"></textarea></div>
-  <div class="btnrow" style="margin-top:14px">
-    <button class="pri" id="pm_save">Save permit</button>
-    <button onclick="document.getElementById('dlg_permit').close()">Cancel</button>
+  <div class="dlg-foot">
+    <button class="primary" id="nt_save">Save Note</button>
+    <button onclick="dlgNote.close()">Cancel</button>
   </div>
-  <div class="msg" id="pm_msg"></div>
 </dialog>
 
-<dialog id="dlg_escort">
-  <h3 id="es_title">Escort</h3>
-  <input type="hidden" id="es_id">
-  <div class="grid">
-    <div><label>Role</label>
-      <select id="es_role">
-        <option value="front">Front</option>
-        <option value="rear">Rear</option>
-        <option value="high_pole">High pole</option>
-        <option value="police">Police</option>
-        <option value="steer">Steer</option>
-      </select></div>
-    <div><label>Status</label>
-      <select id="es_status">
-        <option value="needed">Needed</option>
-        <option value="quoted">Quoted</option>
-        <option value="booked">Booked</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="en_route">En route</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-        <option value="no_show">No show</option>
-      </select></div>
-    <div class="full"><label>Company / vehicle</label><input id="es_company"></div>
-    <div><label>Escort driver name</label><input id="es_dname"></div>
-    <div><label>Escort driver phone</label><input id="es_dphone"></div>
-    <div class="full"><label>Meeting location</label><input id="es_mloc"></div>
-    <div><label>Meeting time</label><input id="es_mtime" type="datetime-local"></div>
-    <div><label>Quoted rate</label><input id="es_quoted" type="number" step="0.01"></div>
-    <div><label>Confirmed rate</label><input id="es_confirmed" type="number" step="0.01"></div>
-    <div><label>Actual cost</label><input id="es_actual" type="number" step="0.01"></div>
-    <div><label>Contacts exchanged</label>
-      <select id="es_contacts"><option value="false">No</option>
-      <option value="true">Yes</option></select></div>
-    <div><label>Confirmed day before</label>
-      <select id="es_dayb"><option value="false">No</option>
-      <option value="true">Yes</option></select></div>
-  </div>
-  <div style="margin-top:12px"><label>Notes</label><textarea id="es_notes"></textarea></div>
-  <div class="btnrow" style="margin-top:14px">
-    <button class="pri" id="es_save">Save escort</button>
-    <button onclick="document.getElementById('dlg_escort').close()">Cancel</button>
-  </div>
-  <div class="msg" id="es_msg"></div>
-</dialog>
+<div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="nav.js"></script>
 <script>
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+/* ============================================================
+   HEAVY HAUL DMS — LOAD WORKSPACE
+   Part 1: config, helpers, data load, hero, actions bar
+   ============================================================ */
 
-const $ = id => document.getElementById(id);
-let db=null, tenant=null, loadId=null, L=null, me=null;
-let PERMITS=[], ESCORTS=[];
+/* ---------- CREDENTIALS ---------- */
+const SUPABASE_URL      = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_ANON_KEY_HERE';
 
-const FLOW = {
-  quoted:['booked'], booked:['permits_pending','dispatched'],
-  permits_pending:['dispatched'], dispatched:['en_route_to_pickup'],
-  en_route_to_pickup:['at_shipper'], at_shipper:['loading'],
-  loading:['loaded'], loaded:['in_transit'],
-  in_transit:['at_weigh_station','under_inspection','at_receiver'],
-  at_weigh_station:['in_transit'], under_inspection:['in_transit'],
-  at_receiver:['unloading'], unloading:['delivered'],
-  delivered:['pod_pending','paperwork'], pod_pending:['paperwork'],
-  paperwork:['invoiced'], invoiced:['paid'], paid:[], cancelled:[], tonu:[]
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ---------- LOADS TABLE FIELD MAP ----------
+   Only the loads + check_ins tables use fallbacks, because their exact
+   column names weren't specified. First matching key wins. Edit here only. */
+const F = {
+  number:      ['load_number','load_no','reference','ref_number','number'],
+  status:      ['status','load_status'],
+  onHold:      ['on_hold','is_on_hold','hold'],
+  holdReason:  ['hold_reason','hold_notes'],
+  holdAt:      ['hold_started_at','held_at','hold_at'],
+  oCity:       ['origin_city','pickup_city'],
+  oState:      ['origin_state','pickup_state'],
+  dCity:       ['dest_city','destination_city','delivery_city'],
+  dState:      ['dest_state','destination_state','delivery_state'],
+  pickup:      ['pickup_date','pickup_at','ship_date'],
+  delivery:    ['delivery_date','delivery_at','due_date'],
+  miles:       ['miles','total_miles','distance_miles'],
+  commodity:   ['commodity','commodity_description','description'],
+  equipment:   ['equipment_type','trailer_type','equipment'],
+  lengthFt:    ['length_ft','load_length_ft'],
+  widthFt:     ['width_ft','load_width_ft'],
+  heightFt:    ['height_ft','load_height_ft'],
+  weightLbs:   ['weight_lbs','gross_weight_lbs','weight'],
+  axles:       ['axle_count','axles'],
+  oversize:    ['is_oversize','oversize'],
+  overweight:  ['is_overweight','overweight'],
+  superload:   ['is_superload','superload'],
+  permitsReq:  ['permits_required','permit_required'],
+  escortsReq:  ['escorts_required','escort_count'],
+  routeSurvey: ['route_survey_required','route_survey'],
+  customer:    ['broker_company_id','customer_id','broker_id'],
+  carrier:     ['carrier_company_id','carrier_id'],
+  driver:      ['driver_name','driver'],
+  driverPhone: ['driver_phone'],
+  truck:       ['truck_number','tractor_number','power_unit'],
+  trailer:     ['trailer_number']
 };
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
-  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function pretty(s){ return String(s||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); }
-function ftin(i){ return i==null?'—':Math.floor(i/12)+"' "+(i%12)+'"'; }
-function money(n){ return n==null?'—':'$'+Number(n).toLocaleString(); }
-function when(iso){ if(!iso) return '—'; const d=new Date(iso);
-  return d.toLocaleDateString([],{month:'numeric',day:'numeric'})+' '+
-         d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); }
-function say(el,t,k){ const m=$(el); m.textContent=t; m.className='msg '+k;
-  if(k==='ok') setTimeout(()=>{m.className='msg';},3500); }
-function val(id){ const v=$(id).value.trim(); return v===''?null:v; }
+/* check_ins insert shape — adjust keys to match your table if it differs */
+const CHECKIN = {
+  type:     'check_in_type',
+  when:     'occurred_at',
+  city:     'city',
+  state:    'state',
+  miles:    'miles_remaining',
+  eta:      'eta',
+  notes:    'notes'
+};
 
-window.onerror = m => { $('hero').innerHTML='<div class="flag">JS error: '+esc(m)+'</div>'; };
+/* ---------- LOAD STATUS STATE MACHINE ----------
+   Edit to match your loads.status check constraint. */
+const STATUS_FLOW = {
+  quoted:      ['booked','cancelled'],
+  booked:      ['dispatched','cancelled'],
+  dispatched:  ['at_pickup','cancelled'],
+  at_pickup:   ['loaded','cancelled'],
+  loaded:      ['in_transit'],
+  in_transit:  ['at_delivery'],
+  at_delivery: ['delivered'],
+  delivered:   ['invoiced'],
+  invoiced:    ['paid'],
+  paid:        [],
+  cancelled:   []
+};
+const STATUS_TONE = {
+  quoted:'grey', booked:'', dispatched:'', at_pickup:'warn', loaded:'warn',
+  in_transit:'warn', at_delivery:'warn', delivered:'ok', invoiced:'ok',
+  paid:'ok', cancelled:'bad'
+};
 
-loadId = new URLSearchParams(location.search).get('id');
+/* ---------- STATE ---------- */
+let TENANT_ID = null;
+let APP_USER_ID = null;
+let LOAD_ID = null;
+let LOAD = null;
+let RED_FLAGS = [];
+let NEXT_ACTION = null;
+let PERMITS = [];
+let ESCORTS = [];
+let EVENTS = [];
+let CHARGES = [];
+let MARGIN = null;
+let CHECKLIST = [];
+let ACTIVE_TAB = 'overview';
+let PENDING_STATUS = null;
 
-if (typeof window.supabase === 'undefined') {
-  $('hero').innerHTML = '<div class="flag">Supabase library failed to load.</div>';
-} else if (SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
-  $('hero').innerHTML = '<div class="flag">Fill in SUPABASE_ANON_KEY.</div>';
-} else if (!loadId) {
-  $('hero').innerHTML = '<div class="flag">No load specified. Open this page from the Fleet Board or All Loads.</div>';
-} else {
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  start();
+/* ---------- HELPERS ---------- */
+const $  = (id) => document.getElementById(id);
+const $$ = (sel, root) => Array.from((root||document).querySelectorAll(sel));
+
+function esc(s){
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
-async function start(){
-  const s = await db.auth.getSession();
-  if (!s.data.session) { location.href='index.html'; return; }
-  tenant = await buildNav(db, 'Load Workspace');
-  if (!tenant) { $('hero').innerHTML='<div class="flag">No profile linked to this login.</div>'; return; }
-  const u = await db.from('app_users').select('id').limit(1);
-  me = u.data && u.data.length ? u.data[0].id : null;
-  await refresh();
-}
-
-async function refresh(){
-  const r = await db.from('loads').select('*').eq('id', loadId).single();
-  if (r.error) { $('hero').innerHTML='<div class="flag">'+esc(r.error.message)+'</div>'; return; }
-  const d = r.data;
-  const [c,b,dr,tr,trl,og,de] = await Promise.all([
-    d.carrier_id ? db.from('carriers').select('legal_name').eq('id',d.carrier_id).single() : {data:null},
-    d.broker_id ? db.from('brokers').select('name').eq('id',d.broker_id).single() : {data:null},
-    d.driver_id ? db.from('drivers').select('first_name,last_name,phone').eq('id',d.driver_id).single() : {data:null},
-    d.tractor_id ? db.from('equipment').select('unit_number').eq('id',d.tractor_id).single() : {data:null},
-    d.trailer_id ? db.from('equipment').select('unit_number,equipment_type').eq('id',d.trailer_id).single() : {data:null},
-    d.origin_facility_id ? db.from('facilities').select('name,city,state').eq('id',d.origin_facility_id).single() : {data:null},
-    d.dest_facility_id ? db.from('facilities').select('name,city,state').eq('id',d.dest_facility_id).single() : {data:null}
-  ]);
-  d.carriers=c.data; d.brokers=b.data; d.drivers=dr.data;
-  d.tractor=tr.data; d.trailer=trl.data; d.origin=og.data; d.dest=de.data;
-  L = d;
-  drawHero(); drawActions(); drawInfo();
-  await Promise.all([drawRoute(), drawTimeline(), drawPermits(),
-                     drawEscorts(), drawChecklist(), drawExpenses()]);
-  $('lnotes').value = L.notes || '';
-  $('acts').style.display=''; $('tabs').style.display='';
-}
-
-function statusClass(s){
-  if (['breakdown','accident','road_closure'].includes(s)) return 'p-red';
-  if (L.hold_reason) return 'p-amb';
-  if (['in_transit','loaded','dispatched','en_route_to_pickup'].includes(s)) return 'p-blu';
-  if (['delivered','pod_pending','paid','invoiced'].includes(s)) return 'p-grn';
-  if (['loading','at_shipper','at_receiver','unloading'].includes(s)) return 'p-amb';
-  return 'p-gry';
-}
-
-async function drawHero(){
-  const disp = L.hold_reason || L.status;
-  let h = '<div class="heroTop">'+
-    '<span class="lnum">'+esc(L.load_number)+'</span>'+
-    '<span class="pill '+statusClass(disp)+'">'+pretty(disp)+'</span>';
-  if (L.hold_reason) h += '<span class="comm">was '+pretty(L.status)+'</span>';
-  if (L.priority && L.priority!=='normal')
-    h += '<span class="pill p-amb">'+pretty(L.priority)+'</span>';
-  h += '<span class="comm" style="margin-left:auto">'+esc(L.commodity||'')+'</span></div>';
-  const over = [];
-  if (L.width_in>102) over.push('w'); if (L.height_in>162) over.push('h');
-  if (L.length_in>636) over.push('l'); if (L.weight_lb>80000) over.push('wt');
-  h += '<div class="chips">'+
-    '<span class="chip'+(over.includes('w')?' over':'')+'">'+ftin(L.width_in)+' wide</span>'+
-    '<span class="chip'+(over.includes('h')?' over':'')+'">'+ftin(L.height_in)+' high</span>'+
-    '<span class="chip'+(over.includes('l')?' over':'')+'">'+ftin(L.length_in)+' long</span>'+
-    '<span class="chip'+(over.includes('wt')?' over':'')+'">'+
-      (L.weight_lb?L.weight_lb.toLocaleString()+' lb':'—')+'</span>';
-  if (L.current_location_text)
-    h += '<span class="chip">'+esc(L.current_location_text)+
-         (L.last_check_in_at?' · '+when(L.last_check_in_at):'')+'</span>';
-  if (L.driver_hours_remaining_min!=null)
-    h += '<span class="chip">'+Math.floor(L.driver_hours_remaining_min/60)+'h '+
-         (L.driver_hours_remaining_min%60)+'m HOS</span>';
-  h += '</div>';
-  if (L.hold_note) h += '<div class="next need">'+esc(L.hold_note)+'</div>';
-  $('hero').innerHTML = h;
-  const na = await db.rpc('load_next_action', { p_load_id: loadId });
-  if (!na.error && na.data) {
-    const need = na.data !== 'On track';
-    $('hero').insertAdjacentHTML('beforeend',
-      '<div class="next'+(need?' need':'')+'">Next: '+esc(na.data)+'</div>');
+function pick(obj, keys){
+  if (!obj) return null;
+  for (const k of keys){
+    const v = obj[k];
+    if (v !== undefined && v !== null && v !== '') return v;
   }
-  const fl = await db.from('v_load_red_flags').select('flags').eq('load_id',loadId).single();
-  if (!fl.error && fl.data && fl.data.flags && fl.data.flags.length) {
-    $('hero').insertAdjacentHTML('beforeend', '<div class="flags">'+
-      fl.data.flags.map(f=>'<div class="flag">'+esc(f)+'</div>').join('')+'</div>');
-  }
+  return null;
 }
+function pickKey(obj, keys){
+  if (!obj) return null;
+  for (const k of keys) if (k in obj) return k;
+  return null;
+}
+function titleize(s){
+  if (!s) return '';
+  return String(s).replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function money(n){
+  if (n === null || n === undefined || n === '') return '—';
+  const v = Number(n);
+  if (isNaN(v)) return '—';
+  return v.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+}
+function num(v){
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+function txt(v){
+  const s = (v === null || v === undefined) ? '' : String(v).trim();
+  return s === '' ? null : s;
+}
+function upper(v){
+  const s = txt(v);
+  return s ? s.toUpperCase() : null;
+}
+function fmtDate(v){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function fmtDT(v){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+}
+function ago(v){
+  if (!v) return '';
+  const d = new Date(v); if (isNaN(d)) return '';
+  const s = (Date.now() - d.getTime())/1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60)+'m ago';
+  if (s < 86400) return Math.floor(s/3600)+'h ago';
+  if (s < 604800) return Math.floor(s/86400)+'d ago';
+  return fmtDate(v);
+}
+/* datetime-local <-> ISO */
+function toLocalInput(v){
+  if (!v) return '';
+  const d = new Date(v); if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fromLocalInput(v){
+  const s = txt(v);
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d) ? null : d.toISOString();
+}
+function toDateInput(v){
+  if (!v) return '';
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(v); if (isNaN(d)) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function todayISO(){ return toDateInput(new Date()); }
 
-function drawActions(){
-  let h = '<h3>Actions</h3><div class="btnrow">';
-  h += '<button class="pri" onclick="openCheckIn()">Log check-in</button>';
-  (FLOW[L.status]||[]).forEach(s => {
-    h += '<button onclick="setStatus(\''+s+'\')">→ '+pretty(s)+'</button>';
-  });
-  if (L.hold_reason)
-    h += '<button class="warn" onclick="clearHold()">Clear hold</button>';
-  else
-    h += '<button class="dgr" onclick="document.getElementById(\'dlg_hold\').showModal()">Put on hold</button>';
-  h += '<a href="board.html" style="margin-left:auto;color:var(--accent);'+
-       'text-decoration:none;font-size:13px;align-self:center">← Fleet Board</a></div>';
-  $('acts').innerHTML = h;
+let toastTimer = null;
+function toast(msg, bad){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show' + (bad ? ' bad' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3400);
 }
-  function drawInfo(){
-  const f = (label, v) => '<div><span>'+label+'</span><b>'+(v||'—')+'</b></div>';
-  const loc = x => x ? esc(x.name)+' ('+esc(x.city||'')+', '+esc(x.state||'')+')' : '—';
-  $('info').innerHTML =
-    f('Carrier', L.carriers ? esc(L.carriers.legal_name) : null) +
-    f('Broker', L.brokers ? esc(L.brokers.name) : null) +
-    f('Broker load #', esc(L.broker_load_number)) +
-    f('Driver', L.drivers ? esc(L.drivers.first_name+' '+L.drivers.last_name) : null) +
-    f('Driver phone', L.drivers ? esc(L.drivers.phone) : null) +
-    f('Truck', L.tractor ? esc(L.tractor.unit_number) : null) +
-    f('Trailer', L.trailer ? esc(L.trailer.unit_number)+' ('+pretty(L.trailer.equipment_type)+')' : null) +
-    f('Origin', loc(L.origin)) +
-    f('Destination', loc(L.dest)) +
-    f('Pickup appt', when(L.pickup_appt_start)) +
-    f('Delivery appt', when(L.delivery_appt_start)) +
-    f('Current ETA', when(L.current_eta)) +
-    f('Rate', money(L.linehaul_rate)) +
-    f('Fuel surcharge', money(L.fuel_surcharge)) +
-    f('Miles', L.total_miles) +
-    f('Rate per mile', L.rate_per_mile ? '$'+L.rate_per_mile : null) +
-    f('Permits handled by', pretty(L.permit_responsibility)) +
-    f('Permit contact', [L.permit_contact_name, L.permit_contact_phone]
-        .filter(Boolean).map(esc).join(' · ')) +
-    f('Escorts handled by', pretty(L.escort_responsibility)) +
-    f('Escort contact', [L.escort_contact_name, L.escort_contact_phone]
-        .filter(Boolean).map(esc).join(' · ')) +
-    f('Detention', L.detention_free_hours
-        ? L.detention_free_hours+'h free, '+money(L.detention_rate_per_hour)+'/h' : null) +
-    f('Customer ref', esc(L.customer_reference)) +
-    f('PO', esc(L.purchase_order));
+function fail(where, error){
+  console.error(where, error);
+  toast((error && (error.message || error.hint)) || ('Error in ' + where), true);
 }
+function showErr(elId, error){
+  const el = $(elId);
+  if (el) el.textContent = (error && (error.message || error.details || error.hint)) || String(error);
+}
+function clearErr(elId){ const el = $(elId); if (el) el.textContent = ''; }
 
-async function drawRoute(){
-  const r = await db.from('load_legs').select('*').eq('load_id',loadId).order('seq');
-  const legs = r.data || [];
-  $('route').innerHTML = legs.length
-    ? '<table><thead><tr><th>#</th><th>State</th><th>Miles</th>'+
-      '<th>Planned entry</th></tr></thead><tbody>'+
-      legs.map(x=>'<tr><td>'+x.seq+'</td><td><b>'+x.state+'</b></td>'+
-        '<td>'+(x.miles||'—')+'</td><td>'+(x.planned_entry_date||'—')+'</td></tr>').join('')+
-      '</tbody></table>'
-    : '<div class="empty">No route states set on this load.</div>';
-}
-
-async function drawTimeline(){
-  const r = await db.from('events').select('*').eq('load_id',loadId)
-    .order('occurred_at',{ascending:false}).limit(100);
-  const ev = r.data || [];
-  $('ct-tl').textContent = ev.length ? ' '+ev.length : '';
-  const render = list => list.length ? list.map(x => {
-    const head = x.event_type === 'status_change'
-      ? esc(x.body || '')
-      : esc(x.subject || '');
-    const showBody = x.event_type !== 'status_change' && x.body;
-    return '<div class="ev'+(x.is_milestone?' mile':'')+'">'+
-      '<div class="t">'+when(x.occurred_at)+' · '+pretty(x.event_type)+'</div>'+
-      '<div class="s">'+head+'</div>'+
-      (showBody ? '<div class="b">'+esc(x.body)+'</div>' : '')+
-      '</div>';
-  }).join('') : '<div class="empty">Nothing logged yet.</div>';
-  $('timeline').innerHTML = render(ev);
-  $('recent').innerHTML = '<div class="tl">'+render(ev.slice(0,5))+'</div>';
-}
-
-// ---------- PERMITS ----------
-async function drawPermits(){
-  const r = await db.from('permits').select('*').eq('load_id',loadId).order('state');
-  PERMITS = r.data || [];
-  $('ct-pm').textContent = PERMITS.length ? ' '+PERMITS.filter(x=>x.status==='issued').length+'/'+PERMITS.length : '';
-  $('permits').innerHTML = PERMITS.length
-    ? '<table><thead><tr><th>State</th><th>Status</th><th>Number</th>'+
-      '<th>Valid</th><th>Escorts</th><th>Driver has it</th><th>Fee</th></tr></thead><tbody>'+
-      PERMITS.map(x=>{
-        const need = [x.escort_front&&'front', x.escort_rear&&'rear',
-                      x.escort_high_pole&&'high pole', x.escort_police&&'police']
-                     .filter(Boolean).join(', ') || '—';
-        const fee = (Number(x.fee)||0)+(Number(x.service_fee)||0);
-        return '<tr class="rowclick" onclick="openPermit(\''+x.id+'\')">'+
-          '<td><b>'+esc(x.state)+'</b></td>'+
-          '<td><span class="pill '+(x.status==='issued'?'p-grn':
-            x.status==='rejected'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
-          '<td>'+(x.permit_number||'—')+'</td>'+
-          '<td>'+(x.valid_from?x.valid_from+' → '+(x.valid_to||'?'):'—')+'</td>'+
-          '<td>'+need+'</td>'+
-          '<td>'+(x.driver_has_permit?'Yes':'No')+'</td>'+
-          '<td>'+(fee?money(fee):'—')+'</td></tr>';
-      }).join('')+'</tbody></table>'
-    : '<div class="empty">No permits yet. Use Add permit, or enter state rules so '+
-      'they generate automatically.</div>';
-}
-
-function openPermit(id){
-  const p = id ? PERMITS.find(x=>x.id===id) : null;
-  $('pm_title').textContent = p ? 'Edit permit — '+p.state : 'Add permit';
-  $('pm_id').value = p ? p.id : '';
-  $('pm_state').value = p ? (p.state||'') : '';
-  $('pm_status').value = p ? p.status : 'needed';
-  $('pm_number').value = p ? (p.permit_number||'') : '';
-  $('pm_auth').value = p ? (p.issuing_authority||'') : '';
-  $('pm_from').value = p ? (p.valid_from||'') : '';
-  $('pm_to').value = p ? (p.valid_to||'') : '';
-  $('pm_fee').value = p ? (p.fee ?? '') : '';
-  $('pm_svc').value = p ? (p.service_fee ?? '') : '';
-  $('pm_driver').value = p ? String(!!p.driver_has_permit) : 'false';
-  $('pm_ef').checked = p ? !!p.escort_front : false;
-  $('pm_er').checked = p ? !!p.escort_rear : false;
-  $('pm_ehp').checked = p ? !!p.escort_high_pole : false;
-  $('pm_ep').checked = p ? !!p.escort_police : false;
-  $('pm_notes').value = p ? (p.notes||'') : '';
-  $('dlg_permit').showModal();
-}
-
-$('pm_save').addEventListener('click', async () => {
-  if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
-  const id = val('pm_id');
-  const rec = {
-    tenant_id: tenant, load_id: loadId,
-    state: val('pm_state').toUpperCase(),
-    status: $('pm_status').value,
-    permit_number: val('pm_number'),
-    issuing_authority: val('pm_auth'),
-    valid_from: val('pm_from') || null,
-    valid_to: val('pm_to') || null,
-    fee: val('pm_fee') ? Number(val('pm_fee')) : null,
-    service_fee: val('pm_svc') ? Number(val('pm_svc')) : null,
-    driver_has_permit: $('pm_driver').value==='true',
-    issued_at: $('pm_status').value==='issued' ? new Date().toISOString() : null,
-    escort_front: $('pm_ef').checked, escort_rear: $('pm_er').checked,
-    escort_high_pole: $('pm_ehp').checked, escort_police: $('pm_ep').checked,
-    notes: val('pm_notes')
+/* ---------- EVENT LOGGER ---------- */
+async function logEvent({ event_type, subject, body, is_milestone }){
+  const row = {
+    tenant_id:   TENANT_ID,
+    entity_type: 'load',
+    entity_id:   LOAD_ID,
+    load_id:     LOAD_ID,
+    event_type:  event_type,
+    direction:   'internal',
+    subject:     subject || null,
+    body:        body || null,
+    is_milestone: !!is_milestone,
+    user_id:     APP_USER_ID
   };
-  const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
-  const r = id
-    ? await db.from('permits').update(rec).eq('id', id)
-    : await db.from('permits').insert(rec);
-  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
-  if ($('pm_status').value==='issued' && !wasIssued) {
-    await db.from('events').insert({
-      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
-      subject: val('pm_state').toUpperCase()+' permit issued',
-      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
-    });
-  }
-  $('dlg_permit').close();
-  drawPermits(); drawExpenses(); drawHero();
-});
-  
-  const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
-  const r = id
-    ? await db.from('permits').update(rec).eq('id', id)
-    : await db.from('permits').insert(rec);
-  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
-  if ($('pm_status').value==='issued' && !wasIssued) {
-    await db.from('events').insert({
-      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
-      subject: val('pm_state').toUpperCase()+' permit issued',
-      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
-    });
-  }
-  $('dlg_permit').close();
-  drawPermits(); drawExpenses(); drawHero();
-});
-  const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
-  const r = id
-    ? await db.from('permits').update(rec).eq('id', id)
-    : await db.from('permits').insert(rec);
-  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
-  if ($('pm_status').value==='issued' && !wasIssued) {
-    await db.from('events').insert({
-      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
-      subject: val('pm_state').toUpperCase()+' permit issued',
-      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
-    });
-  }
-  $('dlg_permit').close();
-  drawPermits(); drawExpenses(); drawHero();
-});
-
-// ---------- ESCORTS ----------
-async function drawEscorts(){
-  const r = await db.from('escort_assignments').select('*').eq('load_id',loadId).order('role');
-  ESCORTS = r.data || [];
-  const conf = ESCORTS.filter(x=>['confirmed','en_route','completed'].includes(x.status)).length;
-  $('ct-es').textContent = ESCORTS.length ? ' '+conf+'/'+ESCORTS.length : '';
-  $('escorts').innerHTML = ESCORTS.length
-    ? '<table><thead><tr><th>Role</th><th>Status</th><th>Company</th>'+
-      '<th>Escort driver</th><th>Meeting</th><th>Contacts</th><th>Cost</th></tr></thead><tbody>'+
-      ESCORTS.map(x=>{
-        const cost = x.actual_cost ?? x.confirmed_rate ?? x.quoted_rate;
-        return '<tr class="rowclick" onclick="openEscort(\''+x.id+'\')">'+
-          '<td><b>'+pretty(x.role)+'</b></td>'+
-          '<td><span class="pill '+(['confirmed','en_route','completed'].includes(x.status)
-            ?'p-grn':x.status==='needed'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
-         '<td>'+(x.vehicle_info?esc(x.vehicle_info):'—')+'</td>'+
-          '<td>'+([x.driver_name,x.driver_phone].filter(Boolean).map(esc).join(' · ')||'—')+'</td>'+
-          '<td>'+(x.meeting_location?esc(x.meeting_location):'—')+
-            (x.meeting_time?'<div class="t">'+when(x.meeting_time)+'</div>':'')+'</td>'+
-          '<td>'+(x.contacts_exchanged?'Yes':'No')+'</td>'+
-          '<td>'+(cost!=null?money(cost):'—')+'</td></tr>';
-      }).join('')+'</tbody></table>'
-    : '<div class="empty">No escorts yet. Use Add escort, or they generate from permit '+
-      'requirements once state rules are on file.</div>';
+  const { error } = await db.from('events').insert(row);
+  if (error) console.error('logEvent failed', event_type, error);
+  return !error;
 }
 
-function openEscort(id){
-  const e = id ? ESCORTS.find(x=>x.id===id) : null;
-  $('es_title').textContent = e ? 'Edit escort — '+pretty(e.role) : 'Add escort';
-  $('es_id').value = e ? e.id : '';
-  $('es_role').value = e ? e.role : 'front';
-  $('es_status').value = e ? e.status : 'needed';
- $('es_company').value = e ? (e.vehicle_info||'') : '';
-  $('es_dname').value = e ? (e.driver_name||'') : '';
-  $('es_dphone').value = e ? (e.driver_phone||'') : '';
-  $('es_mloc').value = e ? (e.meeting_location||'') : '';
-  $('es_mtime').value = e && e.meeting_time ? e.meeting_time.slice(0,16) : '';
-  $('es_quoted').value = e ? (e.quoted_rate ?? '') : '';
-  $('es_confirmed').value = e ? (e.confirmed_rate ?? '') : '';
-  $('es_actual').value = e ? (e.actual_cost ?? '') : '';
-  $('es_contacts').value = e ? String(!!e.contacts_exchanged) : 'false';
-  $('es_dayb').value = e ? String(!!e.confirmed_day_before) : 'false';
-  $('es_notes').value = e ? (e.notes||'') : '';
-  $('dlg_escort').showModal();
-}
+/* ---------- BOOT ---------- */
+async function boot(){
+  const params = new URLSearchParams(location.search);
+  LOAD_ID = params.get('id');
 
-$('es_save').addEventListener('click', async () => {
-  const id = val('es_id');
-  const rec = {
-    tenant_id: tenant, load_id: loadId,
-    role: $('es_role').value,
-    status: $('es_status').value,
-    vehicle_info: val('es_company'),
-    driver_name: val('es_dname'),
-    driver_phone: val('es_dphone'),
-    meeting_location: val('es_mloc'),
-    meeting_time: val('es_mtime') || null,
-    quoted_rate: val('es_quoted') ? Number(val('es_quoted')) : null,
-    confirmed_rate: val('es_confirmed') ? Number(val('es_confirmed')) : null,
-    actual_cost: val('es_actual') ? Number(val('es_actual')) : null,
-    contacts_exchanged: $('es_contacts').value==='true',
-    confirmed_day_before: $('es_dayb').value==='true',
-    notes: val('es_notes')
-  };
-  const wasConfirmed = id ? ['confirmed','en_route','completed'].includes(
-    (ESCORTS.find(x=>x.id===id)||{}).status) : false;
-  const nowConfirmed = ['confirmed','en_route','completed'].includes($('es_status').value);
-  const r = id
-    ? await db.from('escort_assignments').update(rec).eq('id', id)
-    : await db.from('escort_assignments').insert(rec);
-  if (r.error) { say('es_msg', r.error.message, 'err'); return; }
-  if (nowConfirmed && !wasConfirmed) {
-    await db.from('events').insert({
-      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-      event_type:'escort_confirmed', direction:'internal', is_milestone:true, user_id: me,
-      subject: pretty($('es_role').value)+' escort confirmed',
-      body: [val('es_company'), val('es_mloc')].filter(Boolean).join(' · ') || null
-    });
-  }
-  $('dlg_escort').close();
-  drawEscorts(); drawExpenses(); drawHero();
-});
-// ---------- CHECKLIST ----------
-async function drawChecklist(){
-  const r = await db.from('load_checklist_items').select('*')
-    .eq('load_id',loadId).order('phase').order('seq');
-  const items = r.data || [];
-  $('ct-ck').textContent = items.length
-    ? ' '+items.filter(x=>x.done_at||x.not_applicable).length+'/'+items.length : '';
-  if (!items.length) {
-    $('checklist').innerHTML = '<div class="empty">No checklist for this load. '+
-      '<button onclick="genChecklist()" style="margin-left:8px">Generate now</button></div>';
+  TENANT_ID = await buildNav(db, 'Load Workspace');
+
+  if (!LOAD_ID){
+    const e = $('loadErr');
+    e.classList.remove('hide');
+    e.innerHTML = 'No load selected. Open this page as <span class="mono">workspace.html?id=&lt;load uuid&gt;</span>.';
+    $('hero').innerHTML = '<div class="muted">No load id in the URL.</div>';
     return;
   }
-  const order = ['before_booking','before_dispatch','before_pickup','en_route',
-                 'before_delivery','after_delivery','oversize'];
-  let h = '';
-  order.forEach(ph => {
-    const list = items.filter(x=>x.phase===ph);
-    if (!list.length) return;
-    h += '<div class="phase">'+pretty(ph)+'</div>';
-    list.forEach(x => {
-      const isDone = !!(x.done_at || x.not_applicable);
-      h += '<div class="ck'+(isDone?' done':'')+'">'+
-        '<input type="checkbox" '+(isDone?'checked':'')+
-        ' onchange="toggleCk(\''+x.id+'\', this.checked)">'+
-        '<label>'+esc(x.item)+'</label></div>';
-    });
+
+  await lookupAppUser();
+
+  $$('#tabstrip button').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
   });
-  $('checklist').innerHTML = h;
+
+  await refreshAll();
 }
 
-async function genChecklist(){
-  await db.rpc('generate_load_checklist', { p_load_id: loadId });
-  drawChecklist();
-}
-
-async function toggleCk(id, on){
-  await db.from('load_checklist_items').update({
-    done_at: on ? new Date().toISOString() : null,
-    done_by: on ? me : null
-  }).eq('id', id);
-  drawChecklist();
-}
-
-// ---------- EXPENSES ----------
-async function drawExpenses(){
-  const m = await db.from('v_load_margin').select('*').eq('load_id',loadId).single();
-  if (!m.error && m.data) {
-    const rev = Number(m.data.total_revenue)||0;
-    const cost = Number(m.data.total_cost)||0;
-    const net = rev - cost;
-    const pct = rev ? Math.round(net/rev*100) : 0;
-    const f = (label, v, cls) => '<div><span>'+label+'</span><b'+
-      (cls?' style="color:'+cls+'"':'')+'>'+v+'</b></div>';
-    $('margin').innerHTML =
-      f('Revenue', money(rev)) +
-      f('Cost', money(cost)) +
-      f('Net margin', money(net), net>=0?'var(--ok)':'var(--danger)') +
-      f('Margin %', pct+'%', net>=0?'var(--ok)':'var(--danger)');
+async function lookupAppUser(){
+  try {
+    const { data: sess } = await db.auth.getUser();
+    const authId = sess && sess.user ? sess.user.id : null;
+    if (!authId) return;
+    let q = await db.from('app_users').select('id').eq('auth_user_id', authId).maybeSingle();
+    if (q.error || !q.data){
+      q = await db.from('app_users').select('id').eq('id', authId).maybeSingle();
+    }
+    if (q.data) APP_USER_ID = q.data.id;
+  } catch (e){
+    console.warn('app_users lookup skipped', e);
   }
-  const r = await db.from('load_charges').select('*')
-    .eq('load_id',loadId).order('incurred_on',{nullsFirst:false})
-    .order('created_at',{ascending:false});
-  const ch = r.data || [];
-  $('ct-ex').textContent = ch.length ? ' '+ch.length : '';
-  $('charges').innerHTML = ch.length
-    ? '<table><thead><tr><th>Type</th><th>Category</th><th>Description</th>'+
-      '<th>Date</th><th>Billable</th><th>Amount</th><th></th></tr></thead><tbody>'+
-      ch.map(x=>'<tr>'+
-        '<td><span class="pill '+(x.kind==='revenue'?'p-grn':'p-amb')+'">'+
-          pretty(x.kind)+'</span></td>'+
-        '<td>'+pretty(x.category)+'</td>'+
-        '<td>'+esc(x.description||'—')+'</td>'+
-        '<td>'+(x.incurred_on||'—')+'</td>'+
-        '<td>'+(x.billable?'Yes':'No')+'</td>'+
-        '<td>'+money(x.amount)+'</td>'+
-        '<td><span onclick="delCharge(\''+x.id+'\')" style="color:var(--danger);'+
-          'cursor:pointer;font-size:12px">remove</span></td>'+
-        '</tr>').join('')+'</tbody></table>'
-    : '<div class="empty">No charges recorded. Permit fees and escort costs also '+
-      'count toward margin automatically.</div>';
 }
 
-$('ch_save').addEventListener('click', async () => {
-  const amt = val('ch_amt');
-  if (!amt) { say('ch_msg','Enter an amount.','err'); return; }
-  $('ch_save').disabled = true;
-  const r = await db.from('load_charges').insert({
-    tenant_id: tenant, load_id: loadId,
-    kind: $('ch_kind').value, category: $('ch_cat').value,
-    amount: Number(amt), description: val('ch_desc'),
-    incurred_on: val('ch_date') || null,
-    billable: $('ch_bill').value === 'true'
-  });
-  $('ch_save').disabled = false;
-  if (r.error) { say('ch_msg', r.error.message, 'err'); return; }
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'charge_added', direction:'internal', is_manual:true, user_id: me,
-    subject: pretty($('ch_kind').value)+' — '+pretty($('ch_cat').value),
-    body: money(Number(amt))+(val('ch_desc')?' · '+val('ch_desc'):'')
-  });
-  say('ch_msg','Charge added.','ok');
-  ['ch_amt','ch_desc'].forEach(i=>$(i).value='');
-  drawExpenses();
-});
-
-async function delCharge(id){
-  await db.from('load_charges').delete().eq('id', id);
-  drawExpenses();
+/* ---------- DATA ---------- */
+async function refreshAll(){
+  await Promise.all([
+    fetchLoad(),
+    fetchRedFlags(),
+    fetchNextAction(),
+    fetchPermits(),
+    fetchEscorts(),
+    fetchEvents(),
+    fetchCharges(),
+    fetchMargin(),
+    fetchChecklist()
+  ]);
+  drawHero();
+  drawActions();
+  drawCounts();
+  drawActiveTab();
 }
 
-// ---------- SHARED ACTIONS ----------
-async function setStatus(s){
-  const r = await db.from('loads').update({ status: s }).eq('id', loadId);
-  if (r.error) { alert(r.error.message); return; }
-  refresh();
+async function fetchLoad(){
+  const { data, error } = await db.from('loads').select('*').eq('id', LOAD_ID).maybeSingle();
+  if (error){ fail('fetchLoad', error); return; }
+  LOAD = data;
+  if (!LOAD){
+    const e = $('loadErr');
+    e.classList.remove('hide');
+    e.textContent = 'Load not found (or blocked by RLS): ' + LOAD_ID;
+  }
 }
 
-function openCheckIn(){
-  $('ci_loc').value = L.current_location_text || '';
-  $('ci_st').value = L.current_state || '';
-  $('dlg_ci').showModal();
+async function fetchRedFlags(){
+  const { data, error } = await db.from('v_load_red_flags').select('*').eq('load_id', LOAD_ID);
+  if (error){ console.warn('red flags', error); RED_FLAGS = []; return; }
+  RED_FLAGS = data || [];
 }
 
-$('ci_save').addEventListener('click', async () => {
-  const hrs = val('ci_h');
-  const r = await db.from('check_ins').insert({
-    tenant_id: tenant, load_id: loadId, driver_id: L.driver_id,
-    location_text: val('ci_loc'),
-    state: val('ci_st') ? val('ci_st').toUpperCase() : null,
-    eta: val('ci_eta') || null,
-    hos_remaining_min: hrs ? Math.round(Number(hrs)*60) : null,
-    source: $('ci_src').value, note: val('ci_note'), created_by: me
-  });
-  if (r.error) { say('ci_msg', r.error.message, 'err'); return; }
-  $('dlg_ci').close();
-  ['ci_eta','ci_h','ci_note'].forEach(i=>$(i).value='');
-  refresh();
-});
-
-$('h_save').addEventListener('click', async () => {
-  const r = await db.from('loads').update({
-    hold_reason: $('h_reason').value,
-    hold_since: new Date().toISOString(),
-    hold_note: val('h_note'),
-    hold_expected_clear_at: val('h_clear') || null
-  }).eq('id', loadId);
-  if (r.error) { say('h_msg', r.error.message, 'err'); return; }
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'hold_started', direction:'internal', is_milestone:true, user_id: me,
-    subject:'On hold — '+pretty($('h_reason').value), body: val('h_note')
-  });
-  $('dlg_hold').close();
-  $('h_note').value=''; $('h_clear').value='';
-  refresh();
-});
-
-async function clearHold(){
-  const was = L.hold_reason;
-  const r = await db.from('loads').update({
-    hold_reason:null, hold_since:null, hold_note:null, hold_expected_clear_at:null
-  }).eq('id', loadId);
-  if (r.error) { alert(r.error.message); return; }
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'hold_cleared', direction:'internal', is_milestone:true, user_id: me,
-    subject:'Hold cleared', body: pretty(was)+' resolved, resuming '+pretty(L.status)
-  });
-  refresh();
+async function fetchNextAction(){
+  let res = await db.rpc('load_next_action', { p_load_id: LOAD_ID });
+  if (res.error) res = await db.rpc('load_next_action', { load_id: LOAD_ID });
+  if (res.error){ console.warn('load_next_action', res.error); NEXT_ACTION = null; return; }
+  let d = res.data;
+  if (Array.isArray(d)) d = d[0] || null;
+  NEXT_ACTION = d;
 }
 
-$('note_save').addEventListener('click', async () => {
-  if (!val('note_body')) { say('note_msg','Write something first.','err'); return; }
-  const r = await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type: $('note_type').value, direction: $('note_dir').value,
-    is_manual:true, user_id: me,
-    subject: pretty($('note_type').value), body: val('note_body')
+async function fetchPermits(){
+  const { data, error } = await db.from('permits').select('*')
+    .eq('load_id', LOAD_ID).order('state', { ascending: true });
+  if (error){ fail('fetchPermits', error); PERMITS = []; return; }
+  PERMITS = data || [];
+}
+
+async function fetchEscorts(){
+  const { data, error } = await db.from('escort_assignments').select('*')
+    .eq('load_id', LOAD_ID).order('created_at', { ascending: true });
+  if (error){ fail('fetchEscorts', error); ESCORTS = []; return; }
+  ESCORTS = data || [];
+}
+
+async function fetchEvents(){
+  const { data, error } = await db.from('events').select('*')
+    .eq('load_id', LOAD_ID).order('created_at', { ascending: false }).limit(300);
+  if (error){ console.warn('events', error); EVENTS = []; return; }
+  EVENTS = data || [];
+}
+
+async function fetchCharges(){
+  const { data, error } = await db.from('load_charges').select('*')
+    .eq('load_id', LOAD_ID).order('incurred_on', { ascending: true });
+  if (error){ console.warn('load_charges', error); CHARGES = []; return; }
+  CHARGES = data || [];
+}
+
+async function fetchMargin(){
+  const { data, error } = await db.from('v_load_margin')
+    .select('load_id,total_revenue,total_cost').eq('load_id', LOAD_ID).maybeSingle();
+  if (error){ console.warn('v_load_margin', error); MARGIN = null; return; }
+  MARGIN = data;
+}
+
+async function fetchChecklist(){
+  const { data, error } = await db.from('load_checklist_items').select('*')
+    .eq('load_id', LOAD_ID).order('sort_order', { ascending: true });
+  if (error){ console.warn('checklist', error); CHECKLIST = []; return; }
+  CHECKLIST = data || [];
+}
+
+/* ---------- TABS ---------- */
+function switchTab(name){
+  ACTIVE_TAB = name;
+  $$('#tabstrip button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
+  drawActiveTab();
+}
+function drawCounts(){
+  const set = (id, n) => { const el = $(id); if (el) el.textContent = n; };
+  set('cnt-permits', PERMITS.length);
+  set('cnt-escorts', ESCORTS.length);
+  set('cnt-timeline', EVENTS.length);
+  set('cnt-checklist', CHECKLIST.length);
+  set('cnt-notes', EVENTS.filter(e => ['note','call','email','sms','issue'].includes(e.event_type)).length);
+}
+
+/* ---------- HERO ---------- */
+function isOnHold(){
+  const k = pickKey(LOAD, F.onHold);
+  return k ? !!LOAD[k] : false;
+}
+function currentStatus(){
+  return pick(LOAD, F.status) || 'unknown';
+}
+
+function drawHero(){
+  if (!LOAD){ $('hero').innerHTML = '<div class="muted">Load unavailable.</div>'; return; }
+
+  const number = pick(LOAD, F.number) || LOAD_ID.slice(0,8);
+  const status = currentStatus();
+  const tone   = STATUS_TONE[status] !== undefined ? STATUS_TONE[status] : 'grey';
+  const held   = isOnHold();
+
+  const oc = pick(LOAD, F.oCity), os = pick(LOAD, F.oState);
+  const dc = pick(LOAD, F.dCity), ds = pick(LOAD, F.dState);
+  const route = (oc || os || dc || ds)
+    ? `${esc(oc||'?')}${os?', '+esc(os):''} &rarr; ${esc(dc||'?')}${ds?', '+esc(ds):''}`
+    : '<span class="muted">Route not set</span>';
+
+  const pickupD = pick(LOAD, F.pickup), delivD = pick(LOAD, F.delivery);
+  const miles = pick(LOAD, F.miles);
+
+  /* dimension chips */
+  const chips = [];
+  const L = pick(LOAD, F.lengthFt), W = pick(LOAD, F.widthFt),
+        H = pick(LOAD, F.heightFt), WT = pick(LOAD, F.weightLbs);
+  if (L)  chips.push(`<span class="chip">L <b>${esc(L)}'</b></span>`);
+  if (W)  chips.push(`<span class="chip${Number(W) > 8.5 ? ' hot' : ''}">W <b>${esc(W)}'</b></span>`);
+  if (H)  chips.push(`<span class="chip${Number(H) > 13.5 ? ' hot' : ''}">H <b>${esc(H)}'</b></span>`);
+  if (WT) chips.push(`<span class="chip${Number(WT) > 80000 ? ' hot' : ''}">GVW <b>${Number(WT).toLocaleString()} lb</b></span>`);
+  const ax = pick(LOAD, F.axles);
+  if (ax) chips.push(`<span class="chip">${esc(ax)} axles</span>`);
+  const eq = pick(LOAD, F.equipment);
+  if (eq) chips.push(`<span class="chip">${esc(titleize(eq))}</span>`);
+  if (pick(LOAD, F.superload))   chips.push('<span class="chip red">SUPERLOAD</span>');
+  else if (pick(LOAD, F.oversize)) chips.push('<span class="chip hot">Oversize</span>');
+  if (pick(LOAD, F.overweight))  chips.push('<span class="chip hot">Overweight</span>');
+  if (pick(LOAD, F.permitsReq))  chips.push('<span class="chip">Permits req.</span>');
+  const escReq = pick(LOAD, F.escortsReq);
+  if (escReq) chips.push(`<span class="chip">${esc(escReq)} escort${Number(escReq)===1?'':'s'}</span>`);
+  if (pick(LOAD, F.routeSurvey)) chips.push('<span class="chip hot">Route survey</span>');
+  if (miles) chips.push(`<span class="chip">${Number(miles).toLocaleString()} mi</span>`);
+
+  /* next action */
+  let nextHTML = '';
+  if (NEXT_ACTION){
+    let label = '', detail = '';
+    if (typeof NEXT_ACTION === 'string'){
+      label = NEXT_ACTION;
+    } else {
+      label  = NEXT_ACTION.next_action || NEXT_ACTION.action || NEXT_ACTION.label ||
+               NEXT_ACTION.message || NEXT_ACTION.description || '';
+      detail = NEXT_ACTION.detail || NEXT_ACTION.due_at || NEXT_ACTION.due_date || '';
+    }
+    if (label){
+      nextHTML = `<div class="nextbox">
+        <div class="lbl">Next Action</div>
+        <div style="font-weight:600;margin-top:2px">${esc(label)}</div>
+        ${detail ? `<div class="small muted">${esc(detail)}</div>` : ''}
+      </div>`;
+    }
+  }
+
+  /* red flags */
+  let flagHTML = '';
+  if (RED_FLAGS.length){
+    const items = RED_FLAGS.map(f => {
+      const msg = f.message || f.flag_message || f.description || f.flag || f.label || f.reason || '';
+      const sev = String(f.severity || f.level || 'med').toLowerCase();
+      const cls = sev.startsWith('h') || sev.startsWith('crit') ? 'high'
+                : sev.startsWith('l') || sev.startsWith('info') ? 'low' : 'med';
+      const kind = f.flag_type || f.flag_code || f.category || '';
+      if (!msg && !kind) return '';
+      return `<div class="flag ${cls}">${kind ? `<b>${esc(titleize(kind))}:</b> ` : ''}${esc(msg)}</div>`;
+    }).filter(Boolean).join('');
+    if (items) flagHTML = `<div class="flags">${items}</div>`;
+  }
+
+  const holdHTML = held
+    ? `<div class="holdbar">ON HOLD${pick(LOAD, F.holdReason) ? ' — ' + esc(pick(LOAD, F.holdReason)) : ''}
+        ${pick(LOAD, F.holdAt) ? `<span class="small" style="font-weight:400"> · since ${esc(fmtDT(pick(LOAD, F.holdAt)))}</span>` : ''}</div>`
+    : '';
+
+  $('hero').innerHTML = `
+    <div class="hero-top">
+      <div>
+        <div class="hero-num">Load ${esc(number)}</div>
+        <div class="hero-route">${route}</div>
+        <div class="small muted" style="margin-top:4px">
+          Pickup ${esc(fmtDate(pickupD))} · Delivery ${esc(fmtDate(delivD))}
+          ${pick(LOAD, F.commodity) ? ' · ' + esc(pick(LOAD, F.commodity)) : ''}
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div style="text-align:right">
+        <span class="pill ${tone}">${esc(titleize(status))}</span>
+        ${held ? '<span class="pill bad" style="margin-left:6px">On Hold</span>' : ''}
+        <div class="small muted mono" style="margin-top:6px">${esc(LOAD_ID.slice(0,8))}</div>
+      </div>
+    </div>
+    ${holdHTML}
+    <div class="chips">${chips.join('') || '<span class="muted small">No dimensions recorded</span>'}</div>
+    ${nextHTML}
+    ${flagHTML}
+  `;
+}
+
+/* ---------- ACTIONS BAR ---------- */
+function drawActions(){
+  if (!LOAD){ $('actions').innerHTML = ''; return; }
+
+  const status = currentStatus();
+  const held   = isOnHold();
+  const nexts  = STATUS_FLOW[status] || [];
+
+  const statusBtns = nexts.map(s => {
+    const danger = (s === 'cancelled');
+    return `<button class="${danger ? 'danger' : 'primary'}" data-status="${esc(s)}">
+      ${danger ? 'Cancel Load' : '&rarr; ' + esc(titleize(s))}</button>`;
+  }).join('');
+
+  $('actions').innerHTML = `
+    <button class="primary" id="btnCheckIn">Check In</button>
+    <span class="sep"></span>
+    ${statusBtns || '<span class="small muted">No further status transitions</span>'}
+    <span class="sep"></span>
+    ${held
+      ? '<button id="btnClearHold">Clear Hold</button>'
+      : '<button class="danger" id="btnHold">Put On Hold</button>'}
+    <span class="spacer"></span>
+    <button class="ghost sm" id="btnRefresh">Refresh</button>
+  `;
+
+  $('btnCheckIn').addEventListener('click', openCheckIn);
+  $('btnRefresh').addEventListener('click', async () => { await refreshAll(); toast('Refreshed'); });
+  if ($('btnHold'))      $('btnHold').addEventListener('click', openHold);
+  if ($('btnClearHold')) $('btnClearHold').addEventListener('click', clearHold);
+
+  $$('#actions button[data-status]').forEach(b => {
+    b.addEventListener('click', () => openStatus(b.dataset.status));
   });
-  if (r.error) { say('note_msg', r.error.message, 'err'); return; }
-  $('note_body').value='';
-  say('note_msg','Added.','ok');
-  drawTimeline();
-});
 
-$('notes_save').addEventListener('click', async () => {
-  const r = await db.from('loads').update({ notes: $('lnotes').value }).eq('id', loadId);
-  if (r.error) { say('notes_msg', r.error.message, 'err'); return; }
-  say('notes_msg','Saved.','ok');
-});
-
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on');
-    $('p-'+t.dataset.p).classList.add('on');
-  });
-});
-
+  if (held){
+    $$('#actions button[data-status]').forEach(b => {
+      if (b.dataset.status !== 'cancelled'){
+        b.disabled = true;
+        b.title = 'Clear the hold before advancing status';
+      }
+    });
+  }
+}
   /* ============================================================
    Part 2: action handlers, tab renderers, permit/escort/charge/note editors
    ============================================================ */
@@ -1957,7 +1997,6 @@ $('ch_delbtn').addEventListener('click', deleteCharge);
 $('nt_save').addEventListener('click', saveNote);
 
 boot();
-
 </script>
 </body>
 </html>
