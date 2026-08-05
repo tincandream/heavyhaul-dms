@@ -1952,9 +1952,7 @@ async function deleteCharge(){
 /* ============================================================
    NOTES
    ============================================================ */
-const NOTE_TYPES = ['note','call','email','sms','issue'];
-
-  function drawNotes(){
+function drawNotes(){
   const notes = PRIVATE_NOTES;
 
   const items = notes.map(n => `
@@ -2033,7 +2031,6 @@ async function deletePrivate(){
   toast('Note deleted');
   await refreshAll();
 }
-
 
 /* ============================================================
    WIRE UP + START
