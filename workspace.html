@@ -164,6 +164,54 @@
     <div class="card"><h2>Compliance checklist</h2><div id="checklist"></div></div>
   </div>
 
+  <div class="panel" id="p-expenses">
+    <div class="card">
+      <h2>Margin</h2>
+      <div class="info" id="margin"></div>
+    </div>
+    <div class="card">
+      <h2>Record a charge</h2>
+      <div class="grid">
+        <div><label>Type</label>
+          <select id="ch_kind">
+            <option value="cost">Cost</option>
+            <option value="revenue">Revenue</option>
+          </select></div>
+        <div><label>Category</label>
+          <select id="ch_cat">
+            <option value="linehaul">Linehaul</option>
+            <option value="fuel">Fuel surcharge</option>
+            <option value="detention">Detention</option>
+            <option value="layover">Layover</option>
+            <option value="tarp">Tarp</option>
+            <option value="permit_fee">Permit fee</option>
+            <option value="permit_service_fee">Permit service fee</option>
+            <option value="escort">Escort</option>
+            <option value="pilot_car">Pilot car</option>
+            <option value="police">Police escort</option>
+            <option value="driver_pay">Driver pay</option>
+            <option value="fuel_purchase">Fuel purchase</option>
+            <option value="tolls">Tolls</option>
+            <option value="lumper">Lumper</option>
+            <option value="repair">Repair</option>
+            <option value="other">Other</option>
+          </select></div>
+        <div><label>Amount</label><input id="ch_amt" type="number" step="0.01"></div>
+        <div><label>Date incurred</label><input id="ch_date" type="date"></div>
+        <div class="full"><label>Description</label><input id="ch_desc"></div>
+        <div><label>Billable to broker</label>
+          <select id="ch_bill"><option value="false">No</option>
+          <option value="true">Yes</option></select></div>
+      </div>
+      <button class="pri" id="ch_save" style="margin-top:12px">Add charge</button>
+      <div class="msg" id="ch_msg"></div>
+    </div>
+    <div class="card">
+      <h2>Charges on this load</h2>
+      <div id="charges"></div>
+    </div>
+  </div>
+
   <div class="panel" id="p-notes">
     <div class="card">
       <h2>Load notes</h2>
