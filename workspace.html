@@ -533,28 +533,90 @@ async function drawTimeline(){
   $('recent').innerHTML = '<div class="tl">'+render(ev.slice(0,5))+'</div>';
 }
 
+let PERMITS = [];
 async function drawPermits(){
   const r = await db.from('permits').select('*').eq('load_id',loadId).order('state');
-  const p = r.data || [];
-  $('ct-pm').textContent = p.length ? ' '+p.filter(x=>x.status==='issued').length+'/'+p.length : '';
-  $('permits').innerHTML = p.length
+  PERMITS = r.data || [];
+  $('ct-pm').textContent = PERMITS.length ? ' '+PERMITS.filter(x=>x.status==='issued').length+'/'+PERMITS.length : '';
+  $('permits').innerHTML = PERMITS.length
     ? '<table><thead><tr><th>State</th><th>Status</th><th>Number</th>'+
-      '<th>Valid</th><th>Escorts</th><th>Driver has it</th></tr></thead><tbody>'+
-      p.map(x=>{
+      '<th>Valid</th><th>Escorts</th><th>Driver has it</th><th>Fee</th></tr></thead><tbody>'+
+      PERMITS.map(x=>{
         const need = [x.escort_front&&'front', x.escort_rear&&'rear',
                       x.escort_high_pole&&'high pole', x.escort_police&&'police']
                      .filter(Boolean).join(', ') || '—';
-        return '<tr><td><b>'+x.state+'</b></td>'+
+        const fee = (Number(x.fee)||0)+(Number(x.service_fee)||0);
+        return '<tr style="cursor:pointer" onclick="openPermit(\''+x.id+'\')">'+
+          '<td><b>'+esc(x.state)+'</b></td>'+
           '<td><span class="pill '+(x.status==='issued'?'p-grn':
             x.status==='rejected'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
           '<td>'+(x.permit_number||'—')+'</td>'+
           '<td>'+(x.valid_from?x.valid_from+' → '+(x.valid_to||'?'):'—')+'</td>'+
           '<td>'+need+'</td>'+
-          '<td>'+(x.driver_has_permit?'Yes':'No')+'</td></tr>';
+          '<td>'+(x.driver_has_permit?'Yes':'No')+'</td>'+
+          '<td>'+(fee?money(fee):'—')+'</td></tr>';
       }).join('')+'</tbody></table>'
-    : '<div class="empty">No permits generated. Either the load is legal, or no '+
-      'rules are on file for its route states — check State Rules.</div>';
+    : '<div class="empty">No permits yet. Use Add permit, or enter state rules so '+
+      'they generate automatically.</div>';
 }
+
+function openPermit(id){
+  const p = id ? PERMITS.find(x=>x.id===id) : null;
+  $('pm_title').textContent = p ? 'Edit permit — '+p.state : 'Add permit';
+  $('pm_id').value = p ? p.id : '';
+  $('pm_state').value = p ? (p.state||'') : '';
+  $('pm_status').value = p ? p.status : 'needed';
+  $('pm_number').value = p ? (p.permit_number||'') : '';
+  $('pm_auth').value = p ? (p.issuing_authority||'') : '';
+  $('pm_from').value = p ? (p.valid_from||'') : '';
+  $('pm_to').value = p ? (p.valid_to||'') : '';
+  $('pm_fee').value = p ? (p.fee ?? '') : '';
+  $('pm_svc').value = p ? (p.service_fee ?? '') : '';
+  $('pm_driver').value = p ? String(!!p.driver_has_permit) : 'false';
+  $('pm_ef').checked = p ? !!p.escort_front : false;
+  $('pm_er').checked = p ? !!p.escort_rear : false;
+  $('pm_ehp').checked = p ? !!p.escort_high_pole : false;
+  $('pm_ep').checked = p ? !!p.escort_police : false;
+  $('pm_notes').value = p ? (p.notes||'') : '';
+  $('dlg_permit').showModal();
+}
+
+$('pm_save').addEventListener('click', async () => {
+  if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
+  const id = val('pm_id');
+  const rec = {
+    tenant_id: tenant, load_id: loadId,
+    state: val('pm_state').toUpperCase(),
+    status: $('pm_status').value,
+    permit_number: val('pm_number'),
+    issuing_authority: val('pm_auth'),
+    valid_from: val('pm_from') || null,
+    valid_to: val('pm_to') || null,
+    fee: val('pm_fee') ? Number(val('pm_fee')) : null,
+    service_fee: val('pm_svc') ? Number(val('pm_svc')) : null,
+    driver_has_permit: $('pm_driver').value==='true',
+    issued_at: $('pm_status').value==='issued' ? new Date().toISOString() : null,
+    escort_front: $('pm_ef').checked, escort_rear: $('pm_er').checked,
+    escort_high_pole: $('pm_ehp').checked, escort_police: $('pm_ep').checked,
+    notes: val('pm_notes')
+  };
+  const wasIssued = id ? PERMITS.find(x=>x.id===id)?.status==='issued' : false;
+  const r = id
+    ? await db.from('permits').update(rec).eq('id', id)
+    : await db.from('permits').insert(rec);
+  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
+
+  if ($('pm_status').value==='issued' && !wasIssued) {
+    await db.from('events').insert({
+      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
+      subject: val('pm_state').toUpperCase()+' permit issued',
+      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
+    });
+  }
+  $('dlg_permit').close();
+  drawPermits(); drawExpenses(); drawHero();
+});
 
 async function drawEscorts(){
   const r = await db.from('escort_assignments').select('*')
