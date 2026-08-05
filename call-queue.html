@@ -1,0 +1,23 @@
+// call-queue.html
+async function loadQueue() {
+  const { data, error } = await supabase
+    .from('v_call_queue')
+    .select('*')
+    .limit(50);
+  if (error) return console.error(error);
+  render(data);
+}
+
+async function logCall(companyId, contactId, outcome, note, followUpDate) {
+  const { error } = await supabase.from('crm_activities').insert({
+    company_id: companyId,
+    contact_id: contactId,
+    activity_type: 'call',
+    direction: 'outbound',
+    outcome,
+    body: note,
+    next_action_due: followUpDate
+  });
+  if (error) return console.error(error);
+  loadQueue(); // company drops off the queue automatically
+}
