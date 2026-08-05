@@ -661,6 +661,23 @@ $('pm_save').addEventListener('click', async () => {
   $('dlg_permit').close();
   drawPermits(); drawExpenses(); drawHero();
 });
+  
+  const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
+  const r = id
+    ? await db.from('permits').update(rec).eq('id', id)
+    : await db.from('permits').insert(rec);
+  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
+  if ($('pm_status').value==='issued' && !wasIssued) {
+    await db.from('events').insert({
+      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
+      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
+      subject: val('pm_state').toUpperCase()+' permit issued',
+      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
+    });
+  }
+  $('dlg_permit').close();
+  drawPermits(); drawExpenses(); drawHero();
+});
   const wasIssued = id ? (PERMITS.find(x=>x.id===id)||{}).status==='issued' : false;
   const r = id
     ? await db.from('permits').update(rec).eq('id', id)
