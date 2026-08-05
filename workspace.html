@@ -519,6 +519,36 @@ textarea{min-height:76px;resize:vertical}
   </div>
 </dialog>
 
+
+
+  <!-- ============ CHECKLIST ITEM DIALOG ============ -->
+<dialog id="dlgChkItem">
+  <div class="dlg-head"><h3>Add Checklist Item</h3></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field"><label for="ck_phase">Phase</label>
+        <select id="ck_phase">
+          <option value="Booking">Booking</option>
+          <option value="Permits">Permits</option>
+          <option value="Route">Route</option>
+          <option value="Escorts">Escorts</option>
+          <option value="Pre-departure">Pre-departure</option>
+          <option value="In-transit">In-transit</option>
+          <option value="Delivery">Delivery</option>
+          <option value="Other">Other</option>
+        </select></div>
+      <div class="field full"><label for="ck_item">Item *</label>
+        <input id="ck_item" placeholder="Confirm lumper with broker"></div>
+    </div>
+    <div id="ck_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="ck_save">Add Item</button>
+    <button onclick="dlgChkItem.close()">Cancel</button>
+  </div>
+</dialog>
+
+  
 <div id="toast"></div>
 
 <script src="nav.js"></script>
