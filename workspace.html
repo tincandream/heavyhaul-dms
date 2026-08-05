@@ -250,6 +250,50 @@
   <div class="msg" id="ci_msg"></div>
 </dialog>
 
+<dialog id="dlg_permit">
+  <h3 id="pm_title">Permit</h3>
+  <input type="hidden" id="pm_id">
+  <div class="grid">
+    <div><label>State</label><input id="pm_state" maxlength="2"></div>
+    <div><label>Status</label>
+      <select id="pm_status">
+        <option value="needed">Needed</option>
+        <option value="applied">Applied</option>
+        <option value="pending">Pending</option>
+        <option value="issued">Issued</option>
+        <option value="rejected">Rejected</option>
+        <option value="amended">Amended</option>
+        <option value="expired">Expired</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="not_required">Not required</option>
+      </select></div>
+    <div><label>Permit number</label><input id="pm_number"></div>
+    <div><label>Issuing authority</label><input id="pm_auth"></div>
+    <div><label>Valid from</label><input id="pm_from" type="date"></div>
+    <div><label>Valid to</label><input id="pm_to" type="date"></div>
+    <div><label>Permit fee</label><input id="pm_fee" type="number" step="0.01"></div>
+    <div><label>Service fee</label><input id="pm_svc" type="number" step="0.01"></div>
+    <div><label>Driver has permit</label>
+      <select id="pm_driver"><option value="false">No</option>
+      <option value="true">Yes</option></select></div>
+  </div>
+  <div style="margin-top:12px">
+    <label style="margin-bottom:6px">Escorts this permit requires</label>
+    <div class="btnrow">
+      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ef" style="width:auto"> Front</label>
+      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_er" style="width:auto"> Rear</label>
+      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ehp" style="width:auto"> High pole</label>
+      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ep" style="width:auto"> Police</label>
+    </div>
+  </div>
+  <div class="full" style="margin-top:12px"><label>Notes</label><textarea id="pm_notes"></textarea></div>
+  <div class="btnrow" style="margin-top:14px">
+    <button class="pri" id="pm_save">Save permit</button>
+    <button onclick="document.getElementById('dlg_permit').close()">Cancel</button>
+  </div>
+  <div class="msg" id="pm_msg"></div>
+</dialog>
+  
 <dialog id="dlg_hold">
   <h3>Put this load on hold</h3>
   <div class="grid">
