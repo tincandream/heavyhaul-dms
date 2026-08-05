@@ -2,304 +2,314 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>All Loads · Heavy Haul DMS</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Loads — Dispatch</title>
 <style>
-  :root{
-    --bg:#f5f6f8; --card:#fff; --line:#e2e5ea; --ink:#1c2128; --muted:#6b7280;
-    --accent:#1f4e79; --good:#166534; --bad:#991b1b;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-       font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  header{background:var(--accent);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-  header h1{font-size:18px;margin:0;font-weight:600}
-  header nav a{color:#cfe0f0;text-decoration:none;margin-right:14px;font-size:14px}
-  header nav a:hover,header nav a.on{color:#fff}
-  .wrap{max-width:1400px;margin:0 auto;padding:20px}
-  #tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-  @media(max-width:760px){#tiles{grid-template-columns:repeat(2,1fr)}}
-  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;
-        cursor:pointer;text-align:left;font:inherit;color:inherit}
-  .tile:hover{border-color:var(--accent)}
-  .tile.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-  .tile .n{font-size:28px;font-weight:700;line-height:1.1}
-  .tile .l{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:4px}
-  .bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-  .bar input,.bar select,.bar button{padding:9px 11px;border:1px solid var(--line);
-        border-radius:8px;background:#fff;font:inherit;color:inherit}
-  .bar input[type=search]{flex:1;min-width:220px}
-  .bar button{cursor:pointer}
-  .bar button:hover{border-color:var(--accent)}
-  .tblwrap{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:auto}
-  table{width:100%;border-collapse:collapse}
-  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:14px;white-space:nowrap}
-  tbody tr:last-child td{border-bottom:0}
-  th{background:#eef1f5;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
-     color:var(--muted);cursor:pointer;user-select:none;position:sticky;top:0}
-  th .ar{opacity:.35;font-size:10px;margin-left:4px}
-  th.sorted .ar{opacity:1}
-  tbody tr:hover{background:#f8fafc;cursor:pointer}
-  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:#eef1f5;text-transform:capitalize}
-  .pill.active{background:#dbeafe;color:#1e40af}
-  .pill.pipeline{background:#fef3c7;color:#92400e}
-  .pill.completed{background:#dcfce7;color:#166534}
-  .num{text-align:right;font-variant-numeric:tabular-nums}
-  .pos{color:var(--good)} .neg{color:var(--bad)}
-  .msg{padding:28px;text-align:center;color:var(--muted)}
-  .err{background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:14px;
-       white-space:pre-wrap;font-size:14px}
-  a.ref{color:var(--accent);font-weight:600;text-decoration:none}
-  a.ref:hover{text-decoration:underline}
-  .count{color:var(--muted);font-size:13px;margin:10px 2px 0}
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1400px; margin:0 auto 40px; }
+
+  .tiles { display:grid; gap:10px; margin-bottom:16px;
+           grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; cursor:pointer; }
+  .tile .n { font-size:21px; font-weight:600; line-height:1.2; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+  .tile.on { border-color:var(--accent); background:var(--accentbg); }
+
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+         margin-bottom:12px; }
+  select, input { padding:7px 10px; border:1px solid var(--line2);
+                  border-radius:7px; font-size:13px; background:var(--card);
+                  color:var(--ink); font-family:inherit; }
+  .search { min-width:210px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+
+  .wrap { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:1080px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line);
+       white-space:nowrap; cursor:pointer; user-select:none; }
+  th:hover { color:var(--ink); }
+  td { padding:11px 12px; border-bottom:1px solid var(--line);
+       font-size:13px; vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  tr.row { cursor:pointer; }
+  tr.row:hover { background:#faf9f6; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
+  .ldnum { color:var(--accent); font-weight:500; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px;
+          font-size:11.5px; white-space:nowrap; }
+  .p-red { background:var(--dangerbg); color:var(--danger); }
+  .p-amb { background:var(--warnbg); color:var(--warn); }
+  .p-blu { background:var(--accentbg); color:var(--accent); }
+  .p-grn { background:var(--okbg); color:var(--ok); }
+  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
+
+  .num { font-variant-numeric:tabular-nums; text-align:right; }
+  .pos { color:var(--ok); } .neg { color:var(--danger); }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Heavy Haul DMS</h1>
-  <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="loads.html" class="on">Loads</a>
-    <a href="customers.html">Customers</a>
-    <a href="carriers.html">Carriers</a>
-  </nav>
-</header>
+<header></header>
 
-<div class="wrap">
-  <div id="err" class="err" hidden></div>
-
-  <div id="tiles"></div>
+<main>
+  <div class="tiles" id="tiles"></div>
 
   <div class="bar">
-    <input type="search" id="q" placeholder="Search load #, customer, city, commodity…" autocomplete="off">
-    <select id="statusFilter"><option value="">All statuses</option></select>
-    <button id="reset" type="button">Reset</button>
+    <input class="search" id="q" placeholder="Search load, commodity, broker…">
+    <select id="fstatus"><option value="">All statuses</option></select>
+    <select id="fcarrier"><option value="">All carriers</option></select>
+    <select id="fbroker"><option value="">All brokers</option></select>
+    <select id="fdriver"><option value="">All drivers</option></select>
+    <input id="from" type="date" title="Pickup from">
+    <input id="to" type="date" title="Pickup to">
+    <span class="count" id="count"></span>
   </div>
 
-  <div class="tblwrap">
+  <div class="wrap">
     <table>
-      <thead><tr id="head"></tr></thead>
-      <tbody id="rows"><tr><td class="msg" colspan="9">Loading…</td></tr></tbody>
+      <thead><tr>
+        <th data-k="load_number">Load</th>
+        <th data-k="status">Status</th>
+        <th data-k="commodity">Commodity</th>
+        <th data-k="carrier_name">Carrier</th>
+        <th data-k="broker_name">Broker</th>
+        <th data-k="driver_name">Driver</th>
+        <th data-k="route">Route</th>
+        <th data-k="pickup_appt_start">Pickup</th>
+        <th data-k="delivery_appt_start">Delivery</th>
+        <th data-k="linehaul_rate">Rate</th>
+        <th data-k="margin">Margin</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="11" class="msg">Loading…</td></tr></tbody>
     </table>
   </div>
-  <div class="count" id="count"></div>
-</div>
+</main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
 <script>
-/* ============ CREDENTIALS — paste yours here ============ */
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
 
-/* ============ CONFIG — adjust to your schema ============ */
-const CFG = {
-  table: 'loads',
-  marginView: 'v_load_margin',
-  marginKey: 'load_id',          // column in v_load_margin that points back to loads.id
-  buckets: {
-    pipeline:  ['quote','quoted','pending','booked','planning','tendered','permit_pending','awaiting_permits'],
-    active:    ['dispatched','assigned','in_transit','en_route','at_pickup','at_delivery','loading','unloading','on_hold'],
-    completed: ['delivered','completed','invoiced','paid','closed']
+const $ = id => document.getElementById(id);
+let db=null, rows=[], sortKey='pickup_appt_start', sortDir=-1, group='all';
+
+const ACTIVE = ['dispatched','en_route_to_pickup','at_shipper','loading','loaded',
+  'in_transit','at_weigh_station','under_inspection','at_receiver','unloading'];
+const PIPELINE = ['quoted','booked','permits_pending'];
+const CLOSED = ['delivered','pod_pending','paperwork','invoiced','paid',
+                'cancelled','tonu'];
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pretty(s){ return String(s||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); }
+function money(n){ return n==null?'—':'$'+Math.round(Number(n)).toLocaleString(); }
+function day(iso){ if(!iso) return '—'; const d=new Date(iso);
+  return d.toLocaleDateString([],{month:'numeric',day:'numeric',year:'2-digit'}); }
+function fail(t){ $('body').innerHTML='<tr><td colspan="11" class="msg bad">'+esc(t)+'</td></tr>'; }
+
+window.onerror = m => fail('JS error: '+m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load.');
+} else if (SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
+  fail('Edit loads.html and fill in SUPABASE_ANON_KEY.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href='index.html'; return; }
+  const t = await buildNav(db, 'All Loads');
+  if (!t) { fail('No profile linked to this login.'); return; }
+  await load();
+}
+
+async function load(){
+  const r = await db.from('loads')
+    .select('id, load_number, broker_load_number, status, commodity, priority,'+
+            'width_in, height_in, weight_lb, linehaul_rate, fuel_surcharge,'+
+            'total_miles, pickup_appt_start, delivery_appt_start,'+
+            'actual_pickup_at, actual_delivery_at, hold_reason, created_at,'+
+            'carrier_id, broker_id, driver_id, origin_facility_id, dest_facility_id')
+    .is('archived_at', null)
+    .order('created_at', { ascending:false });
+
+  if (r.error) { fail('Query failed: '+r.error.message); return; }
+  const base = r.data || [];
+
+  const [cs, bs, ds, fs, ms] = await Promise.all([
+    db.from('carriers').select('id, legal_name'),
+    db.from('brokers').select('id, name'),
+    db.from('drivers').select('id, first_name, last_name'),
+    db.from('facilities').select('id, city, state'),
+    db.from('v_load_margin').select('load_id, total_revenue, total_cost')
+  ]);
+
+  const carrier={}, broker={}, driver={}, fac={}, marg={};
+  (cs.data||[]).forEach(x => carrier[x.id] = x.legal_name);
+  (bs.data||[]).forEach(x => broker[x.id] = x.name);
+  (ds.data||[]).forEach(x => driver[x.id] = x.first_name+' '+x.last_name);
+  (fs.data||[]).forEach(x => fac[x.id] = (x.city||'')+', '+(x.state||''));
+  (ms.data||[]).forEach(x => marg[x.load_id] = x.total_revenue - x.total_cost);
+
+  rows = base.map(x => ({
+    ...x,
+    carrier_name: carrier[x.carrier_id] || null,
+    broker_name:  broker[x.broker_id] || null,
+    driver_name:  driver[x.driver_id] || null,
+    route: (fac[x.origin_facility_id] && fac[x.dest_facility_id])
+      ? fac[x.origin_facility_id] + ' → ' + fac[x.dest_facility_id] : null,
+    margin: marg[x.id] != null ? marg[x.id] : null
+  }));
+
+  fillFilters();
+  render();
+}
+
+function uniq(k){ return [...new Set(rows.map(r=>r[k]).filter(Boolean))].sort(); }
+
+function fillFilters(){
+  const map = { fstatus:'status', fcarrier:'carrier_name',
+                fbroker:'broker_name', fdriver:'driver_name' };
+  for (const id in map) {
+    const sel=$(id), keep=sel.value, first=sel.options[0].textContent;
+    sel.innerHTML = '<option value="">'+first+'</option>' +
+      uniq(map[id]).map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+    sel.value = keep;
   }
-};
-// Any status not listed above falls into "pipeline" — see bucketOf().
-
-/* ============ helpers ============ */
-const $ = s => document.querySelector(s);
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
-  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function firstOf(row, names){
-  if(!row) return null;
-  for(const n of names){
-    if(row[n] !== undefined && row[n] !== null && row[n] !== '') return row[n];
-  }
-  return null;
-}
-function num(v){
-  if(v === null || v === undefined || v === '') return null;
-  const n = Number(String(v).replace(/[$,]/g,''));
-  return Number.isFinite(n) ? n : null;
-}
-const money = v => v == null ? '—' :
-  (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
-const dt = v => {
-  if(!v) return '—';
-  const d = new Date(v);
-  return isNaN(d) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});
-};
-function bucketOf(status){
-  const s = String(status || '').toLowerCase().trim().replace(/[\s-]+/g,'_');
-  for(const b in CFG.buckets){ if(CFG.buckets[b].includes(s)) return b; }
-  return 'pipeline';
-}
-function place(r, prefix){
-  const c = firstOf(r,[prefix+'_city']), s = firstOf(r,[prefix+'_state']);
-  if(c || s) return [c,s].filter(Boolean).join(', ');
-  return firstOf(r,[prefix, prefix+'_location', prefix+'_address']);
 }
 
-/* ============ normalize one row ============ */
-function norm(r, m){
-  const status = firstOf(r,['status','load_status','stage','state']) || '';
-  return {
-    id:        r.id,
-    ref:       firstOf(r,['load_number','load_no','reference','ref_number','ref','order_number']) || r.id,
-    customer:  firstOf(r,['customer_name','customer','shipper_name','shipper','bill_to','broker']) || '—',
-    origin:    place(r,'origin') || place(r,'pickup') || place(r,'pu') || '—',
-    dest:      place(r,'destination') || place(r,'dest') || place(r,'delivery') || '—',
-    commodity: firstOf(r,['commodity','equipment','description','freight']) || '—',
-    pickup:    firstOf(r,['pickup_date','pu_date','ship_date','start_date','pickup_at']),
-    rate:      num(firstOf(r,['customer_rate','rate','total_rate','linehaul','revenue','quoted_rate'])),
-    margin:    m ? num(firstOf(m,['margin','gross_margin','net_margin','profit','margin_amount'])) : null,
-    marginPct: m ? num(firstOf(m,['margin_pct','margin_percent','gross_margin_pct','margin_percentage'])) : null,
-    status, bucket: bucketOf(status)
-  };
+function statusClass(r){
+  if (r.hold_reason) return 'p-amb';
+  const s = r.status;
+  if (['cancelled','tonu'].includes(s)) return 'p-red';
+  if (['paid','invoiced','delivered','pod_pending','paperwork'].includes(s)) return 'p-grn';
+  if (ACTIVE.includes(s)) return 'p-blu';
+  return 'p-gry';
 }
 
-/* ============ columns ============ */
-const COLS = [
-  {k:'ref',      label:'Load #',      cell:d=>`<a class="ref" href="workspace.html?id=${encodeURIComponent(d.id)}">${esc(d.ref)}</a>`},
-  {k:'customer', label:'Customer',    cell:d=>esc(d.customer)},
-  {k:'origin',   label:'Origin',      cell:d=>esc(d.origin)},
-  {k:'dest',     label:'Destination', cell:d=>esc(d.dest)},
-  {k:'commodity',label:'Commodity',   cell:d=>esc(d.commodity)},
-  {k:'pickup',   label:'Pickup',      cell:d=>dt(d.pickup)},
-  {k:'status',   label:'Status',      cell:d=>`<span class="pill ${d.bucket}">${esc(String(d.status||'—').replace(/_/g,' '))}</span>`},
-  {k:'rate',     label:'Rate',        cls:'num', cell:d=>money(d.rate)},
-  {k:'margin',   label:'Margin',      cls:'num', cell:d=>d.margin==null ? '—' :
-      `<span class="${d.margin<0?'neg':'pos'}">${money(d.margin)}${d.marginPct!=null?' · '+Math.round(d.marginPct)+'%':''}</span>`}
-];
-
-/* ============ state ============ */
-let ROWS = [];
-const view = { tile:'total', q:'', status:'', sort:'pickup', dir:-1 };
-
-/* ============ tiles ============ */
 function tiles(){
-  const c = { total: ROWS.length, active:0, pipeline:0, completed:0 };
-  ROWS.forEach(d => { c[d.bucket] = (c[d.bucket]||0) + 1; });
-
+  const counts = {
+    all: rows.length,
+    active: rows.filter(r=>ACTIVE.includes(r.status)).length,
+    pipeline: rows.filter(r=>PIPELINE.includes(r.status)).length,
+    closed: rows.filter(r=>CLOSED.includes(r.status)).length
+  };
   const defs = [
-    ['total','Total Loads'], ['active','Active'],
-    ['pipeline','Pipeline'], ['completed','Completed']
+    ['all','Total loads'],
+    ['active','Active'],
+    ['pipeline','Pipeline'],
+    ['closed','Completed']
   ];
-
-  $('#tiles').innerHTML = defs.map(([k,label]) =>
-    `<button class="tile${view.tile===k?' on':''}" data-tile="${k}" type="button">
-       <div class="n">${c[k]||0}</div><div class="l">${label}</div>
-     </button>`).join('');
-
-  $('#tiles').querySelectorAll('.tile').forEach(el => {
-    el.onclick = () => { view.tile = el.dataset.tile; render(); };
-  });
-}
-
-/* ============ filter + sort + render ============ */
-function visible(){
-  const q = view.q.toLowerCase().trim();
-  return ROWS.filter(d => {
-    if(view.tile !== 'total' && d.bucket !== view.tile) return false;
-    if(view.status && String(d.status) !== view.status) return false;
-    if(q){
-      const hay = [d.ref,d.customer,d.origin,d.dest,d.commodity,d.status].join(' ').toLowerCase();
-      if(!hay.includes(q)) return false;
-    }
-    return true;
-  }).sort((a,b) => {
-    let x = a[view.sort], y = b[view.sort];
-    if(view.sort === 'pickup'){ x = x ? Date.parse(x) : -Infinity; y = y ? Date.parse(y) : -Infinity; }
-    if(x == null) x = -Infinity;
-    if(y == null) y = -Infinity;
-    if(typeof x === 'number' && typeof y === 'number') return (x - y) * view.dir;
-    return String(x).localeCompare(String(y), 'en', {numeric:true}) * view.dir;
-  });
-}
-
-function head(){
-  $('#head').innerHTML = COLS.map(c =>
-    `<th data-k="${c.k}" class="${c.cls||''}${view.sort===c.k?' sorted':''}">${c.label}<span class="ar">${
-      view.sort===c.k ? (view.dir===1?'▲':'▼') : '◆'}</span></th>`).join('');
-
-  $('#head').querySelectorAll('th').forEach(th => {
-    th.onclick = () => {
-      const k = th.dataset.k;
-      if(view.sort === k){ view.dir = -view.dir; }
-      else { view.sort = k; view.dir = (k==='pickup'||k==='rate'||k==='margin') ? -1 : 1; }
-      render();
-    };
+  $('tiles').innerHTML = defs.map(function(d){
+    const k = d[0], label = d[1];
+    return '<div class="tile'+(group===k?' on':'')+'" data-g="'+k+'">'+
+      '<div class="n">'+counts[k]+'</div><div class="l">'+label+'</div></div>';
+  }).join('');
+  document.querySelectorAll('.tile[data-g]').forEach(function(t){
+    t.addEventListener('click', function(){ group = t.dataset.g; render(); });
   });
 }
 
 function render(){
-  tiles(); head();
-  const list = visible();
-  const tb = $('#rows');
+  const q = $('q').value.toLowerCase().trim();
+  const from = $('from').value, to = $('to').value;
 
-  if(!list.length){
-    tb.innerHTML = `<tr><td class="msg" colspan="${COLS.length}">No loads match these filters.</td></tr>`;
-  } else {
-    tb.innerHTML = list.map(d =>
-      `<tr data-id="${esc(d.id)}">${COLS.map(c =>
-        `<td class="${c.cls||''}">${c.cell(d)}</td>`).join('')}</tr>`).join('');
+  let list = rows.filter(r => {
+    if (group==='active'   && !ACTIVE.includes(r.status)) return false;
+    if (group==='pipeline' && !PIPELINE.includes(r.status)) return false;
+    if (group==='closed'   && !CLOSED.includes(r.status)) return false;
+    if ($('fstatus').value  && r.status !== $('fstatus').value) return false;
+    if ($('fcarrier').value && r.carrier_name !== $('fcarrier').value) return false;
+    if ($('fbroker').value  && r.broker_name !== $('fbroker').value) return false;
+    if ($('fdriver').value  && r.driver_name !== $('fdriver').value) return false;
+    if (from && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) < from)) return false;
+    if (to   && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) > to)) return false;
+    if (q) {
+      const hay = [r.load_number, r.broker_load_number, r.commodity, r.carrier_name,
+                   r.broker_name, r.driver_name, r.route]
+                  .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
-    tb.querySelectorAll('tr').forEach(tr => {
-      tr.onclick = e => {
-        if(e.target.closest('a')) return;
-        location.href = 'workspace.html?id=' + encodeURIComponent(tr.dataset.id);
-      };
-    });
-  }
-  $('#count').textContent = `Showing ${list.length} of ${ROWS.length} loads`;
-}
+  list.sort((a,b) => {
+    const x=a[sortKey], y=b[sortKey];
+    if (x==null) return 1;
+    if (y==null) return -1;
+    return (x>y?1:x<y?-1:0)*sortDir;
+  });
 
-function statusOptions(){
-  const seen = [...new Set(ROWS.map(d => d.status).filter(Boolean))].sort();
-  $('#statusFilter').innerHTML = '<option value="">All statuses</option>' +
-    seen.map(s => `<option value="${esc(s)}">${esc(String(s).replace(/_/g,' '))}</option>`).join('');
-}
+  tiles();
+  $('count').textContent = list.length + ' of ' + rows.length + ' loads';
 
-function fail(msg){
-  const e = $('#err');
-  e.hidden = false;
-  e.textContent = msg;
-  $('#rows').innerHTML = `<tr><td class="msg" colspan="${COLS.length}">Could not load.</td></tr>`;
-}
-
-/* ============ data ============ */
-async function init(){
-  const { data: loads, error } = await db.from(CFG.table).select('*');
-  if(error) return fail('Loading ' + CFG.table + ': ' + error.message);
-  if(!loads) return fail('No data returned from ' + CFG.table + '.');
-
-  const margins = {};
-  const mv = await db.from(CFG.marginView).select('*');
-  if(mv.error){
-    console.warn('margin view unavailable:', mv.error.message);
-  } else if(mv.data){
-    mv.data.forEach(r => {
-      const k = firstOf(r, [CFG.marginKey, 'id']);
-      if(k != null) margins[k] = r;
-    });
+  if (!list.length) {
+    $('body').innerHTML = '<tr><td colspan="11" class="msg">No loads match.</td></tr>';
+    return;
   }
 
-  ROWS = loads.map(r => norm(r, margins[r.id]));
-  statusOptions();
-  render();
+  $('body').innerHTML = list.map(r => {
+    const over = (r.width_in>102)||(r.height_in>162)||(r.weight_lb>80000);
+    const mg = r.margin;
+    return '<tr class="row" data-id="'+r.id+'">'+
+      '<td><span class="ldnum">'+esc(r.load_number)+'</span>'+
+        (r.broker_load_number?'<div class="sub2">'+esc(r.broker_load_number)+'</div>':'')+
+        '</td>'+
+      '<td><span class="pill '+statusClass(r)+'">'+
+        pretty(r.hold_reason || r.status)+'</span></td>'+
+      '<td>'+esc(r.commodity||'—')+
+        (over?'<div class="sub2">oversize</div>':'')+'</td>'+
+      '<td>'+esc(r.carrier_name||'—')+'</td>'+
+      '<td>'+esc(r.broker_name||'—')+'</td>'+
+      '<td>'+esc(r.driver_name||'—')+'</td>'+
+      '<td>'+esc(r.route||'—')+
+        (r.total_miles?'<div class="sub2">'+r.total_miles.toLocaleString()+' mi</div>':'')+
+        '</td>'+
+      '<td>'+day(r.pickup_appt_start)+
+        (r.actual_pickup_at?'<div class="sub2">act '+day(r.actual_pickup_at)+'</div>':'')+
+        '</td>'+
+      '<td>'+day(r.delivery_appt_start)+
+        (r.actual_delivery_at?'<div class="sub2">act '+day(r.actual_delivery_at)+'</div>':'')+
+        '</td>'+
+      '<td class="num">'+money((Number(r.linehaul_rate)||0)+(Number(r.fuel_surcharge)||0))+'</td>'+
+      '<td class="num '+(mg==null?'':mg>=0?'pos':'neg')+'">'+money(mg)+'</td>'+
+      '</tr>';
+  }).join('');
 }
 
-/* ============ wiring ============ */
-$('#q').oninput = e => { view.q = e.target.value; render(); };
-$('#statusFilter').onchange = e => { view.status = e.target.value; render(); };
-$('#reset').onclick = () => {
-  view.tile='total'; view.q=''; view.status='';
-  $('#q').value=''; $('#statusFilter').value='';
-  render();
-};
+['q','fstatus','fcarrier','fbroker','fdriver','from','to'].forEach(id => {
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
 
-init();
+document.querySelectorAll('th[data-k]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=1; }
+    render();
+  });
+});
+
+$('body').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) location.href = 'workspace.html?id=' + tr.dataset.id;
+});
 </script>
 </body>
 </html>
