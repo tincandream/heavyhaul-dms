@@ -629,9 +629,6 @@ function openPermit(id){
 $('pm_save').addEventListener('click', async () => {
   if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
   const id = val('pm_id');
-$('pm_save').addEventListener('click', async () => {
-  if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
-  const id = val('pm_id');
   const rec = {
     tenant_id: tenant, load_id: loadId,
     state: val('pm_state').toUpperCase(),
