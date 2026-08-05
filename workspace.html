@@ -613,6 +613,7 @@ let EVENTS = [];
 let CHARGES = [];
 let MARGIN = null;
 let CHECKLIST = [];
+let PRIVATE_NOTES = [];  
 let ACTIVE_TAB = 'overview';
 let PENDING_STATUS = null;
 
@@ -793,7 +794,18 @@ async function refreshAll(){
     fetchEvents(),
     fetchCharges(),
     fetchMargin(),
-    fetchChecklist()
+  fetchChecklist(async function fetchPrivateNotes(){
+  const { data, error } = await db.from('load_private_notes').select('*')
+    .eq('load_id', LOAD_ID)
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error){ console.warn('private notes', error); PRIVATE_NOTES = []; return; }
+  PRIVATE_NOTES = data || [];
+}),
+
+
+    
+    fetchPrivateNotes()
   ]);
   drawHero();
   drawActions();
@@ -882,7 +894,7 @@ function drawCounts(){
   set('cnt-escorts', ESCORTS.length);
   set('cnt-timeline', EVENTS.length);
   set('cnt-checklist', CHECKLIST.length);
-  set('cnt-notes', EVENTS.filter(e => ['note','call','email','sms','issue'].includes(e.event_type)).length);
+  set('cnt-notes', PRIVATE_NOTES.length);
 }
 
 /* ---------- HERO ---------- */
@@ -1945,60 +1957,86 @@ async function deleteCharge(){
    ============================================================ */
 const NOTE_TYPES = ['note','call','email','sms','issue'];
 
-function drawNotes(){
-  const notes = EVENTS.filter(e => NOTE_TYPES.includes(e.event_type));
+  function drawNotes(){
+  const notes = PRIVATE_NOTES;
 
   const items = notes.map(n => `
-    <div class="tl-item${n.is_milestone ? ' mile' : ''}">
-      <div class="tl-when">
-        <span>${esc(fmtDT(n.occurred_at || n.created_at))}</span>
-        <span class="tl-type">${esc(String(n.event_type))}</span>
-        <span class="muted">${esc(ago(n.occurred_at || n.created_at))}</span>
+    <div class="card box" style="margin-bottom:10px${n.pinned ? ';border-color:#dbe2fb;background:#fafbff' : ''}">
+      <div class="row" style="align-items:flex-start">
+        <div style="flex:1">
+          ${n.pinned ? '<span class="pill" style="margin-bottom:6px;display:inline-block">Pinned</span><br>' : ''}
+          <div class="tl-body" style="color:var(--ink);white-space:pre-wrap">${esc(n.body)}</div>
+          <div class="small muted" style="margin-top:6px">${esc(fmtDT(n.created_at))} · ${esc(ago(n.created_at))}</div>
+        </div>
+        <button class="ghost sm" data-pv="${esc(n.id)}">Edit</button>
       </div>
-      ${n.subject ? `<div class="tl-head">${esc(n.subject)}</div>` : ''}
-      ${n.body ? `<div class="tl-body">${esc(n.body)}</div>` : ''}
     </div>`).join('');
 
   $('tab-notes').innerHTML = `
-    <div class="sechead"><h2>Notes &amp; Communication</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openNote()">+ Add Note</button></div>
+    <div class="sechead"><h2>Private Notes</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openPrivate(null)">+ Add Note</button></div>
+    <div class="small muted" style="margin-bottom:12px">
+      Only visible here — never posted to the timeline or shared. For a note that belongs in
+      the shared load history, use <b>Add Note</b> on the Timeline tab instead.</div>
     ${notes.length
-      ? `<div class="card box"><div class="tl">${items}</div></div>`
-      : '<div class="card"><div class="empty">No notes yet.</div></div>'}`;
-}
+      ? items
+      : '<div class="card"><div class="empty">No private notes yet.</div></div>'}`;
 
-function openNote(){
-  clearErr('nt_err');
-  $('nt_type').value = 'note';
-  $('nt_subject').value = '';
-  $('nt_body').value = '';
-  $('nt_milestone').checked = false;
-  dlgNote.showModal();
-}
-
-async function saveNote(){
-  clearErr('nt_err');
-  const body = txt($('nt_body').value);
-  if (!body){
-    showErr('nt_err', { message: 'Body is required.' });
-    return;
-  }
-  const btn = $('nt_save'); btn.disabled = true;
-
-  const ok = await logEvent({
-    event_type:   $('nt_type').value,
-    subject:      txt($('nt_subject').value),
-    body:         body,
-    is_milestone: $('nt_milestone').checked
+  $$('#tab-notes button[data-pv]').forEach(b => {
+    b.addEventListener('click', () => openPrivate(b.dataset.pv));
   });
+}
 
+function openPrivate(id){
+  clearErr('pv_err');
+  const n = id ? PRIVATE_NOTES.find(x => x.id === id) : null;
+  $('pv_id').value = n ? n.id : '';
+  $('pv_title').textContent = n ? 'Edit Private Note' : 'Private Note';
+  $('pv_delbtn').classList.toggle('hide', !n);
+  $('pv_body').value = n ? (n.body || '') : '';
+  $('pv_pinned').checked = n ? !!n.pinned : false;
+  dlgPrivate.showModal();
+}
+
+async function savePrivate(){
+  clearErr('pv_err');
+  const body = txt($('pv_body').value);
+  if (!body){ showErr('pv_err', { message: 'Note is required.' }); return; }
+  const btn = $('pv_save'); btn.disabled = true;
+
+  const id = txt($('pv_id').value);
+  const row = { body, pinned: $('pv_pinned').checked, updated_at: new Date().toISOString() };
+
+  let error = null;
+  if (id){
+    const r = await db.from('load_private_notes').update(row).eq('id', id);
+    error = r.error;
+  } else {
+    row.tenant_id  = TENANT_ID;
+    row.load_id    = LOAD_ID;
+    row.created_by = APP_USER_ID;
+    const r = await db.from('load_private_notes').insert(row);
+    error = r.error;
+  }
   btn.disabled = false;
-  if (!ok){ showErr('nt_err', { message: 'Save failed — see console.' }); return; }
+  if (error){ showErr('pv_err', error); return; }
 
-  dlgNote.close();
-  toast('Note saved');
+  dlgPrivate.close();
+  toast(id ? 'Note updated' : 'Note saved');
   await refreshAll();
 }
+
+async function deletePrivate(){
+  const id = txt($('pv_id').value);
+  if (!id) return;
+  if (!confirm('Delete this private note?')) return;
+  const { error } = await db.from('load_private_notes').delete().eq('id', id);
+  if (error){ showErr('pv_err', error); return; }
+  dlgPrivate.close();
+  toast('Note deleted');
+  await refreshAll();
+}
+
 
 /* ============================================================
    WIRE UP + START
