@@ -1805,49 +1805,154 @@ async function es_delete(){
 /* ============================================================
    CHECKLIST
    ============================================================ */
+const CHECKLIST_TEMPLATE = [
+  { phase:'Booking',       item:'Rate con signed' },
+  { phase:'Booking',       item:'Carrier packet on file' },
+  { phase:'Booking',       item:'Insurance verified' },
+  { phase:'Permits',       item:'All permits applied' },
+  { phase:'Permits',       item:'All permits issued' },
+  { phase:'Permits',       item:'Permits sent to driver' },
+  { phase:'Route',         item:'Route survey ordered' },
+  { phase:'Route',         item:'Route survey complete' },
+  { phase:'Route',         item:'Restrictions briefed to driver' },
+  { phase:'Escorts',       item:'Escorts booked' },
+  { phase:'Escorts',       item:'Escorts confirmed day-before' },
+  { phase:'Pre-departure', item:'Driver dispatched' },
+  { phase:'Pre-departure', item:'Banners/flags on' },
+  { phase:'Pre-departure', item:'Lights/rotator working' },
+  { phase:'Pre-departure', item:'Load secured (tarps/straps/chains)' },
+  { phase:'Pre-departure', item:'Permits in cab' },
+  { phase:'In-transit',    item:'Daily check-in' },
+  { phase:'In-transit',    item:'Delivery appointment confirmed' },
+  { phase:'Delivery',      item:'POD received' },
+  { phase:'Delivery',      item:'Detention/delays noted' },
+  { phase:'Delivery',      item:'Invoice sent' }
+];
+const PHASE_ORDER = ['Booking','Permits','Route','Escorts','Pre-departure','In-transit','Delivery','Other'];
+
 function drawChecklist(){
+  const head = `
+    <div class="sechead"><h2>Pre-Trip Checklist</h2>
+      <span class="pill ${CHECKLIST.length && CHECKLIST.every(c=>c.done_at||c.not_applicable) ? 'ok':'warn'}">
+        ${CHECKLIST.filter(c=>c.done_at||c.not_applicable).length} / ${CHECKLIST.length}</span>
+      <span class="spacer"></span>
+      ${CHECKLIST.length ? '' : '<button class="primary sm" onclick="seedChecklist()">Apply standard checklist</button>'}
+      <button class="sm" onclick="openChkItem()">+ Add item</button>
+    </div>`;
+
   if (!CHECKLIST.length){
-    $('tab-checklist').innerHTML =
-      '<div class="card"><div class="empty">No checklist items for this load.</div></div>';
+    $('tab-checklist').innerHTML = head +
+      '<div class="card"><div class="empty">No checklist yet. Click “Apply standard checklist” to start.</div></div>';
     return;
   }
 
-  const rows = CHECKLIST.map(c => {
-    const done = !!pick(c, CL.done);
-    return `<tr>
-      <td style="width:36px"><input type="checkbox" data-cl="${esc(c.id)}" ${done ? 'checked' : ''}></td>
-      <td style="${done ? 'text-decoration:line-through;color:var(--muted)' : 'font-weight:600'}">
-        ${esc(pick(c, CL.label) || '(untitled)')}</td>
-      <td>${esc(titleize(pick(c, CL.category)) || '—')}</td>
-      <td class="small muted">${esc(pick(c, CL.notes) || '')}</td>
-      <td class="small muted">${done ? esc(fmtDT(pick(c, CL.doneAt))) : ''}</td>
-    </tr>`;
+  // group by phase in defined order
+  const groups = {};
+  CHECKLIST.forEach(c => { const p = c.phase || 'Other'; (groups[p] = groups[p] || []).push(c); });
+  const orderedPhases = PHASE_ORDER.filter(p => groups[p])
+    .concat(Object.keys(groups).filter(p => !PHASE_ORDER.includes(p)));
+
+  const sections = orderedPhases.map(phase => {
+    const rows = groups[phase]
+      .sort((a,b) => (a.seq||0) - (b.seq||0))
+      .map(c => {
+        const done = !!c.done_at, na = !!c.not_applicable;
+        const label = na ? `<span style="color:var(--muted)">${esc(c.item||'(untitled)')} <span class="small">(N/A)</span></span>`
+                    : done ? `<span style="text-decoration:line-through;color:var(--muted)">${esc(c.item||'(untitled)')}</span>`
+                    : `<span style="font-weight:600">${esc(c.item||'(untitled)')}</span>`;
+        return `<tr>
+          <td style="width:34px"><input type="checkbox" data-cl="${esc(c.id)}" ${done?'checked':''} ${na?'disabled':''}></td>
+          <td>${label}${c.note ? `<div class="small muted">${esc(c.note)}</div>`:''}</td>
+          <td style="width:60px;text-align:center">
+            <button class="ghost sm" data-na="${esc(c.id)}" title="Toggle N/A"
+              style="${na?'color:var(--accent)':''}">N/A</button></td>
+          <td style="width:40px;text-align:center">
+            <button class="ghost sm" data-del="${esc(c.id)}" title="Remove">×</button></td>
+        </tr>`;
+      }).join('');
+    return `<tr><td colspan="4" style="background:#f7f8fa;font-size:11px;text-transform:uppercase;
+      letter-spacing:.5px;font-weight:700;color:var(--muted);padding:8px 10px">${esc(phase)}</td></tr>${rows}`;
   }).join('');
 
-  const done = CHECKLIST.filter(c => !!pick(c, CL.done)).length;
-
-  $('tab-checklist').innerHTML = `
-    <div class="sechead"><h2>Pre-Trip Checklist</h2>
-      <span class="pill ${done === CHECKLIST.length ? 'ok' : 'warn'}">${done} / ${CHECKLIST.length}</span></div>
+  $('tab-checklist').innerHTML = head + `
     <div class="tablewrap"><table>
-      <thead><tr><th></th><th>Item</th><th>Category</th><th>Notes</th><th>Completed</th></tr></thead>
-      <tbody>${rows}</tbody>
+      <thead><tr><th></th><th>Item</th><th style="text-align:center">N/A</th><th></th></tr></thead>
+      <tbody>${sections}</tbody>
     </table></div>`;
 
-  $$('#tab-checklist input[data-cl]').forEach(cb => {
-    cb.addEventListener('change', () => toggleChecklist(cb.dataset.cl, cb.checked));
-  });
+  $$('#tab-checklist input[data-cl]').forEach(cb =>
+    cb.addEventListener('change', () => toggleChecklist(cb.dataset.cl, cb.checked)));
+  $$('#tab-checklist button[data-na]').forEach(b =>
+    b.addEventListener('click', () => toggleChecklistNA(b.dataset.na)));
+  $$('#tab-checklist button[data-del]').forEach(b =>
+    b.addEventListener('click', () => deleteChecklistItem(b.dataset.del)));
 }
 
 async function toggleChecklist(id, checked){
   const patch = { done_at: checked ? new Date().toISOString() : null };
+  if (checked) patch.not_applicable = false;   // checking clears N/A
 
   const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
   if (error){ fail('toggleChecklist', error); return; }
+  await fetchChecklist(); drawCounts(); drawChecklist();
+}
 
-  await fetchChecklist();
-  drawCounts();
-  drawChecklist();
+  async function seedChecklist(){
+  const rows = CHECKLIST_TEMPLATE.map((t, i) => ({
+    tenant_id: TENANT_ID,
+    load_id:   LOAD_ID,
+    phase:     t.phase,
+    seq:       (i + 1) * 10,
+    item:      t.item
+  }));
+  const { error } = await db.from('load_checklist_items').insert(rows);
+  if (error){ fail('seedChecklist', error); return; }
+  toast('Standard checklist added');
+  await fetchChecklist(); drawCounts(); drawChecklist();
+}
+
+async function toggleChecklistNA(id){
+  const item = CHECKLIST.find(c => c.id === id);
+  const patch = { not_applicable: !item.not_applicable };
+  if (patch.not_applicable) patch.done_at = null; // N/A clears done
+  const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
+  if (error){ fail('toggleChecklistNA', error); return; }
+  await fetchChecklist(); drawCounts(); drawChecklist();
+}
+
+function openChkItem(){
+  clearErr('ck_err');
+  $('ck_phase').value = 'Pre-departure';
+  $('ck_item').value = '';
+  dlgChkItem.showModal();
+}
+
+async function saveChkItem(){
+  clearErr('ck_err');
+  const item = txt($('ck_item').value);
+  if (!item){ showErr('ck_err', { message: 'Item text is required.' }); return; }
+  const btn = $('ck_save'); btn.disabled = true;
+
+  const maxSeq = CHECKLIST.reduce((m,c) => Math.max(m, c.seq||0), 0);
+  const { error } = await db.from('load_checklist_items').insert({
+    tenant_id: TENANT_ID,
+    load_id:   LOAD_ID,
+    phase:     $('ck_phase').value,
+    seq:       maxSeq + 10,
+    item
+  });
+  btn.disabled = false;
+  if (error){ showErr('ck_err', error); return; }
+  dlgChkItem.close();
+  toast('Item added');
+  await fetchChecklist(); drawCounts(); drawChecklist();
+}
+
+async function deleteChecklistItem(id){
+  if (!confirm('Remove this checklist item?')) return;
+  const { error } = await db.from('load_checklist_items').delete().eq('id', id);
+  if (error){ fail('deleteChecklistItem', error); return; }
+  await fetchChecklist(); drawCounts(); drawChecklist();
 }
 
 /* ============================================================
@@ -2111,7 +2216,8 @@ $('nt_save').addEventListener('click', saveNote);
 
 $('pv_save').addEventListener('click', savePrivate);
 $('pv_delbtn').addEventListener('click', deletePrivate);
-  
+
+$('ck_save').addEventListener('click', saveChkItem);  
 boot();
 </script>
 </body>
