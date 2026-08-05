@@ -871,6 +871,14 @@ async function fetchChecklist(){
   if (error){ console.warn('checklist', error); CHECKLIST = []; return; }
   CHECKLIST = data || [];
 }
+  async function fetchPrivateNotes(){
+  const { data, error } = await db.from('load_private_notes').select('*')
+    .eq('load_id', LOAD_ID)
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error){ console.warn('private notes', error); PRIVATE_NOTES = []; return; }
+  PRIVATE_NOTES = data || [];
+}
 
 /* ---------- TABS ---------- */
 function switchTab(name){
