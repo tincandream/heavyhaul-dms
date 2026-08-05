@@ -89,7 +89,7 @@
           grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
   .full { grid-column:1/-1; }
   dialog { border:1px solid var(--line); border-radius:12px; padding:20px;
-           max-width:460px; width:92%; }
+           max-width:520px; width:92%; }
   dialog::backdrop { background:rgba(0,0,0,.35); }
   dialog h3 { margin:0 0 14px; font-size:15px; }
   .msg { margin-top:11px; padding:9px 12px; border-radius:7px; font-size:13px;
@@ -97,6 +97,12 @@
   .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
   .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
   .empty { color:var(--muted); font-size:13px; padding:8px 0; }
+  .addrow { display:flex; justify-content:flex-end; margin-bottom:12px; }
+  .rowclick { cursor:pointer; }
+  .rowclick:hover { background:#faf9f6; }
+  .cbrow label { display:inline-flex; align-items:center; gap:5px; font-size:13px;
+                 color:var(--ink); margin-right:14px; }
+  .cbrow input { width:auto; }
 </style>
 </head>
 <body>
@@ -150,18 +156,20 @@
     <div class="card"><h2>Full history</h2><div class="tl" id="timeline"></div></div>
   </div>
 
-<div class="panel" id="p-permits">
+  <div class="panel" id="p-permits">
     <div class="card">
       <h2>Permits by state</h2>
-      <div class="btnrow" style="margin-bottom:12px">
-        <button class="pri" onclick="openPermit()">Add permit</button>
-      </div>
+      <div class="addrow"><button class="pri" onclick="openPermit()">Add permit</button></div>
       <div id="permits"></div>
     </div>
   </div>
 
   <div class="panel" id="p-escorts">
-    <div class="card"><h2>Escort assignments</h2><div id="escorts"></div></div>
+    <div class="card">
+      <h2>Escort assignments</h2>
+      <div class="addrow"><button class="pri" onclick="openEscort()">Add escort</button></div>
+      <div id="escorts"></div>
+    </div>
   </div>
 
   <div class="panel" id="p-checklist">
@@ -169,10 +177,7 @@
   </div>
 
   <div class="panel" id="p-expenses">
-    <div class="card">
-      <h2>Margin</h2>
-      <div class="info" id="margin"></div>
-    </div>
+    <div class="card"><h2>Margin</h2><div class="info" id="margin"></div></div>
     <div class="card">
       <h2>Record a charge</h2>
       <div class="grid">
@@ -210,10 +215,7 @@
       <button class="pri" id="ch_save" style="margin-top:12px">Add charge</button>
       <div class="msg" id="ch_msg"></div>
     </div>
-    <div class="card">
-      <h2>Charges on this load</h2>
-      <div id="charges"></div>
-    </div>
+    <div class="card"><h2>Charges on this load</h2><div id="charges"></div></div>
   </div>
 
   <div class="panel" id="p-notes">
@@ -229,8 +231,7 @@
 <dialog id="dlg_ci">
   <h3>Log a check-in</h3>
   <div class="grid">
-    <div class="full"><label>Location</label>
-      <input id="ci_loc" placeholder="Salina, KS"></div>
+    <div class="full"><label>Location</label><input id="ci_loc" placeholder="Salina, KS"></div>
     <div><label>State</label><input id="ci_st" maxlength="2"></div>
     <div><label>ETA</label><input id="ci_eta" type="datetime-local"></div>
     <div><label>Hours remaining</label><input id="ci_h" type="number" step="0.5"></div>
@@ -248,6 +249,34 @@
     <button onclick="document.getElementById('dlg_ci').close()">Cancel</button>
   </div>
   <div class="msg" id="ci_msg"></div>
+</dialog>
+
+<dialog id="dlg_hold">
+  <h3>Put this load on hold</h3>
+  <div class="grid">
+    <div class="full"><label>Reason</label>
+      <select id="h_reason">
+        <option value="breakdown">Mechanical breakdown</option>
+        <option value="awaiting_permits">Awaiting permits</option>
+        <option value="awaiting_escort">Awaiting escort</option>
+        <option value="weather">Weather</option>
+        <option value="traffic">Traffic</option>
+        <option value="road_closure">Road closure</option>
+        <option value="hos_shutdown">HOS shutdown</option>
+        <option value="detention_shipper">Detention at shipper</option>
+        <option value="detention_receiver">Detention at receiver</option>
+        <option value="curfew">Curfew</option>
+        <option value="holiday_restriction">Holiday restriction</option>
+        <option value="other">Other</option>
+      </select></div>
+    <div class="full"><label>What's happening</label><textarea id="h_note"></textarea></div>
+    <div class="full"><label>Expected to clear</label><input id="h_clear" type="datetime-local"></div>
+  </div>
+  <div class="btnrow" style="margin-top:14px">
+    <button class="dgr" id="h_save">Put on hold</button>
+    <button onclick="document.getElementById('dlg_hold').close()">Cancel</button>
+  </div>
+  <div class="msg" id="h_msg"></div>
 </dialog>
 
 <dialog id="dlg_permit">
@@ -278,60 +307,77 @@
       <option value="true">Yes</option></select></div>
   </div>
   <div style="margin-top:12px">
-    <label style="margin-bottom:6px">Escorts this permit requires</label>
-    <div class="btnrow">
-      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ef" style="width:auto"> Front</label>
-      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_er" style="width:auto"> Rear</label>
-      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ehp" style="width:auto"> High pole</label>
-      <label style="font-size:13px;color:var(--ink)"><input type="checkbox" id="pm_ep" style="width:auto"> Police</label>
+    <label>Escorts this permit requires</label>
+    <div class="cbrow">
+      <label><input type="checkbox" id="pm_ef"> Front</label>
+      <label><input type="checkbox" id="pm_er"> Rear</label>
+      <label><input type="checkbox" id="pm_ehp"> High pole</label>
+      <label><input type="checkbox" id="pm_ep"> Police</label>
     </div>
   </div>
-  <div class="full" style="margin-top:12px"><label>Notes</label><textarea id="pm_notes"></textarea></div>
+  <div style="margin-top:12px"><label>Notes</label><textarea id="pm_notes"></textarea></div>
   <div class="btnrow" style="margin-top:14px">
     <button class="pri" id="pm_save">Save permit</button>
     <button onclick="document.getElementById('dlg_permit').close()">Cancel</button>
   </div>
   <div class="msg" id="pm_msg"></div>
 </dialog>
-  
-<dialog id="dlg_hold">
-  <h3>Put this load on hold</h3>
+
+<dialog id="dlg_escort">
+  <h3 id="es_title">Escort</h3>
+  <input type="hidden" id="es_id">
   <div class="grid">
-    <div class="full"><label>Reason</label>
-      <select id="h_reason">
-        <option value="breakdown">Mechanical breakdown</option>
-        <option value="awaiting_permits">Awaiting permits</option>
-        <option value="awaiting_escort">Awaiting escort</option>
-        <option value="weather">Weather</option>
-        <option value="traffic">Traffic</option>
-        <option value="road_closure">Road closure</option>
-        <option value="hos_shutdown">HOS shutdown</option>
-        <option value="detention_shipper">Detention at shipper</option>
-        <option value="detention_receiver">Detention at receiver</option>
-        <option value="curfew">Curfew</option>
-        <option value="holiday_restriction">Holiday restriction</option>
-        <option value="other">Other</option>
+    <div><label>Role</label>
+      <select id="es_role">
+        <option value="front">Front</option>
+        <option value="rear">Rear</option>
+        <option value="high_pole">High pole</option>
+        <option value="police">Police</option>
+        <option value="steer">Steer</option>
       </select></div>
-    <div class="full"><label>What's happening</label>
-      <textarea id="h_note"></textarea></div>
-    <div class="full"><label>Expected to clear</label>
-      <input id="h_clear" type="datetime-local"></div>
+    <div><label>Status</label>
+      <select id="es_status">
+        <option value="needed">Needed</option>
+        <option value="quoted">Quoted</option>
+        <option value="booked">Booked</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="en_route">En route</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="no_show">No show</option>
+      </select></div>
+    <div class="full"><label>Company</label><input id="es_company"></div>
+    <div><label>Escort driver name</label><input id="es_dname"></div>
+    <div><label>Escort driver phone</label><input id="es_dphone"></div>
+    <div class="full"><label>Meeting location</label><input id="es_mloc"></div>
+    <div><label>Meeting time</label><input id="es_mtime" type="datetime-local"></div>
+    <div><label>Quoted rate</label><input id="es_quoted" type="number" step="0.01"></div>
+    <div><label>Confirmed rate</label><input id="es_confirmed" type="number" step="0.01"></div>
+    <div><label>Actual cost</label><input id="es_actual" type="number" step="0.01"></div>
+    <div><label>Contacts exchanged</label>
+      <select id="es_contacts"><option value="false">No</option>
+      <option value="true">Yes</option></select></div>
+    <div><label>Confirmed day before</label>
+      <select id="es_dayb"><option value="false">No</option>
+      <option value="true">Yes</option></select></div>
   </div>
+  <div style="margin-top:12px"><label>Notes</label><textarea id="es_notes"></textarea></div>
   <div class="btnrow" style="margin-top:14px">
-    <button class="dgr" id="h_save">Put on hold</button>
-    <button onclick="document.getElementById('dlg_hold').close()">Cancel</button>
+    <button class="pri" id="es_save">Save escort</button>
+    <button onclick="document.getElementById('dlg_escort').close()">Cancel</button>
   </div>
-  <div class="msg" id="h_msg"></div>
+  <div class="msg" id="es_msg"></div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="nav.js"></script>
 <script>
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+const SUPABASE_ANON_KEY = 'PASTE-YOUR-ANON-KEY-HERE';
 
 const $ = id => document.getElementById(id);
 let db=null, tenant=null, loadId=null, L=null, me=null;
+let PERMITS=[], ESCORTS=[];
 
 const FLOW = {
   quoted:['booked'], booked:['permits_pending','dispatched'],
@@ -366,7 +412,7 @@ if (typeof window.supabase === 'undefined') {
 } else if (SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
   $('hero').innerHTML = '<div class="flag">Fill in SUPABASE_ANON_KEY.</div>';
 } else if (!loadId) {
-  $('hero').innerHTML = '<div class="flag">No load specified. Open this page by clicking a row on the Fleet Board.</div>';
+  $('hero').innerHTML = '<div class="flag">No load specified. Open this page from the Fleet Board or All Loads.</div>';
 } else {
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   start();
@@ -400,7 +446,7 @@ async function refresh(){
   L = d;
   drawHero(); drawActions(); drawInfo();
   await Promise.all([drawRoute(), drawTimeline(), drawPermits(),
-                     drawEscorts(), drawChecklist, drawExpenses()]);
+                     drawEscorts(), drawChecklist(), drawExpenses()]);
   $('lnotes').value = L.notes || '';
   $('acts').style.display=''; $('tabs').style.display='';
 }
@@ -468,378 +514,6 @@ function drawActions(){
        'text-decoration:none;font-size:13px;align-self:center">← Fleet Board</a></div>';
   $('acts').innerHTML = h;
 }
-
-function drawInfo(){
-  const f = (label, v) => '<div><span>'+label+'</span><b>'+(v||'—')+'</b></div>';
-  const loc = x => x ? esc(x.name)+' ('+esc(x.city||'')+', '+esc(x.state||'')+')' : '—';
-  $('info').innerHTML =
-    f('Carrier', L.carriers ? esc(L.carriers.legal_name) : null) +
-    f('Broker', L.brokers ? esc(L.brokers.name) : null) +
-    f('Broker load #', esc(L.broker_load_number)) +
-    f('Driver', L.drivers ? esc(L.drivers.first_name+' '+L.drivers.last_name) : null) +
-    f('Driver phone', L.drivers ? esc(L.drivers.phone) : null) +
-    f('Truck', L.tractor ? esc(L.tractor.unit_number) : null) +
-    f('Trailer', L.trailer ? esc(L.trailer.unit_number)+' ('+pretty(L.trailer.equipment_type)+')' : null) +
-    f('Origin', loc(L.origin)) +
-    f('Destination', loc(L.dest)) +
-    f('Pickup appt', when(L.pickup_appt_start)) +
-    f('Delivery appt', when(L.delivery_appt_start)) +
-    f('Current ETA', when(L.current_eta)) +
-    f('Rate', money(L.linehaul_rate)) +
-    f('Fuel surcharge', money(L.fuel_surcharge)) +
-    f('Miles', L.total_miles) +
-    f('Rate per mile', L.rate_per_mile ? '$'+L.rate_per_mile : null) +
-    f('Permits handled by', pretty(L.permit_responsibility)) +
-    f('Permit contact', [L.permit_contact_name, L.permit_contact_phone]
-        .filter(Boolean).map(esc).join(' · ')) +
-    f('Escorts handled by', pretty(L.escort_responsibility)) +
-    f('Escort contact', [L.escort_contact_name, L.escort_contact_phone]
-        .filter(Boolean).map(esc).join(' · ')) +
-    f('Detention', L.detention_free_hours
-        ? L.detention_free_hours+'h free, '+money(L.detention_rate_per_hour)+'/h' : null) +
-    f('Customer ref', esc(L.customer_reference)) +
-    f('PO', esc(L.purchase_order));
-}
-
-async function drawRoute(){
-  const r = await db.from('load_legs').select('*').eq('load_id',loadId).order('seq');
-  const legs = r.data || [];
-  $('route').innerHTML = legs.length
-    ? '<table><thead><tr><th>#</th><th>State</th><th>Miles</th>'+
-      '<th>Planned entry</th></tr></thead><tbody>'+
-      legs.map(x=>'<tr><td>'+x.seq+'</td><td><b>'+x.state+'</b></td>'+
-        '<td>'+(x.miles||'—')+'</td><td>'+(x.planned_entry_date||'—')+'</td></tr>').join('')+
-      '</tbody></table>'
-    : '<div class="empty">No route states set on this load.</div>';
-}
-
-async function drawTimeline(){
-  const r = await db.from('events').select('*').eq('load_id',loadId)
-    .order('occurred_at',{ascending:false}).limit(100);
-  const ev = r.data || [];
-  $('ct-tl').textContent = ev.length ? ' '+ev.length : '';
-  const render = list => list.length ? list.map(x => {
-    const head = x.event_type === 'status_change'
-      ? esc(x.body || '')
-      : esc(x.subject || '');
-    const showBody = x.event_type !== 'status_change' && x.body;
-    return '<div class="ev'+(x.is_milestone?' mile':'')+'">'+
-      '<div class="t">'+when(x.occurred_at)+' · '+pretty(x.event_type)+'</div>'+
-      '<div class="s">'+head+'</div>'+
-      (showBody ? '<div class="b">'+esc(x.body)+'</div>' : '')+
-      '</div>';
-  }).join('') : '<div class="empty">Nothing logged yet.</div>';
-  $('timeline').innerHTML = render(ev);
-  $('recent').innerHTML = '<div class="tl">'+render(ev.slice(0,5))+'</div>';
-}
-
-let PERMITS = [];
-async function drawPermits(){
-  const r = await db.from('permits').select('*').eq('load_id',loadId).order('state');
-  PERMITS = r.data || [];
-  $('ct-pm').textContent = PERMITS.length ? ' '+PERMITS.filter(x=>x.status==='issued').length+'/'+PERMITS.length : '';
-  $('permits').innerHTML = PERMITS.length
-    ? '<table><thead><tr><th>State</th><th>Status</th><th>Number</th>'+
-      '<th>Valid</th><th>Escorts</th><th>Driver has it</th><th>Fee</th></tr></thead><tbody>'+
-      PERMITS.map(x=>{
-        const need = [x.escort_front&&'front', x.escort_rear&&'rear',
-                      x.escort_high_pole&&'high pole', x.escort_police&&'police']
-                     .filter(Boolean).join(', ') || '—';
-        const fee = (Number(x.fee)||0)+(Number(x.service_fee)||0);
-        return '<tr style="cursor:pointer" onclick="openPermit(\''+x.id+'\')">'+
-          '<td><b>'+esc(x.state)+'</b></td>'+
-          '<td><span class="pill '+(x.status==='issued'?'p-grn':
-            x.status==='rejected'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
-          '<td>'+(x.permit_number||'—')+'</td>'+
-          '<td>'+(x.valid_from?x.valid_from+' → '+(x.valid_to||'?'):'—')+'</td>'+
-          '<td>'+need+'</td>'+
-          '<td>'+(x.driver_has_permit?'Yes':'No')+'</td>'+
-          '<td>'+(fee?money(fee):'—')+'</td></tr>';
-      }).join('')+'</tbody></table>'
-    : '<div class="empty">No permits yet. Use Add permit, or enter state rules so '+
-      'they generate automatically.</div>';
-}
-
-function openPermit(id){
-  const p = id ? PERMITS.find(x=>x.id===id) : null;
-  $('pm_title').textContent = p ? 'Edit permit — '+p.state : 'Add permit';
-  $('pm_id').value = p ? p.id : '';
-  $('pm_state').value = p ? (p.state||'') : '';
-  $('pm_status').value = p ? p.status : 'needed';
-  $('pm_number').value = p ? (p.permit_number||'') : '';
-  $('pm_auth').value = p ? (p.issuing_authority||'') : '';
-  $('pm_from').value = p ? (p.valid_from||'') : '';
-  $('pm_to').value = p ? (p.valid_to||'') : '';
-  $('pm_fee').value = p ? (p.fee ?? '') : '';
-  $('pm_svc').value = p ? (p.service_fee ?? '') : '';
-  $('pm_driver').value = p ? String(!!p.driver_has_permit) : 'false';
-  $('pm_ef').checked = p ? !!p.escort_front : false;
-  $('pm_er').checked = p ? !!p.escort_rear : false;
-  $('pm_ehp').checked = p ? !!p.escort_high_pole : false;
-  $('pm_ep').checked = p ? !!p.escort_police : false;
-  $('pm_notes').value = p ? (p.notes||'') : '';
-  $('dlg_permit').showModal();
-}
-
-$('pm_save').addEventListener('click', async () => {
-  if (!val('pm_state')) { say('pm_msg','State is required.','err'); return; }
-  const id = val('pm_id');
-  const rec = {
-    tenant_id: tenant, load_id: loadId,
-    state: val('pm_state').toUpperCase(),
-    status: $('pm_status').value,
-    permit_number: val('pm_number'),
-    issuing_authority: val('pm_auth'),
-    valid_from: val('pm_from') || null,
-    valid_to: val('pm_to') || null,
-    fee: val('pm_fee') ? Number(val('pm_fee')) : null,
-    service_fee: val('pm_svc') ? Number(val('pm_svc')) : null,
-    driver_has_permit: $('pm_driver').value==='true',
-    issued_at: $('pm_status').value==='issued' ? new Date().toISOString() : null,
-    escort_front: $('pm_ef').checked, escort_rear: $('pm_er').checked,
-    escort_high_pole: $('pm_ehp').checked, escort_police: $('pm_ep').checked,
-    notes: val('pm_notes')
-  };
-  const wasIssued = id ? PERMITS.find(x=>x.id===id)?.status==='issued' : false;
-  const r = id
-    ? await db.from('permits').update(rec).eq('id', id)
-    : await db.from('permits').insert(rec);
-  if (r.error) { say('pm_msg', r.error.message, 'err'); return; }
-
-  if ($('pm_status').value==='issued' && !wasIssued) {
-    await db.from('events').insert({
-      tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-      event_type:'permit_approved', direction:'internal', is_milestone:true, user_id: me,
-      subject: val('pm_state').toUpperCase()+' permit issued',
-      body: val('pm_number') ? 'Permit #'+val('pm_number') : null
-    });
-  }
-  $('dlg_permit').close();
-  drawPermits(); drawExpenses(); drawHero();
-});
-
-async function drawEscorts(){
-  const r = await db.from('escort_assignments').select('*')
-    .eq('load_id',loadId).order('role');
-  const e = r.data || [];
-  $('ct-es').textContent = e.length
-    ? ' '+e.filter(x=>['confirmed','en_route','completed'].includes(x.status)).length+'/'+e.length : '';
-  $('escorts').innerHTML = e.length
-    ? '<table><thead><tr><th>Role</th><th>Status</th><th>Escort driver</th>'+
-      '<th>Meeting</th><th>Contacts swapped</th></tr></thead><tbody>'+
-      e.map(x=>'<tr><td><b>'+pretty(x.role)+'</b></td>'+
-        '<td><span class="pill '+(['confirmed','en_route','completed'].includes(x.status)
-          ?'p-grn':x.status==='needed'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
-        '<td>'+([x.driver_name,x.driver_phone].filter(Boolean).map(esc).join(' · ')||'—')+'</td>'+
-        '<td>'+(x.meeting_location?esc(x.meeting_location):'—')+
-          (x.meeting_time?'<div class="t">'+when(x.meeting_time)+'</div>':'')+'</td>'+
-        '<td>'+(x.contacts_exchanged?'Yes':'No')+'</td></tr>').join('')+'</tbody></table>'
-    : '<div class="empty">No escorts required, or none generated yet.</div>';
-}
-
-async function drawChecklist(){
-  const r = await db.from('load_checklist_items').select('*')
-    .eq('load_id',loadId).order('phase').order('seq');
-  const items = r.data || [];
-  $('ct-ck').textContent = items.length
-    ? ' '+items.filter(x=>x.done_at||x.not_applicable).length+'/'+items.length : '';
-  if (!items.length) {
-    $('checklist').innerHTML = '<div class="empty">No checklist for this load. '+
-      '<button onclick="genChecklist()" style="margin-left:8px">Generate now</button></div>';
-    return;
-  }
-  const order = ['before_booking','before_dispatch','before_pickup','en_route',
-                 'before_delivery','after_delivery','oversize'];
-  let h = '';
-  order.forEach(ph => {
-    const list = items.filter(x=>x.phase===ph);
-    if (!list.length) return;
-    h += '<div class="phase">'+pretty(ph)+'</div>';
-    list.forEach(x => {
-      const isDone = !!(x.done_at || x.not_applicable);
-      h += '<div class="ck'+(isDone?' done':'')+'">'+
-        '<input type="checkbox" '+(isDone?'checked':'')+
-        ' onchange="toggleCk(\''+x.id+'\', this.checked)">'+
-        '<label>'+esc(x.item)+'</label></div>';
-    });
-  });
-  $('checklist').innerHTML = h;
-}
-
-async function genChecklist(){
-  await db.rpc('generate_load_checklist', { p_load_id: loadId });
-  drawChecklist();
-}
-
-async function toggleCk(id, on){
-  await db.from('load_checklist_items').update({
-    done_at: on ? new Date().toISOString() : null,
-    done_by: on ? me : null
-  }).eq('id', id);
-  drawChecklist();
-}
-
-async function setStatus(s){
-  const r = await db.from('loads').update({ status: s }).eq('id', loadId);
-  if (r.error) { alert(r.error.message); return; }
-  refresh();
-}
-
-function openCheckIn(){
-  $('ci_loc').value = L.current_location_text || '';
-  $('ci_st').value = L.current_state || '';
-  $('dlg_ci').showModal();
-}
-
-$('ci_save').addEventListener('click', async () => {
-  const hrs = val('ci_h');
-  const r = await db.from('check_ins').insert({
-    tenant_id: tenant, load_id: loadId, driver_id: L.driver_id,
-    location_text: val('ci_loc'),
-    state: val('ci_st') ? val('ci_st').toUpperCase() : null,
-    eta: val('ci_eta') || null,
-    hos_remaining_min: hrs ? Math.round(Number(hrs)*60) : null,
-    source: $('ci_src').value, note: val('ci_note'), created_by: me
-  });
-  if (r.error) { say('ci_msg', r.error.message, 'err'); return; }
-  $('dlg_ci').close();
-  ['ci_eta','ci_h','ci_note'].forEach(i=>$(i).value='');
-  refresh();
-});
-
-$('h_save').addEventListener('click', async () => {
-  const r = await db.from('loads').update({
-    hold_reason: $('h_reason').value,
-    hold_since: new Date().toISOString(),
-    hold_note: val('h_note'),
-    hold_expected_clear_at: val('h_clear') || null
-  }).eq('id', loadId);
-  if (r.error) { say('h_msg', r.error.message, 'err'); return; }
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'hold_started', direction:'internal', is_milestone:true, user_id: me,
-    subject:'On hold — '+pretty($('h_reason').value), body: val('h_note')
-  });
-  $('dlg_hold').close();
-  $('h_note').value=''; $('h_clear').value='';
-  refresh();
-});
-
-async function clearHold(){
-  const was = L.hold_reason;
-  const r = await db.from('loads').update({
-    hold_reason:null, hold_since:null, hold_note:null, hold_expected_clear_at:null
-  }).eq('id', loadId);
-  if (r.error) { alert(r.error.message); return; }
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'hold_cleared', direction:'internal', is_milestone:true, user_id: me,
-    subject:'Hold cleared', body: pretty(was)+' resolved, resuming '+pretty(L.status)
-  });
-  refresh();
-}
-
-$('note_save').addEventListener('click', async () => {
-  if (!val('note_body')) { say('note_msg','Write something first.','err'); return; }
-  const r = await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type: $('note_type').value, direction: $('note_dir').value,
-    is_manual:true, user_id: me,
-    subject: pretty($('note_type').value), body: val('note_body')
-  });
-  if (r.error) { say('note_msg', r.error.message, 'err'); return; }
-  $('note_body').value='';
-  say('note_msg','Added.','ok');
-  drawTimeline();
-});
-
-$('notes_save').addEventListener('click', async () => {
-  const r = await db.from('loads').update({ notes: $('lnotes').value }).eq('id', loadId);
-  if (r.error) { say('notes_msg', r.error.message, 'err'); return; }
-  say('notes_msg','Saved.','ok');
-});
-
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on');
-    $('p-'+t.dataset.p).classList.add('on');
-  });
-});
-
-  async function drawExpenses(){
-  const m = await db.from('v_load_margin').select('*').eq('load_id',loadId).single();
-  if (!m.error && m.data) {
-    const rev = Number(m.data.total_revenue)||0;
-    const cost = Number(m.data.total_cost)||0;
-    const net = rev - cost;
-    const pct = rev ? Math.round(net/rev*100) : 0;
-    const f = (label, v, cls) => '<div><span>'+label+'</span><b'+
-      (cls?' style="color:'+cls+'"':'')+'>'+v+'</b></div>';
-    $('margin').innerHTML =
-      f('Revenue', money(rev)) +
-      f('Cost', money(cost)) +
-      f('Net margin', money(net), net>=0?'var(--ok)':'var(--danger)') +
-      f('Margin %', pct+'%', net>=0?'var(--ok)':'var(--danger)');
-  }
-
-  const r = await db.from('load_charges').select('*')
-    .eq('load_id',loadId).order('incurred_on',{nullsFirst:false})
-    .order('created_at',{ascending:false});
-  const ch = r.data || [];
-  $('ct-ex').textContent = ch.length ? ' '+ch.length : '';
-
-  $('charges').innerHTML = ch.length
-    ? '<table><thead><tr><th>Type</th><th>Category</th><th>Description</th>'+
-      '<th>Date</th><th>Billable</th><th class="num">Amount</th><th></th>'+
-      '</tr></thead><tbody>'+
-      ch.map(x=>'<tr>'+
-        '<td><span class="pill '+(x.kind==='revenue'?'p-grn':'p-amb')+'">'+
-          pretty(x.kind)+'</span></td>'+
-        '<td>'+pretty(x.category)+'</td>'+
-        '<td>'+esc(x.description||'—')+'</td>'+
-        '<td>'+(x.incurred_on||'—')+'</td>'+
-        '<td>'+(x.billable?'Yes':'No')+'</td>'+
-        '<td class="num">'+money(x.amount)+'</td>'+
-        '<td><span onclick="delCharge(\''+x.id+'\')" style="color:var(--danger);'+
-          'cursor:pointer;font-size:12px">remove</span></td>'+
-        '</tr>').join('')+'</tbody></table>'
-    : '<div class="empty">No charges recorded. Permit fees and escort costs from '+
-      'those tabs also count toward margin automatically.</div>';
-}
-
-$('ch_save').addEventListener('click', async () => {
-  const amt = val('ch_amt');
-  if (!amt) { say('ch_msg','Enter an amount.','err'); return; }
-  $('ch_save').disabled = true;
-  const r = await db.from('load_charges').insert({
-    tenant_id: tenant, load_id: loadId,
-    kind: $('ch_kind').value, category: $('ch_cat').value,
-    amount: Number(amt), description: val('ch_desc'),
-    incurred_on: val('ch_date') || null,
-    billable: $('ch_bill').value === 'true'
-  });
-  $('ch_save').disabled = false;
-  if (r.error) { say('ch_msg', r.error.message, 'err'); return; }
-
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'charge_added', direction:'internal', is_manual:true, user_id: me,
-    subject: pretty($('ch_kind').value)+' — '+pretty($('ch_cat').value),
-    body: money(Number(amt))+(val('ch_desc')?' · '+val('ch_desc'):'')
-  });
-
-  say('ch_msg','Charge added.','ok');
-  ['ch_amt','ch_desc'].forEach(i=>$(i).value='');
-  drawExpenses();
-});
-
-async function delCharge(id){
-  await db.from('load_charges').delete().eq('id', id);
-  drawExpenses();
-}
-  
 </script>
 </body>
 </html>
