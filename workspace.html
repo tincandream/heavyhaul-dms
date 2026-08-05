@@ -784,7 +784,8 @@ async function lookupAppUser(){
 }
 
 /* ---------- DATA ---------- */
-async function refreshAll(){
+
+  async function refreshAll(){
   await Promise.all([
     fetchLoad(),
     fetchRedFlags(),
@@ -793,7 +794,10 @@ async function refreshAll(){
     fetchEscorts(),
     fetchEvents(),
     fetchCharges(),
-   fetchPrivateNotes();
+    fetchMargin(),
+    fetchChecklist(),
+    fetchPrivateNotes()
+  ]);
   drawHero();
   drawActions();
   drawCounts();
