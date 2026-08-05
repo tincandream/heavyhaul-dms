@@ -352,7 +352,7 @@ async function refresh(){
   L = d;
   drawHero(); drawActions(); drawInfo();
   await Promise.all([drawRoute(), drawTimeline(), drawPermits(),
-                     drawEscorts(), drawChecklist()]);
+                     drawEscorts(), drawChecklist, drawExpenses()]);
   $('lnotes').value = L.notes || '';
   $('acts').style.display=''; $('tabs').style.display='';
 }
