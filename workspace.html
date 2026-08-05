@@ -794,18 +794,15 @@ async function refreshAll(){
     fetchEvents(),
     fetchCharges(),
     fetchMargin(),
-  fetchChecklist(async function fetchPrivateNotes(){
+   fetchChecklist()async function fetchPrivateNotes(){
   const { data, error } = await db.from('load_private_notes').select('*')
     .eq('load_id', LOAD_ID)
     .order('pinned', { ascending: false })
     .order('created_at', { ascending: false });
   if (error){ console.warn('private notes', error); PRIVATE_NOTES = []; return; }
   PRIVATE_NOTES = data || [];
-}),
-
-
-    
-    fetchPrivateNotes()
+},
+   fetchPrivateNotes()
   ]);
   drawHero();
   drawActions();
