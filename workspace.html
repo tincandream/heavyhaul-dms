@@ -346,7 +346,7 @@
         <option value="cancelled">Cancelled</option>
         <option value="no_show">No show</option>
       </select></div>
-    <div class="full"><label>Company</label><input id="es_company"></div>
+    <div class="full"><label>Company / vehicle</label><input id="es_company"></div>
     <div><label>Escort driver name</label><input id="es_dname"></div>
     <div><label>Escort driver phone</label><input id="es_dphone"></div>
     <div class="full"><label>Meeting location</label><input id="es_mloc"></div>
@@ -677,7 +677,7 @@ async function drawEscorts(){
           '<td><b>'+pretty(x.role)+'</b></td>'+
           '<td><span class="pill '+(['confirmed','en_route','completed'].includes(x.status)
             ?'p-grn':x.status==='needed'?'p-red':'p-amb')+'">'+pretty(x.status)+'</span></td>'+
-          '<td>'+(x.company_name?esc(x.company_name):'—')+'</td>'+
+         '<td>'+(x.vehicle_info?esc(x.vehicle_info):'—')+'</td>'+
           '<td>'+([x.driver_name,x.driver_phone].filter(Boolean).map(esc).join(' · ')||'—')+'</td>'+
           '<td>'+(x.meeting_location?esc(x.meeting_location):'—')+
             (x.meeting_time?'<div class="t">'+when(x.meeting_time)+'</div>':'')+'</td>'+
@@ -694,7 +694,7 @@ function openEscort(id){
   $('es_id').value = e ? e.id : '';
   $('es_role').value = e ? e.role : 'front';
   $('es_status').value = e ? e.status : 'needed';
-  $('es_company').value = e ? (e.company_name||'') : '';
+ $('es_company').value = e ? (e.vehicle_info||'') : '';
   $('es_dname').value = e ? (e.driver_name||'') : '';
   $('es_dphone').value = e ? (e.driver_phone||'') : '';
   $('es_mloc').value = e ? (e.meeting_location||'') : '';
