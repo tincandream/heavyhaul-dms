@@ -220,6 +220,28 @@ textarea{min-height:76px;resize:vertical}
   </div>
 </dialog>
 
+ <!-- ============ PRIVATE NOTE DIALOG ============ -->
+<dialog id="dlgPrivate">
+  <div class="dlg-head"><h3 id="pv_title">Private Note</h3></div>
+  <div class="dlg-body">
+    <input type="hidden" id="pv_id">
+    <div class="fgrid">
+      <div class="field full"><label for="pv_body">Note *</label>
+        <textarea id="pv_body" placeholder="Just for you — never posted to the timeline."></textarea></div>
+      <div class="field full"><div class="checks">
+        <label><input type="checkbox" id="pv_pinned"> Pin to top</label>
+      </div></div>
+    </div>
+    <div id="pv_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="pv_save">Save Note</button>
+    <button onclick="dlgPrivate.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger sm hide" id="pv_delbtn">Delete</button>
+  </div>
+</dialog> 
+
 <!-- ============ HOLD DIALOG ============ -->
 <dialog id="dlgHold">
   <div class="dlg-head"><h3>Place Load On Hold</h3></div>
