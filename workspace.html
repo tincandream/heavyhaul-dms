@@ -870,7 +870,7 @@ async function fetchMargin(){
 
 async function fetchChecklist(){
   const { data, error } = await db.from('load_checklist_items').select('*')
-    .eq('load_id', LOAD_ID).order('sort_order', { ascending: true });
+    .eq('load_id', LOAD_ID).order('seq', { ascending: true });
   if (error){ console.warn('checklist', error); CHECKLIST = []; return; }
   CHECKLIST = data || [];
 }
@@ -1059,14 +1059,13 @@ function drawActions(){
    ============================================================ */
 
 /* ---------- CHECKLIST FIELD MAP ----------
-   Adjust to match load_checklist_items if your columns differ. */
 const CL = {
-  label:   ['label','title','item','name','description'],
-  done:    ['is_done','completed','is_complete','done'],
-  doneAt:  ['completed_at','done_at'],
-  category:['category','section','phase'],
-  notes:   ['notes','note'],
-  sort:    ['sort_order','position','seq']
+  label:   ['item','label','title','name','description'],
+  done:    ['done_at'],              // truthy timestamp = complete
+  doneAt:  ['done_at'],
+  category:['phase','category','section'],
+  notes:   ['note','notes'],
+  sort:    ['seq','sort_order','position']
 };
 
 /* ============================================================
@@ -1811,13 +1810,7 @@ function drawChecklist(){
 }
 
 async function toggleChecklist(id, checked){
-  const item = CHECKLIST.find(c => c.id === id);
-  const doneKey   = pickKey(item, CL.done)   || 'is_done';
-  const doneAtKey = pickKey(item, CL.doneAt) || 'completed_at';
-
-  const patch = {};
-  patch[doneKey]   = checked;
-  patch[doneAtKey] = checked ? new Date().toISOString() : null;
+  const patch = { done_at: checked ? new Date().toISOString() : null };
 
   const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
   if (error){ fail('toggleChecklist', error); return; }
