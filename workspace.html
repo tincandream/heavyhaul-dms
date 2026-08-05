@@ -977,6 +977,989 @@ document.querySelectorAll('.tab').forEach(t => {
     $('p-'+t.dataset.p).classList.add('on');
   });
 });
+
+  /* ============================================================
+   Part 2: action handlers, tab renderers, permit/escort/charge/note editors
+   ============================================================ */
+
+/* ---------- CHECKLIST FIELD MAP ----------
+   Adjust to match load_checklist_items if your columns differ. */
+const CL = {
+  label:   ['label','title','item','name','description'],
+  done:    ['is_done','completed','is_complete','done'],
+  doneAt:  ['completed_at','done_at'],
+  category:['category','section','phase'],
+  notes:   ['notes','note'],
+  sort:    ['sort_order','position','seq']
+};
+
+/* ============================================================
+   ACTION HANDLERS
+   ============================================================ */
+
+function openCheckIn(){
+  clearErr('ci_err');
+  $('ci_type').value  = 'en_route';
+  $('ci_when').value  = toLocalInput(new Date());
+  $('ci_city').value  = '';
+  $('ci_state').value = '';
+  $('ci_miles').value = '';
+  $('ci_eta').value   = '';
+  $('ci_notes').value = '';
+  dlgCheckIn.showModal();
+}
+
+async function saveCheckIn(){
+  clearErr('ci_err');
+  const btn = $('ci_save'); btn.disabled = true;
+
+  const type  = $('ci_type').value;
+  const when  = fromLocalInput($('ci_when').value) || new Date().toISOString();
+  const city  = txt($('ci_city').value);
+  const state = upper($('ci_state').value);
+  const notes = txt($('ci_notes').value);
+
+  const row = { tenant_id: TENANT_ID, load_id: LOAD_ID };
+  row[CHECKIN.type]  = type;
+  row[CHECKIN.when]  = when;
+  row[CHECKIN.city]  = city;
+  row[CHECKIN.state] = state;
+  row[CHECKIN.miles] = num($('ci_miles').value);
+  row[CHECKIN.eta]   = fromLocalInput($('ci_eta').value);
+  row[CHECKIN.notes] = notes;
+
+  const { error } = await db.from('check_ins').insert(row);
+  if (error){ showErr('ci_err', error); btn.disabled = false; return; }
+
+  const where = [city, state].filter(Boolean).join(', ');
+  await logEvent({
+    event_type: 'check_in',
+    subject: titleize(type) + (where ? ' — ' + where : ''),
+    body: notes,
+    is_milestone: ['at_pickup','loaded','at_delivery','unloaded'].includes(type)
+  });
+
+  btn.disabled = false;
+  dlgCheckIn.close();
+  toast('Check-in logged');
+  await refreshAll();
+}
+
+function openStatus(newStatus){
+  PENDING_STATUS = newStatus;
+  clearErr('st_err');
+  $('st_notes').value = '';
+  $('st_title').textContent =
+    newStatus === 'cancelled'
+      ? 'Cancel Load'
+      : `${titleize(currentStatus())} → ${titleize(newStatus)}`;
+  $('st_save').textContent = newStatus === 'cancelled' ? 'Cancel Load' : 'Confirm';
+  $('st_save').className = newStatus === 'cancelled' ? 'danger' : 'primary';
+  dlgStatus.showModal();
+}
+
+async function saveStatus(){
+  if (!PENDING_STATUS) return;
+  clearErr('st_err');
+  const btn = $('st_save'); btn.disabled = true;
+
+  const from = currentStatus();
+  const to   = PENDING_STATUS;
+  const statusKey = pickKey(LOAD, F.status) || 'status';
+
+  const patch = {};
+  patch[statusKey] = to;
+  patch.updated_at = new Date().toISOString();
+
+  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
+  if (error){ showErr('st_err', error); btn.disabled = false; return; }
+
+  /* subject carries the transition so the timeline can render it directly */
+  await logEvent({
+    event_type: 'status_change',
+    subject: `${from} → ${to}`,
+    body: txt($('st_notes').value),
+    is_milestone: true
+  });
+
+  PENDING_STATUS = null;
+  btn.disabled = false;
+  dlgStatus.close();
+  toast(`Status → ${titleize(to)}`);
+  await refreshAll();
+}
+
+function openHold(){
+  clearErr('hd_err');
+  $('hd_reason').selectedIndex = 0;
+  $('hd_notes').value = '';
+  dlgHold.showModal();
+}
+
+async function saveHold(){
+  clearErr('hd_err');
+  const btn = $('hd_save'); btn.disabled = true;
+
+  const reason = $('hd_reason').value;
+  const detail = txt($('hd_notes').value);
+
+  const holdKey   = pickKey(LOAD, F.onHold)     || 'on_hold';
+  const reasonKey = pickKey(LOAD, F.holdReason) || 'hold_reason';
+  const atKey     = pickKey(LOAD, F.holdAt)     || 'hold_started_at';
+
+  const patch = { updated_at: new Date().toISOString() };
+  patch[holdKey]   = true;
+  patch[reasonKey] = detail ? `${reason} — ${detail}` : reason;
+  patch[atKey]     = new Date().toISOString();
+
+  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
+  if (error){ showErr('hd_err', error); btn.disabled = false; return; }
+
+  await logEvent({
+    event_type: 'hold_started',
+    subject: reason,
+    body: detail,
+    is_milestone: true
+  });
+
+  btn.disabled = false;
+  dlgHold.close();
+  toast('Load placed on hold');
+  await refreshAll();
+}
+
+async function clearHold(){
+  if (!confirm('Clear the hold on this load?')) return;
+
+  const holdKey   = pickKey(LOAD, F.onHold)     || 'on_hold';
+  const reasonKey = pickKey(LOAD, F.holdReason) || 'hold_reason';
+  const atKey     = pickKey(LOAD, F.holdAt)     || 'hold_started_at';
+  const prior     = pick(LOAD, F.holdReason);
+
+  const patch = { updated_at: new Date().toISOString() };
+  patch[holdKey]   = false;
+  patch[reasonKey] = null;
+  patch[atKey]     = null;
+
+  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
+  if (error){ fail('clearHold', error); return; }
+
+  await logEvent({
+    event_type: 'hold_cleared',
+    subject: 'Hold cleared',
+    body: prior ? `Was: ${prior}` : null,
+    is_milestone: true
+  });
+
+  toast('Hold cleared');
+  await refreshAll();
+}
+
+/* ============================================================
+   TAB DISPATCH
+   ============================================================ */
+function drawActiveTab(){
+  switch (ACTIVE_TAB){
+    case 'overview':  drawOverview();  break;
+    case 'timeline':  drawTimeline();  break;
+    case 'permits':   drawPermits();   break;
+    case 'escorts':   drawEscorts();   break;
+    case 'checklist': drawChecklist(); break;
+    case 'expenses':  drawExpenses();  break;
+    case 'notes':     drawNotes();     break;
+  }
+}
+
+/* ============================================================
+   OVERVIEW
+   ============================================================ */
+function drawOverview(){
+  if (!LOAD){ $('tab-overview').innerHTML = '<div class="empty">No load.</div>'; return; }
+
+  const permIssued = PERMITS.filter(p => p.status === 'issued').length;
+  const permOpen   = PERMITS.filter(p => !['issued','not_required','cancelled'].includes(p.status)).length;
+  const escOK      = ESCORTS.filter(e => ['confirmed','en_route','completed'].includes(e.status)).length;
+  const escOpen    = ESCORTS.filter(e => ['needed','quoted','booked'].includes(e.status)).length;
+  const clDone     = CHECKLIST.filter(c => !!pick(c, CL.done)).length;
+
+  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
+  const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
+  const mar = rev - cst;
+  const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
+
+  $('tab-overview').innerHTML = `
+  <div class="grid2">
+
+    <div class="card box">
+      <h3>Route &amp; Schedule</h3>
+      <dl class="kv">
+        <dt>Origin</dt><dd>${esc(pick(LOAD,F.oCity)||'—')}${pick(LOAD,F.oState)?', '+esc(pick(LOAD,F.oState)):''}</dd>
+        <dt>Destination</dt><dd>${esc(pick(LOAD,F.dCity)||'—')}${pick(LOAD,F.dState)?', '+esc(pick(LOAD,F.dState)):''}</dd>
+        <dt>Pickup</dt><dd>${esc(fmtDate(pick(LOAD,F.pickup)))}</dd>
+        <dt>Delivery</dt><dd>${esc(fmtDate(pick(LOAD,F.delivery)))}</dd>
+        <dt>Miles</dt><dd>${pick(LOAD,F.miles) ? Number(pick(LOAD,F.miles)).toLocaleString() : '—'}</dd>
+        <dt>Commodity</dt><dd>${esc(pick(LOAD,F.commodity)||'—')}</dd>
+        <dt>Equipment</dt><dd>${esc(titleize(pick(LOAD,F.equipment))||'—')}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Dimensions</h3>
+      <dl class="kv">
+        <dt>Length</dt><dd>${pick(LOAD,F.lengthFt) ? esc(pick(LOAD,F.lengthFt))+" ft" : '—'}</dd>
+        <dt>Width</dt><dd>${pick(LOAD,F.widthFt) ? esc(pick(LOAD,F.widthFt))+" ft" : '—'}</dd>
+        <dt>Height</dt><dd>${pick(LOAD,F.heightFt) ? esc(pick(LOAD,F.heightFt))+" ft" : '—'}</dd>
+        <dt>Weight</dt><dd>${pick(LOAD,F.weightLbs) ? Number(pick(LOAD,F.weightLbs)).toLocaleString()+' lb' : '—'}</dd>
+        <dt>Axles</dt><dd>${esc(pick(LOAD,F.axles)||'—')}</dd>
+        <dt>Classification</dt><dd>
+          ${pick(LOAD,F.superload) ? '<span class="pill bad">Superload</span> ' : ''}
+          ${pick(LOAD,F.oversize) ? '<span class="pill warn">Oversize</span> ' : ''}
+          ${pick(LOAD,F.overweight) ? '<span class="pill warn">Overweight</span> ' : ''}
+          ${(!pick(LOAD,F.superload) && !pick(LOAD,F.oversize) && !pick(LOAD,F.overweight)) ? '—' : ''}
+        </dd>
+        <dt>Route survey</dt><dd>${pick(LOAD,F.routeSurvey) ? 'Required' : 'Not required'}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Truck &amp; Driver</h3>
+      <dl class="kv">
+        <dt>Driver</dt><dd>${esc(pick(LOAD,F.driver)||'—')}</dd>
+        <dt>Driver phone</dt><dd>${esc(pick(LOAD,F.driverPhone)||'—')}</dd>
+        <dt>Truck</dt><dd>${esc(pick(LOAD,F.truck)||'—')}</dd>
+        <dt>Trailer</dt><dd>${esc(pick(LOAD,F.trailer)||'—')}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Readiness</h3>
+      <dl class="kv">
+        <dt>Permits</dt><dd>${permIssued} issued${permOpen ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>` : ''} of ${PERMITS.length}</dd>
+        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${ESCORTS.length}</dd>
+        <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
+        <dt>Revenue</dt><dd>${money(rev)}</dd>
+        <dt>Cost</dt><dd>${money(cst)}</dd>
+        <dt>Margin</dt><dd style="font-weight:700;color:${mar >= 0 ? 'var(--ok)' : 'var(--bad)'}">
+          ${money(mar)}${pct !== null ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
+      </dl>
+    </div>
+
+  </div>`;
+}
+
+/* ============================================================
+   TIMELINE
+   ============================================================ */
+function drawTimeline(){
+  if (!EVENTS.length){
+    $('tab-timeline').innerHTML = '<div class="card"><div class="empty">No events yet.</div></div>';
+    return;
+  }
+
+  const items = EVENTS.map(ev => {
+    const when = ev.occurred_at || ev.created_at;
+    const type = ev.event_type || 'note';
+    let headHTML = '';
+
+    if (type === 'status_change'){
+      /* transition is the heading; no repeated "Status changed" label */
+      const raw = String(ev.subject || ev.body || '');
+      const m = raw.split(/\s*(?:→|->|»)\s*/);
+      headHTML = (m.length >= 2)
+        ? `<div class="tl-head trans">${esc(titleize(m[0]))}<span class="arrow">→</span>${esc(titleize(m[1]))}</div>`
+        : `<div class="tl-head trans">${esc(titleize(raw))}</div>`;
+    } else if (ev.subject){
+      headHTML = `<div class="tl-head">${esc(ev.subject)}</div>`;
+    }
+
+    const bodyHTML = (type === 'status_change')
+      ? (ev.body ? `<div class="tl-body">${esc(ev.body)}</div>` : '')
+      : (ev.body ? `<div class="tl-body">${esc(ev.body)}</div>` : '');
+
+    return `<div class="tl-item${ev.is_milestone ? ' mile' : ''}">
+      <div class="tl-when">
+        <span>${esc(fmtDT(when))}</span>
+        <span class="tl-type">${esc(String(type).replace(/_/g,' '))}</span>
+        <span class="muted">${esc(ago(when))}</span>
+      </div>
+      ${headHTML}
+      ${bodyHTML}
+    </div>`;
+  }).join('');
+
+  $('tab-timeline').innerHTML = `
+    <div class="sechead"><h2>Timeline</h2><span class="spacer"></span>
+      <button class="sm" onclick="openNote()">Add Note</button></div>
+    <div class="card box"><div class="tl">${items}</div></div>`;
+}
+
+/* ============================================================
+   PERMITS
+   ============================================================ */
+const PERMIT_TONE = {
+  not_required:'grey', needed:'warn', applied:'', pending:'warn',
+  issued:'ok', rejected:'bad', expired:'bad', amended:'warn', cancelled:'grey'
+};
+
+function drawPermits(){
+  const rows = PERMITS.map(p => {
+    const escorts = [
+      p.escort_front && 'F', p.escort_rear && 'R',
+      p.escort_police && 'P', p.escort_high_pole && 'HP'
+    ].filter(Boolean).join(' / ') || '—';
+
+    const restr = [
+      p.daylight_only && 'Daylight only',
+      p.wind_limit_mph && `${p.wind_limit_mph} mph wind`,
+      p.weekend_travel_allowed === false && 'No weekend',
+      p.holiday_travel_allowed === false && 'No holiday'
+    ].filter(Boolean).join(' · ') || '—';
+
+    const cost = (Number(p.fee) || 0) + (Number(p.service_fee) || 0);
+
+    return `<tr class="clickable" data-permit="${esc(p.id)}">
+      <td><b>${esc(p.state || '—')}</b></td>
+      <td><span class="pill ${PERMIT_TONE[p.status] !== undefined ? PERMIT_TONE[p.status] : 'grey'}">${esc(titleize(p.status))}</span></td>
+      <td class="mono">${esc(p.permit_number || '—')}</td>
+      <td>${esc(p.issuing_authority || '—')}</td>
+      <td>${esc(toDateInput(p.valid_from) || '—')} → ${esc(toDateInput(p.valid_to) || '—')}</td>
+      <td>${escorts}</td>
+      <td class="small">${esc(restr)}</td>
+      <td>${p.driver_has_permit ? '<span class="pill ok">Yes</span>' : '<span class="pill grey">No</span>'}</td>
+      <td style="text-align:right">${cost ? money(cost) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  $('tab-permits').innerHTML = `
+    <div class="sechead"><h2>Permits</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openPermit(null)">+ Add Permit</button></div>
+    ${PERMITS.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>State</th><th>Status</th><th>Permit #</th><th>Authority</th>
+        <th>Valid</th><th>Escorts</th><th>Restrictions</th><th>Driver copy</th>
+        <th style="text-align:right">Cost</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No permits on this load yet.</div></div>'}
+  `;
+
+  $$('#tab-permits tr[data-permit]').forEach(tr => {
+    tr.addEventListener('click', () => openPermit(tr.dataset.permit));
+  });
+}
+
+function openPermit(id){
+  clearErr('pm_err');
+  const p = id ? PERMITS.find(x => x.id === id) : null;
+
+  $('pm_id').value      = p ? p.id : '';
+  $('pm_title').textContent = p ? `Permit — ${p.state || ''}` : 'New Permit';
+  $('pm_idlabel').textContent = p ? p.id.slice(0,8) : '';
+  $('pm_delbtn').classList.toggle('hide', !p);
+
+  $('pm_state').value                     = p ? (p.state || '') : '';
+  $('pm_status').value                    = p ? (p.status || 'needed') : 'needed';
+  $('pm_permit_number').value             = p ? (p.permit_number || '') : '';
+  $('pm_issuing_authority').value         = p ? (p.issuing_authority || '') : '';
+  $('pm_permit_service_id').value         = p ? (p.permit_service_id || '') : '';
+  $('pm_fee').value                       = p && p.fee !== null && p.fee !== undefined ? p.fee : '';
+  $('pm_service_fee').value               = p && p.service_fee !== null && p.service_fee !== undefined ? p.service_fee : '';
+
+  $('pm_applied_at').value                = p ? toLocalInput(p.applied_at) : '';
+  $('pm_issued_at').value                 = p ? toLocalInput(p.issued_at) : '';
+  $('pm_valid_from').value                = p ? toDateInput(p.valid_from) : '';
+  $('pm_valid_to').value                  = p ? toDateInput(p.valid_to) : '';
+
+  $('pm_escort_front').checked            = p ? !!p.escort_front : false;
+  $('pm_escort_rear').checked             = p ? !!p.escort_rear : false;
+  $('pm_escort_police').checked           = p ? !!p.escort_police : false;
+  $('pm_escort_high_pole').checked        = p ? !!p.escort_high_pole : false;
+
+  $('pm_daylight_only').checked           = p ? !!p.daylight_only : false;
+  $('pm_weekend_travel_allowed').checked  = p ? !!p.weekend_travel_allowed : false;
+  $('pm_holiday_travel_allowed').checked  = p ? !!p.holiday_travel_allowed : false;
+  $('pm_wind_limit_mph').value            = p && p.wind_limit_mph !== null && p.wind_limit_mph !== undefined ? p.wind_limit_mph : '';
+
+  $('pm_travel_time_restrictions').value  = p ? (p.travel_time_restrictions || '') : '';
+  $('pm_curfew_notes').value              = p ? (p.curfew_notes || '') : '';
+  $('pm_route_restrictions').value        = p ? (p.route_restrictions || '') : '';
+
+  $('pm_driver_has_permit').checked       = p ? !!p.driver_has_permit : false;
+  $('pm_driver_briefed_at').value         = p ? toLocalInput(p.driver_briefed_at) : '';
+
+  $('pm_notes').value                     = p ? (p.notes || '') : '';
+
+  dlgPermit.showModal();
+}
+
+/* --- PERMIT SAVE — standalone. Touches only the permits table. --- */
+async function pm_save(){
+  clearErr('pm_err');
+  const btn = $('pm_savebtn');
+  btn.disabled = true;
+
+  const pm_id = txt($('pm_id').value);
+  const pm_priorStatus = pm_id
+    ? (PERMITS.find(x => x.id === pm_id) || {}).status || null
+    : null;
+
+  const pm_state  = upper($('pm_state').value);
+  const pm_status = $('pm_status').value;
+
+  if (!pm_state){
+    showErr('pm_err', { message: 'State is required.' });
+    btn.disabled = false;
+    return;
+  }
+
+  const pm_row = {
+    state:                     pm_state,
+    permit_number:             txt($('pm_permit_number').value),
+    issuing_authority:         txt($('pm_issuing_authority').value),
+    permit_service_id:         txt($('pm_permit_service_id').value),
+    status:                    pm_status,
+    applied_at:                fromLocalInput($('pm_applied_at').value),
+    issued_at:                 fromLocalInput($('pm_issued_at').value),
+    valid_from:                txt($('pm_valid_from').value),
+    valid_to:                  txt($('pm_valid_to').value),
+    fee:                       num($('pm_fee').value),
+    service_fee:               num($('pm_service_fee').value),
+    route_restrictions:        txt($('pm_route_restrictions').value),
+    travel_time_restrictions:  txt($('pm_travel_time_restrictions').value),
+    escort_front:              $('pm_escort_front').checked,
+    escort_rear:               $('pm_escort_rear').checked,
+    escort_police:             $('pm_escort_police').checked,
+    escort_high_pole:          $('pm_escort_high_pole').checked,
+    daylight_only:             $('pm_daylight_only').checked,
+    wind_limit_mph:            num($('pm_wind_limit_mph').value),
+    curfew_notes:              txt($('pm_curfew_notes').value),
+    weekend_travel_allowed:    $('pm_weekend_travel_allowed').checked,
+    holiday_travel_allowed:    $('pm_holiday_travel_allowed').checked,
+    driver_has_permit:         $('pm_driver_has_permit').checked,
+    driver_briefed_at:         fromLocalInput($('pm_driver_briefed_at').value),
+    notes:                     txt($('pm_notes').value),
+    updated_at:                new Date().toISOString()
+  };
+
+  /* stamp issued_at automatically when flipping to issued without a date */
+  if (pm_status === 'issued' && !pm_row.issued_at){
+    pm_row.issued_at = new Date().toISOString();
+  }
+
+  let pm_err = null;
+  if (pm_id){
+    const r = await db.from('permits').update(pm_row).eq('id', pm_id);
+    pm_err = r.error;
+  } else {
+    pm_row.tenant_id = TENANT_ID;
+    pm_row.load_id   = LOAD_ID;
+    const r = await db.from('permits').insert(pm_row);
+    pm_err = r.error;
+  }
+
+  if (pm_err){ showErr('pm_err', pm_err); btn.disabled = false; return; }
+
+  /* milestone fires only on the actual transition INTO issued */
+  if (pm_status === 'issued' && pm_priorStatus !== 'issued'){
+    await logEvent({
+      event_type: 'permit_approved',
+      subject: `${pm_state} permit issued`,
+      body: [
+        pm_row.permit_number ? 'Permit #' + pm_row.permit_number : null,
+        pm_row.issuing_authority,
+        (pm_row.valid_from || pm_row.valid_to)
+          ? `Valid ${pm_row.valid_from || '?'} to ${pm_row.valid_to || '?'}` : null
+      ].filter(Boolean).join(' · ') || null,
+      is_milestone: true
+    });
+  }
+
+  btn.disabled = false;
+  dlgPermit.close();
+  toast(pm_id ? 'Permit updated' : 'Permit added');
+  await refreshAll();
+}
+
+async function pm_delete(){
+  const pm_id = txt($('pm_id').value);
+  if (!pm_id) return;
+  if (!confirm('Delete this permit? This cannot be undone.')) return;
+
+  const { error } = await db.from('permits').delete().eq('id', pm_id);
+  if (error){ showErr('pm_err', error); return; }
+
+  dlgPermit.close();
+  toast('Permit deleted');
+  await refreshAll();
+}
+
+/* ============================================================
+   ESCORTS
+   ============================================================ */
+const ESCORT_TONE = {
+  needed:'warn', quoted:'warn', booked:'', confirmed:'ok',
+  en_route:'ok', completed:'ok', cancelled:'grey', no_show:'bad'
+};
+const ESCORT_MILESTONE = ['confirmed','en_route','completed'];
+
+function drawEscorts(){
+  const rows = ESCORTS.map(e => {
+    const rate = e.actual_cost != null ? e.actual_cost
+               : e.confirmed_rate != null ? e.confirmed_rate
+               : e.quoted_rate;
+    const rateLabel = e.actual_cost != null ? 'actual'
+                    : e.confirmed_rate != null ? 'confirmed'
+                    : e.quoted_rate != null ? 'quoted' : '';
+    const ready = [
+      e.contacts_exchanged && 'Contacts',
+      e.confirmed_day_before && 'Day-before'
+    ].filter(Boolean).join(' · ') || '—';
+
+    return `<tr class="clickable" data-escort="${esc(e.id)}">
+      <td><b>${esc(titleize(e.role))}</b></td>
+      <td><span class="pill ${ESCORT_TONE[e.status] !== undefined ? ESCORT_TONE[e.status] : 'grey'}">${esc(titleize(e.status))}</span></td>
+      <td>${esc(e.vehicle_info || '—')}</td>
+      <td>${esc(e.driver_name || '—')}${e.driver_phone ? `<div class="small muted">${esc(e.driver_phone)}</div>` : ''}</td>
+      <td>${esc(fmtDT(e.scheduled_start))}</td>
+      <td>${esc(e.meeting_location || '—')}${e.meeting_time ? `<div class="small muted">${esc(fmtDT(e.meeting_time))}</div>` : ''}</td>
+      <td class="small">${ready}</td>
+      <td style="text-align:right">${rate != null ? money(rate) : '—'}
+        ${rateLabel ? `<div class="small muted">${rateLabel}</div>` : ''}</td>
+    </tr>`;
+  }).join('');
+
+  $('tab-escorts').innerHTML = `
+    <div class="sechead"><h2>Escort Assignments</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openEscort(null)">+ Add Escort</button></div>
+    ${ESCORTS.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>Role</th><th>Status</th><th>Vehicle</th><th>Driver</th>
+        <th>Scheduled</th><th>Meet-up</th><th>Ready</th>
+        <th style="text-align:right">Rate</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No escorts assigned yet.</div></div>'}
+  `;
+
+  $$('#tab-escorts tr[data-escort]').forEach(tr => {
+    tr.addEventListener('click', () => openEscort(tr.dataset.escort));
+  });
+}
+
+function openEscort(id){
+  clearErr('es_err');
+  const e = id ? ESCORTS.find(x => x.id === id) : null;
+
+  $('es_id').value      = e ? e.id : '';
+  $('es_title').textContent = e ? `Escort — ${titleize(e.role || '')}` : 'New Escort Assignment';
+  $('es_idlabel').textContent = e ? e.id.slice(0,8) : '';
+  $('es_delbtn').classList.toggle('hide', !e);
+
+  $('es_role').value              = e ? (e.role || 'front') : 'front';
+  $('es_status').value            = e ? (e.status || 'needed') : 'needed';
+  $('es_escort_company_id').value = e ? (e.escort_company_id || '') : '';
+  $('es_vehicle_info').value      = e ? (e.vehicle_info || '') : '';
+  $('es_driver_name').value       = e ? (e.driver_name || '') : '';
+  $('es_driver_phone').value      = e ? (e.driver_phone || '') : '';
+
+  $('es_quoted_rate').value       = e && e.quoted_rate != null ? e.quoted_rate : '';
+  $('es_confirmed_rate').value    = e && e.confirmed_rate != null ? e.confirmed_rate : '';
+  $('es_actual_cost').value       = e && e.actual_cost != null ? e.actual_cost : '';
+
+  $('es_scheduled_start').value   = e ? toLocalInput(e.scheduled_start) : '';
+  $('es_scheduled_end').value     = e ? toLocalInput(e.scheduled_end) : '';
+  $('es_meeting_time').value      = e ? toLocalInput(e.meeting_time) : '';
+  $('es_meeting_location').value  = e ? (e.meeting_location || '') : '';
+
+  $('es_contacts_exchanged').checked   = e ? !!e.contacts_exchanged : false;
+  $('es_confirmed_day_before').checked = e ? !!e.confirmed_day_before : false;
+
+  $('es_notes').value = e ? (e.notes || '') : '';
+
+  dlgEscort.showModal();
+}
+
+/* --- ESCORT SAVE — standalone. Touches only escort_assignments. --- */
+async function es_save(){
+  clearErr('es_err');
+  const btn = $('es_savebtn');
+  btn.disabled = true;
+
+  const es_id = txt($('es_id').value);
+  const es_priorStatus = es_id
+    ? (ESCORTS.find(x => x.id === es_id) || {}).status || null
+    : null;
+
+  const es_role   = $('es_role').value;
+  const es_status = $('es_status').value;
+
+  const es_row = {
+    role:                 es_role,
+    status:               es_status,
+    escort_company_id:    txt($('es_escort_company_id').value),
+    vehicle_info:         txt($('es_vehicle_info').value),
+    driver_name:          txt($('es_driver_name').value),
+    driver_phone:         txt($('es_driver_phone').value),
+    quoted_rate:          num($('es_quoted_rate').value),
+    confirmed_rate:       num($('es_confirmed_rate').value),
+    actual_cost:          num($('es_actual_cost').value),
+    scheduled_start:      fromLocalInput($('es_scheduled_start').value),
+    scheduled_end:        fromLocalInput($('es_scheduled_end').value),
+    meeting_location:     txt($('es_meeting_location').value),
+    meeting_time:         fromLocalInput($('es_meeting_time').value),
+    contacts_exchanged:   $('es_contacts_exchanged').checked,
+    confirmed_day_before: $('es_confirmed_day_before').checked,
+    notes:                txt($('es_notes').value),
+    updated_at:           new Date().toISOString()
+  };
+
+  let es_err = null;
+  if (es_id){
+    const r = await db.from('escort_assignments').update(es_row).eq('id', es_id);
+    es_err = r.error;
+  } else {
+    es_row.tenant_id = TENANT_ID;
+    es_row.load_id   = LOAD_ID;
+    const r = await db.from('escort_assignments').insert(es_row);
+    es_err = r.error;
+  }
+
+  if (es_err){ showErr('es_err', es_err); btn.disabled = false; return; }
+
+  /* milestone fires once — on first entry into the confirmed family */
+  const es_wasConfirmed = ESCORT_MILESTONE.includes(es_priorStatus);
+  const es_nowConfirmed = ESCORT_MILESTONE.includes(es_status);
+  if (es_nowConfirmed && !es_wasConfirmed){
+    await logEvent({
+      event_type: 'escort_confirmed',
+      subject: `${titleize(es_role)} escort ${es_status === 'confirmed' ? 'confirmed' : titleize(es_status)}`,
+      body: [
+        es_row.vehicle_info,
+        es_row.driver_name ? `Driver: ${es_row.driver_name}` : null,
+        es_row.driver_phone,
+        es_row.meeting_location ? `Meet: ${es_row.meeting_location}` : null
+      ].filter(Boolean).join(' · ') || null,
+      is_milestone: true
+    });
+  }
+
+  btn.disabled = false;
+  dlgEscort.close();
+  toast(es_id ? 'Escort updated' : 'Escort added');
+  await refreshAll();
+}
+
+async function es_delete(){
+  const es_id = txt($('es_id').value);
+  if (!es_id) return;
+  if (!confirm('Delete this escort assignment? This cannot be undone.')) return;
+
+  const { error } = await db.from('escort_assignments').delete().eq('id', es_id);
+  if (error){ showErr('es_err', error); return; }
+
+  dlgEscort.close();
+  toast('Escort deleted');
+  await refreshAll();
+}
+
+/* ============================================================
+   CHECKLIST
+   ============================================================ */
+function drawChecklist(){
+  if (!CHECKLIST.length){
+    $('tab-checklist').innerHTML =
+      '<div class="card"><div class="empty">No checklist items for this load.</div></div>';
+    return;
+  }
+
+  const rows = CHECKLIST.map(c => {
+    const done = !!pick(c, CL.done);
+    return `<tr>
+      <td style="width:36px"><input type="checkbox" data-cl="${esc(c.id)}" ${done ? 'checked' : ''}></td>
+      <td style="${done ? 'text-decoration:line-through;color:var(--muted)' : 'font-weight:600'}">
+        ${esc(pick(c, CL.label) || '(untitled)')}</td>
+      <td>${esc(titleize(pick(c, CL.category)) || '—')}</td>
+      <td class="small muted">${esc(pick(c, CL.notes) || '')}</td>
+      <td class="small muted">${done ? esc(fmtDT(pick(c, CL.doneAt))) : ''}</td>
+    </tr>`;
+  }).join('');
+
+  const done = CHECKLIST.filter(c => !!pick(c, CL.done)).length;
+
+  $('tab-checklist').innerHTML = `
+    <div class="sechead"><h2>Pre-Trip Checklist</h2>
+      <span class="pill ${done === CHECKLIST.length ? 'ok' : 'warn'}">${done} / ${CHECKLIST.length}</span></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th></th><th>Item</th><th>Category</th><th>Notes</th><th>Completed</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+
+  $$('#tab-checklist input[data-cl]').forEach(cb => {
+    cb.addEventListener('change', () => toggleChecklist(cb.dataset.cl, cb.checked));
+  });
+}
+
+async function toggleChecklist(id, checked){
+  const item = CHECKLIST.find(c => c.id === id);
+  const doneKey   = pickKey(item, CL.done)   || 'is_done';
+  const doneAtKey = pickKey(item, CL.doneAt) || 'completed_at';
+
+  const patch = {};
+  patch[doneKey]   = checked;
+  patch[doneAtKey] = checked ? new Date().toISOString() : null;
+
+  const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
+  if (error){ fail('toggleChecklist', error); return; }
+
+  await fetchChecklist();
+  drawCounts();
+  drawChecklist();
+}
+
+/* ============================================================
+   EXPENSES
+   ============================================================ */
+const CHARGE_CATEGORIES = ['linehaul','fuel','detention','layover','tarp','permit_fee',
+  'permit_service_fee','escort','pilot_car','police','driver_pay','fuel_purchase',
+  'tolls','lumper','repair','other'];
+
+function drawExpenses(){
+  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
+  const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
+  const mar = rev - cst;
+  const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
+
+  /* derived costs already tracked on the permit / escort records */
+  const permitFee    = PERMITS.reduce((s,p) => s + (Number(p.fee) || 0), 0);
+  const permitSvc    = PERMITS.reduce((s,p) => s + (Number(p.service_fee) || 0), 0);
+  const escortCost   = ESCORTS.reduce((s,e) => s +
+    (e.actual_cost != null ? Number(e.actual_cost)
+     : e.confirmed_rate != null ? Number(e.confirmed_rate)
+     : Number(e.quoted_rate) || 0), 0);
+
+  const chargeRows = CHARGES.map(c => `
+    <tr class="clickable" data-charge="${esc(c.id)}">
+      <td><span class="pill ${c.kind === 'revenue' ? 'ok' : 'grey'}">${esc(titleize(c.kind))}</span></td>
+      <td><b>${esc(titleize(c.category))}</b></td>
+      <td>${esc(c.description || '—')}</td>
+      <td>${esc(toDateInput(c.incurred_on) || '—')}</td>
+      <td>${c.billable ? '<span class="pill ok">Billable</span>' : '<span class="pill grey">No</span>'}</td>
+      <td style="text-align:right;font-weight:700;color:${c.kind === 'revenue' ? 'var(--ok)' : 'var(--ink)'}">
+        ${money(c.amount)}</td>
+    </tr>`).join('');
+
+  $('tab-expenses').innerHTML = `
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="card box">
+        <h3>Margin (v_load_margin)</h3>
+        <dl class="kv">
+          <dt>Total revenue</dt><dd style="font-weight:700;color:var(--ok)">${money(rev)}</dd>
+          <dt>Total cost</dt><dd style="font-weight:700">${money(cst)}</dd>
+          <dt>Margin</dt><dd style="font-weight:700;font-size:16px;color:${mar >= 0 ? 'var(--ok)' : 'var(--bad)'}">
+            ${money(mar)}${pct !== null ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
+        </dl>
+      </div>
+      <div class="card box">
+        <h3>Costs Carried On Permit / Escort Records</h3>
+        <dl class="kv">
+          <dt>Permit state fees</dt><dd>${money(permitFee)}</dd>
+          <dt>Permit service fees</dt><dd>${money(permitSvc)}</dd>
+          <dt>Escort cost</dt><dd>${money(escortCost)}</dd>
+        </dl>
+        <div class="small muted" style="margin-top:10px">
+          These are stored on the permit and escort records themselves. Only add a
+          <b>permit_fee</b>, <b>permit_service_fee</b>, <b>escort</b>, <b>pilot_car</b> or
+          <b>police</b> charge below if <span class="mono">v_load_margin</span> does
+          <i>not</i> already pull from those tables — otherwise it double-counts.
+        </div>
+      </div>
+    </div>
+
+    <div class="sechead"><h2>Charges (load_charges)</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openCharge(null)">+ Add Charge</button></div>
+    ${CHARGES.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Kind</th><th>Category</th><th>Description</th><th>Incurred</th>
+        <th>Billable</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>${chargeRows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No charges recorded yet.</div></div>'}
+  `;
+
+  $$('#tab-expenses tr[data-charge]').forEach(tr => {
+    tr.addEventListener('click', () => openCharge(tr.dataset.charge));
+  });
+}
+
+function openCharge(id){
+  clearErr('ch_err');
+  const c = id ? CHARGES.find(x => x.id === id) : null;
+
+  $('ch_id').value = c ? c.id : '';
+  $('ch_title').textContent = c ? 'Edit Charge' : 'Add Charge';
+  $('ch_delbtn').classList.toggle('hide', !c);
+
+  $('ch_kind').value        = c ? (c.kind || 'cost') : 'cost';
+  $('ch_category').value    = c ? (c.category || 'other') : 'linehaul';
+  $('ch_amount').value      = c && c.amount != null ? c.amount : '';
+  $('ch_incurred_on').value = c ? toDateInput(c.incurred_on) : todayISO();
+  $('ch_description').value = c ? (c.description || '') : '';
+  $('ch_billable').checked  = c ? !!c.billable : true;
+
+  dlgCharge.showModal();
+}
+
+async function saveCharge(){
+  clearErr('ch_err');
+  const btn = $('ch_save'); btn.disabled = true;
+
+  const id       = txt($('ch_id').value);
+  const kind     = $('ch_kind').value;
+  const category = $('ch_category').value;
+  const amount   = num($('ch_amount').value);
+
+  if (amount === null){
+    showErr('ch_err', { message: 'Amount is required.' });
+    btn.disabled = false; return;
+  }
+  if (!CHARGE_CATEGORIES.includes(category)){
+    showErr('ch_err', { message: 'Invalid category.' });
+    btn.disabled = false; return;
+  }
+
+  const row = {
+    kind, category, amount,
+    description: txt($('ch_description').value),
+    billable:    $('ch_billable').checked,
+    incurred_on: txt($('ch_incurred_on').value) || todayISO()
+  };
+
+  let error = null;
+  if (id){
+    const r = await db.from('load_charges').update(row).eq('id', id);
+    error = r.error;
+  } else {
+    row.tenant_id = TENANT_ID;
+    row.load_id   = LOAD_ID;
+    const r = await db.from('load_charges').insert(row);
+    error = r.error;
+  }
+  if (error){ showErr('ch_err', error); btn.disabled = false; return; }
+
+  if (!id){
+    await logEvent({
+      event_type: 'charge_added',
+      subject: `${titleize(kind)} — ${titleize(category)} ${money(amount)}`,
+      body: row.description,
+      is_milestone: false
+    });
+  }
+
+  btn.disabled = false;
+  dlgCharge.close();
+  toast(id ? 'Charge updated' : 'Charge added');
+  await refreshAll();
+}
+
+async function deleteCharge(){
+  const id = txt($('ch_id').value);
+  if (!id) return;
+  if (!confirm('Delete this charge?')) return;
+
+  const { error } = await db.from('load_charges').delete().eq('id', id);
+  if (error){ showErr('ch_err', error); return; }
+
+  dlgCharge.close();
+  toast('Charge deleted');
+  await refreshAll();
+}
+
+/* ============================================================
+   NOTES
+   ============================================================ */
+const NOTE_TYPES = ['note','call','email','sms','issue'];
+
+function drawNotes(){
+  const notes = EVENTS.filter(e => NOTE_TYPES.includes(e.event_type));
+
+  const items = notes.map(n => `
+    <div class="tl-item${n.is_milestone ? ' mile' : ''}">
+      <div class="tl-when">
+        <span>${esc(fmtDT(n.occurred_at || n.created_at))}</span>
+        <span class="tl-type">${esc(String(n.event_type))}</span>
+        <span class="muted">${esc(ago(n.occurred_at || n.created_at))}</span>
+      </div>
+      ${n.subject ? `<div class="tl-head">${esc(n.subject)}</div>` : ''}
+      ${n.body ? `<div class="tl-body">${esc(n.body)}</div>` : ''}
+    </div>`).join('');
+
+  $('tab-notes').innerHTML = `
+    <div class="sechead"><h2>Notes &amp; Communication</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openNote()">+ Add Note</button></div>
+    ${notes.length
+      ? `<div class="card box"><div class="tl">${items}</div></div>`
+      : '<div class="card"><div class="empty">No notes yet.</div></div>'}`;
+}
+
+function openNote(){
+  clearErr('nt_err');
+  $('nt_type').value = 'note';
+  $('nt_subject').value = '';
+  $('nt_body').value = '';
+  $('nt_milestone').checked = false;
+  dlgNote.showModal();
+}
+
+async function saveNote(){
+  clearErr('nt_err');
+  const body = txt($('nt_body').value);
+  if (!body){
+    showErr('nt_err', { message: 'Body is required.' });
+    return;
+  }
+  const btn = $('nt_save'); btn.disabled = true;
+
+  const ok = await logEvent({
+    event_type:   $('nt_type').value,
+    subject:      txt($('nt_subject').value),
+    body:         body,
+    is_milestone: $('nt_milestone').checked
+  });
+
+  btn.disabled = false;
+  if (!ok){ showErr('nt_err', { message: 'Save failed — see console.' }); return; }
+
+  dlgNote.close();
+  toast('Note saved');
+  await refreshAll();
+}
+
+/* ============================================================
+   WIRE UP + START
+   ============================================================ */
+$('ci_save').addEventListener('click', saveCheckIn);
+$('hd_save').addEventListener('click', saveHold);
+$('st_save').addEventListener('click', saveStatus);
+
+$('pm_savebtn').addEventListener('click', pm_save);
+$('pm_delbtn').addEventListener('click', pm_delete);
+
+$('es_savebtn').addEventListener('click', es_save);
+$('es_delbtn').addEventListener('click', es_delete);
+
+$('ch_save').addEventListener('click', saveCharge);
+$('ch_delbtn').addEventListener('click', deleteCharge);
+
+$('nt_save').addEventListener('click', saveNote);
+
+boot();
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
