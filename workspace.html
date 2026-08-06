@@ -1088,15 +1088,6 @@ function drawActions(){
    Part 2: action handlers, tab renderers, permit/escort/charge/note editors
    ============================================================ */
 
-/* ---------- CHECKLIST FIELD MAP ----------
-const CL = {
-  label:   ['item','label','title','name','description'],
-  done:    ['done_at'],              // truthy timestamp = complete
-  doneAt:  ['done_at'],
-  category:['phase','category','section'],
-  notes:   ['note','notes'],
-  sort:    ['seq','sort_order','position']
-};
 
 /* ============================================================
    ACTION HANDLERS
@@ -1285,7 +1276,7 @@ function drawOverview(){
   const permOpen   = PERMITS.filter(p => !['issued','not_required','cancelled'].includes(p.status)).length;
   const escOK      = ESCORTS.filter(e => ['confirmed','en_route','completed'].includes(e.status)).length;
   const escOpen    = ESCORTS.filter(e => ['needed','quoted','booked'].includes(e.status)).length;
-  const clDone     = CHECKLIST.filter(c => !!pick(c, CL.done)).length;
+  const clDone     = CHECKLIST.filter(c => !!c.done_at).length;
 
   const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
   const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
