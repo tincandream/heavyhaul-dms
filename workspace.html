@@ -916,7 +916,14 @@ async function saveDoc(){
       entity_type: 'load',
       entity_id:   LOAD_ID
     });
-    if (linkIns.error){ throw linkIns.error; }
+ if (linkIns.error){ throw linkIns.error; }
+
+    await logEvent({
+      event_type: 'upload',
+      subject: 'Document uploaded: ' + titleize($('dc_type').value),
+      body: file.name + ' (' + fmtBytes(file.size) + ')',
+      is_milestone: ['pod','rate_con'].includes($('dc_type').value)
+    });
 
     dlgDoc.close();
     toast('Document uploaded');
