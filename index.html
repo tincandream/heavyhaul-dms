@@ -74,99 +74,72 @@
     padding:20px 4vw;
 }
 
-    .login-panel {
-    width: min(420px, 92vw);
+  .login-panel {
+  width: min(380px, 92vw);
+  padding: 18px 22px;
 
-      padding:18px 22px 16px;
+  background: rgba(28, 19, 33, 0.92);
 
-      background: var(--plum-soft);
-      
-border: 1px solid rgba(245,234,214,.25);
-      border-radius: 0px;
+  border: 1px solid rgba(245, 234, 214, 0.25);
+  border-radius: 0;
 
-      box-shadow:
-        0 30px 80px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 18px 45px rgba(0,0,0,.45);
 
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-  .brand-mark {
-    text-align: center;
-    margin-bottom: 12px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
-    .brand-symbol {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-
-      margin-bottom: 8px;
-
-      color: var(--green);
-      font-weight: 700;
-      letter-spacing: 4px;
-    }
-
-    .brand-symbol .star {
-      color: var(--pink);
-      font-size: 29px;
-      line-height: 1;
-    }
-
-    .brand-symbol .wing {
-      font-size: 19px;
-      letter-spacing: 1px;
-    }
-
-    .brand-mark h1 {
-      margin: 0;
-
-      font-family: "Cinzel", serif;
-font-weight: 700;
-letter-spacing: 4px;
-
-      color: var(--cream);
-    }
-
-.brand-mark .command{
-
-    display:block;
-
-    margin-top:10px;
-
-    font-family:"Oswald",sans-serif;
-
-    font-size:.82em;
-
-    font-weight:500;
-
-    letter-spacing:12px;
-
-    color:var(--green);
-
+    .brand-mark {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
-    .brand-mark .subtitle {
-      margin-top: 14px;
+.brand-symbol {
+  margin-bottom: 4px;
+}
 
-      color: var(--pink);
+.brand-mark h1 {
+  margin: 0;
+  font-family: "Cinzel", serif;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
 
-      font-family: Georgia, "Times New Roman", serif;
+.brand-mark .command {
+  display: block;
+  margin-top: 5px;
 
-      font-size: 18px;
-      font-style: italic;
-    }
+  font-family: "Oswald", sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 9px;
 
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+  color: var(--green);
+}
 
-      margin: 28px 0 22px;
-    }
+.brand-mark .subtitle {
+  margin-top: 6px;
+  color: var(--pink);
 
+  font-family: "Cormorant Garamond", serif;
+  font-size: 16px;
+  font-style: italic;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+
+.divider span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
     .divider::before,
     .divider::after {
       content: "";
@@ -205,16 +178,18 @@ letter-spacing: 4px;
       white-space: nowrap;
     }
 
-    .field-label {
-      display: block;
+ .field-label {
+  display: block;
+  margin: 8px 0 4px;
 
-      margin: 16px 0 7px;
+  color: var(--cream);
 
-      color: var(--cream);
-
-      font-size: 14px;
-      font-weight: 500;
-    }
+  font-family: "Oswald", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
 
     .input-wrap {
       position: relative;
@@ -222,119 +197,40 @@ letter-spacing: 4px;
 
 input[type="email"],
 input[type="password"] {
+  width: 100%;
+  height: 38px;
+  padding: 8px 11px;
 
-    width: 100%;
+  background: #17171b;
 
-    padding: 10px 12px;
+  border: 1px solid #545158;
+  border-left: 3px solid var(--pink);
+  border-radius: 0;
 
-    background: #17171b;
+  color: #f5ead6;
 
-    border: 1px solid #4d4d4d;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
 
-    border-radius: 2px;
+  outline: none;
 
-    color: #f5ead6;
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,.65);
 
-    font-size: 15px;
-
-    outline: none;
-
-    box-shadow:
-        inset 0 1px 2px rgba(0,0,0,.55);
-
-    transition:
-        border-color .2s ease,
-        box-shadow .2s ease;
-
-}
-    input::placeholder {
-      color: #9c919b;
-    }
-
- input:focus {
-
-    border-color: #aebc39;
-
-    box-shadow:
-        inset 0 1px 2px rgba(0,0,0,.55),
-        0 0 0 2px rgba(174,188,57,.18);
-
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
 
-    .login-options {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-color: var(--green);
+  border-left-color: var(--green);
 
-      gap: 18px;
-
-      margin-top: 18px;
-
-      font-size: 14px;
-    }
-
-    .remember {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      margin: 0;
-
-      color: var(--cream);
-
-      cursor: pointer;
-    }
-
-    .remember input {
-      width: 17px;
-      height: 17px;
-
-      accent-color: var(--green);
-    }
-
-    .forgot {
-      color: var(--pink);
-      text-decoration: none;
-    }
-
-    .forgot:hover {
-      text-decoration: underline;
-    }
-
-    #signin {
-      width: 100%;
-
-      margin-top: 26px;
-      padding: 16px;
-
-      border: 0;
-      border-radius: 8px;
-
-      background: var(--green);
-      color: var(--plum);
-
-      font-size: 17px;
-      font-weight: 800;
-
-      letter-spacing: 4px;
-
-      cursor: pointer;
-
-      transition:
-        transform 0.15s ease,
-        filter 0.15s ease,
-        box-shadow 0.15s ease;
-    }
-
-    #signin:hover {
-      filter: brightness(1.08);
-
-      transform: translateY(-1px);
-
-      box-shadow:
-        0 12px 25px
-        rgba(0, 0, 0, 0.25);
-    }
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,.65),
+    0 0 0 1px rgba(174,188,57,.22);
+}
 
     #signin:active {
       transform: translateY(0);
