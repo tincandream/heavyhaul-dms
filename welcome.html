@@ -1,841 +1,1521 @@
-// ============================================================
-// nav.js — Heavy Haul Command shared vertical navigation
-//
-// BASIC APPLICATION SHELL
-//
-// Main navigation = vertical left sidebar
-// Page-level navigation = horizontal tabs inside individual pages
-//
-// Include after Supabase CDN and before each page's own script:
-//
-// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-// <script src="nav.js"></script>
-//
-// Then:
-// const tenant = await buildNav(db, 'Fleet Board');
-//
-// ============================================================
-
-
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-
-const NAV_SECTIONS = [
-
-  {
-    label: null,
-
-    items: [
-      {
-        href: 'welcome.html',
-        label: 'Welcome'
-      }
-    ]
-  },
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+  <meta charset="utf-8">
 
-  {
-    label: 'DISPATCH',
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
 
-    items: [
+  <title>Welcome — Heavy Haul Command</title>
 
-      {
-        href: 'board.html',
-        label: 'Fleet Board'
-      },
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      {
-        href: 'newload.html',
-        label: 'New Load'
-      },
+  <!-- Shared application theme -->
+  <link rel="stylesheet" href="theme.css">
 
-      {
-        href: 'loads.html',
-        label: 'All Loads'
-      }
+  <!-- Welcome page styling -->
+  <style>
 
-    ]
-  },
+    /* =========================================================
+       HEAVY HAUL COMMAND
+       WELCOME / COMMAND CENTER
+       ========================================================= */
 
+    :root {
+      --welcome-ink: #3C3A4B;
 
-  {
-    label: 'SOURCING',
+      --welcome-blue: #7FA5B5;
+      --welcome-blue-soft: #EAF3F6;
 
-    items: [
+      --welcome-white: #FAFAFA;
+      --welcome-warm-white: #F6F6F3;
 
-      {
-        href: 'sourcing.html',
-        label: 'Opportunities'
-      },
+      --welcome-lime: #B8C34A;
+      --welcome-lime-soft: #F1F4D8;
 
-      {
-        href: 'call-queue.html',
-        label: 'Call Queue'
-      },
+      --welcome-pink: #D86A8E;
+      --welcome-pink-soft: #F8E5EC;
 
-      {
-        href: 'portals.html',
-        label: 'Portals'
-      },
+      --welcome-stone: #A9B0B4;
 
-      {
-        href: 'load-emails.html',
-        label: 'Load Emails'
-      },
+      --welcome-dark:
+        rgba(35, 27, 40, 0.88);
 
-      {
-        href: 'templates.html',
-        label: 'Templates'
-      },
+      --welcome-glass:
+        rgba(250, 250, 250, 0.91);
+    }
 
-      {
-        href: 'field-manual.html',
-        label: 'Field Manual'
-      },
 
-      {
-        href: 'calculators.html',
-        label: 'Calculators'
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-    ]
-  },
 
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
 
-  {
-    label: 'FLEET COMMAND',
 
-    items: [
+    body {
+      min-height: 100vh;
 
-      {
-        href: 'fleet.html',
-        label: 'Fleet Setup'
-      },
+      font-family:
+        "Inter",
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        sans-serif;
 
-      {
-        href: 'route-planning.html',
-        label: 'Route Planning'
-      },
+      color: var(--welcome-ink);
 
-      {
-        href: 'states.html',
-        label: 'State Rules'
-      },
+      background:
+        linear-gradient(
+          90deg,
+          rgba(29, 20, 32, 0.30) 0%,
+          rgba(29, 20, 32, 0.18) 42%,
+          rgba(29, 20, 32, 0.42) 100%
+        ),
+        url("images/heavy-haul-login-bg1.png");
 
-      {
-        href: 'calendar.html',
-        label: 'Calendar'
-      }
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
 
-    ]
-  }
 
-];
+    /* =========================================================
+       MAIN PAGE
+       ========================================================= */
 
+    .welcome-page {
+      min-height: calc(100vh - 102px);
 
+      padding:
+        42px 5vw 70px;
+    }
 
-// ============================================================
-// BUILD NAVIGATION
-// ============================================================
 
-async function buildNav(dbClient, title) {
+    .welcome-shell {
+      width: min(1180px, 100%);
 
+      margin: 0 auto;
+    }
 
-  const here =
-    location.pathname
-      .split('/')
-      .pop() || 'welcome.html';
 
+    /* =========================================================
+       HERO
+       ========================================================= */
 
-  const header =
-    document.querySelector('header');
+    .welcome-hero {
+      max-width: 720px;
 
+      margin-bottom: 30px;
 
-  if (!header) {
+      padding:
+        28px 30px 26px;
 
-    console.warn(
-      'nav.js: no <header> element found'
-    );
+      background:
+        linear-gradient(
+          135deg,
+          rgba(36, 26, 42, 0.94),
+          rgba(50, 46, 59, 0.84)
+        );
 
-    return null;
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.20);
 
-  }
+      box-shadow:
+        0 20px 50px
+        rgba(0, 0, 0, 0.22);
 
+      backdrop-filter:
+        blur(6px);
 
+      -webkit-backdrop-filter:
+        blur(6px);
+    }
 
-  // ==========================================================
-  // CLEAR OLD HEADER
-  // ==========================================================
 
-  header.innerHTML = '';
+    .welcome-kicker {
+      margin-bottom: 8px;
 
+      color: var(--welcome-lime);
 
+      font-family:
+        "Oswald",
+        sans-serif;
 
-  // ==========================================================
-  // BASIC PAGE SHELL
-  // ==========================================================
+      font-size: 11px;
 
-  document.body.style.margin = '0';
+      font-weight: 500;
 
-  document.body.style.paddingLeft = '220px';
+      letter-spacing: 3px;
 
+      text-transform: uppercase;
+    }
 
 
-  // ==========================================================
-  // SIDEBAR
-  // ==========================================================
+    .welcome-greeting {
+      margin: 0;
 
-  header.style.cssText = `
+      color: var(--welcome-white);
 
-    position: fixed;
+      font-family:
+        "Cinzel",
+        Georgia,
+        serif;
 
-    top: 0;
-    left: 0;
-    bottom: 0;
+      font-size:
+        clamp(30px, 5vw, 48px);
 
-    width: 220px;
+      font-weight: 700;
 
-    display: flex;
-    flex-direction: column;
+      line-height: 1.08;
 
-    padding: 24px 18px 18px;
+      letter-spacing: 1px;
+    }
 
-    background: #ffffff;
 
-    border-right: 1px solid #dddddd;
+    .welcome-subtitle {
+      margin:
+        10px 0 0;
 
-    overflow-y: auto;
+      color: var(--welcome-blue);
 
-    z-index: 1000;
+      font-family:
+        "Cormorant Garamond",
+        Georgia,
+        serif;
 
-  `;
+      font-size: 21px;
 
+      font-style: italic;
 
+      line-height: 1.3;
+    }
 
-  // ==========================================================
-  // BRAND
-  // ==========================================================
 
-  const brand =
-    document.createElement('div');
+    .welcome-line {
+      width: 90px;
+      height: 3px;
 
+      margin-top: 18px;
 
-  brand.style.cssText = `
+      background:
+        linear-gradient(
+          90deg,
+          var(--welcome-pink),
+          var(--welcome-lime)
+        );
+    }
 
-    margin-bottom: 28px;
 
-  `;
+    /* =========================================================
+       SECTION TITLES
+       ========================================================= */
 
+    .section-heading {
+      display: flex;
+      align-items: center;
 
+      gap: 14px;
 
-  const brandMain =
-    document.createElement('div');
+      margin:
+        0 0 11px;
+    }
 
 
-  brandMain.textContent =
-    'HEAVY HAUL';
+    .section-heading h2 {
+      margin: 0;
 
+      color: var(--welcome-white);
 
-  brandMain.style.cssText = `
+      font-family:
+        "Oswald",
+        sans-serif;
 
-    font-size: 17px;
+      font-size: 13px;
 
-    font-weight: 700;
+      font-weight: 500;
 
-    letter-spacing: 1px;
+      letter-spacing: 2px;
 
-  `;
+      text-transform: uppercase;
+    }
 
 
+    .section-heading::after {
+      content: "";
 
-  const brandSub =
-    document.createElement('div');
+      flex: 1;
 
+      height: 1px;
 
-  brandSub.textContent =
-    'COMMAND';
+      background:
+        rgba(250, 250, 250, 0.32);
+    }
 
 
-  brandSub.style.cssText = `
+    /* =========================================================
+       TODAY'S PRIORITIES
+       ========================================================= */
 
-    margin-top: 2px;
+    .priority-section {
+      margin-bottom: 28px;
+    }
 
-    font-size: 12px;
 
-    font-weight: 600;
+    .priority-grid {
+      display: grid;
 
-    letter-spacing: 3px;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
-  `;
+      gap: 12px;
+    }
 
 
+    .priority-card {
+      position: relative;
 
-  brand.appendChild(
-    brandMain
-  );
+      min-height: 118px;
 
+      padding:
+        17px 18px;
 
-  brand.appendChild(
-    brandSub
-  );
+      overflow: hidden;
 
+      background:
+        var(--welcome-glass);
 
-  header.appendChild(
-    brand
-  );
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.72);
 
+      box-shadow:
+        0 10px 28px
+        rgba(28, 22, 31, 0.13);
 
+      backdrop-filter:
+        blur(10px);
 
-  // ==========================================================
-  // CURRENT PAGE
-  // ==========================================================
+      -webkit-backdrop-filter:
+        blur(10px);
+    }
 
-  if (title) {
 
+    .priority-card::before {
+      content: "";
 
-    const currentPage =
-      document.createElement('div');
+      position: absolute;
 
+      top: 0;
+      left: 0;
+      right: 0;
 
-    currentPage.textContent =
-      title;
+      height: 4px;
 
+      background:
+        var(--welcome-blue);
+    }
 
-    currentPage.style.cssText = `
 
-      margin-bottom: 22px;
+    .priority-card.active::before {
+      background:
+        var(--welcome-lime);
+    }
 
-      padding-bottom: 14px;
 
-      border-bottom: 1px solid #e5e5e5;
+    .priority-card.attention::before {
+      background:
+        var(--welcome-pink);
+    }
+
+
+    .priority-card.info::before {
+      background:
+        var(--welcome-blue);
+    }
+
+
+    .priority-value {
+      margin-top: 5px;
+
+      color:
+        var(--welcome-ink);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 34px;
+
+      font-weight: 600;
+
+      line-height: 1;
+    }
+
+
+    .priority-label {
+      margin-top: 11px;
+
+      color: #697177;
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 11px;
+
+      font-weight: 600;
+
+      letter-spacing: 0.7px;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =========================================================
+       CONTINUE WORKING
+       ========================================================= */
+
+    .continue-section {
+      margin-bottom: 28px;
+    }
+
+
+    .continue-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap: 12px;
+    }
+
+
+    .continue-card {
+      position: relative;
+
+      display: block;
+
+      min-height: 135px;
+
+      padding:
+        19px 19px 18px;
+
+      background:
+        rgba(250, 250, 250, 0.93);
+
+      color:
+        var(--welcome-ink);
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.74);
+
+      text-decoration: none;
+
+      box-shadow:
+        0 10px 28px
+        rgba(28, 22, 31, 0.13);
+
+      backdrop-filter:
+        blur(10px);
+
+      -webkit-backdrop-filter:
+        blur(10px);
+
+      transition:
+        transform .16s ease,
+        border-color .16s ease,
+        background .16s ease;
+    }
+
+
+    .continue-card:hover {
+      transform:
+        translateY(-3px);
+
+      background:
+        #FFFFFF;
+
+      border-color:
+        var(--welcome-blue);
+    }
+
+
+    .continue-number {
+      margin-bottom: 17px;
+
+      color:
+        var(--welcome-blue);
+
+      font-family:
+        "Cinzel",
+        serif;
 
       font-size: 12px;
 
-      color: #777777;
+      font-weight: 700;
 
-    `;
-
-
-    header.appendChild(
-      currentPage
-    );
+      letter-spacing: 1px;
+    }
 
 
-  }
+    .continue-card:nth-child(2)
+    .continue-number {
+      color:
+        var(--welcome-lime);
+    }
+
+
+    .continue-card:nth-child(3)
+    .continue-number {
+      color:
+        var(--welcome-pink);
+    }
+
+
+    .continue-card-title {
+      color:
+        var(--welcome-ink);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 16px;
+
+      font-weight: 500;
+
+      letter-spacing: 0.4px;
+    }
+
+
+    .continue-card-note {
+      margin-top: 5px;
+
+      color: #747B80;
+
+      font-size: 11.5px;
+
+      line-height: 1.45;
+    }
+
+
+    .continue-arrow {
+      position: absolute;
+
+      right: 17px;
+      bottom: 14px;
+
+      color:
+        var(--welcome-blue);
+
+      font-size: 17px;
+    }
+
+
+    /* =========================================================
+       RECENT ACTIVITY
+       ========================================================= */
+
+    .activity-panel {
+      background:
+        rgba(250, 250, 250, 0.94);
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.74);
+
+      box-shadow:
+        0 12px 30px
+        rgba(28, 22, 31, 0.13);
+
+      backdrop-filter:
+        blur(10px);
+
+      -webkit-backdrop-filter:
+        blur(10px);
+    }
+
+
+    .activity-row {
+      display: grid;
+
+      grid-template-columns:
+        110px 14px 1fr;
+
+      gap: 12px;
+
+      align-items: start;
+
+      padding:
+        14px 18px;
+
+      border-bottom:
+        1px solid
+        #E8EBEC;
+    }
+
+
+    .activity-row:last-child {
+      border-bottom: 0;
+    }
+
+
+    .activity-time {
+      color: #90969A;
+
+      font-size: 10.5px;
+    }
+
+
+    .activity-marker {
+      width: 8px;
+      height: 8px;
+
+      margin-top: 4px;
+
+      background:
+        var(--welcome-blue);
+
+      border-radius: 50%;
+    }
+
+
+    .activity-row:nth-child(2)
+    .activity-marker {
+      background:
+        var(--welcome-lime);
+    }
+
+
+    .activity-row:nth-child(3)
+    .activity-marker {
+      background:
+        var(--welcome-pink);
+    }
+
+
+    .activity-text {
+      color:
+        var(--welcome-ink);
+
+      font-size: 12px;
+
+      line-height: 1.45;
+    }
+
+
+    .activity-empty {
+      padding:
+        24px 18px;
+
+      color: #7C8388;
+
+      font-size: 12px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 900px) {
+
+      .priority-grid,
+      .continue-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+    }
+
+
+    @media (max-width: 620px) {
+
+      body {
+        background-position:
+          40% center;
+      }
+
+
+      .welcome-page {
+        padding:
+          24px 14px 50px;
+      }
+
+
+      .welcome-hero {
+        padding:
+          22px 20px;
+      }
+
+
+      .priority-grid,
+      .continue-grid {
+        grid-template-columns:
+          1fr;
+      }
+
+
+      .activity-row {
+        grid-template-columns:
+          76px 12px 1fr;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <!-- Shared Heavy Haul Command header -->
+  <header></header>
+
+
+  <main class="welcome-page">
+
+    <div class="welcome-shell">
+
+
+      <!-- =====================================================
+           HERO
+           ===================================================== -->
+
+      <section class="welcome-hero">
+
+        <div class="welcome-kicker">
+          Dispatch Management System
+        </div>
+
+
+        <h1
+          class="welcome-greeting"
+          id="welcomeGreeting"
+        >
+          Welcome Back
+        </h1>
+
+
+        <p class="welcome-subtitle">
+          Everything you need to keep the road moving.
+        </p>
+
+
+        <div class="welcome-line"></div>
+
+      </section>
 
 
 
-  // ==========================================================
-  // NAVIGATION SECTIONS
-  // ==========================================================
+      <!-- =====================================================
+           TODAY'S PRIORITIES
+           ===================================================== -->
 
-  const nav =
-    document.createElement('nav');
+      <section class="priority-section">
 
-
-  nav.style.cssText = `
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 22px;
-
-  `;
+        <div class="section-heading">
+          <h2>Today's Priorities</h2>
+        </div>
 
 
-
-  NAV_SECTIONS.forEach(
-    function (section) {
+        <div class="priority-grid">
 
 
-      const sectionWrap =
-        document.createElement('div');
+          <div class="priority-card active">
+
+            <div
+              class="priority-value"
+              id="activeLoads"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Active Loads
+            </div>
+
+          </div>
+
+
+          <div class="priority-card info">
+
+            <div
+              class="priority-value"
+              id="driverCheckins"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Driver Check-ins
+            </div>
+
+          </div>
+
+
+          <div class="priority-card attention">
+
+            <div
+              class="priority-value"
+              id="permitExpiring"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Permit Expiring
+            </div>
+
+          </div>
+
+
+          <div class="priority-card info">
+
+            <div
+              class="priority-value"
+              id="brokerEmails"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Broker Emails
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </section>
 
 
 
-      // --------------------------------------------------------
-      // SECTION LABEL
-      // --------------------------------------------------------
+      <!-- =====================================================
+           CONTINUE WORKING
+           ===================================================== -->
 
-      if (section.label) {
+      <section class="continue-section">
 
-
-        const sectionLabel =
-          document.createElement('div');
-
-
-        sectionLabel.textContent =
-          section.label;
+        <div class="section-heading">
+          <h2>Continue Working</h2>
+        </div>
 
 
-        sectionLabel.style.cssText = `
-
-          margin-bottom: 6px;
-
-          padding-left: 10px;
-
-          font-size: 10px;
-
-          font-weight: 700;
-
-          letter-spacing: 1.6px;
-
-          color: #888888;
-
-        `;
+        <div class="continue-grid">
 
 
-        sectionWrap.appendChild(
-          sectionLabel
-        );
+          <a
+            class="continue-card"
+            href="loads.html"
+          >
 
+            <div class="continue-number">
+              01
+            </div>
+
+            <div class="continue-card-title">
+              Active Loads
+            </div>
+
+            <div class="continue-card-note">
+              Continue managing freight already in motion.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="board.html"
+          >
+
+            <div class="continue-number">
+              02
+            </div>
+
+            <div class="continue-card-title">
+              Fleet Board
+            </div>
+
+            <div class="continue-card-note">
+              Review fleet availability and assignments.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="calendar.html"
+          >
+
+            <div class="continue-number">
+              03
+            </div>
+
+            <div class="continue-card-title">
+              Calendar
+            </div>
+
+            <div class="continue-card-note">
+              See upcoming loads, deadlines, and appointments.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="call-queue.html"
+          >
+
+            <div class="continue-number">
+              04
+            </div>
+
+            <div class="continue-card-title">
+              Call Queue
+            </div>
+
+            <div class="continue-card-note">
+              Continue sourcing calls and follow-ups.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =====================================================
+           RECENT ACTIVITY
+           ===================================================== -->
+
+      <section>
+
+        <div class="section-heading">
+          <h2>Recent Activity</h2>
+        </div>
+
+
+        <div
+          class="activity-panel"
+          id="recentActivity"
+        >
+
+          <div class="activity-empty">
+            Loading recent activity…
+          </div>
+
+        </div>
+
+      </section>
+
+
+    </div>
+
+  </main>
+
+
+
+  <!-- ========================================================
+       SHARED NAVIGATION
+       ======================================================== -->
+
+  <script src="nav.js"></script>
+
+
+  <script>
+
+    // =========================================================
+    // SUPABASE
+    // =========================================================
+
+    const SUPABASE_URL =
+      'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+    const db =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    let TENANT_ID =
+      null;
+
+
+    // =========================================================
+    // GREETING
+    // =========================================================
+
+    function setGreeting(fullName) {
+
+      const hour =
+        new Date().getHours();
+
+
+      let greeting =
+        'Good Evening';
+
+
+      if (hour < 12) {
+
+        greeting =
+          'Good Morning';
+
+      }
+
+      else if (hour < 17) {
+
+        greeting =
+          'Good Afternoon';
 
       }
 
 
-
-      // --------------------------------------------------------
-      // SECTION ITEMS
-      // --------------------------------------------------------
-
-      section.items.forEach(
-        function (item) {
+      let firstName =
+        '';
 
 
-          const link =
-            document.createElement('a');
+      if (fullName) {
+
+        firstName =
+          fullName
+            .trim()
+            .split(/\s+/)[0];
+
+      }
 
 
-          link.href =
-            item.href;
+      document
+        .getElementById(
+          'welcomeGreeting'
+        )
+        .textContent =
+          firstName
+            ? greeting + ', ' + firstName
+            : greeting;
+
+    }
 
 
-          link.textContent =
-            item.label;
+    // =========================================================
+    // SAFE COUNTER
+    // =========================================================
 
+    async function safeCount(
+      tableName,
+      configureQuery
+    ) {
 
-          const active =
-            item.href === here;
+      try {
 
-
-          link.style.cssText = `
-
-            display: block;
-
-            padding: 8px 10px;
-
-            margin-bottom: 2px;
-
-            text-decoration: none;
-
-            font-size: 13px;
-
-            line-height: 1.2;
-
-            color:
-              ${active
-                ? '#111111'
-                : '#555555'};
-
-            background:
-              ${active
-                ? '#eeeeee'
-                : 'transparent'};
-
-            font-weight:
-              ${active
-                ? '600'
-                : '400'};
-
-          `;
-
-
-
-          link.addEventListener(
-            'mouseenter',
-            function () {
-
-
-              if (!active) {
-
-                link.style.background =
-                  '#f5f5f5';
-
+        let query =
+          db
+            .from(tableName)
+            .select(
+              '*',
+              {
+                count: 'exact',
+                head: true
               }
+            );
 
 
-            }
-          );
+        if (TENANT_ID) {
 
-
-
-          link.addEventListener(
-            'mouseleave',
-            function () {
-
-
-              if (!active) {
-
-                link.style.background =
-                  'transparent';
-
-              }
-
-
-            }
-          );
-
-
-
-          sectionWrap.appendChild(
-            link
-          );
-
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
 
         }
-      );
 
 
+        if (configureQuery) {
 
-      nav.appendChild(
-        sectionWrap
-      );
+          query =
+            configureQuery(
+              query
+            );
 
+        }
+
+
+        const result =
+          await query;
+
+
+        if (result.error) {
+
+          console.warn(
+            'Welcome count:',
+            tableName,
+            result.error.message
+          );
+
+          return null;
+
+        }
+
+
+        return result.count;
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome count:',
+          tableName,
+          error
+        );
+
+        return null;
+
+      }
 
     }
-  );
 
 
+    // =========================================================
+    // PRIORITIES
+    // =========================================================
 
-  header.appendChild(
-    nav
-  );
+    async function loadPriorities() {
 
+      const activeLoads =
+        await safeCount(
+          'loads',
+          function (query) {
 
+            return query.in(
+              'status',
+              [
+                'booked',
+                'dispatched',
+                'at_pickup',
+                'loaded',
+                'in_transit',
+                'at_delivery'
+              ]
+            );
 
-  // ==========================================================
-  // PUSH USER AREA TO BOTTOM
-  // ==========================================================
+          }
+        );
 
-  const spacer =
-    document.createElement('div');
 
-
-  spacer.style.flex = '1';
-
-
-  header.appendChild(
-    spacer
-  );
-
-
-
-  // ==========================================================
-  // USER AREA
-  // ==========================================================
-
-  const userArea =
-    document.createElement('div');
-
-
-  userArea.style.cssText = `
-
-    margin-top: 24px;
-
-    padding-top: 14px;
-
-    border-top: 1px solid #e5e5e5;
-
-  `;
-
-
-
-  const who =
-    document.createElement('div');
-
-
-  who.id =
-    'me';
-
-
-  who.textContent =
-    '…';
-
-
-  who.style.cssText = `
-
-    margin-bottom: 8px;
-
-    font-size: 11px;
-
-    color: #777777;
-
-  `;
-
-
-
-  const signOut =
-    document.createElement('button');
-
-
-  signOut.type =
-    'button';
-
-
-  signOut.textContent =
-    'Sign Out';
-
-
-  signOut.style.cssText = `
-
-    padding: 0;
-
-    background: none;
-
-    border: 0;
-
-    font-size: 12px;
-
-    color: #555555;
-
-    cursor: pointer;
-
-    text-decoration: underline;
-
-  `;
-
-
-
-  signOut.addEventListener(
-    'click',
-    async function () {
-
-
-      await dbClient.auth.signOut();
-
-
-      location.href =
-        'index.html';
-
-
-    }
-  );
-
-
-
-  userArea.appendChild(
-    who
-  );
-
-
-  userArea.appendChild(
-    signOut
-  );
-
-
-  header.appendChild(
-    userArea
-  );
-
-
-
-  // ==========================================================
-  // PROFILE LOOKUP
-  // ==========================================================
-
-  const sess =
-    await dbClient.auth.getUser();
-
-
-  const authId =
-    sess.data &&
-    sess.data.user
-
-      ? sess.data.user.id
-
-      : null;
-
-
-
-  let me =
-    await dbClient
-
-      .from('app_users')
-
-      .select(
-        'full_name, role, tenant_id'
-      )
-
-      .eq(
-        'auth_uid',
-        authId
-      )
-
-      .maybeSingle();
-
-
-
-  // ==========================================================
-  // EXISTING FALLBACK
-  // ==========================================================
-
-  if (
-    !me.error &&
-    !me.data
-  ) {
-
-
-    me =
-      await dbClient
-
-        .from('app_users')
-
-        .select(
-          'full_name, role, tenant_id'
+      document
+        .getElementById(
+          'activeLoads'
         )
+        .textContent =
+          activeLoads === null
+            ? '—'
+            : activeLoads;
 
-        .limit(1)
 
-        .maybeSingle();
 
+      // Driver check-ins:
+      // We keep this graceful if your current schema
+      // uses a different table/column name.
 
-  }
+      const startOfToday =
+        new Date();
 
+      startOfToday.setHours(
+        0,
+        0,
+        0,
+        0
+      );
 
 
-  if (me.error) {
+      const checkins =
+        await safeCount(
+          'check_ins',
+          function (query) {
 
+            return query.gte(
+              'occurred_at',
+              startOfToday.toISOString()
+            );
 
-    who.textContent =
-      'Profile error';
+          }
+        );
 
 
-    console.error(
-      'nav.js: app_users query failed —',
-      me.error.message
-    );
+      document
+        .getElementById(
+          'driverCheckins'
+        )
+        .textContent =
+          checkins === null
+            ? '—'
+            : checkins;
 
 
-    return null;
 
+      // Permits expiring within seven days.
 
-  }
+      const now =
+        new Date();
 
 
+      const sevenDays =
+        new Date();
 
-  if (!me.data) {
 
+      sevenDays.setDate(
+        sevenDays.getDate() + 7
+      );
 
-    who.textContent =
-      'No profile linked';
 
+      const permits =
+        await safeCount(
+          'permits',
+          function (query) {
 
-    return null;
+            return query
+              .gte(
+                'valid_to',
+                now.toISOString()
+              )
+              .lte(
+                'valid_to',
+                sevenDays.toISOString()
+              );
 
+          }
+        );
 
-  }
 
+      document
+        .getElementById(
+          'permitExpiring'
+        )
+        .textContent =
+          permits === null
+            ? '—'
+            : permits;
 
 
-  who.textContent =
-    me.data.full_name;
 
+      // We have not confirmed your load-email table/schema yet,
+      // so do not invent a database query.
 
+      document
+        .getElementById(
+          'brokerEmails'
+        )
+        .textContent =
+          '—';
 
-  return me.data.tenant_id;
+    }
 
 
-}
+    // =========================================================
+    // RECENT ACTIVITY
+    // =========================================================
 
+    async function loadRecentActivity() {
 
+      const panel =
+        document.getElementById(
+          'recentActivity'
+        );
 
-// ============================================================
-// MOBILE / SMALL SCREEN SUPPORT
-// ============================================================
 
-function updateNavLayout() {
+      try {
 
+        let query =
+          db
+            .from('events')
+            .select(
+              'created_at, event_type, subject, body'
+            )
+            .order(
+              'created_at',
+              {
+                ascending: false
+              }
+            )
+            .limit(6);
 
-  const header =
-    document.querySelector('header');
 
+        if (TENANT_ID) {
 
-  if (!header) {
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
 
-    return;
+        }
 
-  }
 
+        const result =
+          await query;
 
 
-  if (
-    window.innerWidth <= 760
-  ) {
+        if (
+          result.error ||
+          !result.data ||
+          result.data.length === 0
+        ) {
 
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No recent activity yet.' +
+            '</div>';
 
-    document.body.style.paddingLeft =
-      '0';
+          return;
 
+        }
 
-    header.style.position =
-      'relative';
 
+        panel.innerHTML =
+          result.data
+            .map(
+              function (item) {
 
-    header.style.width =
-      '100%';
+                const date =
+                  new Date(
+                    item.created_at
+                  );
 
 
-    header.style.height =
-      'auto';
+                const time =
+                  isNaN(date)
+                    ? ''
+                    : date.toLocaleString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        }
+                      );
 
 
-    header.style.bottom =
-      'auto';
+                const text =
+                  item.subject ||
+                  item.body ||
+                  item.event_type ||
+                  'Activity';
 
 
-  }
+                return (
+                  '<div class="activity-row">' +
 
+                    '<div class="activity-time">' +
+                      escapeHtml(time) +
+                    '</div>' +
 
-  else {
+                    '<div class="activity-marker"></div>' +
 
+                    '<div class="activity-text">' +
+                      escapeHtml(text) +
+                    '</div>' +
 
-    document.body.style.paddingLeft =
-      '220px';
+                  '</div>'
+                );
 
+              }
+            )
+            .join('');
 
-    header.style.position =
-      'fixed';
+      }
 
+      catch (error) {
 
-    header.style.width =
-      '220px';
+        console.warn(
+          'Recent activity:',
+          error
+        );
 
 
-    header.style.top =
-      '0';
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Recent activity unavailable.' +
+          '</div>';
 
+      }
 
-    header.style.bottom =
-      '0';
+    }
 
 
-  }
+    // =========================================================
+    // SAFE HTML
+    // =========================================================
 
+    function escapeHtml(value) {
 
-}
+      return String(
+        value || ''
+      )
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 
+    }
 
 
-window.addEventListener(
-  'resize',
-  updateNavLayout
-);
+    // =========================================================
+    // START
+    // =========================================================
 
+    async function start() {
 
-window.addEventListener(
-  'load',
-  updateNavLayout
-);
+      const session =
+        await db.auth.getSession();
+
+
+      if (
+        !session.data ||
+        !session.data.session
+      ) {
+
+        location.href =
+          'index.html';
+
+        return;
+
+      }
+
+
+      // Shared navigation.
+      TENANT_ID =
+        await buildNav(
+          db,
+          'Welcome'
+        );
+
+
+      // Get profile for greeting.
+
+      try {
+
+        const user =
+          await db.auth.getUser();
+
+
+        const authId =
+          user.data &&
+          user.data.user
+            ? user.data.user.id
+            : null;
+
+
+        if (authId) {
+
+          const profile =
+            await db
+              .from('app_users')
+              .select('full_name')
+              .eq(
+                'auth_uid',
+                authId
+              )
+              .maybeSingle();
+
+
+          if (
+            !profile.error &&
+            profile.data
+          ) {
+
+            setGreeting(
+              profile.data.full_name
+            );
+
+          }
+
+          else {
+
+            setGreeting('');
+
+          }
+
+        }
+
+        else {
+
+          setGreeting('');
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome profile:',
+          error
+        );
+
+        setGreeting('');
+
+      }
+
+
+      await Promise.all([
+        loadPriorities(),
+        loadRecentActivity()
+      ]);
+
+    }
+
+
+    start();
+
+  </script>
+
+</body>
+
+</html>
