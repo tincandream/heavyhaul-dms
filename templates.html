@@ -43,3 +43,268 @@
   .sub2 { font-size:11.5px; color:var(--muted); }
   .name { font-weight:600; }
   .tag { display:inline-block; background:var(--accentbg); color:var(--accent);
+         border-radius:5px; padding:1px 8px; font-size:11.5px; }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
+
+  dialog { border:none; border-radius:12px; padding:0; width:min(560px,94vw);
+    box-shadow:0 12px 40px rgba(10,14,25,.28); color:var(--ink); }
+  dialog::backdrop { background:rgba(12,16,26,.45); }
+  .dh { padding:14px 16px; border-bottom:1px solid var(--line); font-weight:600; }
+  .db { padding:16px; max-height:66vh; overflow:auto; }
+  .df { padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px;
+        align-items:center; background:#fbfaf7; }
+  .fg { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .fld { display:flex; flex-direction:column; gap:4px; }
+  .fld.full { grid-column:1/-1; }
+  .fld label { font-size:12px; font-weight:600; color:var(--muted); }
+  .fld input, .fld select, .fld textarea { width:100%; }
+  .spacer { flex:1; }
+  .err { color:var(--danger); font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<header></header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar">
+    <button class="primary" id="addBtn">+ Upload template</button>
+    <input class="search" id="q" placeholder="Search templates…">
+    <select id="fcat"><option value="">All categories</option></select>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr>
+        <th>Template</th><th>Category</th><th>File</th><th>Size</th><th>Uploaded</th><th></th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="6" class="msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- UPLOAD TEMPLATE DIALOG -->
+<dialog id="dlg">
+  <div class="dh">Upload Template</div>
+  <div class="db">
+    <div class="fg">
+      <div class="fld full"><label for="t_file">File *</label>
+        <input type="file" id="t_file"></div>
+      <div class="fld full"><label for="t_title">Template name *</label>
+        <input id="t_title" placeholder="Blank rate confirmation"></div>
+      <div class="fld"><label for="t_cat">Category</label>
+        <select id="t_cat">
+          <option value="rate_con">Rate confirmation</option>
+          <option value="carrier_packet">Carrier packet</option>
+          <option value="broker_carrier_agreement">Broker-carrier agreement</option>
+          <option value="bol">BOL</option>
+          <option value="escort_agreement">Escort agreement</option>
+          <option value="w9">W-9</option>
+          <option value="insurance">Insurance / COI</option>
+          <option value="lease_agreement">Lease agreement</option>
+          <option value="invoice">Invoice template</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="fld full"><label for="t_notes">Notes</label>
+        <textarea id="t_notes"></textarea></div>
+    </div>
+    <div id="t_err" class="err"></div>
+    <div id="t_progress" class="sub2" style="margin-top:8px"></div>
+  </div>
+  <div class="df">
+    <button class="primary" id="saveBtn">Upload</button>
+    <button id="cancelBtn">Cancel</button>
+  </div>
+</dialog>
+
+<div id="toast" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+  background:#22221f;color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;
+  opacity:0;transition:.22s;z-index:9999;pointer-events:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+let db = null, TENANT_ID = null, APP_USER_ID = null, rows = [];
+
+function fail(t){ $('body').innerHTML='<tr><td colspan="6" class="msg bad">'+t+'</td></tr>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function txt(v){ const s=(v==null?'':String(v)).trim(); return s===''?null:s; }
+function pretty(s){ return s?String(s).replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()):''; }
+function fmtDT(v){ if(!v)return '—'; const d=new Date(v); if(isNaN(d))return String(v);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function fmtBytes(n){ if(!n)return '—'; if(n<1024)return n+' B';
+  if(n<1048576)return (n/1024).toFixed(0)+' KB'; return (n/1048576).toFixed(1)+' MB'; }
+
+let toastTimer=null;
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.opacity='1';
+  t.style.transform='translateX(-50%) translateY(0)'; clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(80px)'; },2600); }
+
+window.onerror = m => fail('JS error: ' + m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load. Reload the page.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
+  TENANT_ID = await buildNav(db, 'Templates');
+  if (!TENANT_ID) { fail('No app_users row linked to this login.'); return; }
+  const u = await db.auth.getUser();
+  const authId = u.data.user ? u.data.user.id : null;
+  if (authId){
+    const au = await db.from('app_users').select('id').eq('auth_uid', authId).maybeSingle();
+    if (au.data) APP_USER_ID = au.data.id;
+  }
+  wire();
+  load();
+}
+
+async function load(){
+  const r = await db.from('documents').select('*')
+    .eq('is_template', true).is('archived_at', null)
+    .order('doc_type', { ascending:true });
+  if (r.error){ fail('Query failed: ' + r.error.message); return; }
+  rows = r.data || [];
+  fillFilters(); tiles(); render();
+}
+
+function fillFilters(){
+  const sel=$('fcat'), keep=sel.value;
+  const vals=[...new Set(rows.map(r=>r.doc_type).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All categories</option>'+
+    vals.map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+  sel.value=keep;
+}
+
+function tiles(){
+  const cats = new Set(rows.map(r=>r.doc_type).filter(Boolean)).size;
+  const t = [ ['Templates', rows.length], ['Categories', cats] ];
+  $('tiles').innerHTML = t.map(([l,n])=>'<div class="tile"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+}
+
+function render(){
+  const q=$('q').value.toLowerCase().trim();
+  let list=rows.filter(r=>{
+    if ($('fcat').value && r.doc_type!==$('fcat').value) return false;
+    if (q){ const hay=[r.title,r.filename,r.doc_type].filter(Boolean).join(' ').toLowerCase();
+      if(!hay.includes(q)) return false; }
+    return true;
+  });
+  $('count').textContent = list.length+' of '+rows.length;
+
+  if (!list.length){ $('body').innerHTML='<tr><td colspan="6" class="msg">No templates yet. Click “+ Upload template”.</td></tr>'; return; }
+
+  $('body').innerHTML = list.map(r=>
+    '<tr>'+
+      '<td><span class="name">'+esc(r.title||r.filename||'(file)')+'</span>'+
+        (r.notes?'<div class="sub2">'+esc(r.notes)+'</div>':'')+'</td>'+
+      '<td><span class="tag">'+esc(pretty(r.doc_type))+'</span></td>'+
+      '<td class="sub2">'+esc(r.filename||'—')+'</td>'+
+      '<td>'+esc(fmtBytes(r.byte_size))+'</td>'+
+      '<td class="sub2">'+esc(fmtDT(r.uploaded_at))+'</td>'+
+      '<td style="white-space:nowrap;text-align:right">'+
+        '<button class="primary sm" data-dl="'+esc(r.storage_key)+'" data-fn="'+esc(r.filename||'template')+'">Download</button> '+
+        '<button class="danger sm" data-del="'+esc(r.id)+'">Delete</button></td>'+
+    '</tr>').join('');
+
+  document.querySelectorAll('button[data-dl]').forEach(b=>
+    b.addEventListener('click', ()=>download(b.dataset.dl, b.dataset.fn)));
+  document.querySelectorAll('button[data-del]').forEach(b=>
+    b.addEventListener('click', ()=>del(b.dataset.del)));
+}
+
+async function sha256hex(file){
+  const buf = await file.arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function save(){
+  $('t_err').textContent='';
+  const fileInput=$('t_file');
+  if (!fileInput.files || !fileInput.files.length){ $('t_err').textContent='Choose a file first.'; return; }
+  const title = txt($('t_title').value);
+  if (!title){ $('t_err').textContent='Template name is required.'; return; }
+  const file = fileInput.files[0];
+  const btn=$('saveBtn'); btn.disabled=true;
+  $('t_progress').textContent='Hashing…';
+
+  try {
+    const hash = await sha256hex(file);
+    const ext = (file.name.split('.').pop()||'bin').toLowerCase();
+    const key = `${TENANT_ID}/templates/${hash.slice(0,16)}-${Date.now()}.${ext}`;
+
+    $('t_progress').textContent='Uploading…';
+    const up = await db.storage.from('documents').upload(key, file, {
+      contentType: file.type || 'application/octet-stream', upsert:false });
+    if (up.error) throw up.error;
+
+    $('t_progress').textContent='Saving…';
+    const ins = await db.from('documents').insert({
+      tenant_id:   TENANT_ID,
+      sha256:      hash,
+      storage_key: key,
+      filename:    file.name,
+      mime_type:   file.type || null,
+      byte_size:   file.size,
+      doc_type:    $('t_cat').value,
+      title:       title,
+      notes:       txt($('t_notes').value),
+      is_template: true,
+      uploaded_by: APP_USER_ID || null,
+      uploaded_at: new Date().toISOString(),
+      is_current:  true
+    });
+    if (ins.error) throw ins.error;
+
+    $('dlg').close(); toast('Template uploaded'); load();
+  } catch(e){
+    $('t_err').textContent = e.message || 'Upload failed';
+    $('t_progress').textContent='';
+  } finally { btn.disabled=false; }
+}
+
+async function download(storageKey, filename){
+  const { data, error } = await db.storage.from('documents')
+    .createSignedUrl(storageKey, 300, { download: filename });
+  if (error){ toast('Could not download'); console.error(error); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function del(id){
+  if (!confirm('Delete this template?')) return;
+  const d = rows.find(x=>x.id===id);
+  await db.from('documents').delete().eq('id', id);
+  if (d && d.storage_key) await db.storage.from('documents').remove([d.storage_key]);
+  toast('Template deleted'); load();
+}
+
+function openDlg(){
+  $('t_err').textContent=''; $('t_progress').textContent='';
+  $('t_file').value=''; $('t_title').value=''; $('t_cat').value='rate_con'; $('t_notes').value='';
+  $('dlg').showModal();
+}
+
+function wire(){
+  $('addBtn').addEventListener('click', openDlg);
+  $('saveBtn').addEventListener('click', save);
+  $('cancelBtn').addEventListener('click', ()=>$('dlg').close());
+  $('q').addEventListener('input', render);
+  $('fcat').addEventListener('change', render);
+}
+</script>
+</body>
+</html>
