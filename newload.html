@@ -342,6 +342,10 @@ async function start(){
 
   tenant = await buildNav(db, 'New Load');
   buildDispatchTabs('newload.html');
+  if (!t) {
+    fail('No app_users row linked to this login.');
+    return;
+}
 
   $('statepicker').innerHTML = STATES.map(s =>
     '<span class="st" data-s="'+s+'">'+s+'</span>').join('');
