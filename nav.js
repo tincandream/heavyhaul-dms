@@ -1,115 +1,519 @@
 // ============================================================
-// nav.js — shared header for every page
+// nav.js — shared Heavy Haul Command header
 //
 // Include AFTER the Supabase CDN script and BEFORE the page's
 // own script block:
+//
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="nav.js"></script>
 //   <script> ...page code... </script>
 //
-// Call from inside each page's start() function, after the
-// session check:
+// Call from each page:
 //   const tenant = await buildNav(db, 'Fleet Board');
 //
-// Returns the tenant_id, or null if no app_users row is linked.
+// Returns tenant_id, or null if no app_users row is linked.
 // ============================================================
-const NAV_LINKS = [
-  ['board.html',    'Fleet Board'],
-  ['loads.html',    'All Loads'],
-  ['newload.html',  'New Load'],
-  ['sourcing.html', 'Sourcing'],
-  ['fleet.html',    'Fleet Setup'],
-  ['states.html',   'State Rules']
+
+
+// ============================================================
+// NAVIGATION STRUCTURE
+// ============================================================
+
+const NAV_HUBS = [
+
+  {
+    label: 'Welcome',
+    href: 'welcome.html',
+    pages: [
+      'welcome.html'
+    ]
+  },
+
+  {
+    label: 'Dispatch',
+    pages: [
+      'board.html',
+      'newload.html',
+      'loads.html',
+      'workspace.html'
+    ],
+    items: [
+      ['board.html', 'Fleet Board'],
+      ['newload.html', 'New Load'],
+      ['loads.html', 'All Loads']
+    ]
+  },
+
+  {
+    label: 'Sourcing',
+    pages: [
+      'sourcing.html',
+      'opportunities.html',
+      'call-queue.html',
+      'portals.html',
+      'load-emails.html',
+      'templates.html',
+      'field-manual.html',
+      'calculators.html'
+    ],
+    items: [
+      ['opportunities.html', 'Opportunities'],
+      ['call-queue.html', 'Call Queue'],
+      ['portals.html', 'Portals'],
+      ['load-emails.html', 'Load Emails'],
+      ['templates.html', 'Templates'],
+      ['field-manual.html', 'Field Manual'],
+      ['calculators.html', 'Calculators']
+    ]
+  },
+
+  {
+    label: 'Fleet Command',
+    pages: [
+      'fleet.html',
+      'route-planning.html',
+      'states.html',
+      'calendar.html'
+    ],
+    items: [
+      ['fleet.html', 'Fleet Setup'],
+      ['route-planning.html', 'Route Planning'],
+      ['states.html', 'State Rules'],
+      ['calendar.html', 'Calendar']
+    ]
+  }
+
 ];
 
+
+// ============================================================
+// BUILD NAV
+// ============================================================
+
 async function buildNav(dbClient, title) {
-  const here = location.pathname.split('/').pop() || 'board.html';
-  const header = document.querySelector('header');
+
+  const here =
+    location.pathname.split('/').pop() || 'welcome.html';
+
+  const header =
+    document.querySelector('header');
+
+
   if (!header) {
-    console.warn('nav.js: no <header> element found on this page');
+
+    console.warn(
+      'nav.js: no <header> element found on this page'
+    );
+
     return null;
+
   }
+
+
   header.innerHTML = '';
-  header.style.cssText =
-    'background:#fff;border-bottom:1px solid #e2e0da;padding:12px 18px;' +
-    'display:flex;align-items:center;gap:14px;flex-wrap:wrap';
 
-  const h1 = document.createElement('h1');
-  h1.textContent = title || 'Dispatch';
-  h1.style.cssText = 'font-size:16px;font-weight:600;margin:0;color:#22221f';
-  header.appendChild(h1);
+  header.className =
+    'hh-header';
 
-  const stamp = document.createElement('span');
-  stamp.id = 'stamp';
-  stamp.style.cssText = 'font-size:11.5px;color:#73726c';
-  header.appendChild(stamp);
 
-  const right = document.createElement('span');
-  right.style.cssText =
-    'margin-left:auto;font-size:13px;display:flex;align-items:center;' +
-    'gap:14px;flex-wrap:wrap';
+  // ==========================================================
+  // BRAND / PAGE TITLE
+  // ==========================================================
 
-  NAV_LINKS.forEach(function (link) {
-    const a = document.createElement('a');
-    a.href = link[0];
-    a.textContent = link[1];
-    a.style.cssText = 'text-decoration:none;' +
-      (link[0] === here
-        ? 'color:#22221f;font-weight:600'
-        : 'color:#185fa5');
-    right.appendChild(a);
-  });
+  const brand =
+    document.createElement('div');
 
-  const who = document.createElement('span');
-  who.id = 'me';
-  who.style.cssText = 'color:#73726c';
-  who.textContent = '…';
-  right.appendChild(who);
+  brand.className =
+    'hh-header-brand';
 
-  const outBtn = document.createElement('button');
-  outBtn.textContent = 'Sign out';
-  outBtn.style.cssText =
-    'background:none;border:0;padding:0;margin:0;color:#185fa5;font-size:13px;' +
-    'cursor:pointer;text-decoration:underline;font-family:inherit;' +
-    'line-height:1;vertical-align:baseline';
-  outBtn.addEventListener('click', async function () {
-    await dbClient.auth.signOut();
-    location.href = 'index.html';
-  });
-  right.appendChild(outBtn);
 
-  header.appendChild(right);
+  const brandName =
+    document.createElement('div');
 
-  // ---- profile lookup: filter to the logged-in user ----
-  const sess = await dbClient.auth.getUser();
-  const authId = sess.data && sess.data.user ? sess.data.user.id : null;
+  brandName.className =
+    'hh-brand-name';
 
-  let me = await dbClient
-    .from('app_users')
-    .select('full_name, role, tenant_id')
-    .eq('auth_uid', authId)
-    .maybeSingle();
+  brandName.textContent =
+    'HEAVY HAUL COMMAND';
 
-  // fallback: if the filtered lookup finds nothing, fall back to
-  // the unfiltered first row so the page still works
-  if (!me.error && !me.data) {
-    me = await dbClient
+
+  const pageTitle =
+    document.createElement('div');
+
+  pageTitle.className =
+    'hh-page-title';
+
+  pageTitle.textContent =
+    title || 'Command Center';
+
+
+  brand.appendChild(
+    brandName
+  );
+
+  brand.appendChild(
+    pageTitle
+  );
+
+  header.appendChild(
+    brand
+  );
+
+
+  // ==========================================================
+  // MAIN HUB NAV
+  // ==========================================================
+
+  const nav =
+    document.createElement('nav');
+
+  nav.className =
+    'hh-main-nav';
+
+
+  NAV_HUBS.forEach(
+    function (hub) {
+
+
+      const hubWrap =
+        document.createElement('div');
+
+      hubWrap.className =
+        'hh-nav-hub';
+
+
+      const isActive =
+        hub.pages.includes(here);
+
+
+      // --------------------------------------------------------
+      // SIMPLE LINK: WELCOME
+      // --------------------------------------------------------
+
+      if (!hub.items) {
+
+        const a =
+          document.createElement('a');
+
+        a.href =
+          hub.href;
+
+        a.textContent =
+          hub.label;
+
+        a.className =
+          'hh-nav-link' +
+          (isActive ? ' active' : '');
+
+        hubWrap.appendChild(
+          a
+        );
+
+      }
+
+
+      // --------------------------------------------------------
+      // HUB WITH MENU
+      // --------------------------------------------------------
+
+      else {
+
+        const button =
+          document.createElement('button');
+
+        button.type =
+          'button';
+
+        button.className =
+          'hh-nav-link hh-hub-button' +
+          (isActive ? ' active' : '');
+
+        button.textContent =
+          hub.label;
+
+
+        const arrow =
+          document.createElement('span');
+
+        arrow.className =
+          'hh-nav-arrow';
+
+        arrow.textContent =
+          '▾';
+
+
+        button.appendChild(
+          arrow
+        );
+
+
+        const menu =
+          document.createElement('div');
+
+        menu.className =
+          'hh-hub-menu';
+
+
+        hub.items.forEach(
+          function (item) {
+
+            const a =
+              document.createElement('a');
+
+            a.href =
+              item[0];
+
+            a.textContent =
+              item[1];
+
+            if (
+              item[0] === here
+            ) {
+
+              a.className =
+                'current';
+
+            }
+
+            menu.appendChild(
+              a
+            );
+
+          }
+        );
+
+
+        hubWrap.appendChild(
+          button
+        );
+
+        hubWrap.appendChild(
+          menu
+        );
+
+
+        // click toggle for smaller screens
+        button.addEventListener(
+          'click',
+          function (e) {
+
+            e.stopPropagation();
+
+            document
+              .querySelectorAll(
+                '.hh-nav-hub.open'
+              )
+              .forEach(
+                function (other) {
+
+                  if (
+                    other !== hubWrap
+                  ) {
+
+                    other.classList.remove(
+                      'open'
+                    );
+
+                  }
+
+                }
+              );
+
+            hubWrap.classList.toggle(
+              'open'
+            );
+
+          }
+        );
+
+      }
+
+
+      nav.appendChild(
+        hubWrap
+      );
+
+    }
+  );
+
+
+  header.appendChild(
+    nav
+  );
+
+
+  // ==========================================================
+  // USER / SIGN OUT
+  // ==========================================================
+
+  const userArea =
+    document.createElement('div');
+
+  userArea.className =
+    'hh-user-area';
+
+
+  const who =
+    document.createElement('span');
+
+  who.id =
+    'me';
+
+  who.className =
+    'hh-user-name';
+
+  who.textContent =
+    '…';
+
+
+  const outBtn =
+    document.createElement('button');
+
+  outBtn.type =
+    'button';
+
+  outBtn.className =
+    'hh-signout';
+
+  outBtn.textContent =
+    'Sign out';
+
+
+  outBtn.addEventListener(
+    'click',
+    async function () {
+
+      await dbClient.auth.signOut();
+
+      location.href =
+        'index.html';
+
+    }
+  );
+
+
+  userArea.appendChild(
+    who
+  );
+
+  userArea.appendChild(
+    outBtn
+  );
+
+  header.appendChild(
+    userArea
+  );
+
+
+  // ==========================================================
+  // CLOSE MENUS WHEN CLICKING ELSEWHERE
+  // ==========================================================
+
+  document.addEventListener(
+    'click',
+    function () {
+
+      document
+        .querySelectorAll(
+          '.hh-nav-hub.open'
+        )
+        .forEach(
+          function (hub) {
+
+            hub.classList.remove(
+              'open'
+            );
+
+          }
+        );
+
+    }
+  );
+
+
+  // ==========================================================
+  // PROFILE LOOKUP
+  // ==========================================================
+
+  const sess =
+    await dbClient.auth.getUser();
+
+
+  const authId =
+    sess.data &&
+    sess.data.user
+      ? sess.data.user.id
+      : null;
+
+
+  let me =
+    await dbClient
+
       .from('app_users')
-      .select('full_name, role, tenant_id')
-      .limit(1)
+
+      .select(
+        'full_name, role, tenant_id'
+      )
+
+      .eq(
+        'auth_uid',
+        authId
+      )
+
       .maybeSingle();
+
+
+  // fallback
+  if (
+    !me.error &&
+    !me.data
+  ) {
+
+    me =
+      await dbClient
+
+        .from('app_users')
+
+        .select(
+          'full_name, role, tenant_id'
+        )
+
+        .limit(1)
+
+        .maybeSingle();
+
   }
+
 
   if (me.error) {
-    who.textContent = 'profile error';
-    console.error('nav.js: app_users query failed —', me.error.message);
+
+    who.textContent =
+      'profile error';
+
+    console.error(
+      'nav.js: app_users query failed —',
+      me.error.message
+    );
+
     return null;
-  }
-  if (!me.data) {
-    who.textContent = 'no profile linked';
-    return null;
+
   }
 
-  who.textContent = me.data.full_name + ' (' + me.data.role + ')';
+
+  if (!me.data) {
+
+    who.textContent =
+      'no profile linked';
+
+    return null;
+
+  }
+
+
+  who.textContent =
+    me.data.full_name;
+
+
   return me.data.tenant_id;
+
 }
