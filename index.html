@@ -287,20 +287,29 @@ input[type="password"]:focus {
     .go {
       display: inline-block;
 
-      margin-top: 14px;
+#signin {
+  width: 100%;
 
-      color: var(--pink);
+  margin-top: 14px;
+  padding: 11px;
 
-      font-size: 14px;
+  background: #4b3f46;
+  color: #f5ead6;
 
-      font-family:
-        system-ui,
-        -apple-system,
-        "Segoe UI",
-        sans-serif;
+  border: 1px solid #7a5a42;
+  border-radius: 0;
 
-      text-decoration: none;
-    }
+  font-family: "Oswald", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 4px;
+
+  cursor: pointer;
+
+  transition:
+    background .2s ease,
+    border-color .2s ease;
+}
 
     .go:hover {
       text-decoration: underline;
@@ -354,6 +363,7 @@ input[type="password"]:focus {
       .divider {
         gap: 10px;
       }
+      
 
       .divider span {
         font-size: 12px;
@@ -371,6 +381,7 @@ input[type="password"]:focus {
       .tagline {
         font-size: 10px;
         letter-spacing: 2px;
+      
       }
     }
   </style>
