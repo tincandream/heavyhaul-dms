@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="utf-8">
 
   <meta
@@ -10,569 +12,1167 @@
 
   <title>Heavy Haul Command — Sign In</title>
 
+
+  <!-- GOOGLE FONTS -->
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  >
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  >
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500;600&family=Oswald:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+
+
   <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&family=Oswald:wght@400;500;600&display=swap');
-    
+    /* =====================================================
+       HEAVY HAUL COMMAND
+       LOGIN DESIGN
+       ===================================================== */
+
+
     :root {
-      --cream: #f5ead6;
-      --plum: #241a2a;
-      --plum-soft: rgba(28, 19, 33, 0.94);
-      --pink: #d94b7b;
-      --green: #aebc39;
-      --muted: #b9adb8;
-      --line: rgba(245, 234, 214, 0.25);
-      --danger: #ff6b7a;
-      --ok: #aebc39;
+
+      /* BRAND PALETTE */
+
+      --cream: #F5EAD6;
+
+      --plum: #241A2A;
+
+      --plum-panel: rgba(28, 19, 33, 0.93);
+
+      --charcoal: #17171B;
+
+      --walnut: #7A5A42;
+
+      --walnut-light: #A48A70;
+
+      --pink: #D94B7B;
+
+      --lime: #AEBC39;
+
+      --stone: #B9ADB8;
+
+      --danger: #FF7C84;
+
+      --success: #AEBC39;
+
     }
+
+
+
+    /* =====================================================
+       RESET
+       ===================================================== */
+
 
     * {
       box-sizing: border-box;
     }
 
+
     html,
     body {
+      width: 100%;
+      height: 100%;
       margin: 0;
-      min-height: 100%;
     }
 
-    body {
-      min-height: 100vh;
 
-      font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    body {
+
+      overflow: hidden;
 
       color: var(--cream);
 
+      font-family:
+        "Inter",
+        sans-serif;
+
+
       background:
+
         linear-gradient(
           90deg,
-          rgba(18, 10, 22, 0.10) 0%,
-          rgba(18, 10, 22, 0.16) 45%,
-          rgba(18, 10, 22, 0.68) 100%
+          rgba(20, 12, 22, 0.08) 0%,
+          rgba(20, 12, 22, 0.12) 42%,
+          rgba(20, 12, 22, 0.62) 100%
         ),
+
         url("images/heavy-haul-login-bg1.png");
 
+
       background-size: cover;
+
       background-position: center center;
+
       background-repeat: no-repeat;
-      background-attachment: fixed;
+
     }
 
-   .login-page{
-    height:100vh;
-    overflow:hidden;
 
-    display:flex;
-    justify-content:flex-end;
-    align-items:center;
 
-    padding:20px 4vw;
-}
+    /* =====================================================
+       PAGE LAYOUT
+       ===================================================== */
 
-  .login-panel {
-  width: min(380px, 92vw);
-  padding: 18px 22px;
 
-  background: rgba(28, 19, 33, 0.92);
+    .login-page {
 
-  border: 1px solid rgba(245, 234, 214, 0.25);
-  border-radius: 0;
+      width: 100%;
 
-  box-shadow: 0 18px 45px rgba(0,0,0,.45);
+      height: 100vh;
+      height: 100svh;
 
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
+      display: flex;
+
+      justify-content: flex-end;
+
+      align-items: center;
+
+      padding: 18px 4vw;
+
+    }
+
+
+
+    /* =====================================================
+       LOGIN PANEL
+       ===================================================== */
+
+
+    .login-panel {
+
+      width: min(375px, 92vw);
+
+      padding: 18px 22px 17px;
+
+      background: var(--plum-panel);
+
+      border:
+        1px solid
+        rgba(245, 234, 214, 0.28);
+
+      border-radius: 0;
+
+
+      box-shadow:
+
+        0 18px 45px
+        rgba(0, 0, 0, 0.46),
+
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.035);
+
+
+      backdrop-filter: blur(5px);
+
+      -webkit-backdrop-filter: blur(5px);
+
+    }
+
+
+
+    /* =====================================================
+       BRAND
+       ===================================================== */
+
 
     .brand-mark {
-  text-align: center;
-  margin-bottom: 8px;
-}
 
-.brand-symbol {
-  margin-bottom: 4px;
-}
+      text-align: center;
 
-.brand-mark h1 {
-  margin: 0;
-  font-family: "Cinzel", serif;
-  font-size: 30px;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 3px;
-}
+      margin-bottom: 8px;
 
-.brand-mark .command {
-  display: block;
-  margin-top: 5px;
+    }
 
-  font-family: "Oswald", sans-serif;
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: 9px;
 
-  color: var(--green);
-}
+    .brand-symbol {
 
-.brand-mark .subtitle {
-  margin-top: 6px;
-  color: var(--pink);
+      display: flex;
 
-  font-family: "Cormorant Garamond", serif;
-  font-size: 16px;
-  font-style: italic;
-}
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0 10px;
-}
+      align-items: center;
 
-.divider span {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  white-space: nowrap;
-}
+      justify-content: center;
+
+      gap: 8px;
+
+      height: 18px;
+
+      margin-bottom: 4px;
+
+      color: var(--walnut-light);
+
+    }
+
+
+    .brand-symbol .wing {
+
+      font-size: 13px;
+
+      letter-spacing: -1px;
+
+      opacity: 0.85;
+
+    }
+
+
+    .brand-symbol .star {
+
+      color: var(--pink);
+
+      font-size: 17px;
+
+      line-height: 1;
+
+    }
+
+
+
+    .brand-title {
+
+      margin: 0;
+
+      color: var(--cream);
+
+      font-family:
+        "Cinzel",
+        serif;
+
+      font-size: 29px;
+
+      font-weight: 700;
+
+      line-height: 1;
+
+      letter-spacing: 2.5px;
+
+    }
+
+
+
+    .brand-command {
+
+      display: block;
+
+      margin-top: 5px;
+
+      color: var(--lime);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 21px;
+
+      font-weight: 500;
+
+      line-height: 1;
+
+      letter-spacing: 8px;
+
+    }
+
+
+
+    .brand-subtitle {
+
+      margin-top: 6px;
+
+      color: var(--pink);
+
+      font-family:
+        "Cormorant Garamond",
+        serif;
+
+      font-size: 16px;
+
+      font-style: italic;
+
+      line-height: 1.1;
+
+    }
+
+
+
+    /* =====================================================
+       WELCOME DIVIDER
+       ===================================================== */
+
+
+    .divider {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      margin: 12px 0 9px;
+
+    }
+
+
     .divider::before,
     .divider::after {
+
       content: "";
 
       flex: 1;
 
       height: 1px;
+
+      background:
+        rgba(164, 138, 112, 0.55);
+
     }
 
-    .divider::before {
-      background:
-        linear-gradient(
-          90deg,
-          transparent,
-          var(--pink)
-        );
-    }
-
-    .divider::after {
-      background:
-        linear-gradient(
-          90deg,
-          var(--pink),
-          transparent
-        );
-    }
 
     .divider span {
+
       color: var(--cream);
 
-      font-size: 14px;
-      font-weight: 700;
+      font-family:
+        "Oswald",
+        sans-serif;
 
-      letter-spacing: 4px;
+      font-size: 10px;
+
+      font-weight: 500;
+
+      letter-spacing: 3px;
 
       white-space: nowrap;
+
+      opacity: 0.82;
+
     }
 
- .field-label {
-  display: block;
-  margin: 8px 0 4px;
 
-  color: var(--cream);
 
-  font-family: "Oswald", sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
+    /* =====================================================
+       FORM LABELS
+       ===================================================== */
+
+
+    .field-label {
+
+      display: block;
+
+      margin: 8px 0 4px;
+
+      color: var(--cream);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 11px;
+
+      font-weight: 500;
+
+      letter-spacing: 1.6px;
+
+      text-transform: uppercase;
+
+      opacity: 0.88;
+
+    }
+
+
+
+    /* =====================================================
+       INDUSTRIAL INPUTS
+       ===================================================== */
+
 
     .input-wrap {
       position: relative;
     }
 
-input[type="email"],
-input[type="password"] {
-  width: 100%;
-  height: 38px;
-  padding: 8px 11px;
 
-  background: #17171b;
+    input[type="email"],
+    input[type="password"] {
 
-  border: 1px solid #545158;
-  border-left: 3px solid var(--pink);
-  border-radius: 0;
+      width: 100%;
 
-  color: #f5ead6;
+      height: 38px;
 
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
+      padding: 8px 11px;
 
-  outline: none;
-
-  box-shadow:
-    inset 0 1px 3px rgba(0,0,0,.65);
-
-  transition:
-    border-color .2s ease,
-    box-shadow .2s ease;
-}
-
-input[type="email"]:focus,
-input[type="password"]:focus {
-  border-color: var(--green);
-  border-left-color: var(--green);
-
-  box-shadow:
-    inset 0 1px 3px rgba(0,0,0,.65),
-    0 0 0 1px rgba(174,188,57,.22);
-}
-
-    #signin:active {
-      transform: translateY(0);
-    }
-
-    .tagline {
-      margin-top: 25px;
-
-      text-align: center;
+      background: var(--charcoal);
 
       color: var(--cream);
 
-      font-size: 12px;
-      font-weight: 600;
 
-      letter-spacing: 3px;
-    }
+      border:
+        1px solid
+        rgba(164, 138, 112, 0.58);
 
-    .tagline span {
-      color: var(--pink);
-    }
+      border-left:
+        3px solid
+        var(--walnut);
 
-    .out {
-      margin-top: 20px;
-      padding-top: 18px;
+      border-radius: 0;
 
-      border-top:
-        1px solid var(--line);
-
-      color: var(--muted);
-
-      font-size: 12.5px;
 
       font-family:
-        ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Monaco,
-        Consolas,
-        monospace;
+        "Inter",
+        sans-serif;
+
+      font-size: 13px;
+
+
+      outline: none;
+
+
+      box-shadow:
+
+        inset 0 1px 3px
+        rgba(0, 0, 0, 0.7);
+
+
+      transition:
+
+        border-color 0.18s ease,
+
+        background 0.18s ease,
+
+        box-shadow 0.18s ease;
+
+    }
+
+
+    input::placeholder {
+
+      color: #8E858B;
+
+    }
+
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+
+      background: #1D1B20;
+
+      border-color: var(--walnut-light);
+
+      border-left-color: var(--lime);
+
+
+      box-shadow:
+
+        inset 0 1px 3px
+        rgba(0, 0, 0, 0.7),
+
+        0 0 0 1px
+        rgba(174, 188, 57, 0.15);
+
+    }
+
+
+
+    /* =====================================================
+       LOGIN OPTIONS
+       ===================================================== */
+
+
+    .login-options {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 12px;
+
+      margin-top: 9px;
+
+      font-size: 11px;
+
+    }
+
+
+
+    .remember {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      color: var(--stone);
+
+      font-size: 11px;
+
+      cursor: pointer;
+
+    }
+
+
+    .remember input {
+
+      width: 14px;
+
+      height: 14px;
+
+      margin: 0;
+
+      accent-color: var(--walnut);
+
+    }
+
+
+
+    /* =====================================================
+       FORGOT PASSWORD
+       ===================================================== */
+
+
+    .forgot {
+
+      color: var(--stone);
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 11px;
+
+      font-weight: 500;
+
+      text-decoration: none;
+
+      opacity: 0.82;
+
+
+      transition:
+
+        color 0.18s ease,
+
+        opacity 0.18s ease;
+
+    }
+
+
+    .forgot:hover {
+
+      color: var(--cream);
+
+      opacity: 1;
+
+    }
+
+
+
+    /* =====================================================
+       SIGN IN BUTTON
+       ===================================================== */
+
+
+    #signin {
+
+      width: 100%;
+
+      height: 38px;
+
+      margin-top: 12px;
+
+      padding: 0 14px;
+
+
+      background: var(--walnut);
+
+      color: var(--cream);
+
+
+      border:
+        1px solid
+        var(--walnut-light);
+
+      border-radius: 0;
+
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 13px;
+
+      font-weight: 600;
+
+      letter-spacing: 3.5px;
+
+
+      cursor: pointer;
+
+
+      box-shadow:
+
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.10),
+
+        0 4px 10px
+        rgba(0, 0, 0, 0.25);
+
+
+      transition:
+
+        background 0.18s ease,
+
+        border-color 0.18s ease,
+
+        transform 0.12s ease,
+
+        box-shadow 0.18s ease;
+
+    }
+
+
+    #signin:hover {
+
+      background: #8A674C;
+
+      border-color: #B89E83;
+
+
+      box-shadow:
+
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.12),
+
+        0 6px 14px
+        rgba(0, 0, 0, 0.30);
+
+    }
+
+
+    #signin:active {
+
+      transform: translateY(1px);
+
+    }
+
+
+    #signin:disabled {
+
+      cursor: wait;
+
+      opacity: 0.72;
+
+    }
+
+
+
+    /* =====================================================
+       SYSTEM OUTPUT
+       ===================================================== */
+
+
+    .out {
+
+      margin-top: 11px;
+
+      padding-top: 9px;
+
+
+      border-top:
+
+        1px solid
+        rgba(164, 138, 112, 0.30);
+
+
+      color: var(--stone);
+
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 10.5px;
+
+      line-height: 1.45;
+
 
       white-space: pre-wrap;
+
       word-break: break-word;
+
     }
+
 
     .out .bad {
+
       color: var(--danger);
+
     }
+
 
     .out .good {
-      color: var(--ok);
+
+      color: var(--success);
+
     }
+
+
+
+    /* =====================================================
+       OPEN COMMAND CENTER
+       ===================================================== */
+
 
     .go {
-      display: inline-block;
 
-#signin {
-  width: 100%;
+      display: block;
 
-  margin-top: 14px;
-  padding: 11px;
+      width: 100%;
 
-  background: #4b3f46;
-  color: #f5ead6;
+      margin-top: 8px;
 
-  border: 1px solid #7a5a42;
-  border-radius: 0;
+      padding: 8px 10px;
 
-  font-family: "Oswald", sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 4px;
 
-  cursor: pointer;
+      background:
+        rgba(122, 90, 66, 0.18);
 
-  transition:
-    background .2s ease,
-    border-color .2s ease;
-}
+
+      color: var(--cream);
+
+
+      border:
+        1px solid
+        rgba(164, 138, 112, 0.55);
+
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 11px;
+
+      font-weight: 500;
+
+      letter-spacing: 1.5px;
+
+
+      text-align: center;
+
+      text-decoration: none;
+
+
+      transition:
+
+        background 0.18s ease,
+
+        border-color 0.18s ease;
+
+    }
+
 
     .go:hover {
-      text-decoration: underline;
+
+      background:
+        rgba(122, 90, 66, 0.34);
+
+      border-color: var(--walnut-light);
+
     }
 
-    @media (max-width: 900px) {
-      body {
-        background-position: 38% center;
-      }
 
-      .login-page {
-        justify-content: center;
 
-        padding: 34px 22px;
-      }
+    /* =====================================================
+       SMALLER LAPTOP SCREENS
+       ===================================================== */
+
+
+    @media (max-height: 720px) {
 
       .login-panel {
-        max-width: 470px;
-      }
-    }
 
-    @media (max-width: 600px) {
-      body {
-        background-position: 35% center;
+        padding:
+          14px 20px;
+
       }
 
-      .login-page {
-        align-items: flex-end;
 
-        padding: 18px;
+      .brand-title {
+
+        font-size: 25px;
+
       }
 
-      .login-panel {
-        padding: 28px 22px;
 
-        border-radius: 22px;
+      .brand-command {
+
+        font-size: 18px;
+
+        letter-spacing: 7px;
+
       }
 
-      .brand-mark h1 {
-        font-size: 36px;
+
+      .brand-subtitle {
+
+        font-size: 14px;
+
       }
 
-      .brand-mark .command {
-        letter-spacing: 5px;
+
+      .brand-symbol {
+
+        display: none;
+
       }
 
-      .brand-mark .subtitle {
-        font-size: 16px;
-      }
 
       .divider {
-        gap: 10px;
-      }
-      
 
-      .divider span {
-        font-size: 12px;
-        letter-spacing: 3px;
+        margin:
+          8px 0 6px;
+
       }
 
-      .login-options {
-        flex-wrap: wrap;
+
+      .field-label {
+
+        margin:
+          6px 0 3px;
+
       }
+
+
+      input[type="email"],
+      input[type="password"] {
+
+        height: 34px;
+
+      }
+
 
       #signin {
-        letter-spacing: 3px;
+
+        height: 35px;
+
+        margin-top: 9px;
+
       }
 
-      .tagline {
-        font-size: 10px;
-        letter-spacing: 2px;
-      
+
+      .out {
+
+        margin-top: 8px;
+
+        padding-top: 6px;
+
       }
+
     }
 
- /* FINAL LOGIN CONTROL COLORS */
 
-.forgot {
-  color: #B9ADB8 !important;
-  text-decoration: none !important;
-}
 
-.forgot:hover {
-  color: #F7F3EA !important;
-}
+    /* =====================================================
+       TABLET
+       ===================================================== */
 
-#signin {
-  width: 100% !important;
-  margin-top: 14px !important;
-  padding: 10px 14px !important;
 
-  background: #7A5A42 !important;
-  color: #F7F3EA !important;
+    @media (max-width: 900px) {
 
-  border: 1px solid #A48A70 !important;
-  border-radius: 0 !important;
+      body {
 
-  font-family: "Oswald", sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  letter-spacing: 4px !important;
+        background-position:
+          38% center;
 
-  cursor: pointer !important;
-}
+      }
 
-#signin:hover {
-  background: #8B6A50 !important;
-  border-color: #C0A78E !important;
-}
 
-.go {
-  color: #B9ADB8 !important;
-  text-decoration: none !important;
-}
+      .login-page {
 
-.go:hover {
-  color: #F7F3EA !important;
-}    
+        justify-content: center;
 
-/* Open Command Center link */
-a.go,
-.go {
-  color: #6B92A5 !important;   /* muted teal */
-  text-decoration: none !important;
+        padding:
+          16px;
 
-  font-family: "Oswald", sans-serif !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  letter-spacing: 1px !important;
-}
+      }
 
-a.go:hover,
-.go:hover {
-  color: #F7F3EA !important;
-}
-      button {
-  background: #7A5A42 !important;
-  color: #F7F3EA !important;
-  border: 1px solid #A48A70 !important;
-  border-radius: 0 !important;
-}
+    }
+
+
+
+    /* =====================================================
+       PHONE
+       ===================================================== */
+
+
+    @media (max-width: 600px) {
+
+      body {
+
+        overflow: auto;
+
+        background-position:
+          35% center;
+
+      }
+
+
+      .login-page {
+
+        min-height: 100svh;
+
+        height: auto;
+
+        justify-content: center;
+
+        align-items: center;
+
+        padding:
+          14px;
+
+      }
+
+
+      .login-panel {
+
+        width:
+          min(360px, 94vw);
+
+        padding:
+          16px 18px;
+
+      }
+
+
+      .brand-title {
+
+        font-size: 26px;
+
+      }
+
+
+      .brand-command {
+
+        font-size: 19px;
+
+        letter-spacing: 6px;
+
+      }
+
+
+      .brand-symbol {
+
+        display: none;
+
+      }
+
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+
   <main class="login-page">
+
 
     <section class="login-panel">
 
+
+      <!-- BRAND -->
+
       <div class="brand-mark">
 
+
         <div class="brand-symbol">
-          <span class="wing">━━</span>
-          <span class="star">★</span>
-          <span class="wing">━━</span>
+
+          <span class="wing">
+            ━━
+          </span>
+
+          <span class="star">
+            ★
+          </span>
+
+          <span class="wing">
+            ━━
+          </span>
+
         </div>
 
-        <h1>
+
+        <h1 class="brand-title">
+
           HEAVY HAUL
 
-          <span class="command">
+          <span class="brand-command">
+
             COMMAND
+
           </span>
+
         </h1>
 
-        <div class="subtitle">
+
+        <div class="brand-subtitle">
+
           Dispatch Management System
+
         </div>
 
+
       </div>
 
+
+
+      <!-- WELCOME -->
 
       <div class="divider">
-        <span>WELCOME BACK</span>
+
+        <span>
+          WELCOME BACK
+        </span>
+
       </div>
 
+
+
+      <!-- EMAIL -->
 
       <label
         class="field-label"
         for="email"
       >
+
         Email
+
       </label>
 
+
       <div class="input-wrap">
+
         <input
           id="email"
           type="email"
           autocomplete="username"
           placeholder="Enter your email"
         >
+
       </div>
 
+
+
+      <!-- PASSWORD -->
 
       <label
         class="field-label"
         for="password"
       >
+
         Password
+
       </label>
 
+
       <div class="input-wrap">
+
         <input
           id="password"
           type="password"
           autocomplete="current-password"
           placeholder="Enter your password"
         >
+
       </div>
 
 
+
+      <!-- LOGIN OPTIONS -->
+
       <div class="login-options">
 
+
         <label class="remember">
+
           <input
             id="remember"
             type="checkbox"
           >
+
           Remember me
+
         </label>
+
 
         <a
           class="forgot"
           href="#"
           onclick="return false;"
         >
+
           Forgot password?
+
         </a>
+
 
       </div>
 
+
+
+      <!-- SIGN IN -->
 
       <button
         id="signin"
         type="button"
       >
-        SIGN IN →
+
+        SIGN IN
+
       </button>
 
+
+
+      <!-- STATUS -->
 
       <div
         id="out"
         class="out"
       >
+
         Loading…
+
       </div>
 
-
-      <div class="tagline">
-        COMMAND
-        <span>•</span>
-        CONTROL
-        <span>•</span>
-        DELIVER
-      </div>
 
     </section>
+
 
   </main>
 
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- ==================================================
+       SUPABASE
+       ================================================== -->
+
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+
 
   <script>
 
@@ -580,58 +1180,78 @@ a.go:hover,
     // SUPABASE CONNECTION
     // ==================================================
 
+
     const SUPABASE_URL =
       'https://zyhdatteglxozsgnjhrm.supabase.co';
 
+
     const SUPABASE_ANON_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
 
 
     // ==================================================
     // PAGE ELEMENTS
     // ==================================================
 
+
     const out =
       document.getElementById('out');
+
 
     const emailInput =
       document.getElementById('email');
 
+
     const passwordInput =
       document.getElementById('password');
+
 
     const signinButton =
       document.getElementById('signin');
 
+
     const rememberCheckbox =
       document.getElementById('remember');
+
 
     let db = null;
 
 
+
     // ==================================================
-    // MESSAGE LOGGER
+    // STATUS MESSAGE
     // ==================================================
+
 
     function log(text, cls) {
 
       const span =
         document.createElement('span');
 
+
       if (cls) {
-        span.className = cls;
+
+        span.className =
+          cls;
+
       }
+
 
       span.textContent =
         text + '\n';
 
+
       out.appendChild(span);
+
     }
+
 
 
     // ==================================================
     // JAVASCRIPT ERROR HANDLING
     // ==================================================
+
 
     window.onerror =
       function (msg) {
@@ -644,22 +1264,28 @@ a.go:hover,
       };
 
 
-    out.textContent = '';
+
+    out.textContent =
+      '';
+
 
 
     // ==================================================
     // REMEMBER EMAIL
     // ==================================================
 
+
     const savedEmail =
       localStorage.getItem(
         'heavyHaulRememberedEmail'
       );
 
+
     if (savedEmail) {
 
       emailInput.value =
         savedEmail;
+
 
       rememberCheckbox.checked =
         true;
@@ -667,25 +1293,26 @@ a.go:hover,
     }
 
 
+
     // ==================================================
     // STARTUP CHECKS
     // ==================================================
+
 
     if (
       typeof window.supabase ===
       'undefined'
     ) {
 
+
       log(
-        'FAIL: Supabase library did not load from the CDN.',
+        'Unable to load sign-in service.',
         'bad'
       );
 
-      log(
-        'Check your internet connection, then reload.'
-      );
 
     }
+
 
     else if (
       SUPABASE_URL.indexOf(
@@ -693,12 +1320,15 @@ a.go:hover,
       ) !== -1
     ) {
 
+
       log(
-        'FAIL: SUPABASE_URL is still the placeholder.',
+        'Supabase URL has not been configured.',
         'bad'
       );
 
+
     }
+
 
     else if (
       SUPABASE_ANON_KEY.indexOf(
@@ -706,25 +1336,33 @@ a.go:hover,
       ) !== -1
     ) {
 
+
       log(
-        'FAIL: SUPABASE_ANON_KEY is still the placeholder.',
+        'Supabase key has not been configured.',
         'bad'
       );
 
+
     }
+
 
     else if (
-      SUPABASE_ANON_KEY.length < 100
+      SUPABASE_ANON_KEY.length <
+      100
     ) {
 
+
       log(
-        'FAIL: anon key appears to be incomplete.',
+        'Supabase key appears incomplete.',
         'bad'
       );
 
+
     }
 
+
     else {
+
 
       db =
         window.supabase.createClient(
@@ -732,203 +1370,282 @@ a.go:hover,
           SUPABASE_ANON_KEY
         );
 
+
       log(
         'System ready.',
         'good'
       );
 
 
+
       db.auth
         .getSession()
-        .then(function (r) {
+        .then(
+          function (r) {
 
-          if (
-            r.data &&
-            r.data.session
-          ) {
 
-            log(
-              'Existing session found.',
-              'good'
-            );
+            if (
+              r.data &&
+              r.data.session
+            ) {
 
-            check();
+
+              log(
+                'Existing session found.',
+                'good'
+              );
+
+
+              check();
+
+
+            }
 
           }
-
-        });
+        );
 
     }
+
 
 
     // ==================================================
     // SIGN IN
     // ==================================================
 
+
     signinButton
       .addEventListener(
         'click',
         function () {
 
+
           if (!db) {
 
+
+            out.textContent =
+              '';
+
+
             log(
-              'Cannot sign in — Supabase is not ready.',
+              'Sign-in service is not ready.',
               'bad'
             );
 
+
             return;
 
+
           }
+
 
 
           const email =
             emailInput.value.trim();
 
+
           const password =
             passwordInput.value;
 
 
+
           if (!email) {
 
-            out.textContent = '';
+
+            out.textContent =
+              '';
+
 
             log(
               'Please enter your email address.',
               'bad'
             );
 
+
             emailInput.focus();
 
+
             return;
+
 
           }
 
 
+
           if (!password) {
 
-            out.textContent = '';
+
+            out.textContent =
+              '';
+
 
             log(
               'Please enter your password.',
               'bad'
             );
 
+
             passwordInput.focus();
+
 
             return;
 
+
           }
+
 
 
           if (
             rememberCheckbox.checked
           ) {
 
+
             localStorage.setItem(
               'heavyHaulRememberedEmail',
               email
             );
 
-          } else {
+
+          }
+
+          else {
+
 
             localStorage.removeItem(
               'heavyHaulRememberedEmail'
             );
 
+
           }
 
 
-          out.textContent = '';
+
+          out.textContent =
+            '';
+
 
           log(
             'Signing in…'
           );
 
 
+
           signinButton.disabled =
             true;
+
 
           signinButton.textContent =
             'SIGNING IN…';
 
 
+
           db.auth
             .signInWithPassword({
 
-              email: email,
+              email:
+                email,
 
-              password: password
+              password:
+                password
 
             })
 
-            .then(function (r) {
 
-              if (r.error) {
+            .then(
+              function (r) {
+
+
+                if (r.error) {
+
+
+                  log(
+                    'SIGN IN FAILED: ' +
+                    r.error.message,
+                    'bad'
+                  );
+
+
+                  return;
+
+
+                }
+
+
 
                 log(
-                  'SIGN IN FAILED: ' +
-                  r.error.message,
+                  'Signed in successfully.',
+                  'good'
+                );
+
+
+                check();
+
+
+              }
+            )
+
+
+            .catch(
+              function (e) {
+
+
+                log(
+                  'NETWORK ERROR: ' +
+                  e.message,
                   'bad'
                 );
 
-                return;
 
               }
+            )
 
 
-              log(
-                'Signed in successfully.',
-                'good'
-              );
+            .finally(
+              function () {
 
-              check();
 
-            })
+                signinButton.disabled =
+                  false;
 
-            .catch(function (e) {
 
-              log(
-                'NETWORK ERROR: ' +
-                e.message,
-                'bad'
-              );
+                signinButton.textContent =
+                  'SIGN IN';
 
-            })
 
-            .finally(function () {
+              }
+            );
 
-              signinButton.disabled =
-                false;
-
-              signinButton.textContent =
-                'SIGN IN →';
-
-            });
 
         }
       );
 
 
+
     // ==================================================
-    // ENTER KEY SIGN IN
+    // ENTER KEY
     // ==================================================
+
 
     passwordInput
       .addEventListener(
         'keydown',
         function (e) {
 
+
           if (
-            e.key === 'Enter'
+            e.key ===
+            'Enter'
           ) {
+
 
             signinButton.click();
 
+
           }
+
 
         }
       );
+
 
 
     emailInput
@@ -936,181 +1653,259 @@ a.go:hover,
         'keydown',
         function (e) {
 
+
           if (
-            e.key === 'Enter'
+            e.key ===
+            'Enter'
           ) {
+
 
             passwordInput.focus();
 
+
           }
+
 
         }
       );
 
 
+
     // ==================================================
-    // VERIFY USER + DATABASE ACCESS
+    // VERIFY USER AND DATABASE ACCESS
     // ==================================================
+
 
     function check() {
 
+
       db
-        .from('app_users')
+        .from(
+          'app_users'
+        )
+
 
         .select(
           'full_name, role, tenant_id'
         )
 
-        .then(function (r) {
 
-          if (r.error) {
-
-            log(
-              'app_users error: ' +
-              r.error.message,
-              'bad'
-            );
-
-            return;
-
-          }
+        .then(
+          function (r) {
 
 
-          if (
-            !r.data ||
-            r.data.length === 0
-          ) {
-
-            log(
-              'No app_users profile is linked to this login.',
-              'bad'
-            );
-
-            return;
-
-          }
+            if (r.error) {
 
 
-          log(
-            'Welcome, ' +
-            r.data[0].full_name +
-            '.',
-            'good'
-          );
+              log(
+                'Profile error: ' +
+                r.error.message,
+                'bad'
+              );
 
 
-          return db
-            .from('loads')
-
-            .select(
-              '*',
-              {
-                count: 'exact',
-                head: true
-              }
-            );
-
-        })
+              return;
 
 
-        .then(function (r) {
-
-          if (!r) {
-            return;
-          }
+            }
 
 
-          if (r.error) {
+
+            if (
+              !r.data ||
+              r.data.length === 0
+            ) {
+
+
+              log(
+                'No application profile is linked to this login.',
+                'bad'
+              );
+
+
+              return;
+
+
+            }
+
+
 
             log(
-              'Loads error: ' +
-              r.error.message,
-              'bad'
-            );
-
-          } else {
-
-            log(
-              'Loads available: ' +
-              r.count,
+              'Welcome, ' +
+              r.data[0].full_name +
+              '.',
               'good'
             );
 
+
+
+            return db
+              .from(
+                'loads'
+              )
+
+
+              .select(
+                '*',
+                {
+                  count:
+                    'exact',
+
+                  head:
+                    true
+                }
+              );
+
+
           }
+        )
 
 
-          return db
-            .from('v_fleet_board')
 
-            .select(
-              '*',
-              {
-                count: 'exact',
-                head: true
-              }
-            );
-
-        })
+        .then(
+          function (r) {
 
 
-        .then(function (r) {
+            if (!r) {
 
-          if (!r) {
-            return;
+              return;
+
+            }
+
+
+
+            if (r.error) {
+
+
+              log(
+                'Loads error: ' +
+                r.error.message,
+                'bad'
+              );
+
+
+            }
+
+            else {
+
+
+              log(
+                'Loads available: ' +
+                r.count,
+                'good'
+              );
+
+
+            }
+
+
+
+            return db
+              .from(
+                'v_fleet_board'
+              )
+
+
+              .select(
+                '*',
+                {
+                  count:
+                    'exact',
+
+                  head:
+                    true
+                }
+              );
+
+
           }
+        )
 
 
-          if (r.error) {
+
+        .then(
+          function (r) {
+
+
+            if (!r) {
+
+              return;
+
+            }
+
+
+
+            if (r.error) {
+
+
+              log(
+                'Fleet board error: ' +
+                r.error.message,
+                'bad'
+              );
+
+
+              return;
+
+
+            }
+
+
 
             log(
-              'Fleet board error: ' +
-              r.error.message,
+              'Command Center ready.',
+              'good'
+            );
+
+
+
+            const a =
+              document.createElement(
+                'a'
+              );
+
+
+            a.href =
+              'board.html';
+
+
+            a.className =
+              'go';
+
+
+            a.textContent =
+              'OPEN COMMAND CENTER';
+
+
+            out.appendChild(a);
+
+
+          }
+        )
+
+
+
+        .catch(
+          function (e) {
+
+
+            log(
+              'ERROR: ' +
+              e.message,
               'bad'
             );
 
-            return;
 
           }
+        );
 
-
-          log(
-            'Fleet board ready.',
-            'good'
-          );
-
-
-          const a =
-            document.createElement(
-              'a'
-            );
-
-          a.href =
-            'board.html';
-
-          a.className =
-            'go';
-
-          a.textContent =
-            'Open Command Center →';
-
-          out.appendChild(a);
-
-        })
-
-
-        .catch(function (e) {
-
-          log(
-            'ERROR: ' +
-            e.message,
-            'bad'
-          );
-
-        });
 
     }
 
+
   </script>
 
+
 </body>
+
 </html>
