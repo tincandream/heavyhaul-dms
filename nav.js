@@ -14,15 +14,12 @@
 // Returns the tenant_id, or null if no app_users row is linked.
 // ============================================================
 const NAV_LINKS = [
-  ['board.html',         'Fleet Board'],
-  ['loads.html',         'All Loads'],
-  ['newload.html',       'New Load'],
-  ['opportunities.html', 'Opportunities'],
-  ['call-queue.html',    'Call Queue'],
-  ['portals.html',       'Portals'],
-  ['inbox.html',         'Load Emails'],
-  ['fleet.html',         'Fleet Setup'],
-  ['states.html',        'State Rules']
+  ['board.html',    'Fleet Board'],
+  ['loads.html',    'All Loads'],
+  ['newload.html',  'New Load'],
+  ['sourcing.html', 'Sourcing'],
+  ['fleet.html',    'Fleet Setup'],
+  ['states.html',   'State Rules']
 ];
 
 async function buildNav(dbClient, title) {
