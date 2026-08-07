@@ -136,6 +136,9 @@ async function start(){
   const s = await db.auth.getSession();
   if (!s.data.session) { location.href='index.html'; return; }
   const t = await buildNav(db, 'All Loads');
+
+buildDispatchTabs('loads.html');
+  
   if (!t) { fail('No profile linked to this login.'); return; }
   await load();
 }
