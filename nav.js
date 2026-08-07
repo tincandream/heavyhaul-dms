@@ -12,10 +12,7 @@
 //   const tenant = await buildNav(db, 'Fleet Board');
 //
 // Returns the tenant_id, or null if no app_users row is linked.
-// buildNav clears and rebuilds whatever is inside <header>, so
-// existing header markup does not need to be removed first.
 // ============================================================
-
 const NAV_LINKS = [
   ['board.html',         'Fleet Board'],
   ['loads.html',         'All Loads'],
@@ -30,13 +27,11 @@ const NAV_LINKS = [
 
 async function buildNav(dbClient, title) {
   const here = location.pathname.split('/').pop() || 'board.html';
-
   const header = document.querySelector('header');
   if (!header) {
     console.warn('nav.js: no <header> element found on this page');
     return null;
   }
-
   header.innerHTML = '';
   header.style.cssText =
     'background:#fff;border-bottom:1px solid #e2e0da;padding:12px 18px;' +
@@ -47,7 +42,6 @@ async function buildNav(dbClient, title) {
   h1.style.cssText = 'font-size:16px;font-weight:600;margin:0;color:#22221f';
   header.appendChild(h1);
 
-  // Pages that show a "last updated" time write into this
   const stamp = document.createElement('span');
   stamp.id = 'stamp';
   stamp.style.cssText = 'font-size:11.5px;color:#73726c';
@@ -77,7 +71,7 @@ async function buildNav(dbClient, title) {
 
   const outBtn = document.createElement('button');
   outBtn.textContent = 'Sign out';
-outBtn.style.cssText =
+  outBtn.style.cssText =
     'background:none;border:0;padding:0;margin:0;color:#185fa5;font-size:13px;' +
     'cursor:pointer;text-decoration:underline;font-family:inherit;' +
     'line-height:1;vertical-align:baseline';
@@ -89,18 +83,36 @@ outBtn.style.cssText =
 
   header.appendChild(right);
 
- const sess = await dbClient.auth.getUser();
-const me = await dbClient
+  // ---- profile lookup: filter to the logged-in user ----
+  const sess = await dbClient.auth.getUser();
+  const authId = sess.data && sess.data.user ? sess.data.user.id : null;
+
+  let me = await dbClient
     .from('app_users')
-    .select('full_name, role, tenant_id');
+    .select('full_name, role, tenant_id')
+    .eq('auth_uid', authId)
+    .maybeSingle();
+
+  // fallback: if the filtered lookup finds nothing, fall back to
+  // the unfiltered first row so the page still works
+  if (!me.error && !me.data) {
+    me = await dbClient
+      .from('app_users')
+      .select('full_name, role, tenant_id')
+      .limit(1)
+      .maybeSingle();
+  }
+
   if (me.error) {
     who.textContent = 'profile error';
     console.error('nav.js: app_users query failed —', me.error.message);
     return null;
   }
-  if (!me.data || !me.data.length) {
+  if (!me.data) {
     who.textContent = 'no profile linked';
     return null;
   }
-  who.textContent = me.data[0].full_name + ' (' + me.data[0].role + ')';
-  return me.data[0].tenant_id;
+
+  who.textContent = me.data.full_name + ' (' + me.data.role + ')';
+  return me.data.tenant_id;
+}
