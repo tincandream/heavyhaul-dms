@@ -8,14 +8,51 @@
   :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
           --line:#e2e0da; --accent:#185fa5; --danger:#a32d2d; --ok:#0f6e56; }
   * { box-sizing: border-box; }
-  body body { margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
-         font:15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  header { background:var(--card); border-bottom:1px solid var(--line);
+  body body{
+    margin:0;
+    min-height:100vh;
+
+    background:
+        linear-gradient(
+            rgba(8,12,18,.55),
+            rgba(8,12,18,.78)
+        ),
+        url("images/heavy-haul-login-bg.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+
+    color:white;
+
+    font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+}header{
+    background:rgba(10,15,20,.82); border-bottom:1px solid var(--line);
            padding:12px 18px; display:flex; align-items:center; gap:14px; }
-  header h1 { font-size:16px; font-weight:600; margin:0; }
+  header h1{
+    color:white;
+} { font-size:16px; font-weight:600; margin:0; }
   .wrap { padding:40px 20px; display:flex; justify-content:center; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
-          padding:26px; width:100%; max-width:440px; }
+ .card{
+
+    width:100%;
+    max-width:470px;
+
+    padding:36px;
+
+    background:rgba(12,17,24,.88);
+
+    border:1px solid rgba(255,255,255,.18);
+
+    border-radius:18px;
+
+    backdrop-filter:blur(10px);
+
+    box-shadow:
+        0 25px 70px rgba(0,0,0,.55);
+
+}
   h1 { font-size:19px; font-weight:600; margin:0 0 4px; }
   .sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
   label { display:block; font-size:13px; color:var(--muted); margin:14px 0 5px; }
