@@ -1016,7 +1016,8 @@ async function refreshAll(){
     fetchCharges(),
     fetchMargin(),
     fetchChecklist(),
-    fetchPrivateNotes()
+    fetchPrivateNotes(),
+    fetchDocuments()
   ]);
   drawHero();
   drawActions();
@@ -1114,6 +1115,7 @@ function drawCounts(){
   set('cnt-timeline', EVENTS.length);
   set('cnt-checklist', CHECKLIST.length);
   set('cnt-notes', PRIVATE_NOTES.length);
+  set('cnt-documents', DOCUMENTS.length);
 }
 
 /* ---------- HERO ---------- */
@@ -1450,6 +1452,7 @@ function drawActiveTab(){
     case 'checklist': drawChecklist(); break;
     case 'expenses':  drawExpenses();  break;
     case 'notes':     drawNotes();     break;
+    case 'documents': drawDocuments(); break;
   }
 }
 
@@ -2395,7 +2398,8 @@ $('nt_save').addEventListener('click', saveNote);
 $('pv_save').addEventListener('click', savePrivate);
 $('pv_delbtn').addEventListener('click', deletePrivate);
 
-$('ck_save').addEventListener('click', saveChkItem);  
+$('ck_save').addEventListener('click', saveChkItem);
+$('dc_save').addEventListener('click', saveDoc);
 boot();
 </script>
 </body>
