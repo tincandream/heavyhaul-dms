@@ -3,194 +3,443 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dispatch — Sign in</title>
+
+<title>Heavy Haul Command — Sign In</title>
+
 <style>
-  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
-          --line:#e2e0da; --accent:#185fa5; --danger:#a32d2d; --ok:#0f6e56; }
-  * { box-sizing: border-box; }
+:root {
+  --cream: #f5ead6;
+  --plum: #241a2a;
+  --plum-soft: rgba(28, 19, 33, 0.94);
+  --pink: #d94b7b;
+  --green: #aebc39;
+  --muted: #b9adb8;
+  --line: rgba(245, 234, 214, 0.25);
+  --danger: #ff6b7a;
+  --ok: #aebc39;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
   margin: 0;
+  min-height: 100%;
+}
+
+body {
   min-height: 100vh;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: var(--cream);
 
   background:
     linear-gradient(
-      rgba(8, 12, 18, 0.55),
-      rgba(8, 12, 18, 0.78)
+      90deg,
+      rgba(18, 10, 22, 0.10) 0%,
+      rgba(18, 10, 22, 0.18) 48%,
+      rgba(18, 10, 22, 0.65) 100%
     ),
     url("images/heavy-haul-login-bg.jpg");
 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 48px 6vw;
+}
+
+.login-panel {
+  width: min(500px, 100%);
+  padding: 42px 42px 36px;
+
+  background: var(--plum-soft);
+
+  border: 1px solid rgba(245, 234, 214, 0.65);
+  border-radius: 28px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.45);
+
+  backdrop-filter: blur(9px);
+}
+
+.brand-mark {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.brand-star {
+  color: var(--pink);
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.brand-mark h1 {
+  margin: 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(38px, 5vw, 58px);
+  line-height: 0.95;
+  letter-spacing: 3px;
+
+  color: var(--cream);
+}
+
+.brand-mark .command {
+  display: block;
+  margin-top: 10px;
+
+  color: var(--green);
+
+  font-family:
+    "Arial Narrow",
+    "Roboto Condensed",
+    sans-serif;
+
+  font-size: 0.82em;
+  letter-spacing: 9px;
+}
+
+.brand-mark .subtitle {
+  margin-top: 14px;
+
+  color: var(--pink);
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 18px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin: 28px 0 22px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--pink)
+  );
+}
+
+.divider::after {
+  background: linear-gradient(
+    90deg,
+    var(--pink),
+    transparent
+  );
+}
+
+.divider span {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  white-space: nowrap;
+}
+
+label {
+  display: block;
+  margin: 16px 0 7px;
+
+  color: var(--cream);
+  font-size: 14px;
+}
+
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 15px 16px;
+
+  border: 1px solid rgba(245, 234, 214, 0.35);
+  border-radius: 8px;
+
+  background: rgba(20, 15, 25, 0.60);
 
   color: white;
-  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
-  header{
-    background:rgba(10,15,20,.82); border-bottom:1px solid var(--line);
-           padding:12px 18px; display:flex; align-items:center; gap:14px; }
-  header h1{
-    color:white;
-} { font-size:16px; font-weight:600; margin:0; }
-  .wrap { padding:40px 20px; display:flex; justify-content:center; }
- .card{
 
-    width:100%;
-    max-width:470px;
-
-    padding:36px;
-
-    background:rgba(12,17,24,.88);
-
-    border:1px solid rgba(255,255,255,.18);
-
-    border-radius:18px;
-
-    backdrop-filter:blur(10px);
-
-    box-shadow:
-        0 25px 70px rgba(0,0,0,.55);
-
+input::placeholder {
+  color: #9c919b;
 }
-  h1 { font-size:19px; font-weight:600; margin:0 0 4px; }
-  .sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
-  label { display:block; font-size:13px; color:var(--muted); margin:14px 0 5px; }
-  input { width:100%; padding:10px 12px; border:1px solid var(--line);
-          border-radius:8px; font-size:15px; }
-  button { width:100%; margin-top:18px; padding:11px; border:0; border-radius:8px;
-           background:var(--accent); color:#fff; font-size:15px; cursor:pointer; }
-  .out { margin-top:18px; padding-top:16px; border-top:1px solid var(--line);
-         font-size:12.5px; font-family:ui-monospace,Consolas,monospace;
-         color:var(--muted); white-space:pre-wrap; word-break:break-word; }
-  .out .bad { color:var(--danger); }
-  .out .good { color:var(--ok); }
-  .go { display:inline-block; margin-top:14px; color:var(--accent);
-        font-size:14px; font-family:system-ui,sans-serif; }
+
+input:focus {
+  border-color: var(--pink);
+
+  box-shadow:
+    0 0 0 3px rgba(217, 75, 123, 0.15);
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 18px;
+
+  font-size: 14px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remember input {
+  accent-color: var(--green);
+}
+
+.forgot {
+  color: var(--pink);
+  text-decoration: none;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}
+
+#signin {
+  width: 100%;
+
+  margin-top: 26px;
+  padding: 16px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: var(--green);
+  color: var(--plum);
+
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 4px;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+#signin:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+#signin:active {
+  transform: translateY(0);
+}
+
+.out {
+  margin-top: 20px;
+  padding-top: 18px;
+
+  border-top: 1px solid var(--line);
+
+  color: var(--muted);
+  font-size: 12.5px;
+
+  font-family:
+    ui-monospace,
+    Consolas,
+    monospace;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.out .bad {
+  color: var(--danger);
+}
+
+.out .good {
+  color: var(--ok);
+}
+
+.go {
+  display: inline-block;
+
+  margin-top: 14px;
+
+  color: var(--pink);
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+
+  text-decoration: none;
+}
+
+.go:hover {
+  text-decoration: underline;
+}
+
+.tagline {
+  margin-top: 26px;
+
+  text-align: center;
+
+  color: var(--cream);
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+}
+
+.tagline span {
+  color: var(--pink);
+}
+
+@media (max-width: 800px) {
+
+  body {
+    background-position: 42% center;
+  }
+
+  .login-page {
+    justify-content: center;
+    align-items: flex-end;
+
+    padding: 22px;
+  }
+
+  .login-panel {
+    padding: 30px 24px;
+    border-radius: 22px;
+  }
+
+  .brand-mark h1 {
+    font-size: 38px;
+  }
+
+  .brand-mark .command {
+    letter-spacing: 6px;
+  }
+
+  .login-options {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
 </style>
 </head>
+
 <body>
-<body>
-<header>
-  <h1>Heavy Haul Dispatch</h1>
-</header>
-<div class="wrap">
-<div class="card">
-  <p class="sub">Sign in to the command center</p>
 
-  <label for="email">Email</label>
-  <input id="email" type="email" autocomplete="username" value="diannavmwaka@gmail.com">
+<main class="login-page">
 
-  <label for="password">Password</label>
-  <input id="password" type="password" autocomplete="current-password">
+  <section class="login-panel">
 
-  <button id="signin">Sign in</button>
+    <div class="brand-mark">
 
-  <div id="out" class="out">Loading…</div>
-</div>
+      <div class="brand-star">
+        ★
+      </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-// ===== FILL IN THESE TWO VALUES =====
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
-// ====================================
+      <h1>
+        HEAVY HAUL
+        <span class="command">
+          COMMAND
+        </span>
+      </h1>
 
-const out = document.getElementById('out');
-let db = null;
+      <div class="subtitle">
+        Dispatch Management System
+      </div>
 
-function log(text, cls) {
-  const span = document.createElement('span');
-  if (cls) span.className = cls;
-  span.textContent = text + '\n';
-  out.appendChild(span);
-}
+    </div>
 
-// Catch anything that throws, so nothing ever hangs silently
-window.onerror = function (msg) { log('JS ERROR: ' + msg, 'bad'); };
 
-out.textContent = '';
+    <div class="divider">
+      <span>WELCOME BACK</span>
+    </div>
 
-// --- Startup checks ---
-if (typeof window.supabase === 'undefined') {
-  log('FAIL: Supabase library did not load from the CDN.', 'bad');
-  log('Check your internet connection, then reload.');
-} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID') !== -1) {
-  log('FAIL: SUPABASE_URL is still the placeholder.', 'bad');
-  log('Edit this file and paste your Project URL.');
-} else if (SUPABASE_ANON_KEY.indexOf('PASTE-YOUR') !== -1) {
-  log('FAIL: SUPABASE_ANON_KEY is still the placeholder.', 'bad');
-  log('Edit this file and paste your anon public key.');
-} else if (SUPABASE_ANON_KEY.length < 100) {
-  log('FAIL: anon key is only ' + SUPABASE_ANON_KEY.length +
-      ' characters — it should be around 200.', 'bad');
-  log('It was truncated when copied. Paste it again.');
-} else {
-  log('Library loaded.', 'good');
-  log('URL: ' + SUPABASE_URL);
-  log('Key length: ' + SUPABASE_ANON_KEY.length + ' characters');
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  log('Client ready. Enter your password and sign in.', 'good');
-  db.auth.getSession().then(function (r) {
-    if (r.data && r.data.session) { log('Existing session found.'); check(); }
-  });
-}
 
-// --- Sign in ---
-document.getElementById('signin').addEventListener('click', function () {
-  if (!db) { log('Cannot sign in — see the errors above.', 'bad'); return; }
+    <label for="email">
+      Email
+    </label>
 
-  out.textContent = '';
-  log('Attempting sign in…');
+    <input
+      id="email"
+      type="email"
+      autocomplete="username"
+      placeholder="Enter your email"
+    >
 
-  db.auth.signInWithPassword({
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value
-  }).then(function (r) {
-    if (r.error) { log('SIGN IN FAILED: ' + r.error.message, 'bad'); return; }
-    log('Signed in as ' + r.data.user.email, 'good');
-    check();
-  }).catch(function (e) {
-    log('NETWORK ERROR: ' + e.message, 'bad');
-  });
-});
 
-document.getElementById('password').addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') document.getElementById('signin').click();
-});
+    <label for="password">
+      Password
+    </label>
 
-// --- Verify RLS and data access ---
-function check() {
-  db.from('app_users').select('full_name, role, tenant_id').then(function (r) {
-    if (r.error) { log('app_users error: ' + r.error.message, 'bad'); return; }
-    if (!r.data || r.data.length === 0) {
-      log('PROBLEM: no app_users row linked to this login.', 'bad');
-      log('Every query returns empty until that is fixed.');
-      return;
-    }
-    log('Profile: ' + r.data[0].full_name + ' (' + r.data[0].role + ')', 'good');
-    log('Tenant: ' + r.data[0].tenant_id);
+    <input
+      id="password"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Enter your password"
+    >
 
-    return db.from('loads').select('*', { count: 'exact', head: true });
-  }).then(function (r) {
-    if (!r) return;
-    log(r.error ? ('loads error: ' + r.error.message) : ('Loads visible: ' + r.count),
-        r.error ? 'bad' : 'good');
-    return db.from('v_fleet_board').select('*', { count: 'exact', head: true });
-  }).then(function (r) {
-    if (!r) return;
-    log(r.error ? ('fleet board error: ' + r.error.message)
-                : ('Fleet board rows: ' + r.count),
-        r.error ? 'bad' : 'good');
 
-    const a = document.createElement('a');
-    a.href = 'board.html';
-    a.className = 'go';
-    a.textContent = 'Open Fleet Board →';
-    out.appendChild(a);
-  }).catch(function (e) {
-    log('ERROR: ' + e.message, 'bad');
-  });
-}
-</script>
-</body>
-</html>
+    <div class="login-options">
+
+      <label class="remember">
+        <input type="checkbox">
+        Remember me
+      </label>
+
+      <a
+        class="forgot"
+        href="#"
+      >
+        Forgot password?
+      </a>
+
+    </div>
+
+
+    <button id="signin">
+      SIGN IN →
+    </button>
+
+
+    <div id="out" class="out">
+      Loading…
+    </div>
+
+
+    <div class="tagline">
+      COMMAND <span>•</span>
+      CONTROL <span>•</span>
+      DELIVER
+    </div>
+
+  </section>
+
+</main>
