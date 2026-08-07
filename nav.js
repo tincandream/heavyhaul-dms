@@ -17,11 +17,15 @@
 // ============================================================
 
 const NAV_LINKS = [
-  ['board.html',   'Fleet Board'],
-  ['loads.html',   'All Loads'],
-  ['newload.html', 'New Load'],
-  ['fleet.html',   'Fleet Setup'],
-  ['states.html',  'State Rules']
+  ['board.html',         'Fleet Board'],
+  ['loads.html',         'All Loads'],
+  ['newload.html',       'New Load'],
+  ['opportunities.html', 'Opportunities'],
+  ['call-queue.html',    'Call Queue'],
+  ['portals.html',       'Portals'],
+  ['inbox.html',         'Load Emails'],
+  ['fleet.html',         'Fleet Setup'],
+  ['states.html',        'State Rules']
 ];
 
 async function buildNav(dbClient, title) {
