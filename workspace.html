@@ -179,9 +179,45 @@ textarea{min-height:76px;resize:vertical}
   <section class="panel"    id="tab-escorts"></section>
   <section class="panel"    id="tab-checklist"></section>
   <section class="panel"    id="tab-expenses"></section>
+  <section class="panel" id="tab-documents"></section>
   <section class="panel"    id="tab-notes"></section>
+  
 
 </div>
+
+  <!-- ============ DOCUMENT UPLOAD DIALOG ============ -->
+<dialog id="dlgDoc">
+  <div class="dlg-head"><h3>Upload Document</h3></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field full"><label for="dc_file">File *</label>
+        <input type="file" id="dc_file"></div>
+      <div class="field"><label for="dc_type">Type</label>
+        <select id="dc_type">
+          <option value="rate_con">Rate confirmation</option>
+          <option value="pod">POD</option>
+          <option value="bol">BOL</option>
+          <option value="permit">Permit</option>
+          <option value="escort_agreement">Escort agreement</option>
+          <option value="insurance">Insurance</option>
+          <option value="scale_ticket">Scale ticket</option>
+          <option value="photo">Photo</option>
+          <option value="invoice">Invoice</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="field"><label for="dc_title">Title</label>
+        <input id="dc_title" placeholder="optional label"></div>
+      <div class="field full"><label for="dc_notes">Notes</label>
+        <textarea id="dc_notes"></textarea></div>
+    </div>
+    <div id="dc_err" class="err"></div>
+    <div id="dc_progress" class="small muted" style="margin-top:8px"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="dc_save">Upload</button>
+    <button onclick="dlgDoc.close()">Cancel</button>
+  </div>
+</dialog>
 
 <!-- ============ CHECK-IN DIALOG ============ -->
 <dialog id="dlgCheckIn">
