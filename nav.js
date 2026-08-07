@@ -94,7 +94,7 @@ outBtn.style.cssText =
   const me = await dbClient
     .from('app_users')
     .select('full_name, role, tenant_id')
-    .eq('auth_user_id', authId)
+    .eq('auth_uid', authId)
     .maybeSingle();
   if (me.error) {
     who.textContent = 'profile error';
@@ -107,18 +107,3 @@ outBtn.style.cssText =
   }
   who.textContent = me.data.full_name + ' (' + me.data.role + ')';
   return me.data.tenant_id;
-
-  if (me.error) {
-    who.textContent = 'profile error';
-    console.error('nav.js: app_users query failed —', me.error.message);
-    return null;
-  }
-
-  if (!me.data || !me.data.length) {
-    who.textContent = 'no profile linked';
-    return null;
-  }
-
-  who.textContent = me.data[0].full_name + ' (' + me.data[0].role + ')';
-  return me.data[0].tenant_id;
-}
