@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Welcome — Heavy Haul Command</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+
+    /* ============================================================
+       WELCOME PAGE — PAGE-SPECIFIC STYLES
+       ============================================================ */
+
+    body {
+      margin: 0;
+    }
+
+    .welcome-wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 34px 24px 70px;
+    }
+
+    .welcome-heading {
+      margin-bottom: 26px;
+    }
+
+    .welcome-heading h1 {
+      margin: 0;
+
+      font-family: "Cinzel", serif;
+      font-size: clamp(30px, 4vw, 46px);
+      font-weight: 700;
+      letter-spacing: 1.5px;
+
+      color: #3C3A4B;
+    }
+
+    .greeting {
+      margin-top: 7px;
+
+      font-family: "Cormorant Garamond", serif;
+      font-size: 25px;
+      font-style: italic;
+
+      color: #7FA5B5;
+    }
+
+
+    /* ============================================================
+       SECTION LABEL
+       ============================================================ */
+
+    .section-label {
+      margin: 0 0 10px;
+
+      font-family: "Oswald", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.8px;
+
+      text-transform: uppercase;
+
+      color: #3C3A4B;
+    }
+
+
+    /* ============================================================
+       PRIORITIES
+       ============================================================ */
+
+    .priority-panel {
+      background: #EAF3F6;
+
+      border: 1px solid #D4E3E8;
+      border-left: 4px solid #7FA5B5;
+
+      padding: 18px 20px;
+
+      margin-bottom: 30px;
+    }
+
+    .priority-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .priority-item {
+      background: #FAFAFA;
+
+      border: 1px solid #D9DEE1;
+
+      padding: 16px;
+
+      min-height: 96px;
+    }
+
+    .priority-number {
+      font-family: "Oswald", sans-serif;
+
+      font-size: 30px;
+      font-weight: 600;
+
+      line-height: 1;
+
+      color: #3C3A4B;
+    }
+
+    .priority-text {
+      margin-top: 8px;
+
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+
+      color: #72797E;
+    }
+
+    .priority-item.active {
+      border-top: 4px solid #B8C34A;
+    }
+
+    .priority-item.attention {
+      border-top: 4px solid #D86A8E;
+    }
+
+    .priority-item.info {
+      border-top: 4px solid #7FA5B5;
+    }
+
+
+    /* ============================================================
+       CONTINUE WORKING
+       ============================================================ */
+
+    .continue-section {
+      margin-bottom: 34px;
+    }
+
+    .continue-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap: 12px;
+    }
+
+    .continue-card {
+      display: block;
+
+      min-height: 118px;
+
+      padding: 18px;
+
+      background: #FAFAFA;
+
+      border: 1px solid #D9DEE1;
+
+      text-decoration: none;
+
+      transition:
+        transform .15s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .continue-card:hover {
+      transform: translateY(-2px);
+
+      background: #F7FAFB;
+
+      border-color: #7FA5B5;
+
+      box-shadow:
+        0 8px 20px
+        rgba(60,58,75,.07);
+    }
+
+    .continue-icon {
+      width: 34px;
+      height: 34px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-bottom: 15px;
+
+      background: #EAF3F6;
+
+      color: #668C9D;
+
+      font-family: "Oswald", sans-serif;
+      font-size: 13px;
+
+      border: 1px solid #D4E3E8;
+    }
+
+    .continue-card:nth-child(2) .continue-icon {
+      background: #F1F4D8;
+      border-color: #DDE3A4;
+      color: #6E7629;
+    }
+
+    .continue-card:nth-child(3) .continue-icon {
+      background: #F8E5EC;
+      border-color: #EBC3D1;
+      color: #A14666;
+    }
+
+    .continue-card:nth-child(4) .continue-icon {
+      background: #EAF3F6;
+      border-color: #D4E3E8;
+      color: #668C9D;
+    }
+
+    .continue-title {
+      font-family: "Oswald", sans-serif;
+
+      font-size: 15px;
+      font-weight: 500;
+
+      letter-spacing: .5px;
+
+      color: #3C3A4B;
+    }
+
+    .continue-note {
+      margin-top: 5px;
+
+      font-family: "Inter", sans-serif;
+
+      font-size: 11.5px;
+
+      color: #7D8388;
+    }
+
+
+    /* ============================================================
+       RECENT ACTIVITY
+       ============================================================ */
+
+    .activity-panel {
+      background: #FAFAFA;
+
+      border: 1px solid #D9DEE1;
+    }
+
+    .activity-row {
+      display: grid;
+
+      grid-template-columns:
+        110px 18px 1fr;
+
+      align-items: start;
+
+      gap: 10px;
+
+      padding: 14px 18px;
+
+      border-bottom:
+        1px solid #ECEEEF;
+    }
+
+    .activity-row:last-child {
+      border-bottom: 0;
+    }
+
+    .activity-time {
+      font-family: "Inter", sans-serif;
+
+      font-size: 11px;
+
+      color: #93999D;
+    }
+
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+
+      margin-top: 4px;
+
+      background: #7FA5B5;
+
+      border-radius: 50%;
+    }
+
+    .activity-row:nth-child(2) .activity-dot {
+      background: #B8C34A;
+    }
+
+    .activity-row:nth-child(3) .activity-dot {
+      background: #D86A8E;
+    }
+
+    .activity-row:nth-child(4) .activity-dot {
+      background: #7FA5B5;
+    }
+
+    .activity-text {
+      font-family: "Inter", sans-serif;
+
+      font-size: 12.5px;
+
+      color: #3C3A4B;
+    }
+
+    .activity-text strong {
+      font-weight: 600;
+    }
+
+    .activity-empty {
+      padding: 24px 18px;
+
+      color: #8A9095;
+
+      font-family: "Inter", sans-serif;
+      font-size: 12px;
+    }
+
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+
+    @media (max-width: 900px) {
+
+      .priority-list,
+      .continue-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+    }
+
+    @media (max-width: 600px) {
+
+      .welcome-wrap {
+        padding:
+          24px 14px 50px;
+      }
+
+      .priority-list,
+      .continue-grid {
+        grid-template-columns:
+          1fr;
+      }
+
+      .activity-row {
+        grid-template-columns:
+          78px 14px 1fr;
+      }
+
+    }
+
+  </style>
+
+  <link rel="stylesheet" href="theme.css">
+
+</head>
+
+
+<body>
+
+  <header></header>
+
+  <main class="welcome-wrap">
+
+
+    <!-- ======================================================
+         HEADING
+         ====================================================== -->
+
+    <section class="welcome-heading">
+
+      <h1>
+        HEAVY HAUL COMMAND
+      </h1>
+
+      <div
+        class="greeting"
+        id="greeting"
+      >
+        Good Morning
+      </div>
+
+    </section>
+
+
+
+    <!-- ======================================================
+         TODAY'S PRIORITIES
+         ====================================================== -->
+
+    <section>
+
+      <h2 class="section-label">
+        Today's Priorities
+      </h2>
+
+      <div class="priority-panel">
+
+        <div class="priority-list">
+
+
+          <div class="priority-item active">
+
+            <div
+              class="priority-number"
+              id="activeLoads"
+            >
+              —
+            </div>
+
+            <div class="priority-text">
+              Active Loads
+            </div>
+
+          </div>
+
+
+          <div class="priority-item info">
+
+            <div
+              class="priority-number"
+              id="driverCheckins"
+            >
+              —
+            </div>
+
+            <div class="priority-text">
+              Driver Check-ins
+            </div>
+
+          </div>
+
+
+          <div class="priority-item attention">
+
+            <div
+              class="priority-number"
+              id="permitExpiring"
+            >
+              —
+            </div>
+
+            <div class="priority-text">
+              Permit Expiring
+            </div>
+
+          </div>
+
+
+          <div class="priority-item info">
+
+            <div
+              class="priority-number"
+              id="brokerEmails"
+            >
+              —
+            </div>
+
+            <div class="priority-text">
+              Broker Emails
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ======================================================
+         CONTINUE WORKING
+         ====================================================== -->
+
+    <section class="continue-section">
+
+      <h2 class="section-label">
+        Continue Working
+      </h2>
+
+      <div class="continue-grid">
+
+
+        <a
+          class="continue-card"
+          href="loads.html"
+        >
+
+          <div class="continue-icon">
+            AL
+          </div>
+
+          <div class="continue-title">
+            Active Loads
+          </div>
+
+          <div class="continue-note">
+            Continue managing active freight.
+          </div>
+
+        </a>
+
+
+
+        <a
+          class="continue-card"
+          href="board.html"
+        >
+
+          <div class="continue-icon">
+            FB
+          </div>
+
+          <div class="continue-title">
+            Fleet Board
+          </div>
+
+          <div class="continue-note">
+            View fleet and load status.
+          </div>
+
+        </a>
+
+
+
+        <a
+          class="continue-card"
+          href="calendar.html"
+        >
+
+          <div class="continue-icon">
+            CAL
+          </div>
+
+          <div class="continue-title">
+            Calendar
+          </div>
+
+          <div class="continue-note">
+            Review upcoming activity.
+          </div>
+
+        </a>
+
+
+
+        <a
+          class="continue-card"
+          href="call-queue.html"
+        >
+
+          <div class="continue-icon">
+            CQ
+          </div>
+
+          <div class="continue-title">
+            Call Queue
+          </div>
+
+          <div class="continue-note">
+            Continue sourcing and follow-ups.
+          </div>
+
+        </a>
+
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ======================================================
+         RECENT ACTIVITY
+         ====================================================== -->
+
+    <section>
+
+      <h2 class="section-label">
+        Recent Activity
+      </h2>
+
+      <div
+        class="activity-panel"
+        id="recentActivity"
+      >
+
+        <div class="activity-empty">
+          Loading recent activity…
+        </div>
+
+      </div>
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- ========================================================
+       SHARED NAVIGATION
+       ======================================================== -->
+
+  <script src="nav.js"></script>
+
+
+  <script>
+
+    // ==========================================================
+    // SUPABASE CONNECTION
+    // ==========================================================
+
+    const SUPABASE_URL =
+      'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+    const db =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    let TENANT_ID =
+      null;
+
+
+    // ==========================================================
+    // GREETING
+    // ==========================================================
+
+    function setGreeting(name) {
+
+      const hour =
+        new Date().getHours();
+
+      let greeting =
+        'Good Evening';
+
+      if (hour < 12) {
+        greeting =
+          'Good Morning';
+      }
+
+      else if (hour < 17) {
+        greeting =
+          'Good Afternoon';
+      }
+
+
+      document
+        .getElementById('greeting')
+        .textContent =
+          name
+            ? greeting + ', ' + name
+            : greeting;
+
+    }
+
+
+    // ==========================================================
+    // SAFE COUNT
+    // ==========================================================
+
+    async function countRows(
+      table,
+      configure
+    ) {
+
+      try {
+
+        let query =
+          db
+            .from(table)
+            .select(
+              '*',
+              {
+                count:
+                  'exact',
+
+                head:
+                  true
+              }
+            );
+
+
+        if (TENANT_ID) {
+
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
+
+        }
+
+
+        if (configure) {
+
+          query =
+            configure(query);
+
+        }
+
+
+        const result =
+          await query;
+
+
+        if (result.error) {
+
+          console.warn(
+            'Welcome count:',
+            table,
+            result.error.message
+          );
+
+          return null;
+
+        }
+
+
+        return result.count;
+
+      }
+
+      catch (e) {
+
+        console.warn(
+          'Welcome count:',
+          table,
+          e
+        );
+
+        return null;
+
+      }
+
+    }
+
+
+    // ==========================================================
+    // PRIORITY COUNTS
+    // ==========================================================
+
+    async function loadPriorities() {
+
+      /*
+        Active Loads
+
+        This deliberately checks several common active statuses
+        rather than altering the database.
+      */
+
+      const active =
+        await countRows(
+          'loads',
+          function (q) {
+
+            return q.in(
+              'status',
+              [
+                'booked',
+                'dispatched',
+                'at_pickup',
+                'loaded',
+                'in_transit',
+                'at_delivery'
+              ]
+            );
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          'activeLoads'
+        )
+        .textContent =
+          active === null
+            ? '—'
+            : active;
+
+
+      /*
+        Driver Check-ins
+
+        Count today's check-ins if the table supports occurred_at.
+      */
+
+      const today =
+        new Date();
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      const checkins =
+        await countRows(
+          'check_ins',
+          function (q) {
+
+            return q.gte(
+              'occurred_at',
+              today.toISOString()
+            );
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          'driverCheckins'
+        )
+        .textContent =
+          checkins === null
+            ? '—'
+            : checkins;
+
+
+      /*
+        Permit Expiring
+
+        For this first Welcome-page build we keep this conservative.
+        If valid_to exists, count permits expiring within 7 days.
+      */
+
+      const sevenDays =
+        new Date();
+
+      sevenDays.setDate(
+        sevenDays.getDate() + 7
+      );
+
+
+      const permits =
+        await countRows(
+          'permits',
+          function (q) {
+
+            return q
+              .gte(
+                'valid_to',
+                new Date().toISOString()
+              )
+              .lte(
+                'valid_to',
+                sevenDays.toISOString()
+              );
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          'permitExpiring'
+        )
+        .textContent =
+          permits === null
+            ? '—'
+            : permits;
+
+
+      /*
+        Broker Emails
+
+        The exact email table/schema is not known here yet.
+        Leave this as a graceful dash instead of guessing.
+      */
+
+      document
+        .getElementById(
+          'brokerEmails'
+        )
+        .textContent =
+          '—';
+
+    }
+
+
+    // ==========================================================
+    // RECENT ACTIVITY
+    // ==========================================================
+
+    async function loadRecentActivity() {
+
+      const panel =
+        document.getElementById(
+          'recentActivity'
+        );
+
+
+      try {
+
+        let query =
+          db
+            .from('events')
+            .select(
+              'created_at, event_type, subject, body'
+            )
+            .order(
+              'created_at',
+              {
+                ascending:
+                  false
+              }
+            )
+            .limit(6);
+
+
+        if (TENANT_ID) {
+
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
+
+        }
+
+
+        const result =
+          await query;
+
+
+        if (
+          result.error ||
+          !result.data ||
+          result.data.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No recent activity yet.' +
+            '</div>';
+
+          return;
+
+        }
+
+
+        panel.innerHTML =
+          result.data
+            .map(
+              function (item) {
+
+
+                const d =
+                  new Date(
+                    item.created_at
+                  );
+
+
+                const when =
+                  isNaN(d)
+                    ? ''
+                    : d.toLocaleString(
+                        'en-US',
+                        {
+                          month:
+                            'short',
+
+                          day:
+                            'numeric',
+
+                          hour:
+                            'numeric',
+
+                          minute:
+                            '2-digit'
+                        }
+                      );
+
+
+                const description =
+                  item.subject ||
+                  item.body ||
+                  item.event_type ||
+                  'Activity';
+
+
+                return (
+                  '<div class="activity-row">' +
+
+                    '<div class="activity-time">' +
+                      escapeHtml(when) +
+                    '</div>' +
+
+                    '<div class="activity-dot"></div>' +
+
+                    '<div class="activity-text">' +
+                      escapeHtml(description) +
+                    '</div>' +
+
+                  '</div>'
+                );
+
+              }
+            )
+            .join('');
+
+      }
+
+      catch (e) {
+
+        console.warn(
+          'Recent activity:',
+          e
+        );
+
+
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Recent activity unavailable.' +
+          '</div>';
+
+      }
+
+    }
+
+
+    // ==========================================================
+    // HTML ESCAPE
+    // ==========================================================
+
+    function escapeHtml(value) {
+
+      return String(
+        value || ''
+      )
+        .replaceAll(
+          '&',
+          '&amp;'
+        )
+        .replaceAll(
+          '<',
+          '&lt;'
+        )
+        .replaceAll(
+          '>',
+          '&gt;'
+        )
+        .replaceAll(
+          '"',
+          '&quot;'
+        )
+        .replaceAll(
+          "'",
+          '&#039;'
+        );
+
+    }
+
+
+    // ==========================================================
+    // START
+    // ==========================================================
+
+    async function start() {
+
+      const session =
+        await db.auth.getSession();
+
+
+      if (
+        !session.data ||
+        !session.data.session
+      ) {
+
+        location.href =
+          'index.html';
+
+        return;
+
+      }
+
+
+      TENANT_ID =
+        await buildNav(
+          db,
+          'Welcome'
+        );
+
+
+      /*
+        Use the currently authenticated user's profile
+        for the greeting.
+      */
+
+      try {
+
+        const user =
+          await db.auth.getUser();
+
+
+        const authId =
+          user.data &&
+          user.data.user
+            ? user.data.user.id
+            : null;
+
+
+        if (authId) {
+
+          let profile =
+            await db
+
+              .from(
+                'app_users'
+              )
+
+              .select(
+                'full_name'
+              )
+
+              .eq(
+                'auth_uid',
+                authId
+              )
+
+              .maybeSingle();
+
+
+          if (
+            !profile.error &&
+            profile.data
+          ) {
+
+            const firstName =
+              profile.data.full_name
+                ? profile.data.full_name
+                    .trim()
+                    .split(/\s+/)[0]
+                : '';
+
+
+            setGreeting(
+              firstName
+            );
+
+          }
+
+          else {
+
+            setGreeting('');
+
+          }
+
+        }
+
+        else {
+
+          setGreeting('');
+
+        }
+
+      }
+
+      catch (e) {
+
+        console.warn(
+          'Welcome profile:',
+          e
+        );
+
+        setGreeting('');
+
+      }
+
+
+      await Promise.all([
+        loadPriorities(),
+        loadRecentActivity()
+      ]);
+
+    }
+
+
+    start();
+
+  </script>
+
+
+</body>
+
+</html>
