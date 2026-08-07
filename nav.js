@@ -1,17 +1,15 @@
 // ============================================================
 // nav.js
-// HEAVY HAUL COMMAND — GLOBAL APPLICATION HEADER
+// HEAVY HAUL COMMAND — GLOBAL NAVIGATION
 //
 // ROW 1:
 // HEAVY HAUL COMMAND
 //
 // ROW 2:
 // Welcome | Dispatch | Sourcing | Fleet Command
-//                         Dianna V. Mwaka (Owner) | Sign Out
+//                  Dianna V. Mwaka (Owner) | Sign Out
 //
-// IMPORTANT:
-// This file ONLY builds global navigation.
-// Hub-specific navigation belongs inside each hub page.
+// Hub-specific tools DO NOT belong here.
 // ============================================================
 
 
@@ -27,12 +25,9 @@ const MAIN_NAV = [
 ];
 
 
-
 // ============================================================
 // PAGES THAT BELONG TO EACH HUB
-//
-// This lets the correct main tab stay highlighted even when
-// the user is inside one of that hub's tools.
+// Used only to keep the correct hub highlighted.
 // ============================================================
 
 const HUB_PAGES = {
@@ -41,7 +36,6 @@ const HUB_PAGES = {
     'welcome.html'
   ],
 
-
   'dispatch.html': [
     'dispatch.html',
     'board.html',
@@ -49,7 +43,6 @@ const HUB_PAGES = {
     'loads.html',
     'workspace.html'
   ],
-
 
   'sourcing.html': [
     'sourcing.html',
@@ -62,7 +55,6 @@ const HUB_PAGES = {
     'calculators.html'
   ],
 
-
   'fleet-command.html': [
     'fleet-command.html',
     'fleet.html',
@@ -74,7 +66,6 @@ const HUB_PAGES = {
 };
 
 
-
 // ============================================================
 // FIND CURRENT HUB
 // ============================================================
@@ -83,20 +74,14 @@ function getCurrentHub(currentPage) {
 
   for (const hub in HUB_PAGES) {
 
-    if (
-      HUB_PAGES[hub].includes(currentPage)
-    ) {
-
+    if (HUB_PAGES[hub].includes(currentPage)) {
       return hub;
-
     }
 
   }
 
   return 'welcome.html';
-
 }
-
 
 
 // ============================================================
@@ -106,14 +91,10 @@ function getCurrentHub(currentPage) {
 async function buildNav(dbClient, title) {
 
   const here =
-    location.pathname
-      .split('/')
-      .pop() || 'welcome.html';
-
+    location.pathname.split('/').pop() || 'welcome.html';
 
   const activeHub =
     getCurrentHub(here);
-
 
   const header =
     document.querySelector('header');
@@ -122,94 +103,130 @@ async function buildNav(dbClient, title) {
   if (!header) {
 
     console.warn(
-      'nav.js: no <header> element found'
+      'nav.js: no <header> element found on this page'
     );
 
     return null;
-
   }
 
 
-  // Remove anything left over from older nav versions.
+  // ==========================================================
+  // REMOVE OLD SIDEBAR BEHAVIOR
+  // ==========================================================
 
   header.innerHTML = '';
-
   header.removeAttribute('style');
 
-  header.className =
-    'hh-global-header';
-
-
-  // IMPORTANT:
-  // Undo the abandoned vertical sidebar.
-
-  document.body.style.paddingLeft =
-    '0';
-
+  document.body.style.paddingLeft = '0';
+  document.body.style.margin = '0';
 
 
   // ==========================================================
-  // ROW 1 — BRAND
+  // BASIC HEADER
+  // ==========================================================
+
+  header.style.width = '100%';
+  header.style.background = '#ffffff';
+  header.style.borderBottom = '1px solid #dddddd';
+  header.style.position = 'relative';
+  header.style.zIndex = '1000';
+
+
+  // ==========================================================
+  // ROW 1 — HEAVY HAUL COMMAND
   // ==========================================================
 
   const brandRow =
     document.createElement('div');
 
-
-  brandRow.className =
-    'hh-brand-row';
-
+  brandRow.style.display = 'flex';
+  brandRow.style.alignItems = 'center';
+  brandRow.style.minHeight = '54px';
+  brandRow.style.padding = '0 26px';
+  brandRow.style.borderBottom = '1px solid #eeeeee';
 
 
   const brand =
     document.createElement('a');
 
-
   brand.href =
     'welcome.html';
 
-
-  brand.className =
-    'hh-global-brand';
-
-
   brand.textContent =
     'HEAVY HAUL COMMAND';
+
+  brand.style.color =
+    '#222222';
+
+  brand.style.fontSize =
+    '16px';
+
+  brand.style.fontWeight =
+    '700';
+
+  brand.style.letterSpacing =
+    '1.4px';
+
+  brand.style.textDecoration =
+    'none';
 
 
   brandRow.appendChild(
     brand
   );
 
-
   header.appendChild(
     brandRow
   );
 
 
-
   // ==========================================================
-  // ROW 2 — HUBS + USER
+  // ROW 2 — HUBS + USER + SIGN OUT
   // ==========================================================
 
   const navRow =
     document.createElement('div');
 
+  navRow.style.display =
+    'flex';
 
-  navRow.className =
-    'hh-global-nav-row';
+  navRow.style.alignItems =
+    'center';
+
+  navRow.style.width =
+    '100%';
+
+  navRow.style.minHeight =
+    '48px';
+
+  navRow.style.padding =
+    '0 26px';
+
+  navRow.style.gap =
+    '20px';
+
+  navRow.style.boxSizing =
+    'border-box';
 
 
-
-  // LEFT SIDE — HUB NAVIGATION
+  // ==========================================================
+  // HUB LINKS
+  // ==========================================================
 
   const nav =
     document.createElement('nav');
 
+  nav.style.display =
+    'flex';
 
-  nav.className =
-    'hh-global-nav';
+  nav.style.alignItems =
+    'center';
 
+  nav.style.gap =
+    '0';
+
+  nav.style.flexShrink =
+    '0';
 
 
   MAIN_NAV.forEach(
@@ -218,7 +235,6 @@ async function buildNav(dbClient, title) {
       const href =
         item[0];
 
-
       const label =
         item[1];
 
@@ -226,35 +242,89 @@ async function buildNav(dbClient, title) {
       const link =
         document.createElement('a');
 
-
       link.href =
         href;
-
 
       link.textContent =
         label;
 
 
-      link.className =
-        'hh-global-nav-link';
+      link.style.display =
+        'flex';
+
+      link.style.alignItems =
+        'center';
+
+      link.style.minHeight =
+        '48px';
+
+      link.style.padding =
+        '0 17px';
+
+      link.style.textDecoration =
+        'none';
+
+      link.style.fontSize =
+        '13px';
+
+      link.style.fontWeight =
+        '600';
+
+      link.style.whiteSpace =
+        'nowrap';
+
+      link.style.borderBottom =
+        '3px solid transparent';
 
 
-      if (
-        href === activeHub
-      ) {
+      if (href === activeHub) {
 
-        link.classList.add(
-          'active'
-        );
+        link.style.color =
+          '#111111';
+
+        link.style.borderBottomColor =
+          '#555555';
 
       }
+
+      else {
+
+        link.style.color =
+          '#666666';
+
+      }
+
+
+      link.addEventListener(
+        'mouseenter',
+        function () {
+
+          if (href !== activeHub) {
+            link.style.color = '#222222';
+          }
+
+        }
+      );
+
+
+      link.addEventListener(
+        'mouseleave',
+        function () {
+
+          if (href !== activeHub) {
+            link.style.color = '#666666';
+          }
+
+        }
+      );
 
 
       nav.appendChild(
         link
       );
 
-  });
+    }
+  );
 
 
   navRow.appendChild(
@@ -262,68 +332,119 @@ async function buildNav(dbClient, title) {
   );
 
 
-
-  // RIGHT SIDE — USER
+  // ==========================================================
+  // USER AREA — SAME LINE
+  // ==========================================================
 
   const userArea =
     document.createElement('div');
 
+  userArea.style.marginLeft =
+    'auto';
 
-  userArea.className =
-    'hh-global-user';
+  userArea.style.display =
+    'flex';
 
+  userArea.style.alignItems =
+    'center';
+
+  userArea.style.gap =
+    '9px';
+
+  userArea.style.whiteSpace =
+    'nowrap';
 
 
   const who =
     document.createElement('span');
 
-
   who.id =
     'me';
-
-
-  who.className =
-    'hh-global-user-name';
-
 
   who.textContent =
     '…';
 
+  who.style.color =
+    '#666666';
+
+  who.style.fontSize =
+    '12px';
 
 
   const divider =
     document.createElement('span');
 
-
-  divider.className =
-    'hh-global-divider';
-
-
   divider.textContent =
     '|';
 
+  divider.style.color =
+    '#bbbbbb';
+
+  divider.style.fontSize =
+    '12px';
 
 
   const signOut =
     document.createElement('button');
 
-
   signOut.type =
     'button';
-
-
-  signOut.className =
-    'hh-global-signout';
-
 
   signOut.textContent =
     'Sign Out';
 
+  signOut.style.padding =
+    '0';
+
+  signOut.style.margin =
+    '0';
+
+  signOut.style.background =
+    'transparent';
+
+  signOut.style.border =
+    '0';
+
+  signOut.style.color =
+    '#555555';
+
+  signOut.style.fontSize =
+    '12px';
+
+  signOut.style.fontWeight =
+    '400';
+
+  signOut.style.cursor =
+    'pointer';
+
+  signOut.style.fontFamily =
+    'inherit';
+
+
+  signOut.addEventListener(
+    'mouseenter',
+    function () {
+
+      signOut.style.color =
+        '#111111';
+
+    }
+  );
+
+
+  signOut.addEventListener(
+    'mouseleave',
+    function () {
+
+      signOut.style.color =
+        '#555555';
+
+    }
+  );
 
 
   signOut.addEventListener(
     'click',
-
     async function () {
 
       await dbClient.auth.signOut();
@@ -335,16 +456,13 @@ async function buildNav(dbClient, title) {
   );
 
 
-
   userArea.appendChild(
     who
   );
 
-
   userArea.appendChild(
     divider
   );
-
 
   userArea.appendChild(
     signOut
@@ -361,9 +479,8 @@ async function buildNav(dbClient, title) {
   );
 
 
-
   // ==========================================================
-  // USER PROFILE
+  // PROFILE LOOKUP
   // ==========================================================
 
   const session =
@@ -377,26 +494,15 @@ async function buildNav(dbClient, title) {
       : null;
 
 
-
   let me =
     await dbClient
-
       .from('app_users')
-
-      .select(
-        'full_name, role, tenant_id'
-      )
-
-      .eq(
-        'auth_uid',
-        authId
-      )
-
+      .select('full_name, role, tenant_id')
+      .eq('auth_uid', authId)
       .maybeSingle();
 
 
-
-  // Preserve the fallback from the original working nav.js.
+  // Preserve original fallback.
 
   if (
     !me.error &&
@@ -405,19 +511,12 @@ async function buildNav(dbClient, title) {
 
     me =
       await dbClient
-
         .from('app_users')
-
-        .select(
-          'full_name, role, tenant_id'
-        )
-
+        .select('full_name, role, tenant_id')
         .limit(1)
-
         .maybeSingle();
 
   }
-
 
 
   if (me.error) {
@@ -425,17 +524,13 @@ async function buildNav(dbClient, title) {
     who.textContent =
       'Profile error';
 
-
     console.error(
       'nav.js: app_users query failed —',
       me.error.message
     );
 
-
     return null;
-
   }
-
 
 
   if (!me.data) {
@@ -444,12 +539,12 @@ async function buildNav(dbClient, title) {
       'No profile linked';
 
     return null;
-
   }
 
 
-
-  // Use the full name and role exactly as requested.
+  // ==========================================================
+  // NAME + ROLE
+  // ==========================================================
 
   const fullName =
     me.data.full_name || 'User';
@@ -459,7 +554,7 @@ async function buildNav(dbClient, title) {
     me.data.role || 'User';
 
 
-  const displayRole =
+  const formattedRole =
     role.charAt(0).toUpperCase() +
     role.slice(1);
 
@@ -467,11 +562,9 @@ async function buildNav(dbClient, title) {
   who.textContent =
     fullName +
     ' (' +
-    displayRole +
+    formattedRole +
     ')';
 
 
-
   return me.data.tenant_id;
-
 }
