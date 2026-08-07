@@ -3,7 +3,91 @@
    GLOBAL VISUAL SYSTEM
    AIRY AMERICANA / INDUSTRIAL
    ============================================================ */
+/* ===========================================
+   STANDARD PAGE HEADER
+=========================================== */
 
+.page-header {
+
+    max-width:1100px;
+
+    margin:34px auto 20px;
+
+    padding:0 24px;
+
+}
+
+.page-header h1{
+
+    margin:0;
+
+    font-family:"Cinzel",serif;
+
+    font-size:34px;
+
+    font-weight:600;
+
+    color:var(--ink);
+
+}
+
+.page-header p{
+
+    margin-top:8px;
+
+    font-family:"Cormorant Garamond",serif;
+
+    font-size:20px;
+
+    color:var(--soft-blue);
+
+    font-style:italic;
+
+}
+
+/* ===========================================
+   HUB TABS
+=========================================== */
+
+.dispatch-tabs{
+
+    max-width:1100px;
+
+    margin:0 auto 26px;
+
+    padding:0 24px;
+
+    display:flex;
+
+    gap:26px;
+
+    border-bottom:1px solid rgba(0,0,0,.12);
+
+}
+
+.dispatch-tabs a{
+
+    padding:14px 0;
+
+    text-decoration:none;
+
+    color:var(--ink);
+
+    font-family:"Oswald",sans-serif;
+
+    letter-spacing:1px;
+
+    border-bottom:3px solid transparent;
+
+}
+
+.dispatch-tabs a.active{
+
+    border-bottom-color:var(--soft-blue);
+
+    color:var(--soft-blue);
+
+}
 
 /* ============================================================
    FONTS
