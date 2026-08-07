@@ -180,6 +180,8 @@ async function start() {
   if (!s.data.session) { location.href = 'index.html'; return; }
 
   const t = await buildNav(db, 'Fleet Board');
+  buildDispatchTabs('board.html');
+  
   if (!t) { fail('No app_users row linked to this login.'); return; }
 
   load();
