@@ -1,0 +1,78 @@
+/* ======================================================
+   HEAVY HAUL COMMAND
+   GLOBAL DESIGN SYSTEM
+   Version 1.0
+   ====================================================== */
+
+@import url(...);
+
+/* Root Variables */
+:root {
+    ...
+}
+
+/* Base */
+html {
+    ...
+}
+
+body {
+    ...
+}
+
+/* Typography */
+h1 {
+    ...
+}
+
+/* Links */
+a {
+    ...
+}
+
+/* Buttons */
+.btn {
+    ...
+}
+
+/* Forms */
+input,
+select,
+textarea {
+    ...
+}
+
+/* Cards */
+.card {
+    ...
+}
+
+/* Tables */
+table {
+    ...
+}
+
+/* Sidebar */
+.sidebar {
+    ...
+}
+
+/* Navigation */
+.nav-item {
+    ...
+}
+
+/* Status Badges */
+.badge-active {
+    ...
+}
+
+/* Utilities */
+.text-muted {
+    ...
+}
+
+/* Responsive */
+@media (...) {
+    ...
+}
