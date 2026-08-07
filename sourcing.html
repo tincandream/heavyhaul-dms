@@ -1,1 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sourcing — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
+          --ok:#0f6e56; --okbg:#e4f4ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:22px 18px 60px; max-width:1100px; margin:0 auto; }
+  h2.section { font-size:15px; font-weight:600; margin:0 0 4px; }
+  p.lead { color:var(--muted); margin:0 0 20px; font-size:13.5px; }
+  .cards { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+  a.card { display:block; text-decoration:none; color:inherit; background:var(--card);
+    border:1px solid var(--line); border-radius:12px; padding:18px 18px 16px;
+    transition:.12s; }
+  a.card:hover { border-color:var(--accent); box-shadow:0 3px 14px rgba(24,95,165,.10);
+    transform:translateY(-1px); }
+  .card .ico { width:38px; height:38px; border-radius:9px; background:var(--accentbg);
+    display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:12px; }
+  .card h3 { margin:0 0 4px; font-size:15.5px; font-weight:600; }
+  .card p { margin:0; color:var(--muted); font-size:12.5px; line-height:1.45; }
+  .card .go { margin-top:12px; font-size:12.5px; color:var(--accent); font-weight:600; }
+  .msg { padding:26px; text-align:center; color:var(--muted); }
+</style>
+</head>
+<body>
 
+<header></header>
+
+<main>
+  <h2 class="section">Sourcing</h2>
+  <p class="lead">Find and win freight — work your relationships into your own private load board.</p>
+
+  <div class="cards" id="cards">
+    <a class="card" href="opportunities.html">
+      <div class="ico">📋</div>
+      <h3>Opportunities</h3>
+      <p>Your private load board — freight you've captured from calls, emails, and portals, ready to quote and book.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <a class="card" href="call-queue.html">
+      <div class="ico">📞</div>
+      <h3>Call Queue</h3>
+      <p>Your daily call list — brokers and carriers due for a touch, in priority order.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <a class="card" href="portals.html">
+      <div class="ico">🌐</div>
+      <h3>Portals</h3>
+      <p>Broker load portals to sweep each morning, with what's due to check.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <a class="card" href="inbox.html">
+      <div class="ico">✉️</div>
+      <h3>Load Emails</h3>
+      <p>Broker daily load-email feeds you're subscribed to, and where the freight lives in each.</p>
+      <div class="go">Open →</div>
+    </a>
+
+    <a class="card" href="templates.html">
+      <div class="ico">📄</div>
+      <h3>Templates</h3>
+      <p>Your dispatcher documents and the full paperwork flow from onboarding a carrier through delivery.</p>
+      <div class="go">Open →</div>
+    </a>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+if (typeof window.supabase !== 'undefined') {
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (async () => {
+    const s = await db.auth.getSession();
+    if (!s.data.session) { location.href = 'index.html'; return; }
+    await buildNav(db, 'Sourcing');
+  })();
+}
+</script>
+</body>
+</html>
