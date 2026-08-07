@@ -1,6 +1,6 @@
 /* ============================================================
    HEAVY HAUL COMMAND
-   GLOBAL THEME
+   GLOBAL THEME — AIRY AMERICANA
    ============================================================ */
 
 
@@ -12,55 +12,58 @@
 
 
 /* ============================================================
-   BRAND PALETTE
+   COLOR PALETTE
    ============================================================ */
 
 :root {
 
-  --cream: #F5EAD6;
+  /* CORE COLORS */
 
-  --plum: #241A2A;
+  --ink: #3C3A4B;
+  --ink-dark: #302E3B;
 
-  --plum-dark: #1C1321;
+  --blue: #577584;
+  --blue-light: #718D9A;
+  --blue-soft: #E9F0F2;
 
-  --charcoal: #17171B;
+  --white: #FAFAFA;
+  --white-warm: #F7F6F3;
 
-  --charcoal-soft: #242329;
+  --cream: #D5C9BD;
 
-  --walnut: #7A5A42;
+  --stone: #97A0A7;
+  --stone-light: #D7DBDE;
 
-  --walnut-light: #A48A70;
+  --lime: #B8B05D;
+  --lime-soft: #F2F0DE;
 
-  --pink: #D94B7B;
-
-  --lime: #AEBC39;
-
-  --stone: #B9ADB8;
-
-  --danger: #FF7C84;
-
-  --success: #AEBC39;
+  --rose: #C0656B;
+  --rose-soft: #F5E7E8;
 
 
-  /* APPLICATION SURFACES */
+  /* APPLICATION ROLES */
 
-  --page-background: #F5EAD6;
+  --page-bg: var(--white-warm);
 
-  --panel-background: #FFFDF8;
+  --surface: var(--white);
 
-  --sidebar-background: #241A2A;
+  --sidebar-bg: var(--ink);
 
-  --header-background: #1C1321;
+  --header-bg: var(--white);
 
-  --input-background: #17171B;
+  --primary: var(--blue);
 
-  --text-main: #2C2830;
+  --primary-hover: var(--blue-light);
 
-  --text-muted: #756D74;
+  --text-main: var(--ink);
 
-  --text-light: #F5EAD6;
+  --text-muted: #737A80;
 
-  --border-light: rgba(122, 90, 66, 0.22);
+  --text-light: var(--white);
+
+  --border: var(--stone-light);
+
+  --border-strong: var(--stone);
 
 }
 
@@ -73,16 +76,18 @@
   box-sizing: border-box;
 }
 
+
 html {
   margin: 0;
   padding: 0;
 }
 
+
 body {
 
   margin: 0;
 
-  background: var(--page-background);
+  background: var(--page-bg);
 
   color: var(--text-main);
 
@@ -104,7 +109,7 @@ h1,
 
   margin-top: 0;
 
-  color: var(--plum);
+  color: var(--ink);
 
   font-family: "Cinzel", serif;
 
@@ -120,7 +125,7 @@ h3,
 h4,
 .section-title {
 
-  color: var(--plum);
+  color: var(--ink);
 
   font-family: "Oswald", sans-serif;
 
@@ -134,7 +139,7 @@ h4,
 .subtitle,
 .page-subtitle {
 
-  color: var(--walnut);
+  color: var(--blue);
 
   font-family: "Cormorant Garamond", serif;
 
@@ -142,6 +147,11 @@ h4,
 
   font-style: italic;
 
+}
+
+
+p {
+  color: var(--text-main);
 }
 
 
@@ -159,7 +169,7 @@ small,
 
 a {
 
-  color: var(--walnut);
+  color: var(--blue);
 
   text-decoration: none;
 
@@ -172,35 +182,38 @@ a {
 
 a:hover {
 
-  color: var(--plum);
+  color: var(--ink);
 
 }
 
 
 /* ============================================================
-   APPLICATION HEADER
+   APP HEADER / TOP BAR
    ============================================================ */
 
 header,
 .app-header,
 .topbar {
 
-  background: var(--header-background);
+  background: var(--header-bg);
 
-  color: var(--cream);
+  color: var(--ink);
 
-  border-bottom:
-    1px solid
-    rgba(164, 138, 112, 0.28);
+  border-bottom: 1px solid var(--border);
+
+  box-shadow:
+    0 2px 10px
+    rgba(60, 58, 75, 0.05);
 
 }
 
 
+header h1,
 .app-header h1,
 .topbar h1,
 header .brand {
 
-  color: var(--cream);
+  color: var(--ink);
 
   font-family: "Cinzel", serif;
 
@@ -215,9 +228,9 @@ header .brand {
 .app-sidebar,
 nav.sidebar {
 
-  background: var(--sidebar-background);
+  background: var(--sidebar-bg);
 
-  color: var(--cream);
+  color: var(--text-light);
 
 }
 
@@ -225,7 +238,7 @@ nav.sidebar {
 .sidebar a,
 .app-sidebar a {
 
-  color: var(--stone);
+  color: #D7DBDE;
 
   font-family: "Oswald", sans-serif;
 
@@ -239,10 +252,10 @@ nav.sidebar {
 .sidebar a:hover,
 .app-sidebar a:hover {
 
-  color: var(--cream);
+  color: var(--white);
 
   background:
-    rgba(245, 234, 214, 0.06);
+    rgba(250, 250, 250, 0.06);
 
 }
 
@@ -251,20 +264,20 @@ nav.sidebar {
 .app-sidebar a.active,
 .sidebar .active {
 
-  color: var(--cream);
+  color: var(--white);
 
   background:
-    rgba(122, 90, 66, 0.28);
+    rgba(87, 117, 132, 0.32);
 
   border-left:
     3px solid
-    var(--walnut-light);
+    var(--blue-light);
 
 }
 
 
 /* ============================================================
-   MAIN CONTENT AREA
+   MAIN CONTENT
    ============================================================ */
 
 main,
@@ -285,17 +298,17 @@ main,
 .widget,
 .stat-card {
 
-  background: var(--panel-background);
+  background: var(--surface);
 
   border:
     1px solid
-    var(--border-light);
+    var(--border);
 
   border-radius: 0;
 
   box-shadow:
-    0 5px 16px
-    rgba(36, 26, 42, 0.06);
+    0 5px 18px
+    rgba(60, 58, 75, 0.05);
 
 }
 
@@ -303,7 +316,7 @@ main,
 .card-header,
 .panel-header {
 
-  color: var(--plum);
+  color: var(--ink);
 
   font-family: "Oswald", sans-serif;
 
@@ -313,31 +326,31 @@ main,
 
   border-bottom:
     1px solid
-    var(--border-light);
+    var(--border);
 
 }
 
 
 /* ============================================================
-   BUTTONS
+   PRIMARY BUTTONS
    ============================================================ */
 
 button,
 .btn,
 .button {
 
-  background: var(--walnut);
+  background: var(--blue);
 
-  color: var(--cream);
+  color: var(--white);
 
   border:
     1px solid
-    var(--walnut-light);
+    var(--blue);
 
   border-radius: 0;
 
   padding:
-    9px 14px;
+    9px 15px;
 
   font-family: "Oswald", sans-serif;
 
@@ -345,14 +358,15 @@ button,
 
   font-weight: 500;
 
-  letter-spacing: 1.2px;
+  letter-spacing: 1.4px;
 
   cursor: pointer;
 
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    box-shadow 0.18s ease;
 
 }
 
@@ -361,9 +375,13 @@ button:hover,
 .btn:hover,
 .button:hover {
 
-  background: #8A674C;
+  background: var(--blue-light);
 
-  border-color: #B89E83;
+  border-color: var(--blue-light);
+
+  box-shadow:
+    0 4px 10px
+    rgba(87, 117, 132, 0.16);
 
 }
 
@@ -378,22 +396,54 @@ button:active,
 }
 
 
-/* SECONDARY BUTTON */
+/* ============================================================
+   SECONDARY BUTTONS
+   ============================================================ */
 
 .btn-secondary {
 
-  background: var(--charcoal-soft);
+  background: var(--white);
 
-  color: var(--cream);
+  color: var(--blue);
 
-  border-color: #555159;
+  border:
+    1px solid
+    var(--blue);
 
 }
 
 
 .btn-secondary:hover {
 
-  background: #302E34;
+  background: var(--blue-soft);
+
+  color: var(--ink);
+
+}
+
+
+/* ============================================================
+   QUIET BUTTONS
+   ============================================================ */
+
+.btn-quiet {
+
+  background: transparent;
+
+  color: var(--ink);
+
+  border:
+    1px solid
+    var(--border-strong);
+
+}
+
+
+.btn-quiet:hover {
+
+  background: var(--white);
+
+  border-color: var(--blue);
 
 }
 
@@ -404,7 +454,7 @@ button:active,
 
 label {
 
-  color: var(--plum);
+  color: var(--ink);
 
   font-family: "Oswald", sans-serif;
 
@@ -412,7 +462,7 @@ label {
 
   font-weight: 500;
 
-  letter-spacing: 0.7px;
+  letter-spacing: 0.8px;
 
 }
 
@@ -423,13 +473,13 @@ textarea {
 
   width: 100%;
 
-  background: #FFFDF8;
+  background: var(--white);
 
-  color: var(--text-main);
+  color: var(--ink);
 
   border:
     1px solid
-    var(--walnut-light);
+    var(--border-strong);
 
   border-radius: 0;
 
@@ -444,7 +494,8 @@ textarea {
 
   transition:
     border-color 0.18s ease,
-    box-shadow 0.18s ease;
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 
 }
 
@@ -453,11 +504,13 @@ input:focus,
 select:focus,
 textarea:focus {
 
-  border-color: var(--walnut);
+  border-color: var(--blue);
+
+  background: #FFFFFF;
 
   box-shadow:
     0 0 0 2px
-    rgba(122, 90, 66, 0.12);
+    rgba(87, 117, 132, 0.10);
 
 }
 
@@ -465,27 +518,31 @@ textarea:focus {
 input::placeholder,
 textarea::placeholder {
 
-  color: #9B9296;
+  color: #A1A6AA;
 
 }
 
 
-/* DARK / INDUSTRIAL FIELD */
+/* ============================================================
+   INDUSTRIAL INPUT
+   ============================================================ */
 
-.input-dark,
+.input-industrial,
 .industrial-input {
 
-  background: var(--charcoal);
+  background: var(--white);
 
-  color: var(--cream);
+  color: var(--ink);
 
   border:
     1px solid
-    #545158;
+    var(--stone);
 
   border-left:
     3px solid
-    var(--walnut);
+    var(--blue);
+
+  border-radius: 0;
 
 }
 
@@ -500,9 +557,9 @@ table {
 
   border-collapse: collapse;
 
-  background: var(--panel-background);
+  background: var(--surface);
 
-  color: var(--text-main);
+  color: var(--ink);
 
 }
 
@@ -510,9 +567,9 @@ table {
 thead,
 table thead {
 
-  background: var(--plum);
+  background: var(--ink);
 
-  color: var(--cream);
+  color: var(--white);
 
 }
 
@@ -522,7 +579,7 @@ th {
   padding:
     10px 12px;
 
-  color: var(--cream);
+  color: var(--white);
 
   font-family: "Oswald", sans-serif;
 
@@ -544,7 +601,15 @@ td {
 
   border-bottom:
     1px solid
-    rgba(122, 90, 66, 0.14);
+    var(--border);
+
+}
+
+
+tbody tr:nth-child(even) {
+
+  background:
+    rgba(87, 117, 132, 0.025);
 
 }
 
@@ -552,7 +617,7 @@ td {
 tbody tr:hover {
 
   background:
-    rgba(122, 90, 66, 0.045);
+    var(--blue-soft);
 
 }
 
@@ -582,40 +647,54 @@ tbody tr:hover {
 }
 
 
-/* ACTIVE / SUCCESS */
+/* ACTIVE / ON TIME */
 
 .badge-active,
 .badge-success,
 .status-active,
 .status-success {
 
-  background:
-    rgba(174, 188, 57, 0.20);
+  background: var(--lime-soft);
 
-  color: #5D661A;
+  color: #686326;
 
   border:
     1px solid
-    rgba(174, 188, 57, 0.50);
+    var(--lime);
 
 }
 
 
-/* IMPORTANT / ATTENTION */
+/* ALERT / ATTENTION */
 
 .badge-alert,
 .badge-warning,
 .status-alert,
 .status-warning {
 
-  background:
-    rgba(217, 75, 123, 0.12);
+  background: var(--rose-soft);
 
-  color: #A4375E;
+  color: #93464B;
 
   border:
     1px solid
-    rgba(217, 75, 123, 0.38);
+    var(--rose);
+
+}
+
+
+/* INFORMATIONAL */
+
+.badge-info,
+.status-info {
+
+  background: var(--blue-soft);
+
+  color: var(--blue);
+
+  border:
+    1px solid
+    rgba(87, 117, 132, 0.40);
 
 }
 
@@ -626,19 +705,20 @@ tbody tr:hover {
 .status-neutral {
 
   background:
-    rgba(185, 173, 184, 0.22);
+    #EFF1F2;
 
-  color: #665E65;
+  color:
+    #666D72;
 
   border:
     1px solid
-    rgba(185, 173, 184, 0.50);
+    var(--stone-light);
 
 }
 
 
 /* ============================================================
-   NOTIFICATIONS / ALERTS
+   ALERT BOXES
    ============================================================ */
 
 .alert {
@@ -646,14 +726,15 @@ tbody tr:hover {
   padding:
     10px 12px;
 
-  border-radius: 0;
+  background: var(--white);
+
+  border:
+    1px solid
+    var(--border);
 
   border-left:
     4px solid
-    var(--walnut);
-
-  background:
-    rgba(122, 90, 66, 0.08);
+    var(--blue);
 
 }
 
@@ -669,27 +750,27 @@ tbody tr:hover {
 .alert-warning {
 
   border-left-color:
-    var(--pink);
+    var(--rose);
 
 }
 
 
-.alert-danger {
+.alert-info {
 
   border-left-color:
-    var(--danger);
+    var(--blue);
 
 }
 
 
 /* ============================================================
-   DASHBOARD NUMBERS
+   DASHBOARD METRICS
    ============================================================ */
 
 .stat-number,
 .metric-value {
 
-  color: var(--plum);
+  color: var(--ink);
 
   font-family: "Oswald", sans-serif;
 
@@ -709,7 +790,7 @@ tbody tr:hover {
 
   font-weight: 500;
 
-  letter-spacing: 0.8px;
+  letter-spacing: 0.9px;
 
   text-transform: uppercase;
 
@@ -717,19 +798,63 @@ tbody tr:hover {
 
 
 /* ============================================================
-   TOOLBAR
+   TOOLBARS / ACTION BARS
    ============================================================ */
 
 .toolbar,
 .action-bar {
 
-  background: #FFFDF8;
+  background: var(--white);
 
   border:
     1px solid
-    var(--border-light);
+    var(--border);
 
   border-radius: 0;
+
+}
+
+
+/* ============================================================
+   TABS
+   ============================================================ */
+
+.tabs {
+
+  border-bottom:
+    1px solid
+    var(--border);
+
+}
+
+
+.tab,
+.tabs a {
+
+  color: var(--text-muted);
+
+  border-bottom:
+    2px solid
+    transparent;
+
+}
+
+
+.tab:hover,
+.tabs a:hover {
+
+  color: var(--blue);
+
+}
+
+
+.tab.active,
+.tabs a.active {
+
+  color: var(--ink);
+
+  border-bottom-color:
+    var(--blue);
 
 }
 
@@ -744,7 +869,62 @@ hr {
 
   border-top:
     1px solid
-    rgba(122, 90, 66, 0.22);
+    var(--border);
+
+}
+
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+
+.modal,
+.dialog {
+
+  background: var(--white);
+
+  color: var(--ink);
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 0;
+
+  box-shadow:
+    0 20px 55px
+    rgba(60, 58, 75, 0.16);
+
+}
+
+
+/* ============================================================
+   DROPDOWNS
+   ============================================================ */
+
+.dropdown,
+.menu {
+
+  background: var(--white);
+
+  color: var(--ink);
+
+  border:
+    1px solid
+    var(--border);
+
+  box-shadow:
+    0 10px 25px
+    rgba(60, 58, 75, 0.10);
+
+}
+
+
+.dropdown a:hover,
+.menu a:hover {
+
+  background:
+    var(--blue-soft);
 
 }
 
@@ -755,90 +935,103 @@ hr {
 
 ::-webkit-scrollbar {
 
-  width: 10px;
+  width: 9px;
 
-  height: 10px;
+  height: 9px;
 
 }
 
 
 ::-webkit-scrollbar-track {
 
-  background: #E9E0D3;
+  background:
+    #ECEFF0;
 
 }
 
 
 ::-webkit-scrollbar-thumb {
 
-  background: var(--walnut);
+  background:
+    var(--stone);
 
 }
 
 
 ::-webkit-scrollbar-thumb:hover {
 
-  background: #8A674C;
+  background:
+    var(--blue);
 
 }
 
 
 /* ============================================================
-   SELECTION
+   TEXT SELECTION
    ============================================================ */
 
 ::selection {
 
-  background: var(--walnut);
+  background:
+    var(--blue);
 
-  color: var(--cream);
+  color:
+    var(--white);
 
 }
 
 
 /* ============================================================
-   UTILITY CLASSES
+   UTILITY COLORS
    ============================================================ */
 
-.text-plum {
-  color: var(--plum);
+.text-ink {
+  color: var(--ink);
 }
 
-.text-cream {
-  color: var(--cream);
+.text-blue {
+  color: var(--blue);
 }
 
-.text-walnut {
-  color: var(--walnut);
-}
-
-.text-pink {
-  color: var(--pink);
-}
-
-.text-lime {
-  color: var(--lime);
+.text-white {
+  color: var(--white);
 }
 
 .text-stone {
   color: var(--stone);
 }
 
-
-.bg-plum {
-  background: var(--plum);
+.text-lime {
+  color: var(--lime);
 }
 
-.bg-cream {
-  background: var(--cream);
+.text-rose {
+  color: var(--rose);
 }
 
-.bg-walnut {
-  background: var(--walnut);
+
+.bg-ink {
+  background: var(--ink);
 }
 
-.bg-charcoal {
-  background: var(--charcoal);
+.bg-blue {
+  background: var(--blue);
+}
+
+.bg-white {
+  background: var(--white);
+}
+
+.bg-blue-soft {
+  background: var(--blue-soft);
+}
+
+.bg-lime-soft {
+  background: var(--lime-soft);
+}
+
+.bg-rose-soft {
+  background: var(--rose-soft);
 }
 
 
@@ -866,7 +1059,7 @@ hr {
 
   h1,
   .page-title {
-    font-size: 25px;
+    font-size: 24px;
   }
 
   button,
