@@ -89,9 +89,24 @@ outBtn.style.cssText =
 
   header.appendChild(right);
 
+ const sess = await dbClient.auth.getUser();
+  const authId = sess.data.user ? sess.data.user.id : null;
   const me = await dbClient
     .from('app_users')
-    .select('full_name, role, tenant_id');
+    .select('full_name, role, tenant_id')
+    .eq('auth_user_id', authId)
+    .maybeSingle();
+  if (me.error) {
+    who.textContent = 'profile error';
+    console.error('nav.js: app_users query failed —', me.error.message);
+    return null;
+  }
+  if (!me.data) {
+    who.textContent = 'no profile linked';
+    return null;
+  }
+  who.textContent = me.data.full_name + ' (' + me.data.role + ')';
+  return me.data.tenant_id;
 
   if (me.error) {
     who.textContent = 'profile error';
