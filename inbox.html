@@ -1,1 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load Emails — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; --accentbg:#e7f0f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1200px; margin:0 auto 40px; }
 
+  .tiles { display:grid; gap:10px; margin-bottom:18px;
+           grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  .tile .n { font-size:22px; font-weight:600; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  select, .search, input, textarea { padding:7px 10px; border:1px solid var(--line2);
+    border-radius:7px; font-size:13px; background:var(--card); color:var(--ink); font-family:inherit; }
+  .search { min-width:190px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+  button { font:inherit; cursor:pointer; border-radius:7px; border:1px solid var(--line2);
+    background:var(--card); color:var(--ink); padding:7px 13px; font-weight:600; }
+  button:hover { background:#faf9f6; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:hover { filter:brightness(1.08); }
+  button.sm { padding:5px 10px; font-size:12px; }
+  button.danger { border-color:#e2b8b8; color:var(--danger); background:#fff; }
+
+  .wrap { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:880px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:0; }
+  tr.row { cursor:pointer; }
+  tr.row:hover { background:#faf9f6; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
+  .name { font-weight:600; }
+  .mono { font-family:ui-monospace,monospace; font-size:12px; }
+  .tag { display:inline-block; background:#f0efeb; border:1px solid var(--line);
+         border-radius:5px; padding:1px 7px; font-size:11.5px; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px; font-size:11.5px; white-space:nowrap; }
+  .p-active { background:var(--okbg); color:var(--ok); }
+  .p-paused { background:var(--warnbg); color:var(--warn); }
+  .p-unsub { background:#f0efeb; color:var(--muted); }
+  .p-bounce { background:var(--dangerbg); color:var(--danger); }
+  .os { color:var(--warn); font-weight:600; font-size:11px; }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
+
+  dialog { border:none; border-radius:12px; padding:0; width:min(620px,94vw);
+    box-shadow:0 12px 40px rgba(10,14,25,.28); color:var(--ink); }
+  dialog::backdrop { background:rgba(12,16,26,.45); }
+  .dh { padding:14px 16px; border-bottom:1px solid var(--line); font-weight:600; }
+  .db { padding:16px; max-height:66vh; overflow:auto; }
+  .df { padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px;
+        align-items:center; background:#fbfaf7; }
+  .fg { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .fld { display:flex; flex-direction:column; gap:4px; }
+  .fld.full { grid-column:1/-1; }
+  .fld label { font-size:12px; font-weight:600; color:var(--muted); }
+  .fld input, .fld select, .fld textarea { width:100%; }
+  .checks { display:flex; gap:16px; flex-wrap:wrap; padding-top:4px; }
+  .checks label { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; }
+  .checks input { width:auto; }
+  .spacer { flex:1; }
+  .err { color:var(--danger); font-size:12px; font-weight:600; }
+  .hint { font-size:11.5px; color:var(--muted); margin-top:4px; }
+</style>
+</head>
+<body>
+
+<header></header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar">
+    <button class="primary" id="addBtn">+ Add feed</button>
+    <input class="search" id="q" placeholder="Search feed, broker, sender…">
+    <select id="fstatus"><option value="">All statuses</option></select>
+    <label style="font-size:13px;display:flex;align-items:center;gap:6px">
+      <input type="checkbox" id="fover"> Oversize only</label>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr>
+        <th>Feed</th><th>Broker</th><th>Sender</th><th>Frequency</th>
+        <th>Format</th><th>Gmail label</th><th>Status</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="7" class="msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- ADD / EDIT FEED DIALOG -->
+<dialog id="dlg">
+  <div class="dh" id="dlgTitle">Add Load-Email Feed</div>
+  <div class="db">
+    <input type="hidden" id="f_id">
+    <div class="fg">
+      <div class="fld"><label for="f_name">Feed name *</label>
+        <input id="f_name" placeholder="TMC daily oversize blast"></div>
+      <div class="fld"><label for="f_broker">Broker</label>
+        <input id="f_broker" placeholder="TMC Transportation"></div>
+      <div class="fld"><label for="f_sender">Sender email</label>
+        <input id="f_sender" placeholder="loads@tmc.com"></div>
+      <div class="fld"><label for="f_domain">Sender domain</label>
+        <input id="f_domain" placeholder="tmc.com"></div>
+      <div class="fld"><label for="f_status">Subscription status</label>
+        <select id="f_status">
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="unsubscribed">Unsubscribed</option>
+          <option value="bouncing">Bouncing</option>
+        </select></div>
+      <div class="fld"><label for="f_freq">Frequency</label>
+        <input id="f_freq" placeholder="Daily 7am"></div>
+      <div class="fld"><label for="f_format">Format</label>
+        <select id="f_format">
+          <option value="">—</option>
+          <option value="html_table">HTML table</option>
+          <option value="plain_text">Plain text</option>
+          <option value="pdf_attachment">PDF attachment</option>
+          <option value="csv_attachment">CSV attachment</option>
+          <option value="spreadsheet_link">Spreadsheet link</option>
+          <option value="mixed">Mixed</option>
+        </select></div>
+      <div class="fld"><label for="f_time">Typical send time</label>
+        <input type="time" id="f_time"></div>
+      <div class="fld"><label for="f_avg">Avg loads / email</label>
+        <input type="number" id="f_avg"></div>
+      <div class="fld"><label for="f_label">Gmail label</label>
+        <input id="f_label" placeholder="Loads/TMC"></div>
+    </div>
+    <div class="checks" style="margin-top:10px">
+      <label><input type="checkbox" id="f_oversize"> Contains oversize freight</label>
+    </div>
+    <div class="fld full" style="margin-top:12px"><label for="f_parse">Parse notes</label>
+      <textarea id="f_parse" style="min-height:56px" placeholder="Dims in cols D–F, weight in col G. Oversize flagged in subject line."></textarea>
+      <div class="hint">Where the equipment / dimensions live in this email's format — so you can scan fast.</div></div>
+    <div id="f_err" class="err"></div>
+  </div>
+  <div class="df">
+    <button class="primary" id="saveBtn">Save</button>
+    <button id="cancelBtn">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger" id="delBtn" style="display:none">Delete</button>
+  </div>
+</dialog>
+
+<div id="toast" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+  background:#22221f;color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;
+  opacity:0;transition:.22s;z-index:9999;pointer-events:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+let db = null, TENANT_ID = null, rows = [];
+
+function fail(t){ $('body').innerHTML='<tr><td colspan="7" class="msg bad">'+t+'</td></tr>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function txt(v){ const s=(v==null?'':String(v)).trim(); return s===''?null:s; }
+function num(v){ if(v==null||v==='')return null; const n=Number(v); return isNaN(n)?null:n; }
+function pretty(s){ return s?String(s).replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()):''; }
+
+let toastTimer=null;
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.opacity='1';
+  t.style.transform='translateX(-50%) translateY(0)'; clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(80px)'; },2600); }
+
+window.onerror = m => fail('JS error: ' + m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load. Reload the page.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
+}
+
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
+  TENANT_ID = await buildNav(db, 'Load Emails');
+  if (!TENANT_ID) { fail('No app_users row linked to this login.'); return; }
+  wire();
+  load();
+}
+
+const STATUS_PILL = { active:'p-active', paused:'p-paused',
+  unsubscribed:'p-unsub', bouncing:'p-bounce' };
+
+async function load(){
+  const r = await db.from('load_email_feeds').select('*')
+    .order('feed_name', { ascending:true });
+  if (r.error){ fail('Query failed: ' + r.error.message); return; }
+  rows = r.data || [];
+  fillFilters(); tiles(); render();
+}
+
+function fillFilters(){
+  const sel=$('fstatus'), keep=sel.value;
+  const vals=[...new Set(rows.map(r=>r.subscription_status).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All statuses</option>'+
+    vals.map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+  sel.value=keep;
+}
+
+function tiles(){
+  const active = rows.filter(r=>r.subscription_status==='active').length;
+  const os = rows.filter(r=>r.contains_oversize).length;
+  const t = [
+    ['Feeds', rows.length],
+    ['Active', active],
+    ['Oversize feeds', os]
+  ];
+  $('tiles').innerHTML = t.map(([l,n])=>'<div class="tile"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+}
+
+function render(){
+  const q=$('q').value.toLowerCase().trim();
+  let list=rows.filter(r=>{
+    if ($('fstatus').value && r.subscription_status!==$('fstatus').value) return false;
+    if ($('fover').checked && !r.contains_oversize) return false;
+    if (q){ const hay=[r.feed_name,r.broker_name,r.sender_email,r.sender_domain]
+      .filter(Boolean).join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  $('count').textContent = list.length+' of '+rows.length;
+
+  if (!list.length){ $('body').innerHTML='<tr><td colspan="7" class="msg">No feeds yet. Click “+ Add feed”.</td></tr>'; return; }
+
+  $('body').innerHTML = list.map(r=>
+    '<tr class="row" data-id="'+esc(r.id)+'">'+
+      '<td><span class="name">'+esc(r.feed_name)+'</span>'+
+        (r.contains_oversize?'<div class="os">oversize</div>':'')+'</td>'+
+      '<td>'+esc(r.broker_name||'—')+'</td>'+
+      '<td class="mono">'+esc(r.sender_email||r.sender_domain||'—')+'</td>'+
+      '<td>'+esc(r.frequency||'—')+'</td>'+
+      '<td>'+(r.format?'<span class="tag">'+esc(pretty(r.format))+'</span>':'—')+'</td>'+
+      '<td>'+(r.gmail_label?'<span class="mono">'+esc(r.gmail_label)+'</span>':'—')+'</td>'+
+      '<td><span class="pill '+(STATUS_PILL[r.subscription_status]||'p-active')+'">'+
+        esc(pretty(r.subscription_status))+'</span></td>'+
+    '</tr>').join('');
+
+  document.querySelectorAll('tr[data-id]').forEach(tr=>
+    tr.addEventListener('click', ()=>openDlg(tr.dataset.id)));
+}
+
+// ===== dialog =====
+function openDlg(id){
+  $('f_err').textContent='';
+  const f = id ? rows.find(x=>x.id===id) : null;
+  $('f_id').value = f?f.id:'';
+  $('dlgTitle').textContent = f?'Edit Feed':'Add Load-Email Feed';
+  $('delBtn').style.display = f?'inline-block':'none';
+  $('f_name').value   = f?(f.feed_name||''):'';
+  $('f_broker').value = f?(f.broker_name||''):'';
+  $('f_sender').value = f?(f.sender_email||''):'';
+  $('f_domain').value = f?(f.sender_domain||''):'';
+  $('f_status').value = f?(f.subscription_status||'active'):'active';
+  $('f_freq').value   = f?(f.frequency||''):'';
+  $('f_format').value = f?(f.format||''):'';
+  $('f_time').value   = f?(f.typical_send_time||''):'';
+  $('f_avg').value    = f&&f.avg_loads_per_email!=null?f.avg_loads_per_email:'';
+  $('f_label').value  = f?(f.gmail_label||''):'';
+  $('f_oversize').checked = f?!!f.contains_oversize:false;
+  $('f_parse').value  = f?(f.parse_notes||''):'';
+  $('dlg').showModal();
+}
+
+async function save(){
+  $('f_err').textContent='';
+  const name=txt($('f_name').value);
+  if (!name){ $('f_err').textContent='Feed name is required.'; return; }
+  const btn=$('saveBtn'); btn.disabled=true;
+  const id=txt($('f_id').value);
+  const row = {
+    feed_name:           name,
+    broker_name:         txt($('f_broker').value),
+    sender_email:        txt($('f_sender').value),
+    sender_domain:       txt($('f_domain').value),
+    subscription_status: $('f_status').value,
+    frequency:           txt($('f_freq').value),
+    format:              txt($('f_format').value),
+    typical_send_time:   txt($('f_time').value),
+    avg_loads_per_email: num($('f_avg').value),
+    gmail_label:         txt($('f_label').value),
+    contains_oversize:   $('f_oversize').checked,
+    parse_notes:         txt($('f_parse').value)
+  };
+  let error=null;
+  if (id){
+    const r=await db.from('load_email_feeds').update(row).eq('id', id); error=r.error;
+  } else {
+    row.tenant_id=TENANT_ID;
+    const r=await db.from('load_email_feeds').insert(row); error=r.error;
+  }
+  btn.disabled=false;
+  if (error){ $('f_err').textContent=error.message; return; }
+  $('dlg').close(); toast(id?'Updated':'Added'); load();
+}
+
+async function del(){
+  const id=txt($('f_id').value); if(!id)return;
+  if(!confirm('Delete this feed?'))return;
+  const r=await db.from('load_email_feeds').delete().eq('id', id);
+  if(r.error){ $('f_err').textContent=r.error.message; return; }
+  $('dlg').close(); toast('Deleted'); load();
+}
+
+function wire(){
+  $('addBtn').addEventListener('click', ()=>openDlg(null));
+  $('saveBtn').addEventListener('click', save);
+  $('delBtn').addEventListener('click', del);
+  $('cancelBtn').addEventListener('click', ()=>$('dlg').close());
+  ['q','fstatus','fover'].forEach(id=>{
+    $(id).addEventListener('input', render);
+    $(id).addEventListener('change', render);
+  });
+}
+</script>
+</body>
+</html>
