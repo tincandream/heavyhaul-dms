@@ -1,78 +1,878 @@
-/* ======================================================
+/* ============================================================
    HEAVY HAUL COMMAND
-   GLOBAL DESIGN SYSTEM
-   Version 1.0
-   ====================================================== */
+   GLOBAL THEME
+   ============================================================ */
 
-@import url(...);
 
-/* Root Variables */
+/* ============================================================
+   FONTS
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500;600&family=Oswald:wght@400;500;600&display=swap');
+
+
+/* ============================================================
+   BRAND PALETTE
+   ============================================================ */
+
 :root {
-    ...
+
+  --cream: #F5EAD6;
+
+  --plum: #241A2A;
+
+  --plum-dark: #1C1321;
+
+  --charcoal: #17171B;
+
+  --charcoal-soft: #242329;
+
+  --walnut: #7A5A42;
+
+  --walnut-light: #A48A70;
+
+  --pink: #D94B7B;
+
+  --lime: #AEBC39;
+
+  --stone: #B9ADB8;
+
+  --danger: #FF7C84;
+
+  --success: #AEBC39;
+
+
+  /* APPLICATION SURFACES */
+
+  --page-background: #F5EAD6;
+
+  --panel-background: #FFFDF8;
+
+  --sidebar-background: #241A2A;
+
+  --header-background: #1C1321;
+
+  --input-background: #17171B;
+
+  --text-main: #2C2830;
+
+  --text-muted: #756D74;
+
+  --text-light: #F5EAD6;
+
+  --border-light: rgba(122, 90, 66, 0.22);
+
 }
 
-/* Base */
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
 html {
-    ...
+  margin: 0;
+  padding: 0;
 }
 
 body {
-    ...
+
+  margin: 0;
+
+  background: var(--page-background);
+
+  color: var(--text-main);
+
+  font-family: "Inter", sans-serif;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+
 }
 
-/* Typography */
-h1 {
-    ...
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+h1,
+.page-title {
+
+  margin-top: 0;
+
+  color: var(--plum);
+
+  font-family: "Cinzel", serif;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
 }
 
-/* Links */
+
+h2,
+h3,
+h4,
+.section-title {
+
+  color: var(--plum);
+
+  font-family: "Oswald", sans-serif;
+
+  font-weight: 500;
+
+  letter-spacing: 1px;
+
+}
+
+
+.subtitle,
+.page-subtitle {
+
+  color: var(--walnut);
+
+  font-family: "Cormorant Garamond", serif;
+
+  font-size: 18px;
+
+  font-style: italic;
+
+}
+
+
+small,
+.text-muted {
+
+  color: var(--text-muted);
+
+}
+
+
+/* ============================================================
+   LINKS
+   ============================================================ */
+
 a {
-    ...
+
+  color: var(--walnut);
+
+  text-decoration: none;
+
+  transition:
+    color 0.18s ease,
+    opacity 0.18s ease;
+
 }
 
-/* Buttons */
-.btn {
-    ...
+
+a:hover {
+
+  color: var(--plum);
+
 }
 
-/* Forms */
+
+/* ============================================================
+   APPLICATION HEADER
+   ============================================================ */
+
+header,
+.app-header,
+.topbar {
+
+  background: var(--header-background);
+
+  color: var(--cream);
+
+  border-bottom:
+    1px solid
+    rgba(164, 138, 112, 0.28);
+
+}
+
+
+.app-header h1,
+.topbar h1,
+header .brand {
+
+  color: var(--cream);
+
+  font-family: "Cinzel", serif;
+
+}
+
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+.sidebar,
+.app-sidebar,
+nav.sidebar {
+
+  background: var(--sidebar-background);
+
+  color: var(--cream);
+
+}
+
+
+.sidebar a,
+.app-sidebar a {
+
+  color: var(--stone);
+
+  font-family: "Oswald", sans-serif;
+
+  letter-spacing: 0.7px;
+
+  text-decoration: none;
+
+}
+
+
+.sidebar a:hover,
+.app-sidebar a:hover {
+
+  color: var(--cream);
+
+  background:
+    rgba(245, 234, 214, 0.06);
+
+}
+
+
+.sidebar a.active,
+.app-sidebar a.active,
+.sidebar .active {
+
+  color: var(--cream);
+
+  background:
+    rgba(122, 90, 66, 0.28);
+
+  border-left:
+    3px solid
+    var(--walnut-light);
+
+}
+
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+
+main,
+.main-content,
+.content {
+
+  color: var(--text-main);
+
+}
+
+
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
+
+.card,
+.panel,
+.widget,
+.stat-card {
+
+  background: var(--panel-background);
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 0;
+
+  box-shadow:
+    0 5px 16px
+    rgba(36, 26, 42, 0.06);
+
+}
+
+
+.card-header,
+.panel-header {
+
+  color: var(--plum);
+
+  font-family: "Oswald", sans-serif;
+
+  font-weight: 500;
+
+  letter-spacing: 0.8px;
+
+  border-bottom:
+    1px solid
+    var(--border-light);
+
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+button,
+.btn,
+.button {
+
+  background: var(--walnut);
+
+  color: var(--cream);
+
+  border:
+    1px solid
+    var(--walnut-light);
+
+  border-radius: 0;
+
+  padding:
+    9px 14px;
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  letter-spacing: 1.2px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.12s ease;
+
+}
+
+
+button:hover,
+.btn:hover,
+.button:hover {
+
+  background: #8A674C;
+
+  border-color: #B89E83;
+
+}
+
+
+button:active,
+.btn:active,
+.button:active {
+
+  transform:
+    translateY(1px);
+
+}
+
+
+/* SECONDARY BUTTON */
+
+.btn-secondary {
+
+  background: var(--charcoal-soft);
+
+  color: var(--cream);
+
+  border-color: #555159;
+
+}
+
+
+.btn-secondary:hover {
+
+  background: #302E34;
+
+}
+
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+label {
+
+  color: var(--plum);
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.7px;
+
+}
+
+
 input,
 select,
 textarea {
-    ...
+
+  width: 100%;
+
+  background: #FFFDF8;
+
+  color: var(--text-main);
+
+  border:
+    1px solid
+    var(--walnut-light);
+
+  border-radius: 0;
+
+  padding:
+    9px 11px;
+
+  font-family: "Inter", sans-serif;
+
+  font-size: 13px;
+
+  outline: none;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
 }
 
-/* Cards */
-.card {
-    ...
+
+input:focus,
+select:focus,
+textarea:focus {
+
+  border-color: var(--walnut);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(122, 90, 66, 0.12);
+
 }
 
-/* Tables */
+
+input::placeholder,
+textarea::placeholder {
+
+  color: #9B9296;
+
+}
+
+
+/* DARK / INDUSTRIAL FIELD */
+
+.input-dark,
+.industrial-input {
+
+  background: var(--charcoal);
+
+  color: var(--cream);
+
+  border:
+    1px solid
+    #545158;
+
+  border-left:
+    3px solid
+    var(--walnut);
+
+}
+
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
 table {
-    ...
+
+  width: 100%;
+
+  border-collapse: collapse;
+
+  background: var(--panel-background);
+
+  color: var(--text-main);
+
 }
 
-/* Sidebar */
-.sidebar {
-    ...
+
+thead,
+table thead {
+
+  background: var(--plum);
+
+  color: var(--cream);
+
 }
 
-/* Navigation */
-.nav-item {
-    ...
+
+th {
+
+  padding:
+    10px 12px;
+
+  color: var(--cream);
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.8px;
+
+  text-align: left;
+
 }
 
-/* Status Badges */
-.badge-active {
-    ...
+
+td {
+
+  padding:
+    10px 12px;
+
+  border-bottom:
+    1px solid
+    rgba(122, 90, 66, 0.14);
+
 }
 
-/* Utilities */
-.text-muted {
-    ...
+
+tbody tr:hover {
+
+  background:
+    rgba(122, 90, 66, 0.045);
+
 }
 
-/* Responsive */
-@media (...) {
-    ...
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+.badge,
+.status {
+
+  display: inline-block;
+
+  padding:
+    3px 7px;
+
+  border-radius: 0;
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.5px;
+
+}
+
+
+/* ACTIVE / SUCCESS */
+
+.badge-active,
+.badge-success,
+.status-active,
+.status-success {
+
+  background:
+    rgba(174, 188, 57, 0.20);
+
+  color: #5D661A;
+
+  border:
+    1px solid
+    rgba(174, 188, 57, 0.50);
+
+}
+
+
+/* IMPORTANT / ATTENTION */
+
+.badge-alert,
+.badge-warning,
+.status-alert,
+.status-warning {
+
+  background:
+    rgba(217, 75, 123, 0.12);
+
+  color: #A4375E;
+
+  border:
+    1px solid
+    rgba(217, 75, 123, 0.38);
+
+}
+
+
+/* NEUTRAL */
+
+.badge-neutral,
+.status-neutral {
+
+  background:
+    rgba(185, 173, 184, 0.22);
+
+  color: #665E65;
+
+  border:
+    1px solid
+    rgba(185, 173, 184, 0.50);
+
+}
+
+
+/* ============================================================
+   NOTIFICATIONS / ALERTS
+   ============================================================ */
+
+.alert {
+
+  padding:
+    10px 12px;
+
+  border-radius: 0;
+
+  border-left:
+    4px solid
+    var(--walnut);
+
+  background:
+    rgba(122, 90, 66, 0.08);
+
+}
+
+
+.alert-success {
+
+  border-left-color:
+    var(--lime);
+
+}
+
+
+.alert-warning {
+
+  border-left-color:
+    var(--pink);
+
+}
+
+
+.alert-danger {
+
+  border-left-color:
+    var(--danger);
+
+}
+
+
+/* ============================================================
+   DASHBOARD NUMBERS
+   ============================================================ */
+
+.stat-number,
+.metric-value {
+
+  color: var(--plum);
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 28px;
+
+  font-weight: 600;
+
+}
+
+
+.stat-label,
+.metric-label {
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.8px;
+
+  text-transform: uppercase;
+
+}
+
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+
+.toolbar,
+.action-bar {
+
+  background: #FFFDF8;
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 0;
+
+}
+
+
+/* ============================================================
+   DIVIDERS
+   ============================================================ */
+
+hr {
+
+  border: 0;
+
+  border-top:
+    1px solid
+    rgba(122, 90, 66, 0.22);
+
+}
+
+
+/* ============================================================
+   SCROLLBARS
+   ============================================================ */
+
+::-webkit-scrollbar {
+
+  width: 10px;
+
+  height: 10px;
+
+}
+
+
+::-webkit-scrollbar-track {
+
+  background: #E9E0D3;
+
+}
+
+
+::-webkit-scrollbar-thumb {
+
+  background: var(--walnut);
+
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+
+  background: #8A674C;
+
+}
+
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+
+::selection {
+
+  background: var(--walnut);
+
+  color: var(--cream);
+
+}
+
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+
+.text-plum {
+  color: var(--plum);
+}
+
+.text-cream {
+  color: var(--cream);
+}
+
+.text-walnut {
+  color: var(--walnut);
+}
+
+.text-pink {
+  color: var(--pink);
+}
+
+.text-lime {
+  color: var(--lime);
+}
+
+.text-stone {
+  color: var(--stone);
+}
+
+
+.bg-plum {
+  background: var(--plum);
+}
+
+.bg-cream {
+  background: var(--cream);
+}
+
+.bg-walnut {
+  background: var(--walnut);
+}
+
+.bg-charcoal {
+  background: var(--charcoal);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  body {
+    font-size: 13px;
+  }
+
+  .card,
+  .panel,
+  .widget,
+  .stat-card {
+    box-shadow: none;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  h1,
+  .page-title {
+    font-size: 25px;
+  }
+
+  button,
+  .btn,
+  .button {
+    min-height: 38px;
+  }
+
 }
