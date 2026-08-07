@@ -19,7 +19,7 @@
 
 const MAIN_NAV = [
   ['welcome.html', 'Welcome'],
-  ['dispatch.html', 'Dispatch'],
+  ['board.html', 'Dispatch'],
   ['sourcing.html', 'Sourcing'],
   ['fleet-command.html', 'Fleet Command']
 ];
