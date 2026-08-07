@@ -1,1 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Fleet Command — Heavy Haul Command</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+
+    /* ============================================================
+       FLEET COMMAND HUB — BASIC STRUCTURE
+       ============================================================ */
+
+    .hub-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 38px 24px 70px;
+    }
+
+    .hub-heading {
+      margin-bottom: 28px;
+    }
+
+    .hub-heading h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+      font-weight: 700;
+    }
+
+    .hub-heading p {
+      margin: 0;
+      color: #777777;
+      font-size: 13px;
+    }
+
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .hub-card {
+      display: block;
+
+      min-height: 155px;
+
+      padding: 22px;
+
+      background: #ffffff;
+
+      border: 1px solid #dddddd;
+
+      color: #222222;
+
+      text-decoration: none;
+
+      transition:
+        border-color .15s ease,
+        transform .15s ease,
+        box-shadow .15s ease;
+    }
+
+    .hub-card:hover {
+      border-color: #999999;
+
+      transform: translateY(-2px);
+
+      box-shadow:
+        0 8px 20px
+        rgba(0, 0, 0, .06);
+    }
+
+    .hub-card-title {
+      margin-bottom: 8px;
+
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .hub-card-note {
+      color: #777777;
+
+      font-size: 12.5px;
+
+      line-height: 1.5;
+    }
+
+    @media (max-width: 760px) {
+
+      .hub-grid {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <header></header>
+
+
+  <main class="hub-wrap">
+
+    <section class="hub-heading">
+
+      <h1>
+        Fleet Command
+      </h1>
+
+      <p>
+        Manage fleet readiness, route planning,
+        state requirements, and scheduling.
+      </p>
+
+    </section>
+
+
+    <section class="hub-grid">
+
+
+      <a
+        class="hub-card"
+        href="fleet.html"
+      >
+
+        <div class="hub-card-title">
+          Fleet Setup
+        </div>
+
+        <div class="hub-card-note">
+          Manage drivers, trucks, trailers,
+          equipment, and fleet records.
+        </div>
+
+      </a>
+
+
+      <a
+        class="hub-card"
+        href="route-planning.html"
+      >
+
+        <div class="hub-card-title">
+          Route Planning
+        </div>
+
+        <div class="hub-card-note">
+          Plan routes, review restrictions,
+          clearances, stops, and travel considerations.
+        </div>
+
+      </a>
+
+
+      <a
+        class="hub-card"
+        href="states.html"
+      >
+
+        <div class="hub-card-title">
+          State Rules
+        </div>
+
+        <div class="hub-card-note">
+          Review permit offices, escort requirements,
+          travel restrictions, and state-specific rules.
+        </div>
+
+      </a>
+
+
+      <a
+        class="hub-card"
+        href="calendar.html"
+      >
+
+        <div class="hub-card-title">
+          Calendar
+        </div>
+
+        <div class="hub-card-note">
+          Review deliveries, permits, maintenance,
+          escorts, appointments, and deadlines.
+        </div>
+
+      </a>
+
+
+    </section>
+
+  </main>
+
+
+  <script src="nav.js"></script>
+
+
+  <script>
+
+    // ==========================================================
+    // SUPABASE
+    // ==========================================================
+
+    const SUPABASE_URL =
+      'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+    const db =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    // ==========================================================
+    // START
+    // ==========================================================
+
+    async function start() {
+
+      const session =
+        await db.auth.getSession();
+
+
+      if (
+        !session.data ||
+        !session.data.session
+      ) {
+
+        location.href =
+          'index.html';
+
+        return;
+
+      }
+
+
+      await buildNav(
+        db,
+        'Fleet Command'
+      );
+
+    }
+
+
+    start();
+
+  </script>
+
+
+</body>
+
+</html>
