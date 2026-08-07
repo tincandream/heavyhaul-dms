@@ -1,1216 +1,841 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-  <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <title>Welcome — Heavy Haul Command</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-
-    /* ============================================================
-       WELCOME PAGE — PAGE-SPECIFIC STYLES
-       ============================================================ */
-
-    body {
-      margin: 0;
-    }
-
-    .welcome-wrap {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 34px 24px 70px;
-    }
-
-    .welcome-heading {
-      margin-bottom: 26px;
-    }
-
-    .welcome-heading h1 {
-      margin: 0;
-
-      font-family: "Cinzel", serif;
-      font-size: clamp(30px, 4vw, 46px);
-      font-weight: 700;
-      letter-spacing: 1.5px;
-
-      color: #3C3A4B;
-    }
-
-    .greeting {
-      margin-top: 7px;
-
-      font-family: "Cormorant Garamond", serif;
-      font-size: 25px;
-      font-style: italic;
-
-      color: #7FA5B5;
-    }
+// ============================================================
+// nav.js — Heavy Haul Command shared vertical navigation
+//
+// BASIC APPLICATION SHELL
+//
+// Main navigation = vertical left sidebar
+// Page-level navigation = horizontal tabs inside individual pages
+//
+// Include after Supabase CDN and before each page's own script:
+//
+// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+// <script src="nav.js"></script>
+//
+// Then:
+// const tenant = await buildNav(db, 'Fleet Board');
+//
+// ============================================================
 
 
-    /* ============================================================
-       SECTION LABEL
-       ============================================================ */
 
-    .section-label {
-      margin: 0 0 10px;
+// ============================================================
+// NAVIGATION
+// ============================================================
 
-      font-family: "Oswald", sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 1.8px;
+const NAV_SECTIONS = [
 
-      text-transform: uppercase;
+  {
+    label: null,
 
-      color: #3C3A4B;
-    }
+    items: [
+      {
+        href: 'welcome.html',
+        label: 'Welcome'
+      }
+    ]
+  },
 
 
-    /* ============================================================
-       PRIORITIES
-       ============================================================ */
+  {
+    label: 'DISPATCH',
 
-    .priority-panel {
-      background: #EAF3F6;
+    items: [
 
-      border: 1px solid #D4E3E8;
-      border-left: 4px solid #7FA5B5;
+      {
+        href: 'board.html',
+        label: 'Fleet Board'
+      },
 
-      padding: 18px 20px;
+      {
+        href: 'newload.html',
+        label: 'New Load'
+      },
 
-      margin-bottom: 30px;
-    }
+      {
+        href: 'loads.html',
+        label: 'All Loads'
+      }
 
-    .priority-list {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
+    ]
+  },
 
-    .priority-item {
-      background: #FAFAFA;
 
-      border: 1px solid #D9DEE1;
+  {
+    label: 'SOURCING',
 
-      padding: 16px;
+    items: [
 
-      min-height: 96px;
-    }
+      {
+        href: 'sourcing.html',
+        label: 'Opportunities'
+      },
 
-    .priority-number {
-      font-family: "Oswald", sans-serif;
+      {
+        href: 'call-queue.html',
+        label: 'Call Queue'
+      },
 
-      font-size: 30px;
-      font-weight: 600;
+      {
+        href: 'portals.html',
+        label: 'Portals'
+      },
 
-      line-height: 1;
+      {
+        href: 'load-emails.html',
+        label: 'Load Emails'
+      },
 
-      color: #3C3A4B;
-    }
+      {
+        href: 'templates.html',
+        label: 'Templates'
+      },
 
-    .priority-text {
-      margin-top: 8px;
+      {
+        href: 'field-manual.html',
+        label: 'Field Manual'
+      },
 
-      font-family: "Inter", sans-serif;
+      {
+        href: 'calculators.html',
+        label: 'Calculators'
+      }
+
+    ]
+  },
+
+
+  {
+    label: 'FLEET COMMAND',
+
+    items: [
+
+      {
+        href: 'fleet.html',
+        label: 'Fleet Setup'
+      },
+
+      {
+        href: 'route-planning.html',
+        label: 'Route Planning'
+      },
+
+      {
+        href: 'states.html',
+        label: 'State Rules'
+      },
+
+      {
+        href: 'calendar.html',
+        label: 'Calendar'
+      }
+
+    ]
+  }
+
+];
+
+
+
+// ============================================================
+// BUILD NAVIGATION
+// ============================================================
+
+async function buildNav(dbClient, title) {
+
+
+  const here =
+    location.pathname
+      .split('/')
+      .pop() || 'welcome.html';
+
+
+  const header =
+    document.querySelector('header');
+
+
+  if (!header) {
+
+    console.warn(
+      'nav.js: no <header> element found'
+    );
+
+    return null;
+
+  }
+
+
+
+  // ==========================================================
+  // CLEAR OLD HEADER
+  // ==========================================================
+
+  header.innerHTML = '';
+
+
+
+  // ==========================================================
+  // BASIC PAGE SHELL
+  // ==========================================================
+
+  document.body.style.margin = '0';
+
+  document.body.style.paddingLeft = '220px';
+
+
+
+  // ==========================================================
+  // SIDEBAR
+  // ==========================================================
+
+  header.style.cssText = `
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 220px;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 24px 18px 18px;
+
+    background: #ffffff;
+
+    border-right: 1px solid #dddddd;
+
+    overflow-y: auto;
+
+    z-index: 1000;
+
+  `;
+
+
+
+  // ==========================================================
+  // BRAND
+  // ==========================================================
+
+  const brand =
+    document.createElement('div');
+
+
+  brand.style.cssText = `
+
+    margin-bottom: 28px;
+
+  `;
+
+
+
+  const brandMain =
+    document.createElement('div');
+
+
+  brandMain.textContent =
+    'HEAVY HAUL';
+
+
+  brandMain.style.cssText = `
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+  `;
+
+
+
+  const brandSub =
+    document.createElement('div');
+
+
+  brandSub.textContent =
+    'COMMAND';
+
+
+  brandSub.style.cssText = `
+
+    margin-top: 2px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    letter-spacing: 3px;
+
+  `;
+
+
+
+  brand.appendChild(
+    brandMain
+  );
+
+
+  brand.appendChild(
+    brandSub
+  );
+
+
+  header.appendChild(
+    brand
+  );
+
+
+
+  // ==========================================================
+  // CURRENT PAGE
+  // ==========================================================
+
+  if (title) {
+
+
+    const currentPage =
+      document.createElement('div');
+
+
+    currentPage.textContent =
+      title;
+
+
+    currentPage.style.cssText = `
+
+      margin-bottom: 22px;
+
+      padding-bottom: 14px;
+
+      border-bottom: 1px solid #e5e5e5;
+
       font-size: 12px;
 
-      color: #72797E;
-    }
+      color: #777777;
 
-    .priority-item.active {
-      border-top: 4px solid #B8C34A;
-    }
+    `;
 
-    .priority-item.attention {
-      border-top: 4px solid #D86A8E;
-    }
 
-    .priority-item.info {
-      border-top: 4px solid #7FA5B5;
-    }
+    header.appendChild(
+      currentPage
+    );
 
 
-    /* ============================================================
-       CONTINUE WORKING
-       ============================================================ */
+  }
 
-    .continue-section {
-      margin-bottom: 34px;
-    }
 
-    .continue-grid {
-      display: grid;
 
-      grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+  // ==========================================================
+  // NAVIGATION SECTIONS
+  // ==========================================================
 
-      gap: 12px;
-    }
+  const nav =
+    document.createElement('nav');
 
-    .continue-card {
-      display: block;
 
-      min-height: 118px;
+  nav.style.cssText = `
 
-      padding: 18px;
+    display: flex;
 
-      background: #FAFAFA;
+    flex-direction: column;
 
-      border: 1px solid #D9DEE1;
+    gap: 22px;
 
-      text-decoration: none;
+  `;
 
-      transition:
-        transform .15s ease,
-        border-color .18s ease,
-        background .18s ease,
-        box-shadow .18s ease;
-    }
 
-    .continue-card:hover {
-      transform: translateY(-2px);
 
-      background: #F7FAFB;
+  NAV_SECTIONS.forEach(
+    function (section) {
 
-      border-color: #7FA5B5;
 
-      box-shadow:
-        0 8px 20px
-        rgba(60,58,75,.07);
-    }
+      const sectionWrap =
+        document.createElement('div');
 
-    .continue-icon {
-      width: 34px;
-      height: 34px;
 
-      display: flex;
-      align-items: center;
-      justify-content: center;
 
-      margin-bottom: 15px;
+      // --------------------------------------------------------
+      // SECTION LABEL
+      // --------------------------------------------------------
 
-      background: #EAF3F6;
+      if (section.label) {
 
-      color: #668C9D;
 
-      font-family: "Oswald", sans-serif;
-      font-size: 13px;
+        const sectionLabel =
+          document.createElement('div');
 
-      border: 1px solid #D4E3E8;
-    }
 
-    .continue-card:nth-child(2) .continue-icon {
-      background: #F1F4D8;
-      border-color: #DDE3A4;
-      color: #6E7629;
-    }
+        sectionLabel.textContent =
+          section.label;
 
-    .continue-card:nth-child(3) .continue-icon {
-      background: #F8E5EC;
-      border-color: #EBC3D1;
-      color: #A14666;
-    }
 
-    .continue-card:nth-child(4) .continue-icon {
-      background: #EAF3F6;
-      border-color: #D4E3E8;
-      color: #668C9D;
-    }
+        sectionLabel.style.cssText = `
 
-    .continue-title {
-      font-family: "Oswald", sans-serif;
+          margin-bottom: 6px;
 
-      font-size: 15px;
-      font-weight: 500;
+          padding-left: 10px;
 
-      letter-spacing: .5px;
+          font-size: 10px;
 
-      color: #3C3A4B;
-    }
+          font-weight: 700;
 
-    .continue-note {
-      margin-top: 5px;
+          letter-spacing: 1.6px;
 
-      font-family: "Inter", sans-serif;
+          color: #888888;
 
-      font-size: 11.5px;
+        `;
 
-      color: #7D8388;
-    }
 
+        sectionWrap.appendChild(
+          sectionLabel
+        );
 
-    /* ============================================================
-       RECENT ACTIVITY
-       ============================================================ */
 
-    .activity-panel {
-      background: #FAFAFA;
-
-      border: 1px solid #D9DEE1;
-    }
-
-    .activity-row {
-      display: grid;
-
-      grid-template-columns:
-        110px 18px 1fr;
-
-      align-items: start;
-
-      gap: 10px;
-
-      padding: 14px 18px;
-
-      border-bottom:
-        1px solid #ECEEEF;
-    }
-
-    .activity-row:last-child {
-      border-bottom: 0;
-    }
-
-    .activity-time {
-      font-family: "Inter", sans-serif;
-
-      font-size: 11px;
-
-      color: #93999D;
-    }
-
-    .activity-dot {
-      width: 8px;
-      height: 8px;
-
-      margin-top: 4px;
-
-      background: #7FA5B5;
-
-      border-radius: 50%;
-    }
-
-    .activity-row:nth-child(2) .activity-dot {
-      background: #B8C34A;
-    }
-
-    .activity-row:nth-child(3) .activity-dot {
-      background: #D86A8E;
-    }
-
-    .activity-row:nth-child(4) .activity-dot {
-      background: #7FA5B5;
-    }
-
-    .activity-text {
-      font-family: "Inter", sans-serif;
-
-      font-size: 12.5px;
-
-      color: #3C3A4B;
-    }
-
-    .activity-text strong {
-      font-weight: 600;
-    }
-
-    .activity-empty {
-      padding: 24px 18px;
-
-      color: #8A9095;
-
-      font-family: "Inter", sans-serif;
-      font-size: 12px;
-    }
-
-
-    /* ============================================================
-       RESPONSIVE
-       ============================================================ */
-
-    @media (max-width: 900px) {
-
-      .priority-list,
-      .continue-grid {
-        grid-template-columns:
-          repeat(2, minmax(0, 1fr));
-      }
-
-    }
-
-    @media (max-width: 600px) {
-
-      .welcome-wrap {
-        padding:
-          24px 14px 50px;
-      }
-
-      .priority-list,
-      .continue-grid {
-        grid-template-columns:
-          1fr;
-      }
-
-      .activity-row {
-        grid-template-columns:
-          78px 14px 1fr;
-      }
-
-    }
-
-  </style>
-
-  <link rel="stylesheet" href="theme.css">
-
-</head>
-
-
-<body>
-
-  <header></header>
-
-  <main class="welcome-wrap">
-
-
-    <!-- ======================================================
-         HEADING
-         ====================================================== -->
-
-    <section class="welcome-heading">
-
-      <h1>
-        HEAVY HAUL COMMAND
-      </h1>
-
-      <div
-        class="greeting"
-        id="greeting"
-      >
-        Good Morning
-      </div>
-
-    </section>
-
-
-
-    <!-- ======================================================
-         TODAY'S PRIORITIES
-         ====================================================== -->
-
-    <section>
-
-      <h2 class="section-label">
-        Today's Priorities
-      </h2>
-
-      <div class="priority-panel">
-
-        <div class="priority-list">
-
-
-          <div class="priority-item active">
-
-            <div
-              class="priority-number"
-              id="activeLoads"
-            >
-              —
-            </div>
-
-            <div class="priority-text">
-              Active Loads
-            </div>
-
-          </div>
-
-
-          <div class="priority-item info">
-
-            <div
-              class="priority-number"
-              id="driverCheckins"
-            >
-              —
-            </div>
-
-            <div class="priority-text">
-              Driver Check-ins
-            </div>
-
-          </div>
-
-
-          <div class="priority-item attention">
-
-            <div
-              class="priority-number"
-              id="permitExpiring"
-            >
-              —
-            </div>
-
-            <div class="priority-text">
-              Permit Expiring
-            </div>
-
-          </div>
-
-
-          <div class="priority-item info">
-
-            <div
-              class="priority-number"
-              id="brokerEmails"
-            >
-              —
-            </div>
-
-            <div class="priority-text">
-              Broker Emails
-            </div>
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-
-    <!-- ======================================================
-         CONTINUE WORKING
-         ====================================================== -->
-
-    <section class="continue-section">
-
-      <h2 class="section-label">
-        Continue Working
-      </h2>
-
-      <div class="continue-grid">
-
-
-        <a
-          class="continue-card"
-          href="loads.html"
-        >
-
-          <div class="continue-icon">
-            AL
-          </div>
-
-          <div class="continue-title">
-            Active Loads
-          </div>
-
-          <div class="continue-note">
-            Continue managing active freight.
-          </div>
-
-        </a>
-
-
-
-        <a
-          class="continue-card"
-          href="board.html"
-        >
-
-          <div class="continue-icon">
-            FB
-          </div>
-
-          <div class="continue-title">
-            Fleet Board
-          </div>
-
-          <div class="continue-note">
-            View fleet and load status.
-          </div>
-
-        </a>
-
-
-
-        <a
-          class="continue-card"
-          href="calendar.html"
-        >
-
-          <div class="continue-icon">
-            CAL
-          </div>
-
-          <div class="continue-title">
-            Calendar
-          </div>
-
-          <div class="continue-note">
-            Review upcoming activity.
-          </div>
-
-        </a>
-
-
-
-        <a
-          class="continue-card"
-          href="call-queue.html"
-        >
-
-          <div class="continue-icon">
-            CQ
-          </div>
-
-          <div class="continue-title">
-            Call Queue
-          </div>
-
-          <div class="continue-note">
-            Continue sourcing and follow-ups.
-          </div>
-
-        </a>
-
-
-      </div>
-
-    </section>
-
-
-
-    <!-- ======================================================
-         RECENT ACTIVITY
-         ====================================================== -->
-
-    <section>
-
-      <h2 class="section-label">
-        Recent Activity
-      </h2>
-
-      <div
-        class="activity-panel"
-        id="recentActivity"
-      >
-
-        <div class="activity-empty">
-          Loading recent activity…
-        </div>
-
-      </div>
-
-    </section>
-
-
-  </main>
-
-
-
-  <!-- ========================================================
-       SHARED NAVIGATION
-       ======================================================== -->
-
-  <script src="nav.js"></script>
-
-
-  <script>
-
-    // ==========================================================
-    // SUPABASE CONNECTION
-    // ==========================================================
-
-    const SUPABASE_URL =
-      'https://zyhdatteglxozsgnjhrm.supabase.co';
-
-
-    const SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
-
-
-    const db =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
-
-
-    let TENANT_ID =
-      null;
-
-
-    // ==========================================================
-    // GREETING
-    // ==========================================================
-
-    function setGreeting(name) {
-
-      const hour =
-        new Date().getHours();
-
-      let greeting =
-        'Good Evening';
-
-      if (hour < 12) {
-        greeting =
-          'Good Morning';
-      }
-
-      else if (hour < 17) {
-        greeting =
-          'Good Afternoon';
       }
 
 
-      document
-        .getElementById('greeting')
-        .textContent =
-          name
-            ? greeting + ', ' + name
-            : greeting;
 
-    }
+      // --------------------------------------------------------
+      // SECTION ITEMS
+      // --------------------------------------------------------
+
+      section.items.forEach(
+        function (item) {
 
 
-    // ==========================================================
-    // SAFE COUNT
-    // ==========================================================
+          const link =
+            document.createElement('a');
 
-    async function countRows(
-      table,
-      configure
-    ) {
 
-      try {
+          link.href =
+            item.href;
 
-        let query =
-          db
-            .from(table)
-            .select(
-              '*',
-              {
-                count:
-                  'exact',
 
-                head:
-                  true
+          link.textContent =
+            item.label;
+
+
+          const active =
+            item.href === here;
+
+
+          link.style.cssText = `
+
+            display: block;
+
+            padding: 8px 10px;
+
+            margin-bottom: 2px;
+
+            text-decoration: none;
+
+            font-size: 13px;
+
+            line-height: 1.2;
+
+            color:
+              ${active
+                ? '#111111'
+                : '#555555'};
+
+            background:
+              ${active
+                ? '#eeeeee'
+                : 'transparent'};
+
+            font-weight:
+              ${active
+                ? '600'
+                : '400'};
+
+          `;
+
+
+
+          link.addEventListener(
+            'mouseenter',
+            function () {
+
+
+              if (!active) {
+
+                link.style.background =
+                  '#f5f5f5';
+
               }
-            );
 
 
-        if (TENANT_ID) {
-
-          query =
-            query.eq(
-              'tenant_id',
-              TENANT_ID
-            );
-
-        }
-
-
-        if (configure) {
-
-          query =
-            configure(query);
-
-        }
-
-
-        const result =
-          await query;
-
-
-        if (result.error) {
-
-          console.warn(
-            'Welcome count:',
-            table,
-            result.error.message
+            }
           );
 
-          return null;
+
+
+          link.addEventListener(
+            'mouseleave',
+            function () {
+
+
+              if (!active) {
+
+                link.style.background =
+                  'transparent';
+
+              }
+
+
+            }
+          );
+
+
+
+          sectionWrap.appendChild(
+            link
+          );
+
 
         }
-
-
-        return result.count;
-
-      }
-
-      catch (e) {
-
-        console.warn(
-          'Welcome count:',
-          table,
-          e
-        );
-
-        return null;
-
-      }
-
-    }
-
-
-    // ==========================================================
-    // PRIORITY COUNTS
-    // ==========================================================
-
-    async function loadPriorities() {
-
-      /*
-        Active Loads
-
-        This deliberately checks several common active statuses
-        rather than altering the database.
-      */
-
-      const active =
-        await countRows(
-          'loads',
-          function (q) {
-
-            return q.in(
-              'status',
-              [
-                'booked',
-                'dispatched',
-                'at_pickup',
-                'loaded',
-                'in_transit',
-                'at_delivery'
-              ]
-            );
-
-          }
-        );
-
-
-      document
-        .getElementById(
-          'activeLoads'
-        )
-        .textContent =
-          active === null
-            ? '—'
-            : active;
-
-
-      /*
-        Driver Check-ins
-
-        Count today's check-ins if the table supports occurred_at.
-      */
-
-      const today =
-        new Date();
-
-      today.setHours(
-        0,
-        0,
-        0,
-        0
       );
 
 
-      const checkins =
-        await countRows(
-          'check_ins',
-          function (q) {
 
-            return q.gte(
-              'occurred_at',
-              today.toISOString()
-            );
-
-          }
-        );
-
-
-      document
-        .getElementById(
-          'driverCheckins'
-        )
-        .textContent =
-          checkins === null
-            ? '—'
-            : checkins;
-
-
-      /*
-        Permit Expiring
-
-        For this first Welcome-page build we keep this conservative.
-        If valid_to exists, count permits expiring within 7 days.
-      */
-
-      const sevenDays =
-        new Date();
-
-      sevenDays.setDate(
-        sevenDays.getDate() + 7
+      nav.appendChild(
+        sectionWrap
       );
 
 
-      const permits =
-        await countRows(
-          'permits',
-          function (q) {
-
-            return q
-              .gte(
-                'valid_to',
-                new Date().toISOString()
-              )
-              .lte(
-                'valid_to',
-                sevenDays.toISOString()
-              );
-
-          }
-        );
+    }
+  );
 
 
-      document
-        .getElementById(
-          'permitExpiring'
-        )
-        .textContent =
-          permits === null
-            ? '—'
-            : permits;
+
+  header.appendChild(
+    nav
+  );
 
 
-      /*
-        Broker Emails
 
-        The exact email table/schema is not known here yet.
-        Leave this as a graceful dash instead of guessing.
-      */
+  // ==========================================================
+  // PUSH USER AREA TO BOTTOM
+  // ==========================================================
 
-      document
-        .getElementById(
-          'brokerEmails'
-        )
-        .textContent =
-          '—';
+  const spacer =
+    document.createElement('div');
+
+
+  spacer.style.flex = '1';
+
+
+  header.appendChild(
+    spacer
+  );
+
+
+
+  // ==========================================================
+  // USER AREA
+  // ==========================================================
+
+  const userArea =
+    document.createElement('div');
+
+
+  userArea.style.cssText = `
+
+    margin-top: 24px;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #e5e5e5;
+
+  `;
+
+
+
+  const who =
+    document.createElement('div');
+
+
+  who.id =
+    'me';
+
+
+  who.textContent =
+    '…';
+
+
+  who.style.cssText = `
+
+    margin-bottom: 8px;
+
+    font-size: 11px;
+
+    color: #777777;
+
+  `;
+
+
+
+  const signOut =
+    document.createElement('button');
+
+
+  signOut.type =
+    'button';
+
+
+  signOut.textContent =
+    'Sign Out';
+
+
+  signOut.style.cssText = `
+
+    padding: 0;
+
+    background: none;
+
+    border: 0;
+
+    font-size: 12px;
+
+    color: #555555;
+
+    cursor: pointer;
+
+    text-decoration: underline;
+
+  `;
+
+
+
+  signOut.addEventListener(
+    'click',
+    async function () {
+
+
+      await dbClient.auth.signOut();
+
+
+      location.href =
+        'index.html';
+
 
     }
+  );
 
 
-    // ==========================================================
-    // RECENT ACTIVITY
-    // ==========================================================
 
-    async function loadRecentActivity() {
-
-      const panel =
-        document.getElementById(
-          'recentActivity'
-        );
+  userArea.appendChild(
+    who
+  );
 
 
-      try {
-
-        let query =
-          db
-            .from('events')
-            .select(
-              'created_at, event_type, subject, body'
-            )
-            .order(
-              'created_at',
-              {
-                ascending:
-                  false
-              }
-            )
-            .limit(6);
+  userArea.appendChild(
+    signOut
+  );
 
 
-        if (TENANT_ID) {
-
-          query =
-            query.eq(
-              'tenant_id',
-              TENANT_ID
-            );
-
-        }
+  header.appendChild(
+    userArea
+  );
 
 
-        const result =
-          await query;
+
+  // ==========================================================
+  // PROFILE LOOKUP
+  // ==========================================================
+
+  const sess =
+    await dbClient.auth.getUser();
 
 
-        if (
-          result.error ||
-          !result.data ||
-          result.data.length === 0
-        ) {
+  const authId =
+    sess.data &&
+    sess.data.user
 
-          panel.innerHTML =
-            '<div class="activity-empty">' +
-            'No recent activity yet.' +
-            '</div>';
+      ? sess.data.user.id
 
-          return;
-
-        }
+      : null;
 
 
-        panel.innerHTML =
-          result.data
-            .map(
-              function (item) {
 
+  let me =
+    await dbClient
 
-                const d =
-                  new Date(
-                    item.created_at
-                  );
+      .from('app_users')
 
-
-                const when =
-                  isNaN(d)
-                    ? ''
-                    : d.toLocaleString(
-                        'en-US',
-                        {
-                          month:
-                            'short',
-
-                          day:
-                            'numeric',
-
-                          hour:
-                            'numeric',
-
-                          minute:
-                            '2-digit'
-                        }
-                      );
-
-
-                const description =
-                  item.subject ||
-                  item.body ||
-                  item.event_type ||
-                  'Activity';
-
-
-                return (
-                  '<div class="activity-row">' +
-
-                    '<div class="activity-time">' +
-                      escapeHtml(when) +
-                    '</div>' +
-
-                    '<div class="activity-dot"></div>' +
-
-                    '<div class="activity-text">' +
-                      escapeHtml(description) +
-                    '</div>' +
-
-                  '</div>'
-                );
-
-              }
-            )
-            .join('');
-
-      }
-
-      catch (e) {
-
-        console.warn(
-          'Recent activity:',
-          e
-        );
-
-
-        panel.innerHTML =
-          '<div class="activity-empty">' +
-          'Recent activity unavailable.' +
-          '</div>';
-
-      }
-
-    }
-
-
-    // ==========================================================
-    // HTML ESCAPE
-    // ==========================================================
-
-    function escapeHtml(value) {
-
-      return String(
-        value || ''
+      .select(
+        'full_name, role, tenant_id'
       )
-        .replaceAll(
-          '&',
-          '&amp;'
+
+      .eq(
+        'auth_uid',
+        authId
+      )
+
+      .maybeSingle();
+
+
+
+  // ==========================================================
+  // EXISTING FALLBACK
+  // ==========================================================
+
+  if (
+    !me.error &&
+    !me.data
+  ) {
+
+
+    me =
+      await dbClient
+
+        .from('app_users')
+
+        .select(
+          'full_name, role, tenant_id'
         )
-        .replaceAll(
-          '<',
-          '&lt;'
-        )
-        .replaceAll(
-          '>',
-          '&gt;'
-        )
-        .replaceAll(
-          '"',
-          '&quot;'
-        )
-        .replaceAll(
-          "'",
-          '&#039;'
-        );
 
-    }
+        .limit(1)
+
+        .maybeSingle();
 
 
-    // ==========================================================
-    // START
-    // ==========================================================
-
-    async function start() {
-
-      const session =
-        await db.auth.getSession();
+  }
 
 
-      if (
-        !session.data ||
-        !session.data.session
-      ) {
 
-        location.href =
-          'index.html';
-
-        return;
-
-      }
+  if (me.error) {
 
 
-      TENANT_ID =
-        await buildNav(
-          db,
-          'Welcome'
-        );
+    who.textContent =
+      'Profile error';
 
 
-      /*
-        Use the currently authenticated user's profile
-        for the greeting.
-      */
-
-      try {
-
-        const user =
-          await db.auth.getUser();
+    console.error(
+      'nav.js: app_users query failed —',
+      me.error.message
+    );
 
 
-        const authId =
-          user.data &&
-          user.data.user
-            ? user.data.user.id
-            : null;
+    return null;
 
 
-        if (authId) {
-
-          let profile =
-            await db
-
-              .from(
-                'app_users'
-              )
-
-              .select(
-                'full_name'
-              )
-
-              .eq(
-                'auth_uid',
-                authId
-              )
-
-              .maybeSingle();
+  }
 
 
-          if (
-            !profile.error &&
-            profile.data
-          ) {
 
-            const firstName =
-              profile.data.full_name
-                ? profile.data.full_name
-                    .trim()
-                    .split(/\s+/)[0]
-                : '';
+  if (!me.data) {
 
 
-            setGreeting(
-              firstName
-            );
-
-          }
-
-          else {
-
-            setGreeting('');
-
-          }
-
-        }
-
-        else {
-
-          setGreeting('');
-
-        }
-
-      }
-
-      catch (e) {
-
-        console.warn(
-          'Welcome profile:',
-          e
-        );
-
-        setGreeting('');
-
-      }
+    who.textContent =
+      'No profile linked';
 
 
-      await Promise.all([
-        loadPriorities(),
-        loadRecentActivity()
-      ]);
-
-    }
+    return null;
 
 
-    start();
-
-  </script>
+  }
 
 
-</body>
 
-</html>
+  who.textContent =
+    me.data.full_name;
+
+
+
+  return me.data.tenant_id;
+
+
+}
+
+
+
+// ============================================================
+// MOBILE / SMALL SCREEN SUPPORT
+// ============================================================
+
+function updateNavLayout() {
+
+
+  const header =
+    document.querySelector('header');
+
+
+  if (!header) {
+
+    return;
+
+  }
+
+
+
+  if (
+    window.innerWidth <= 760
+  ) {
+
+
+    document.body.style.paddingLeft =
+      '0';
+
+
+    header.style.position =
+      'relative';
+
+
+    header.style.width =
+      '100%';
+
+
+    header.style.height =
+      'auto';
+
+
+    header.style.bottom =
+      'auto';
+
+
+  }
+
+
+  else {
+
+
+    document.body.style.paddingLeft =
+      '220px';
+
+
+    header.style.position =
+      'fixed';
+
+
+    header.style.width =
+      '220px';
+
+
+    header.style.top =
+      '0';
+
+
+    header.style.bottom =
+      '0';
+
+
+  }
+
+
+}
+
+
+
+window.addEventListener(
+  'resize',
+  updateNavLayout
+);
+
+
+window.addEventListener(
+  'load',
+  updateNavLayout
+);
