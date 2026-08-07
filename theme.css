@@ -1,6 +1,7 @@
 /* ============================================================
    HEAVY HAUL COMMAND
-   GLOBAL THEME — AIRY AMERICANA
+   GLOBAL VISUAL SYSTEM
+   AIRY AMERICANA / INDUSTRIAL
    ============================================================ */
 
 
@@ -12,155 +13,179 @@
 
 
 /* ============================================================
-   COLOR PALETTE
+   PALETTE + CLAUDE VARIABLE OVERRIDES
+
+   These names deliberately match the variables already used
+   throughout the existing Heavy Haul DMS pages.
    ============================================================ */
 
 :root {
 
-  /* CORE COLORS */
+  /* MAIN BRAND COLORS */
+
+  --hh-ink: #3C3A4B;
+  --hh-blue: #577584;
+  --hh-blue-light: #7895A2;
+
+  --hh-white: #FAFAFA;
+  --hh-offwhite: #F6F6F3;
+
+  --hh-soft-neutral: #D5C9BD;
+  --hh-stone: #97A0A7;
+
+  --hh-lime: #B8B05D;
+  --hh-rose: #C0656B;
+
+
+  /* OVERRIDE EXISTING APPLICATION VARIABLES */
+
+  --bg: #F6F6F3;
+
+  --card: #FAFAFA;
 
   --ink: #3C3A4B;
-  --ink-dark: #302E3B;
 
-  --blue: #577584;
-  --blue-light: #718D9A;
-  --blue-soft: #E9F0F2;
+  --muted: #747B82;
 
-  --white: #FAFAFA;
-  --white-warm: #F7F6F3;
-
-  --cream: #D5C9BD;
-
-  --stone: #97A0A7;
-  --stone-light: #D7DBDE;
-
-  --lime: #B8B05D;
-  --lime-soft: #F2F0DE;
-
-  --rose: #C0656B;
-  --rose-soft: #F5E7E8;
+  --line: #D8DADD;
 
 
-  /* APPLICATION ROLES */
+  /* OLD BLUE ACCENT BECOMES OUR MUTED BLUE */
 
-  --page-bg: var(--white-warm);
+  --accent: #577584;
 
-  --surface: var(--white);
+  --accent-soft: #EDF2F4;
 
-  --sidebar-bg: var(--ink);
 
-  --header-bg: var(--white);
+  /* STATUS COLORS */
 
-  --primary: var(--blue);
+  --ok: #77742E;
+  --ok-soft: #F3F1DF;
 
-  --primary-hover: var(--blue-light);
+  --warn: #A4545A;
+  --warn-soft: #F7E9EA;
 
-  --text-main: var(--ink);
+  --bad: #9E4650;
+  --bad-soft: #F8E7E9;
 
-  --text-muted: #737A80;
 
-  --text-light: var(--white);
+  /* SHAPE + DEPTH */
 
-  --border: var(--stone-light);
+  --radius: 0px;
 
-  --border-strong: var(--stone);
+  --shadow:
+    0 4px 16px
+    rgba(60,58,75,.055);
 
 }
+
 
 
 /* ============================================================
-   RESET
+   BASE
    ============================================================ */
 
-* {
-  box-sizing: border-box;
-}
+html,
+body {
 
+  background: var(--bg);
 
-html {
-  margin: 0;
-  padding: 0;
 }
 
 
 body {
 
-  margin: 0;
+  color: var(--ink);
 
-  background: var(--page-bg);
-
-  color: var(--text-main);
-
-  font-family: "Inter", sans-serif;
+  font-family:
+    "Inter",
+    sans-serif !important;
 
   font-size: 14px;
 
-  line-height: 1.5;
+}
+
+
+/* AIRIER PAGE WIDTH */
+
+.wrap {
+
+  max-width: 1240px;
+
+  padding:
+    22px 24px 70px;
 
 }
+
 
 
 /* ============================================================
    TYPOGRAPHY
    ============================================================ */
 
-h1,
-.page-title {
+h1 {
 
-  margin-top: 0;
+  font-family:
+    "Cinzel",
+    serif;
 
-  color: var(--ink);
-
-  font-family: "Cinzel", serif;
+  color: var(--hh-ink);
 
   font-weight: 700;
-
-  letter-spacing: 1.5px;
-
-}
-
-
-h2,
-h3,
-h4,
-.section-title {
-
-  color: var(--ink);
-
-  font-family: "Oswald", sans-serif;
-
-  font-weight: 500;
 
   letter-spacing: 1px;
 
 }
 
 
-.subtitle,
-.page-subtitle {
+h2,
+h3,
+h4 {
 
-  color: var(--blue);
+  font-family:
+    "Oswald",
+    sans-serif;
 
-  font-family: "Cormorant Garamond", serif;
+  color: var(--hh-ink);
 
-  font-size: 18px;
+  font-weight: 500;
 
-  font-style: italic;
+  letter-spacing: .5px;
+
+}
+
+
+.hero-num {
+
+  font-family:
+    "Cinzel",
+    serif;
+
+  color: var(--hh-ink);
 
 }
 
 
-p {
-  color: var(--text-main);
-}
+.hero-route,
+.muted {
 
-
-small,
-.text-muted {
-
-  color: var(--text-muted);
+  color: #747B82;
 
 }
+
+
+.sechead h2 {
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  color: var(--hh-ink);
+
+  letter-spacing: .7px;
+
+}
+
 
 
 /* ============================================================
@@ -169,283 +194,632 @@ small,
 
 a {
 
-  color: var(--blue);
+  color: var(--hh-blue);
 
   text-decoration: none;
-
-  transition:
-    color 0.18s ease,
-    opacity 0.18s ease;
 
 }
 
 
 a:hover {
 
-  color: var(--ink);
+  color: var(--hh-ink);
 
 }
+
 
 
 /* ============================================================
-   APP HEADER / TOP BAR
+   CARDS
    ============================================================ */
 
-header,
-.app-header,
-.topbar {
+.card {
 
-  background: var(--header-bg);
+  background: var(--hh-white);
 
-  color: var(--ink);
+  border:
+    1px solid
+    #D8DADD;
 
-  border-bottom: 1px solid var(--border);
+  border-radius: 0;
 
-  box-shadow:
-    0 2px 10px
-    rgba(60, 58, 75, 0.05);
+  box-shadow: var(--shadow);
 
 }
 
 
-header h1,
-.app-header h1,
-.topbar h1,
-header .brand {
+/* Gives large cards a subtle industrial marker */
 
-  color: var(--ink);
-
-  font-family: "Cinzel", serif;
-
-}
-
-
-/* ============================================================
-   SIDEBAR
-   ============================================================ */
-
-.sidebar,
-.app-sidebar,
-nav.sidebar {
-
-  background: var(--sidebar-bg);
-
-  color: var(--text-light);
-
-}
-
-
-.sidebar a,
-.app-sidebar a {
-
-  color: #D7DBDE;
-
-  font-family: "Oswald", sans-serif;
-
-  letter-spacing: 0.7px;
-
-  text-decoration: none;
-
-}
-
-
-.sidebar a:hover,
-.app-sidebar a:hover {
-
-  color: var(--white);
-
-  background:
-    rgba(250, 250, 250, 0.06);
-
-}
-
-
-.sidebar a.active,
-.app-sidebar a.active,
-.sidebar .active {
-
-  color: var(--white);
-
-  background:
-    rgba(87, 117, 132, 0.32);
+.hero {
 
   border-left:
-    3px solid
-    var(--blue-light);
+    4px solid
+    var(--hh-blue);
 
 }
+
 
 
 /* ============================================================
-   MAIN CONTENT
+   ACTION BAR
    ============================================================ */
 
-main,
-.main-content,
-.content {
+.actionbar {
 
-  color: var(--text-main);
+  background: var(--hh-white);
+
+  border-color: #D8DADD;
 
 }
+
 
 
 /* ============================================================
-   CARDS / PANELS
+   BUTTONS
    ============================================================ */
 
-.card,
-.panel,
-.widget,
-.stat-card {
+button {
 
-  background: var(--surface);
-
-  border:
-    1px solid
-    var(--border);
-
-  border-radius: 0;
-
-  box-shadow:
-    0 5px 18px
-    rgba(60, 58, 75, 0.05);
-
-}
-
-
-.card-header,
-.panel-header {
-
-  color: var(--ink);
-
-  font-family: "Oswald", sans-serif;
-
-  font-weight: 500;
-
-  letter-spacing: 0.8px;
-
-  border-bottom:
-    1px solid
-    var(--border);
-
-}
-
-
-/* ============================================================
-   PRIMARY BUTTONS
-   ============================================================ */
-
-button,
-.btn,
-.button {
-
-  background: var(--blue);
-
-  color: var(--white);
-
-  border:
-    1px solid
-    var(--blue);
-
-  border-radius: 0;
-
-  padding:
-    9px 15px;
-
-  font-family: "Oswald", sans-serif;
+  font-family:
+    "Oswald",
+    sans-serif;
 
   font-size: 13px;
 
   font-weight: 500;
 
-  letter-spacing: 1.4px;
+  letter-spacing: .5px;
 
-  cursor: pointer;
+  border-radius: 0;
 
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.12s ease,
-    box-shadow 0.18s ease;
+  background:
+    var(--hh-white);
+
+  color:
+    var(--hh-ink);
+
+  border:
+    1px solid
+    #C7CDD0;
 
 }
 
 
-button:hover,
-.btn:hover,
-.button:hover {
+button:hover {
 
-  background: var(--blue-light);
+  background:
+    #EFF3F4;
 
-  border-color: var(--blue-light);
+  border-color:
+    var(--hh-blue);
+
+}
+
+
+/* MAIN ACTION */
+
+button.primary {
+
+  background:
+    var(--hh-blue);
+
+  border-color:
+    var(--hh-blue);
+
+  color:
+    var(--hh-white);
+
+}
+
+
+button.primary:hover {
+
+  background:
+    var(--hh-blue-light);
+
+  border-color:
+    var(--hh-blue-light);
+
+  filter: none;
+
+}
+
+
+/* SECONDARY / QUIET */
+
+button.ghost {
+
+  color:
+    #747B82;
+
+  background:
+    transparent;
+
+}
+
+
+button.ghost:hover {
+
+  color:
+    var(--hh-blue);
+
+}
+
+
+/* DANGER */
+
+button.danger {
+
+  background:
+    var(--hh-white);
+
+  border-color:
+    #DAB8BC;
+
+  color:
+    var(--hh-rose);
+
+}
+
+
+button.danger:hover {
+
+  background:
+    #F7E9EA;
+
+}
+
+
+
+/* ============================================================
+   TOP TABS
+
+   This is the navigation style I want to carry across things
+   like Fleet Setup instead of dropdown navigation.
+   ============================================================ */
+
+.tabs {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    0;
+
+  flex-wrap:
+    wrap;
+
+  border-bottom:
+    1px solid
+    #D8DADD;
+
+  margin-bottom:
+    18px;
+
+  background:
+    transparent;
+
+}
+
+
+.tabs button {
+
+  background:
+    transparent;
+
+  border:
+    0;
+
+  border-bottom:
+    3px solid
+    transparent;
+
+  border-radius:
+    0;
+
+  color:
+    #747B82;
+
+  padding:
+    10px 15px 9px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .8px;
+
+}
+
+
+.tabs button:hover {
+
+  background:
+    transparent;
+
+  color:
+    var(--hh-blue);
+
+}
+
+
+.tabs button.on,
+.tabs button.active {
+
+  color:
+    var(--hh-ink);
+
+  border-bottom-color:
+    var(--hh-blue);
+
+}
+
+
+.tabs .cnt {
+
+  background:
+    #EDF2F4;
+
+  color:
+    var(--hh-blue);
+
+  border-radius:
+    0;
+
+}
+
+
+
+/* ============================================================
+   STATUS PILLS
+   ============================================================ */
+
+.pill {
+
+  border-radius:
+    0;
+
+  background:
+    #EDF2F4;
+
+  color:
+    var(--hh-blue);
+
+  border:
+    1px solid
+    #CCDADF;
+
+}
+
+
+.pill.ok {
+
+  background:
+    #F3F1DF;
+
+  color:
+    #77742E;
+
+  border-color:
+    #D8D19A;
+
+}
+
+
+.pill.warn {
+
+  background:
+    #F7E9EA;
+
+  color:
+    #A4545A;
+
+  border-color:
+    #E3B9BD;
+
+}
+
+
+.pill.bad {
+
+  background:
+    #F8E7E9;
+
+  color:
+    #9E4650;
+
+  border-color:
+    #E1B0B5;
+
+}
+
+
+.pill.grey {
+
+  background:
+    #EFF1F2;
+
+  color:
+    #747B82;
+
+}
+
+
+
+/* ============================================================
+   CHIPS
+   ============================================================ */
+
+.chip {
+
+  background:
+    #F1F3F3;
+
+  border:
+    1px solid
+    #D8DADD;
+
+  border-radius:
+    0;
+
+  color:
+    var(--hh-ink);
+
+}
+
+
+.chip.hot {
+
+  background:
+    #F3F1DF;
+
+  border-color:
+    #D8D19A;
+
+  color:
+    #77742E;
+
+}
+
+
+.chip.red {
+
+  background:
+    #F7E9EA;
+
+  border-color:
+    #E3B9BD;
+
+  color:
+    #A4545A;
+
+}
+
+
+
+/* ============================================================
+   NEXT ACTION
+   ============================================================ */
+
+.nextbox {
+
+  background:
+    #EDF2F4;
+
+  border:
+    1px solid
+    #CCDADF;
+
+  border-left:
+    4px solid
+    var(--hh-blue);
+
+  border-radius:
+    0;
+
+}
+
+
+.nextbox .lbl {
+
+  color:
+    var(--hh-blue);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+}
+
+
+
+/* ============================================================
+   HOLDS + FLAGS
+   ============================================================ */
+
+.holdbar {
+
+  border-radius:
+    0;
+
+  background:
+    #F7E9EA;
+
+  border:
+    1px solid
+    #E3B9BD;
+
+  border-left:
+    4px solid
+    var(--hh-rose);
+
+  color:
+    #934A50;
+
+}
+
+
+.flag {
+
+  border-radius:
+    0;
+
+}
+
+
+.flag.high {
+
+  background:
+    #F7E9EA;
+
+  border-color:
+    #E3B9BD;
+
+  color:
+    #934A50;
+
+}
+
+
+.flag.med {
+
+  background:
+    #F3F1DF;
+
+  border-color:
+    #D8D19A;
+
+  color:
+    #77742E;
+
+}
+
+
+.flag.low {
+
+  background:
+    #EFF1F2;
+
+  border-color:
+    #D8DADD;
+
+  color:
+    #747B82;
+
+}
+
+
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+.tablewrap {
+
+  background:
+    var(--hh-white);
+
+  border:
+    1px solid
+    #D8DADD;
+
+  border-radius:
+    0;
 
   box-shadow:
-    0 4px 10px
-    rgba(87, 117, 132, 0.16);
+    var(--shadow);
 
 }
 
 
-button:active,
-.btn:active,
-.button:active {
+table {
 
-  transform:
-    translateY(1px);
+  background:
+    var(--hh-white);
 
 }
+
+
+th {
+
+  background:
+    #F0F3F4;
+
+  color:
+    var(--hh-blue);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    11px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .8px;
+
+  border-bottom:
+    1px solid
+    #CDD5D8;
+
+}
+
+
+td {
+
+  color:
+    var(--hh-ink);
+
+  border-bottom:
+    1px solid
+    #E8E9EA;
+
+}
+
+
+tr.clickable:hover td,
+tbody tr:hover td {
+
+  background:
+    #F3F6F7;
+
+}
+
 
 
 /* ============================================================
-   SECONDARY BUTTONS
+   CONTENT BOXES
    ============================================================ */
 
-.btn-secondary {
+.box {
 
-  background: var(--white);
-
-  color: var(--blue);
-
-  border:
-    1px solid
-    var(--blue);
+  background:
+    var(--hh-white);
 
 }
 
 
-.btn-secondary:hover {
+.box h3 {
 
-  background: var(--blue-soft);
+  color:
+    var(--hh-blue);
 
-  color: var(--ink);
-
-}
-
-
-/* ============================================================
-   QUIET BUTTONS
-   ============================================================ */
-
-.btn-quiet {
-
-  background: transparent;
-
-  color: var(--ink);
-
-  border:
-    1px solid
-    var(--border-strong);
+  font-family:
+    "Oswald",
+    sans-serif;
 
 }
 
-
-.btn-quiet:hover {
-
-  background: var(--white);
-
-  border-color: var(--blue);
-
-}
 
 
 /* ============================================================
@@ -454,15 +828,21 @@ button:active,
 
 label {
 
-  color: var(--ink);
+  color:
+    #666D74;
 
-  font-family: "Oswald", sans-serif;
+  font-family:
+    "Oswald",
+    sans-serif;
 
-  font-size: 12px;
+  font-size:
+    12px;
 
-  font-weight: 500;
+  font-weight:
+    500;
 
-  letter-spacing: 0.8px;
+  letter-spacing:
+    .35px;
 
 }
 
@@ -471,31 +851,22 @@ input,
 select,
 textarea {
 
-  width: 100%;
+  background:
+    #FFFFFF;
 
-  background: var(--white);
-
-  color: var(--ink);
+  color:
+    var(--hh-ink);
 
   border:
     1px solid
-    var(--border-strong);
+    #BFC7CB;
 
-  border-radius: 0;
+  border-radius:
+    0;
 
-  padding:
-    9px 11px;
-
-  font-family: "Inter", sans-serif;
-
-  font-size: 13px;
-
-  outline: none;
-
-  transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease;
+  font-family:
+    "Inter",
+    sans-serif;
 
 }
 
@@ -504,440 +875,238 @@ input:focus,
 select:focus,
 textarea:focus {
 
-  border-color: var(--blue);
+  outline:
+    none;
 
-  background: #FFFFFF;
+  border-color:
+    var(--hh-blue);
 
   box-shadow:
     0 0 0 2px
-    rgba(87, 117, 132, 0.10);
+    rgba(87,117,132,.10);
 
 }
 
-
-input::placeholder,
-textarea::placeholder {
-
-  color: #A1A6AA;
-
-}
 
 
 /* ============================================================
-   INDUSTRIAL INPUT
+   FIELDSETS
    ============================================================ */
 
-.input-industrial,
-.industrial-input {
-
-  background: var(--white);
-
-  color: var(--ink);
+.fs {
 
   border:
     1px solid
-    var(--stone);
+    #D8DADD;
 
-  border-left:
-    3px solid
-    var(--blue);
-
-  border-radius: 0;
-
-}
-
-
-/* ============================================================
-   TABLES
-   ============================================================ */
-
-table {
-
-  width: 100%;
-
-  border-collapse: collapse;
-
-  background: var(--surface);
-
-  color: var(--ink);
-
-}
-
-
-thead,
-table thead {
-
-  background: var(--ink);
-
-  color: var(--white);
-
-}
-
-
-th {
-
-  padding:
-    10px 12px;
-
-  color: var(--white);
-
-  font-family: "Oswald", sans-serif;
-
-  font-size: 12px;
-
-  font-weight: 500;
-
-  letter-spacing: 0.8px;
-
-  text-align: left;
-
-}
-
-
-td {
-
-  padding:
-    10px 12px;
-
-  border-bottom:
-    1px solid
-    var(--border);
-
-}
-
-
-tbody tr:nth-child(even) {
+  border-radius:
+    0;
 
   background:
-    rgba(87, 117, 132, 0.025);
+    #FAFAFA;
 
 }
 
 
-tbody tr:hover {
-
-  background:
-    var(--blue-soft);
-
-}
-
-
-/* ============================================================
-   STATUS BADGES
-   ============================================================ */
-
-.badge,
-.status {
-
-  display: inline-block;
-
-  padding:
-    3px 7px;
-
-  border-radius: 0;
-
-  font-family: "Oswald", sans-serif;
-
-  font-size: 11px;
-
-  font-weight: 500;
-
-  letter-spacing: 0.5px;
-
-}
-
-
-/* ACTIVE / ON TIME */
-
-.badge-active,
-.badge-success,
-.status-active,
-.status-success {
-
-  background: var(--lime-soft);
-
-  color: #686326;
-
-  border:
-    1px solid
-    var(--lime);
-
-}
-
-
-/* ALERT / ATTENTION */
-
-.badge-alert,
-.badge-warning,
-.status-alert,
-.status-warning {
-
-  background: var(--rose-soft);
-
-  color: #93464B;
-
-  border:
-    1px solid
-    var(--rose);
-
-}
-
-
-/* INFORMATIONAL */
-
-.badge-info,
-.status-info {
-
-  background: var(--blue-soft);
-
-  color: var(--blue);
-
-  border:
-    1px solid
-    rgba(87, 117, 132, 0.40);
-
-}
-
-
-/* NEUTRAL */
-
-.badge-neutral,
-.status-neutral {
-
-  background:
-    #EFF1F2;
+.fs legend {
 
   color:
-    #666D72;
+    var(--hh-blue);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+}
+
+
+
+/* ============================================================
+   DIALOGS
+   ============================================================ */
+
+dialog {
+
+  border-radius:
+    0;
+
+  background:
+    var(--hh-white);
+
+  color:
+    var(--hh-ink);
 
   border:
     1px solid
-    var(--stone-light);
+    #CBD0D3;
+
+  box-shadow:
+    0 18px 50px
+    rgba(60,58,75,.18);
 
 }
 
 
-/* ============================================================
-   ALERT BOXES
-   ============================================================ */
+dialog::backdrop {
 
-.alert {
-
-  padding:
-    10px 12px;
-
-  background: var(--white);
-
-  border:
-    1px solid
-    var(--border);
-
-  border-left:
-    4px solid
-    var(--blue);
+  background:
+    rgba(60,58,75,.38);
 
 }
 
 
-.alert-success {
+.dlg-head {
 
-  border-left-color:
-    var(--lime);
-
-}
-
-
-.alert-warning {
-
-  border-left-color:
-    var(--rose);
-
-}
-
-
-.alert-info {
-
-  border-left-color:
-    var(--blue);
-
-}
-
-
-/* ============================================================
-   DASHBOARD METRICS
-   ============================================================ */
-
-.stat-number,
-.metric-value {
-
-  color: var(--ink);
-
-  font-family: "Oswald", sans-serif;
-
-  font-size: 28px;
-
-  font-weight: 600;
-
-}
-
-
-.stat-label,
-.metric-label {
-
-  color: var(--text-muted);
-
-  font-size: 11px;
-
-  font-weight: 500;
-
-  letter-spacing: 0.9px;
-
-  text-transform: uppercase;
-
-}
-
-
-/* ============================================================
-   TOOLBARS / ACTION BARS
-   ============================================================ */
-
-.toolbar,
-.action-bar {
-
-  background: var(--white);
-
-  border:
-    1px solid
-    var(--border);
-
-  border-radius: 0;
-
-}
-
-
-/* ============================================================
-   TABS
-   ============================================================ */
-
-.tabs {
+  background:
+    #F4F6F6;
 
   border-bottom:
     1px solid
-    var(--border);
+    #D8DADD;
 
 }
 
 
-.tab,
-.tabs a {
+.dlg-head h3 {
 
-  color: var(--text-muted);
+  color:
+    var(--hh-ink);
 
-  border-bottom:
-    2px solid
-    transparent;
-
-}
-
-
-.tab:hover,
-.tabs a:hover {
-
-  color: var(--blue);
+  font-family:
+    "Cinzel",
+    serif;
 
 }
 
 
-.tab.active,
-.tabs a.active {
+.dlg-foot {
 
-  color: var(--ink);
-
-  border-bottom-color:
-    var(--blue);
-
-}
-
-
-/* ============================================================
-   DIVIDERS
-   ============================================================ */
-
-hr {
-
-  border: 0;
+  background:
+    #F4F6F6;
 
   border-top:
     1px solid
-    var(--border);
+    #D8DADD;
 
 }
+
 
 
 /* ============================================================
-   MODALS
+   TIMELINE
    ============================================================ */
 
-.modal,
-.dialog {
-
-  background: var(--white);
-
-  color: var(--ink);
-
-  border:
-    1px solid
-    var(--border);
-
-  border-radius: 0;
-
-  box-shadow:
-    0 20px 55px
-    rgba(60, 58, 75, 0.16);
-
-}
-
-
-/* ============================================================
-   DROPDOWNS
-   ============================================================ */
-
-.dropdown,
-.menu {
-
-  background: var(--white);
-
-  color: var(--ink);
-
-  border:
-    1px solid
-    var(--border);
-
-  box-shadow:
-    0 10px 25px
-    rgba(60, 58, 75, 0.10);
-
-}
-
-
-.dropdown a:hover,
-.menu a:hover {
+.tl::before {
 
   background:
-    var(--blue-soft);
+    #D8DADD;
 
 }
 
 
+.tl-item::before {
+
+  background:
+    #BFC7CB;
+
+}
+
+
+.tl-item.mile::before {
+
+  background:
+    var(--hh-blue);
+
+  box-shadow:
+    0 0 0 1px
+    var(--hh-blue);
+
+}
+
+
+.tl-type {
+
+  border-radius:
+    0;
+
+  background:
+    #EDF2F4;
+
+  color:
+    var(--hh-blue);
+
+}
+
+
+
 /* ============================================================
-   SCROLLBARS
+   TOAST
+   ============================================================ */
+
+#toast {
+
+  background:
+    var(--hh-ink);
+
+  color:
+    var(--hh-white);
+
+  border-radius:
+    0;
+
+  box-shadow:
+    0 8px 25px
+    rgba(60,58,75,.22);
+
+}
+
+
+#toast.bad {
+
+  background:
+    var(--hh-rose);
+
+}
+
+
+
+/* ============================================================
+   EMPTY STATES
+   ============================================================ */
+
+.empty {
+
+  color:
+    #858C92;
+
+}
+
+
+
+/* ============================================================
+   CHECKBOXES
+   ============================================================ */
+
+input[type="checkbox"] {
+
+  accent-color:
+    var(--hh-blue);
+
+}
+
+
+
+/* ============================================================
+   SCROLLBAR
    ============================================================ */
 
 ::-webkit-scrollbar {
 
-  width: 9px;
+  width:
+    9px;
 
-  height: 9px;
+  height:
+    9px;
 
 }
 
@@ -945,7 +1114,7 @@ hr {
 ::-webkit-scrollbar-track {
 
   background:
-    #ECEFF0;
+    #EEF0F1;
 
 }
 
@@ -953,7 +1122,7 @@ hr {
 ::-webkit-scrollbar-thumb {
 
   background:
-    var(--stone);
+    #AAB5BA;
 
 }
 
@@ -961,9 +1130,10 @@ hr {
 ::-webkit-scrollbar-thumb:hover {
 
   background:
-    var(--blue);
+    var(--hh-blue);
 
 }
+
 
 
 /* ============================================================
@@ -973,99 +1143,45 @@ hr {
 ::selection {
 
   background:
-    var(--blue);
+    var(--hh-blue);
 
   color:
-    var(--white);
+    var(--hh-white);
 
 }
 
-
-/* ============================================================
-   UTILITY COLORS
-   ============================================================ */
-
-.text-ink {
-  color: var(--ink);
-}
-
-.text-blue {
-  color: var(--blue);
-}
-
-.text-white {
-  color: var(--white);
-}
-
-.text-stone {
-  color: var(--stone);
-}
-
-.text-lime {
-  color: var(--lime);
-}
-
-.text-rose {
-  color: var(--rose);
-}
-
-
-.bg-ink {
-  background: var(--ink);
-}
-
-.bg-blue {
-  background: var(--blue);
-}
-
-.bg-white {
-  background: var(--white);
-}
-
-.bg-blue-soft {
-  background: var(--blue-soft);
-}
-
-.bg-lime-soft {
-  background: var(--lime-soft);
-}
-
-.bg-rose-soft {
-  background: var(--rose-soft);
-}
 
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
 
-  body {
-    font-size: 13px;
+  .wrap {
+
+    padding:
+      14px 12px 50px;
+
   }
 
-  .card,
-  .panel,
-  .widget,
-  .stat-card {
-    box-shadow: none;
+
+  .tabs {
+
+    overflow-x:
+      auto;
+
+    flex-wrap:
+      nowrap;
+
   }
 
-}
 
+  .tabs button {
 
-@media (max-width: 600px) {
+    white-space:
+      nowrap;
 
-  h1,
-  .page-title {
-    font-size: 24px;
-  }
-
-  button,
-  .btn,
-  .button {
-    min-height: 38px;
   }
 
 }
