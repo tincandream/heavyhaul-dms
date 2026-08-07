@@ -1,23 +1,380 @@
-// call-queue.html
-async function loadQueue() {
-  const { data, error } = await supabase
-    .from('v_call_queue')
-    .select('*')
-    .limit(50);
-  if (error) return console.error(error);
-  render(data);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Call Queue — Dispatch</title>
+<style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; --accentbg:#e7f0f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1200px; margin:0 auto 40px; }
+
+  .tiles { display:grid; gap:10px; margin-bottom:18px;
+           grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  .tile .n { font-size:22px; font-weight:600; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  select, .search, input, textarea { padding:7px 10px; border:1px solid var(--line2);
+    border-radius:7px; font-size:13px; background:var(--card); color:var(--ink);
+    font-family:inherit; }
+  .search { min-width:190px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+  button { font:inherit; cursor:pointer; border-radius:7px; border:1px solid var(--line2);
+    background:var(--card); color:var(--ink); padding:7px 13px; font-weight:600; }
+  button:hover { background:#faf9f6; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:hover { filter:brightness(1.08); }
+  button.sm { padding:5px 10px; font-size:12px; }
+  button.danger { border-color:#e2b8b8; color:var(--danger); background:#fff; }
+
+  .wrap { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:800px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:0; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
+  .name { font-weight:600; }
+  .direct { color:var(--ok); font-size:11px; font-weight:600; }
+  .dial { font-family:ui-monospace,monospace; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px; font-size:11.5px; white-space:nowrap; }
+  .p-lead { background:var(--accentbg); color:var(--accent); }
+  .p-cont { background:var(--warnbg); color:var(--warn); }
+  .p-pack { background:var(--warnbg); color:var(--warn); }
+  .p-pend { background:var(--warnbg); color:var(--warn); }
+  .p-active { background:var(--okbg); color:var(--ok); }
+  .p-tierA { background:var(--okbg); color:var(--ok); font-weight:600; }
+  .p-tierB { background:var(--accentbg); color:var(--accent); }
+  .p-tierC { background:#f0efeb; color:var(--muted); }
+  .overdue { color:var(--danger); font-weight:600; }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
+
+  dialog { border:none; border-radius:12px; padding:0; width:min(560px,94vw);
+    box-shadow:0 12px 40px rgba(10,14,25,.28); color:var(--ink); }
+  dialog::backdrop { background:rgba(12,16,26,.45); }
+  .dh { padding:14px 16px; border-bottom:1px solid var(--line); font-weight:600; }
+  .db { padding:16px; max-height:66vh; overflow:auto; }
+  .df { padding:12px 16px; border-top:1px solid var(--line); display:flex; gap:8px;
+        align-items:center; background:#fbfaf7; }
+  .fg { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .fld { display:flex; flex-direction:column; gap:4px; }
+  .fld.full { grid-column:1/-1; }
+  .fld label { font-size:12px; font-weight:600; color:var(--muted); }
+  .fld input, .fld select, .fld textarea { width:100%; }
+  .spacer { flex:1; }
+  .err { color:var(--danger); font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<header></header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="bar">
+    <button class="primary" id="addCoBtn">+ Add company</button>
+    <input class="search" id="q" placeholder="Search company…">
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr>
+        <th>Company</th><th>Contact</th><th>Phone</th>
+        <th>Status</th><th>Tier</th><th>Due</th><th></th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="7" class="msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- LOG CALL DIALOG -->
+<dialog id="dlgCall">
+  <div class="dh" id="callTitle">Log Call</div>
+  <div class="db">
+    <input type="hidden" id="c_company">
+    <input type="hidden" id="c_contact">
+    <div class="fg">
+      <div class="fld"><label for="c_outcome">Outcome</label>
+        <select id="c_outcome">
+          <option value="connected">Connected</option>
+          <option value="no_answer">No answer</option>
+          <option value="voicemail">Left voicemail</option>
+          <option value="gatekeeper">Gatekeeper</option>
+          <option value="callback_requested">Callback requested</option>
+          <option value="not_interested">Not interested</option>
+          <option value="info_sent">Info sent</option>
+          <option value="load_offered">Load offered</option>
+          <option value="booked">Booked</option>
+          <option value="bad_number">Bad number</option>
+        </select></div>
+      <div class="fld"><label for="c_followup">Next follow-up</label>
+        <input type="date" id="c_followup"></div>
+      <div class="fld full"><label for="c_note">Note</label>
+        <textarea id="c_note" style="min-height:64px" placeholder="Talked to dispatch, sending packet."></textarea></div>
+    </div>
+    <div id="c_err" class="err"></div>
+  </div>
+  <div class="df">
+    <button class="primary" id="c_save">Log Call</button>
+    <button id="c_cancel">Cancel</button>
+    <span class="spacer"></span>
+    <span class="sub2">Logging advances the follow-up date automatically.</span>
+  </div>
+</dialog>
+
+<!-- ADD COMPANY DIALOG -->
+<dialog id="dlgCo">
+  <div class="dh">Add Company</div>
+  <div class="db">
+    <div class="fg">
+      <div class="fld full"><label for="co_name">Legal name *</label>
+        <input id="co_name" placeholder="ABC Logistics LLC"></div>
+      <div class="fld"><label for="co_type">Type</label>
+        <select id="co_type">
+          <option value="broker">Broker</option>
+          <option value="carrier">Carrier</option>
+          <option value="shipper">Shipper</option>
+          <option value="both">Both</option>
+        </select></div>
+      <div class="fld"><label for="co_status">Status</label>
+        <select id="co_status">
+          <option value="lead">Lead</option>
+          <option value="contacted">Contacted</option>
+          <option value="packet_sent">Packet sent</option>
+          <option value="pending_approval">Pending approval</option>
+          <option value="active">Active</option>
+        </select></div>
+      <div class="fld"><label for="co_tier">Tier</label>
+        <select id="co_tier">
+          <option value="">—</option>
+          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+        </select></div>
+      <div class="fld"><label for="co_phone">Main phone</label><input id="co_phone"></div>
+      <div class="fld full"><label for="co_first">Primary contact — first name</label>
+        <input id="co_first" placeholder="optional"></div>
+      <div class="fld"><label for="co_last">Last name</label><input id="co_last"></div>
+      <div class="fld"><label for="co_direct">Direct phone</label><input id="co_direct"></div>
+      <div class="fld full"><div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">
+          <input type="checkbox" id="co_direct_freight" style="width:auto"> Sends direct freight</label>
+      </div></div>
+    </div>
+    <div id="co_err" class="err"></div>
+  </div>
+  <div class="df">
+    <button class="primary" id="co_save">Add Company</button>
+    <button id="co_cancel">Cancel</button>
+  </div>
+</dialog>
+
+<div id="toast" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+  background:#22221f;color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;
+  opacity:0;transition:.22s;z-index:9999;pointer-events:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+let db = null, TENANT_ID = null, rows = [];
+
+function fail(t){ $('body').innerHTML='<tr><td colspan="7" class="msg bad">'+t+'</td></tr>'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function txt(v){ const s=(v==null?'':String(v)).trim(); return s===''?null:s; }
+function pretty(s){ return s?String(s).replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()):''; }
+function fmtDate(v){ if(!v)return '—'; const d=new Date(v); if(isNaN(d))return String(v);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function todayISO(){ const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function plusDays(n){ const d=new Date(); d.setDate(d.getDate()+n); const p=x=>String(x).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+
+let toastTimer=null;
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.opacity='1';
+  t.style.transform='translateX(-50%) translateY(0)'; clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(80px)'; },2600); }
+
+window.onerror = m => fail('JS error: ' + m);
+
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load. Reload the page.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  start();
 }
 
-async function logCall(companyId, contactId, outcome, note, followUpDate) {
-  const { error } = await supabase.from('crm_activities').insert({
-    company_id: companyId,
-    contact_id: contactId,
-    activity_type: 'call',
-    direction: 'outbound',
-    outcome,
-    body: note,
-    next_action_due: followUpDate
-  });
-  if (error) return console.error(error);
-  loadQueue(); // company drops off the queue automatically
+async function start(){
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
+  TENANT_ID = await buildNav(db, 'Call Queue');
+  if (!TENANT_ID) { fail('No app_users row linked to this login.'); return; }
+  wire();
+  loadQueue();
 }
+
+const STATUS_PILL = { lead:'p-lead', contacted:'p-cont', packet_sent:'p-pack',
+  pending_approval:'p-pend', active:'p-active' };
+
+async function loadQueue(){
+  const r = await db.from('v_call_queue').select('*').limit(200);
+  if (r.error){ fail('Query failed: ' + r.error.message); return; }
+  rows = r.data || [];
+  tiles(); render();
+}
+
+function tiles(){
+  const today = todayISO();
+  const overdue = rows.filter(r=>r.next_touch_date && r.next_touch_date < today).length;
+  const direct  = rows.filter(r=>r.sends_direct_freight).length;
+  const t = [
+    ['Due today', rows.length, false],
+    ['Overdue', overdue, false],
+    ['Direct-freight', direct, false]
+  ];
+  $('tiles').innerHTML = t.map(([l,n])=>'<div class="tile"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+}
+
+function render(){
+  const q = $('q').value.toLowerCase().trim();
+  const today = todayISO();
+  let list = rows.filter(r=> !q || (r.legal_name||'').toLowerCase().includes(q));
+  $('count').textContent = list.length + ' due';
+
+  if (!list.length){
+    $('body').innerHTML='<tr><td colspan="7" class="msg">No one due for a call. '+
+      (rows.length?'':'Add a company to get started.')+'</td></tr>';
+    return;
+  }
+
+  $('body').innerHTML = list.map(r=>{
+    const contact = (r.first_name||r.last_name)
+      ? esc([r.first_name,r.last_name].filter(Boolean).join(' ')) : '<span class="sub2">—</span>';
+    const tier = r.tier ? '<span class="pill p-tier'+esc(r.tier)+'">'+esc(r.tier)+'</span>' : '<span class="sub2">—</span>';
+    const overdue = r.next_touch_date && r.next_touch_date < today;
+    const due = r.next_touch_date
+      ? '<span class="'+(overdue?'overdue':'')+'">'+esc(fmtDate(r.next_touch_date))+'</span>'
+      : '<span class="sub2">now</span>';
+    return '<tr>'+
+      '<td><span class="name">'+esc(r.legal_name)+'</span>'+
+        (r.sends_direct_freight?'<div class="direct">Direct freight</div>':'')+'</td>'+
+      '<td>'+contact+(r.best_time_to_call?'<div class="sub2">'+esc(r.best_time_to_call)+'</div>':'')+'</td>'+
+      '<td class="dial">'+esc(r.dial||'—')+'</td>'+
+      '<td><span class="pill '+(STATUS_PILL[r.status]||'p-lead')+'">'+esc(pretty(r.status))+'</span></td>'+
+      '<td>'+tier+'</td>'+
+      '<td>'+due+'</td>'+
+      '<td><button class="primary sm" data-co="'+esc(r.company_id)+'" data-ct="'+esc(r.contact_id||'')+'">Log call</button></td>'+
+      '</tr>';
+  }).join('');
+
+  document.querySelectorAll('button[data-co]').forEach(b=>
+    b.addEventListener('click', ()=>openCall(b.dataset.co, b.dataset.ct)));
+}
+
+// ===== log call =====
+function openCall(companyId, contactId){
+  $('c_err').textContent='';
+  $('c_company').value = companyId;
+  $('c_contact').value = contactId || '';
+  const r = rows.find(x=>x.company_id===companyId);
+  $('callTitle').textContent = 'Log Call — ' + (r ? r.legal_name : '');
+  $('c_outcome').value = 'connected';
+  $('c_note').value = '';
+  // default next follow-up 14 days out
+  $('c_followup').value = plusDays(14);
+  $('dlgCall').showModal();
+}
+
+async function saveCall(){
+  $('c_err').textContent='';
+  const btn=$('c_save'); btn.disabled=true;
+  const r = await db.from('crm_activities').insert({
+    tenant_id:       TENANT_ID,
+    company_id:      txt($('c_company').value),
+    contact_id:      txt($('c_contact').value),
+    activity_type:   'call',
+    direction:       'outbound',
+    outcome:         $('c_outcome').value,
+    body:            txt($('c_note').value),
+    next_action_due: txt($('c_followup').value)
+  });
+  btn.disabled=false;
+  if (r.error){ $('c_err').textContent = r.error.message; return; }
+  $('dlgCall').close();
+  toast('Call logged');
+  loadQueue(); // company drops off the queue automatically via the trigger
+}
+
+// ===== add company =====
+function openCo(){
+  $('co_err').textContent='';
+  ['co_name','co_phone','co_first','co_last','co_direct'].forEach(id=>$(id).value='');
+  $('co_type').value='broker'; $('co_status').value='lead'; $('co_tier').value='';
+  $('co_direct_freight').checked=false;
+  $('dlgCo').showModal();
+}
+
+async function saveCo(){
+  $('co_err').textContent='';
+  const name = txt($('co_name').value);
+  if (!name){ $('co_err').textContent='Legal name is required.'; return; }
+  const btn=$('co_save'); btn.disabled=true;
+
+  const ins = await db.from('companies').insert({
+    tenant_id:            TENANT_ID,
+    legal_name:           name,
+    company_type:         $('co_type').value,
+    status:               $('co_status').value,
+    tier:                 txt($('co_tier').value),
+    main_phone:           txt($('co_phone').value),
+    sends_direct_freight: $('co_direct_freight').checked,
+    next_touch_date:      todayISO()   // due immediately so it shows in the queue
+  }).select().single();
+
+  if (ins.error){ btn.disabled=false; $('co_err').textContent = ins.error.message; return; }
+
+  // optional primary contact
+  const first = txt($('co_first').value);
+  if (first){
+    const c = await db.from('company_contacts').insert({
+      tenant_id:    TENANT_ID,
+      company_id:   ins.data.id,
+      first_name:   first,
+      last_name:    txt($('co_last').value),
+      direct_phone: txt($('co_direct').value),
+      is_primary:   true
+    });
+    if (c.error){ btn.disabled=false; $('co_err').textContent = 'Company saved, but contact failed: '+c.error.message; loadQueue(); return; }
+  }
+
+  btn.disabled=false;
+  $('dlgCo').close();
+  toast('Company added');
+  loadQueue();
+}
+
+function wire(){
+  $('addCoBtn').addEventListener('click', openCo);
+  $('c_save').addEventListener('click', saveCall);
+  $('c_cancel').addEventListener('click', ()=>$('dlgCall').close());
+  $('co_save').addEventListener('click', saveCo);
+  $('co_cancel').addEventListener('click', ()=>$('dlgCo').close());
+  $('q').addEventListener('input', render);
+}
+</script>
+</body>
+</html>
