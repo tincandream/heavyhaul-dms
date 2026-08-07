@@ -1,89 +1,102 @@
 // ============================================================
-// nav.js — shared Heavy Haul Command header
+// nav.js
+// HEAVY HAUL COMMAND — GLOBAL APPLICATION HEADER
 //
-// Include AFTER the Supabase CDN script and BEFORE the page's
-// own script block:
+// ROW 1:
+// HEAVY HAUL COMMAND
 //
-//   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-//   <script src="nav.js"></script>
-//   <script> ...page code... </script>
+// ROW 2:
+// Welcome | Dispatch | Sourcing | Fleet Command
+//                         Dianna V. Mwaka (Owner) | Sign Out
 //
-// Call from each page:
-//   const tenant = await buildNav(db, 'Fleet Board');
-//
-// Returns tenant_id, or null if no app_users row is linked.
+// IMPORTANT:
+// This file ONLY builds global navigation.
+// Hub-specific navigation belongs inside each hub page.
 // ============================================================
 
 
 // ============================================================
-// NAVIGATION STRUCTURE
+// GLOBAL HUBS
 // ============================================================
 
-const NAV_HUBS = [
+const MAIN_NAV = [
+  ['welcome.html', 'Welcome'],
+  ['dispatch.html', 'Dispatch'],
+  ['sourcing.html', 'Sourcing'],
+  ['fleet-command.html', 'Fleet Command']
+];
 
-  {
-    label: 'Welcome',
-    href: 'welcome.html',
-    pages: [
-      'welcome.html'
-    ]
-  },
 
-  {
-    label: 'Dispatch',
-    pages: [
-      'board.html',
-      'newload.html',
-      'loads.html',
-      'workspace.html'
-    ],
-    items: [
-      ['board.html', 'Fleet Board'],
-      ['newload.html', 'New Load'],
-      ['loads.html', 'All Loads']
-    ]
-  },
 
-  {
-    label: 'Sourcing',
-    pages: [
-      'sourcing.html',
-      'opportunities.html',
-      'call-queue.html',
-      'portals.html',
-      'load-emails.html',
-      'templates.html',
-      'field-manual.html',
-      'calculators.html'
-    ],
-    items: [
-      ['opportunities.html', 'Opportunities'],
-      ['call-queue.html', 'Call Queue'],
-      ['portals.html', 'Portals'],
-      ['load-emails.html', 'Load Emails'],
-      ['templates.html', 'Templates'],
-      ['field-manual.html', 'Field Manual'],
-      ['calculators.html', 'Calculators']
-    ]
-  },
+// ============================================================
+// PAGES THAT BELONG TO EACH HUB
+//
+// This lets the correct main tab stay highlighted even when
+// the user is inside one of that hub's tools.
+// ============================================================
 
-  {
-    label: 'Fleet Command',
-    pages: [
-      'fleet.html',
-      'route-planning.html',
-      'states.html',
-      'calendar.html'
-    ],
-    items: [
-      ['fleet.html', 'Fleet Setup'],
-      ['route-planning.html', 'Route Planning'],
-      ['states.html', 'State Rules'],
-      ['calendar.html', 'Calendar']
-    ]
+const HUB_PAGES = {
+
+  'welcome.html': [
+    'welcome.html'
+  ],
+
+
+  'dispatch.html': [
+    'dispatch.html',
+    'board.html',
+    'newload.html',
+    'loads.html',
+    'workspace.html'
+  ],
+
+
+  'sourcing.html': [
+    'sourcing.html',
+    'opportunities.html',
+    'call-queue.html',
+    'portals.html',
+    'load-emails.html',
+    'templates.html',
+    'field-manual.html',
+    'calculators.html'
+  ],
+
+
+  'fleet-command.html': [
+    'fleet-command.html',
+    'fleet.html',
+    'route-planning.html',
+    'states.html',
+    'calendar.html'
+  ]
+
+};
+
+
+
+// ============================================================
+// FIND CURRENT HUB
+// ============================================================
+
+function getCurrentHub(currentPage) {
+
+  for (const hub in HUB_PAGES) {
+
+    if (
+      HUB_PAGES[hub].includes(currentPage)
+    ) {
+
+      return hub;
+
+    }
+
   }
 
-];
+  return 'welcome.html';
+
+}
+
 
 
 // ============================================================
@@ -93,7 +106,14 @@ const NAV_HUBS = [
 async function buildNav(dbClient, title) {
 
   const here =
-    location.pathname.split('/').pop() || 'welcome.html';
+    location.pathname
+      .split('/')
+      .pop() || 'welcome.html';
+
+
+  const activeHub =
+    getCurrentHub(here);
+
 
   const header =
     document.querySelector('header');
@@ -102,7 +122,7 @@ async function buildNav(dbClient, title) {
   if (!header) {
 
     console.warn(
-      'nav.js: no <header> element found on this page'
+      'nav.js: no <header> element found'
     );
 
     return null;
@@ -110,277 +130,200 @@ async function buildNav(dbClient, title) {
   }
 
 
+  // Remove anything left over from older nav versions.
+
   header.innerHTML = '';
 
+  header.removeAttribute('style');
+
   header.className =
-    'hh-header';
+    'hh-global-header';
+
+
+  // IMPORTANT:
+  // Undo the abandoned vertical sidebar.
+
+  document.body.style.paddingLeft =
+    '0';
+
 
 
   // ==========================================================
-  // BRAND / PAGE TITLE
+  // ROW 1 — BRAND
   // ==========================================================
+
+  const brandRow =
+    document.createElement('div');
+
+
+  brandRow.className =
+    'hh-brand-row';
+
+
 
   const brand =
-    document.createElement('div');
+    document.createElement('a');
+
+
+  brand.href =
+    'welcome.html';
+
 
   brand.className =
-    'hh-header-brand';
+    'hh-global-brand';
 
 
-  const brandName =
-    document.createElement('div');
-
-  brandName.className =
-    'hh-brand-name';
-
-  brandName.textContent =
+  brand.textContent =
     'HEAVY HAUL COMMAND';
 
 
-  const pageTitle =
-    document.createElement('div');
-
-  pageTitle.className =
-    'hh-page-title';
-
-  pageTitle.textContent =
-    title || 'Command Center';
-
-
-  brand.appendChild(
-    brandName
-  );
-
-  brand.appendChild(
-    pageTitle
-  );
-
-  header.appendChild(
+  brandRow.appendChild(
     brand
   );
 
 
+  header.appendChild(
+    brandRow
+  );
+
+
+
   // ==========================================================
-  // MAIN HUB NAV
+  // ROW 2 — HUBS + USER
   // ==========================================================
+
+  const navRow =
+    document.createElement('div');
+
+
+  navRow.className =
+    'hh-global-nav-row';
+
+
+
+  // LEFT SIDE — HUB NAVIGATION
 
   const nav =
     document.createElement('nav');
 
+
   nav.className =
-    'hh-main-nav';
+    'hh-global-nav';
 
 
-  NAV_HUBS.forEach(
-    function (hub) {
+
+  MAIN_NAV.forEach(
+    function (item) {
+
+      const href =
+        item[0];
 
 
-      const hubWrap =
-        document.createElement('div');
-
-      hubWrap.className =
-        'hh-nav-hub';
+      const label =
+        item[1];
 
 
-      const isActive =
-        hub.pages.includes(here);
+      const link =
+        document.createElement('a');
 
 
-      // --------------------------------------------------------
-      // SIMPLE LINK: WELCOME
-      // --------------------------------------------------------
-
-      if (!hub.items) {
-
-        const a =
-          document.createElement('a');
-
-        a.href =
-          hub.href;
-
-        a.textContent =
-          hub.label;
-
-        a.className =
-          'hh-nav-link' +
-          (isActive ? ' active' : '');
-
-        hubWrap.appendChild(
-          a
-        );
-
-      }
+      link.href =
+        href;
 
 
-      // --------------------------------------------------------
-      // HUB WITH MENU
-      // --------------------------------------------------------
-
-      else {
-
-        const button =
-          document.createElement('button');
-
-        button.type =
-          'button';
-
-        button.className =
-          'hh-nav-link hh-hub-button' +
-          (isActive ? ' active' : '');
-
-        button.textContent =
-          hub.label;
+      link.textContent =
+        label;
 
 
-        const arrow =
-          document.createElement('span');
-
-        arrow.className =
-          'hh-nav-arrow';
-
-        arrow.textContent =
-          '▾';
+      link.className =
+        'hh-global-nav-link';
 
 
-        button.appendChild(
-          arrow
-        );
+      if (
+        href === activeHub
+      ) {
 
-
-        const menu =
-          document.createElement('div');
-
-        menu.className =
-          'hh-hub-menu';
-
-
-        hub.items.forEach(
-          function (item) {
-
-            const a =
-              document.createElement('a');
-
-            a.href =
-              item[0];
-
-            a.textContent =
-              item[1];
-
-            if (
-              item[0] === here
-            ) {
-
-              a.className =
-                'current';
-
-            }
-
-            menu.appendChild(
-              a
-            );
-
-          }
-        );
-
-
-        hubWrap.appendChild(
-          button
-        );
-
-        hubWrap.appendChild(
-          menu
-        );
-
-
-        // click toggle for smaller screens
-        button.addEventListener(
-          'click',
-          function (e) {
-
-            e.stopPropagation();
-
-            document
-              .querySelectorAll(
-                '.hh-nav-hub.open'
-              )
-              .forEach(
-                function (other) {
-
-                  if (
-                    other !== hubWrap
-                  ) {
-
-                    other.classList.remove(
-                      'open'
-                    );
-
-                  }
-
-                }
-              );
-
-            hubWrap.classList.toggle(
-              'open'
-            );
-
-          }
+        link.classList.add(
+          'active'
         );
 
       }
 
 
       nav.appendChild(
-        hubWrap
+        link
       );
 
-    }
-  );
+  });
 
 
-  header.appendChild(
+  navRow.appendChild(
     nav
   );
 
 
-  // ==========================================================
-  // USER / SIGN OUT
-  // ==========================================================
+
+  // RIGHT SIDE — USER
 
   const userArea =
     document.createElement('div');
 
+
   userArea.className =
-    'hh-user-area';
+    'hh-global-user';
+
 
 
   const who =
     document.createElement('span');
 
+
   who.id =
     'me';
 
+
   who.className =
-    'hh-user-name';
+    'hh-global-user-name';
+
 
   who.textContent =
     '…';
 
 
-  const outBtn =
+
+  const divider =
+    document.createElement('span');
+
+
+  divider.className =
+    'hh-global-divider';
+
+
+  divider.textContent =
+    '|';
+
+
+
+  const signOut =
     document.createElement('button');
 
-  outBtn.type =
+
+  signOut.type =
     'button';
 
-  outBtn.className =
-    'hh-signout';
 
-  outBtn.textContent =
-    'Sign out';
+  signOut.className =
+    'hh-global-signout';
 
 
-  outBtn.addEventListener(
+  signOut.textContent =
+    'Sign Out';
+
+
+
+  signOut.addEventListener(
     'click',
+
     async function () {
 
       await dbClient.auth.signOut();
@@ -392,58 +335,47 @@ async function buildNav(dbClient, title) {
   );
 
 
+
   userArea.appendChild(
     who
   );
 
+
   userArea.appendChild(
-    outBtn
+    divider
   );
 
-  header.appendChild(
+
+  userArea.appendChild(
+    signOut
+  );
+
+
+  navRow.appendChild(
     userArea
   );
 
 
-  // ==========================================================
-  // CLOSE MENUS WHEN CLICKING ELSEWHERE
-  // ==========================================================
-
-  document.addEventListener(
-    'click',
-    function () {
-
-      document
-        .querySelectorAll(
-          '.hh-nav-hub.open'
-        )
-        .forEach(
-          function (hub) {
-
-            hub.classList.remove(
-              'open'
-            );
-
-          }
-        );
-
-    }
+  header.appendChild(
+    navRow
   );
 
 
+
   // ==========================================================
-  // PROFILE LOOKUP
+  // USER PROFILE
   // ==========================================================
 
-  const sess =
+  const session =
     await dbClient.auth.getUser();
 
 
   const authId =
-    sess.data &&
-    sess.data.user
-      ? sess.data.user.id
+    session.data &&
+    session.data.user
+      ? session.data.user.id
       : null;
+
 
 
   let me =
@@ -463,7 +395,9 @@ async function buildNav(dbClient, title) {
       .maybeSingle();
 
 
-  // fallback
+
+  // Preserve the fallback from the original working nav.js.
+
   if (
     !me.error &&
     !me.data
@@ -485,33 +419,57 @@ async function buildNav(dbClient, title) {
   }
 
 
+
   if (me.error) {
 
     who.textContent =
-      'profile error';
+      'Profile error';
+
 
     console.error(
       'nav.js: app_users query failed —',
       me.error.message
     );
 
+
     return null;
 
   }
+
 
 
   if (!me.data) {
 
     who.textContent =
-      'no profile linked';
+      'No profile linked';
 
     return null;
 
   }
 
 
+
+  // Use the full name and role exactly as requested.
+
+  const fullName =
+    me.data.full_name || 'User';
+
+
+  const role =
+    me.data.role || 'User';
+
+
+  const displayRole =
+    role.charAt(0).toUpperCase() +
+    role.slice(1);
+
+
   who.textContent =
-    me.data.full_name;
+    fullName +
+    ' (' +
+    displayRole +
+    ')';
+
 
 
   return me.data.tenant_id;
