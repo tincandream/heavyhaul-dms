@@ -794,6 +794,157 @@ function showErr(elId, error){
 }
 function clearErr(elId){ const el = $(elId); if (el) el.textContent = ''; }
 
+  /* ============================================================
+   DOCUMENTS
+   ============================================================ */
+let DOCUMENTS = [];
+
+async function fetchDocuments(){
+  // get link rows for this load, then their documents
+  const links = await db.from('document_links').select('document_id')
+    .eq('entity_type','load').eq('entity_id', LOAD_ID);
+  if (links.error){ console.warn('doc links', links.error); DOCUMENTS = []; return; }
+  const ids = (links.data||[]).map(l=>l.document_id);
+  if (!ids.length){ DOCUMENTS = []; return; }
+  const docs = await db.from('documents').select('*')
+    .in('id', ids).is('archived_at', null).order('uploaded_at',{ascending:false});
+  if (docs.error){ console.warn('documents', docs.error); DOCUMENTS = []; return; }
+  DOCUMENTS = docs.data || [];
+}
+
+function fmtBytes(n){
+  if (!n) return '—';
+  if (n < 1024) return n+' B';
+  if (n < 1048576) return (n/1024).toFixed(0)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+
+function drawDocuments(){
+  const rows = DOCUMENTS.map(d=>`
+    <tr>
+      <td><b>${esc(d.title || d.filename || '(file)')}</b>
+        ${d.filename && d.title ? `<div class="small muted">${esc(d.filename)}</div>`:''}</td>
+      <td>${esc(titleize(d.doc_type)||'—')}</td>
+      <td>${esc(fmtBytes(d.byte_size))}</td>
+      <td class="small muted">${esc(fmtDT(d.uploaded_at))}</td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="sm" data-view="${esc(d.id)}" data-key="${esc(d.storage_key)}">View</button>
+        <button class="danger sm" data-deldoc="${esc(d.id)}">Remove</button>
+      </td>
+    </tr>`).join('');
+
+  $('tab-documents').innerHTML = `
+    <div class="sechead"><h2>Documents</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openDoc()">+ Upload</button></div>
+    ${DOCUMENTS.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No documents on this load. Click “+ Upload”.</div></div>'}
+  `;
+
+  $$('#tab-documents button[data-view]').forEach(b=>
+    b.addEventListener('click', ()=>viewDoc(b.dataset.key)));
+  $$('#tab-documents button[data-deldoc]').forEach(b=>
+    b.addEventListener('click', ()=>deleteDoc(b.dataset.deldoc)));
+}
+
+function openDoc(){
+  clearErr('dc_err');
+  $('dc_progress').textContent = '';
+  $('dc_file').value = '';
+  $('dc_type').value = 'rate_con';
+  $('dc_title').value = '';
+  $('dc_notes').value = '';
+  dlgDoc.showModal();
+}
+
+async function sha256hex(file){
+  const buf = await file.arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function saveDoc(){
+  clearErr('dc_err');
+  const fileInput = $('dc_file');
+  if (!fileInput.files || !fileInput.files.length){
+    showErr('dc_err', { message:'Choose a file first.' }); return;
+  }
+  const file = fileInput.files[0];
+  const btn = $('dc_save'); btn.disabled = true;
+  $('dc_progress').textContent = 'Hashing…';
+
+  try {
+    const hash = await sha256hex(file);
+    const ext = (file.name.split('.').pop()||'bin').toLowerCase();
+    const key = `${TENANT_ID}/${LOAD_ID}/${hash.slice(0,16)}-${Date.now()}.${ext}`;
+
+    $('dc_progress').textContent = 'Uploading…';
+    const up = await db.storage.from('documents').upload(key, file, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false
+    });
+    if (up.error){ throw up.error; }
+
+    $('dc_progress').textContent = 'Saving record…';
+    const docIns = await db.from('documents').insert({
+      tenant_id:   TENANT_ID,
+      sha256:      hash,
+      storage_key: key,
+      filename:    file.name,
+      mime_type:   file.type || null,
+      byte_size:   file.size,
+      doc_type:    $('dc_type').value,
+      title:       txt($('dc_title').value),
+      notes:       txt($('dc_notes').value),
+      uploaded_by: APP_USER_ID || null,
+      uploaded_at: new Date().toISOString(),
+      is_current:  true
+    }).select().single();
+    if (docIns.error){ throw docIns.error; }
+
+    const linkIns = await db.from('document_links').insert({
+      tenant_id:   TENANT_ID,
+      document_id: docIns.data.id,
+      entity_type: 'load',
+      entity_id:   LOAD_ID
+    });
+    if (linkIns.error){ throw linkIns.error; }
+
+    dlgDoc.close();
+    toast('Document uploaded');
+    await fetchDocuments(); drawCounts(); drawDocuments();
+  } catch (e){
+    showErr('dc_err', e);
+    $('dc_progress').textContent = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function viewDoc(storageKey){
+  const { data, error } = await db.storage.from('documents')
+    .createSignedUrl(storageKey, 300); // 5-minute link
+  if (error){ toast('Could not open file'); console.error(error); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function deleteDoc(docId){
+  if (!confirm('Remove this document from the load?')) return;
+  const d = DOCUMENTS.find(x=>x.id===docId);
+  // remove the link, archive the doc, delete the file
+  await db.from('document_links').delete()
+    .eq('document_id', docId).eq('entity_type','load').eq('entity_id', LOAD_ID);
+  await db.from('documents').update({ archived_at: new Date().toISOString() }).eq('id', docId);
+  if (d && d.storage_key){
+    await db.storage.from('documents').remove([d.storage_key]);
+  }
+  toast('Document removed');
+  await fetchDocuments(); drawCounts(); drawDocuments();
+}
+
 /* ---------- EVENT LOGGER ---------- */
 async function logEvent({ event_type, subject, body, is_milestone }){
   const row = {
