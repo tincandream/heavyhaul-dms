@@ -341,7 +341,7 @@ async function start(){
   if (!s.data.session) { location.href='index.html'; return; }
 
   tenant = await buildNav(db, 'New Load');
-  if (!tenant) { alert('No profile linked to this login.'); return; }
+  buildDispatchTabs('newload.html');
 
   $('statepicker').innerHTML = STATES.map(s =>
     '<span class="st" data-s="'+s+'">'+s+'</span>').join('');
