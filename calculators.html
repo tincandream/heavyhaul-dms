@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>Calculators — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+
+<style>
+
+/* ============================================================
+   HEAVY HAUL COMMAND
+   CALCULATORS
+   ============================================================ */
+
+:root {
+
+  --calc-ink:
+    var(--hh-ink, #3C3A4B);
+
+  --calc-blue:
+    var(--hh-blue, #7FA5B5);
+
+  --calc-blue-dark:
+    var(--hh-blue-dark, #668C9D);
+
+  --calc-blue-soft:
+    var(--hh-blue-soft, #EAF3F6);
+
+  --calc-pink:
+    var(--hh-pink, #D86A8E);
+
+  --calc-pink-soft:
+    var(--hh-pink-soft, #F8E5EC);
+
+  --calc-lime:
+    var(--hh-lime, #B8C34A);
+
+  --calc-lime-soft:
+    var(--hh-lime-soft, #F1F4D8);
+
+  --calc-white:
+    #FFFFFF;
+
+  --calc-muted:
+    #747B82;
+
+  --calc-line:
+    #D9DEE1;
+
+}
+
+
+* {
+  box-sizing:
+    border-box;
+}
+
+
+body {
+  margin:
+    0;
+}
+
+
+main {
+  width:
+    min(1400px, 100%);
+
+  margin:
+    0 auto 60px;
+
+  padding:
+    28px 24px 60px;
+}
+
+
+/* ============================================================
+   PAGE INTRO
+   ============================================================ */
+
+.calc-intro {
+  margin:
+    0 0 28px;
+}
+
+
+.calc-intro h1 {
+  margin:
+    0;
+
+  font-family:
+    "Cinzel",
+    serif;
+
+  font-size:
+    30px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    1px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-intro p {
+  max-width:
+    720px;
+
+  margin:
+    6px 0 0;
+
+  font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-size:
+    19px;
+
+  font-style:
+    italic;
+
+  color:
+    var(--calc-blue);
+}
+
+
+/* ============================================================
+   TOOL SWITCHER
+   ============================================================ */
+
+.tool-tabs {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    28px;
+
+  margin:
+    0 0 26px;
+
+  border-bottom:
+    1px solid
+    var(--calc-line);
+}
+
+
+.tool-tabs button {
+  min-height:
+    44px;
+
+  margin:
+    0;
+
+  padding:
+    0 0 10px;
+
+  background:
+    transparent;
+
+  color:
+    var(--calc-ink);
+
+  border:
+    0;
+
+  border-bottom:
+    3px solid transparent;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    13px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .8px;
+
+  cursor:
+    pointer;
+}
+
+
+.tool-tabs button:hover {
+  color:
+    var(--calc-blue-dark);
+}
+
+
+.tool-tabs button.active {
+  color:
+    var(--calc-blue-dark);
+
+  border-bottom-color:
+    var(--calc-blue);
+}
+
+
+/* ============================================================
+   CALCULATOR PANELS
+   ============================================================ */
+
+.calc-panel {
+  display:
+    none;
+}
+
+
+.calc-panel.active {
+  display:
+    block;
+}
+
+
+.calc-layout {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(300px, .9fr);
+
+  gap:
+    22px;
+
+  align-items:
+    start;
+}
+
+
+/* ============================================================
+   CARD
+   ============================================================ */
+
+.calc-card {
+  padding:
+    22px;
+
+  background:
+    var(--calc-white);
+
+  border:
+    1px solid
+    var(--calc-line);
+
+  box-shadow:
+    0 5px 18px
+    rgba(60,58,75,.05);
+}
+
+
+.calc-card + .calc-card {
+  margin-top:
+    16px;
+}
+
+
+.calc-card h2 {
+  margin:
+    0 0 4px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    17px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .5px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-card h3 {
+  margin:
+    0 0 12px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    14px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .4px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-hint {
+  margin:
+    0 0 20px;
+
+  color:
+    var(--calc-muted);
+
+  font-size:
+    12.5px;
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.form-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    15px;
+}
+
+
+.field.full {
+  grid-column:
+    1 / -1;
+}
+
+
+.field label {
+  display:
+    block;
+
+  margin:
+    0 0 5px;
+
+  color:
+    #626970;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    12px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .3px;
+}
+
+
+.field .explain {
+  margin-top:
+    4px;
+
+  color:
+    #8A9096;
+
+  font-size:
+    10.5px;
+}
+
+
+.field input,
+.field select {
+  width:
+    100%;
+
+  padding:
+    10px 11px;
+
+  background:
+    #FFFFFF;
+
+  color:
+    var(--calc-ink);
+
+  border:
+    1px solid
+    #BEC8CD;
+
+  border-radius:
+    0;
+
+  font:
+    inherit;
+
+  outline:
+    none;
+}
+
+
+.field input:focus,
+.field select:focus {
+  border-color:
+    var(--calc-blue);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(127,165,181,.13);
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.calc-actions {
+  display:
+    flex;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    9px;
+
+  margin-top:
+    20px;
+}
+
+
+.calc-btn {
+  padding:
+    10px 18px;
+
+  background:
+    var(--calc-blue);
+
+  color:
+    white;
+
+  border:
+    1px solid
+    var(--calc-blue);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    13px;
+
+  letter-spacing:
+    .6px;
+
+  cursor:
+    pointer;
+}
+
+
+.calc-btn:hover {
+  background:
+    var(--calc-blue-dark);
+
+  border-color:
+    var(--calc-blue-dark);
+}
+
+
+.calc-btn.secondary {
+  background:
+    white;
+
+  color:
+    var(--calc-blue-dark);
+
+  border-color:
+    var(--calc-line);
+}
+
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+
+.result-card {
+  position:
+    sticky;
+
+  top:
+    20px;
+}
+
+
+.result-status {
+  margin-bottom:
+    18px;
+
+  padding:
+    16px;
+
+  border-left:
+    5px solid
+    var(--calc-blue);
+
+  background:
+    var(--calc-blue-soft);
+}
+
+
+.result-status.good {
+  border-left-color:
+    var(--calc-lime);
+
+  background:
+    var(--calc-lime-soft);
+}
+
+
+.result-status.tight {
+  border-left-color:
+    var(--calc-pink);
+
+  background:
+    var(--calc-pink-soft);
+}
+
+
+.result-status.no {
+  border-left-color:
+    #B04B5C;
+
+  background:
+    #F8E5E8;
+}
+
+
+.status-label {
+  margin-bottom:
+    2px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    11px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    1px;
+
+  text-transform:
+    uppercase;
+}
+
+
+.status-main {
+  font-family:
+    "Cinzel",
+    serif;
+
+  font-size:
+    22px;
+
+  font-weight:
+    600;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.status-detail {
+  margin-top:
+    5px;
+
+  color:
+    #646B71;
+
+  font-size:
+    12px;
+}
+
+
+/* ============================================================
+   RESULT METRICS
+   ============================================================ */
+
+.metrics {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    10px;
+}
+
+
+.metric {
+  min-height:
+    86px;
+
+  padding:
+    13px;
+
+  background:
+    #FBFCFC;
+
+  border:
+    1px solid
+    var(--calc-line);
+
+  border-top:
+    3px solid
+    var(--calc-blue);
+}
+
+
+.metric:nth-child(2n) {
+  border-top-color:
+    var(--calc-lime);
+}
+
+
+.metric:nth-child(3n) {
+  border-top-color:
+    var(--calc-pink);
+}
+
+
+.metric-label {
+  color:
+    var(--calc-muted);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .6px;
+
+  text-transform:
+    uppercase;
+}
+
+
+.metric-value {
+  margin-top:
+    6px;
+
+  color:
+    var(--calc-ink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    23px;
+
+  font-weight:
+    500;
+}
+
+
+/* ============================================================
+   WARNINGS
+   ============================================================ */
+
+.warnings {
+  margin-top:
+    16px;
+}
+
+
+.warning {
+  margin-top:
+    8px;
+
+  padding:
+    10px 12px;
+
+  background:
+    var(--calc-pink-soft);
+
+  color:
+    #85455C;
+
+  border-left:
+    3px solid
+    var(--calc-pink);
+
+  font-size:
+    12px;
+}
+
+
+.notice {
+  margin-top:
+    18px;
+
+  padding-top:
+    14px;
+
+  border-top:
+    1px solid
+    var(--calc-line);
+
+  color:
+    #7B8187;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+}
+
+
+/* ============================================================
+   PROFIT SUMMARY
+   ============================================================ */
+
+.money-positive {
+  color:
+    #657025;
+}
+
+
+.money-negative {
+  color:
+    #A14666;
+}
+
+
+/* ============================================================
+   BREAK EVEN
+   ============================================================ */
+
+.break-even {
+  margin-top:
+    16px;
+
+  padding:
+    13px;
+
+  background:
+    var(--calc-blue-soft);
+
+  border-left:
+    3px solid
+    var(--calc-blue);
+
+  color:
+    var(--calc-ink);
+
+  font-size:
+    12px;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 850px) {
+
+  .calc-layout {
+    grid-template-columns:
+      1fr;
+  }
+
+  .result-card {
+    position:
+      static;
+  }
+
+}
+
+
+@media (max-width: 560px) {
+
+  main {
+    padding:
+      20px 14px 50px;
+  }
+
+  .form-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .metrics {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- Global Heavy Haul Command navigation -->
+
+<header></header>
+
+
+<main>
+
+
+  <!-- ========================================================
+       PAGE HEADER
+       ======================================================== -->
+
+  <section class="calc-intro">
+
+    <h1>CALCULATORS</h1>
+
+    <p>
+      Quick planning tools for hours of service and load profitability.
+    </p>
+
+  </section>
+
+
+
+  <!-- ========================================================
+       CALCULATOR TABS
+       ======================================================== -->
+
+  <nav class="tool-tabs">
+
+    <button
+      type="button"
+      id="hosTab"
+      class="active">
+
+      HOS Calculator
+
+    </button>
+
+
+    <button
+      type="button"
+      id="profitTab">
+
+      Dispatch Profit Calculator
+
+    </button>
+
+  </nav>
+
+
+
+  <!-- ========================================================
+       HOS CALCULATOR
+       ======================================================== -->
+
+  <section
+    class="calc-panel active"
+    id="hosPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>HOS Trip Check</h2>
+
+          <p class="calc-hint">
+            Enter the remaining clocks shown on the driver's ELD,
+            then enter the driving and on-duty time expected for the next move.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="driveRemaining">
+                Driving time remaining
+              </label>
+
+              <input
+                id="driveRemaining"
+                type="number"
+                min="0"
+                max="11"
+                step="0.1"
+                placeholder="Example: 6.5"
+              >
+
+              <div class="explain">
+                Remaining 11-hour driving clock.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="windowRemaining">
+                14-hour window remaining
+              </label>
+
+              <input
+                id="windowRemaining"
+                type="number"
+                min="0"
+                max="14"
+                step="0.1"
+                placeholder="Example: 8"
+              >
+
+              <div class="explain">
+                Time remaining before the duty window closes.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="cycleRemaining">
+                Cycle hours remaining
+              </label>
+
+              <input
+                id="cycleRemaining"
+                type="number"
+                min="0"
+                max="70"
+                step="0.1"
+                placeholder="Example: 18"
+              >
+
+              <div class="explain">
+                Remaining 60/70-hour cycle time shown by the ELD.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="driveSinceBreak">
+                Driving since last qualifying break
+              </label>
+
+              <input
+                id="driveSinceBreak"
+                type="number"
+                min="0"
+                max="8"
+                step="0.1"
+                value="0"
+              >
+
+              <div class="explain">
+                Cumulative driving since the last qualifying 30-minute interruption.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tripDrive">
+                Planned driving time
+              </label>
+
+              <input
+                id="tripDrive"
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="Example: 5.25"
+              >
+
+              <div class="explain">
+                Estimated actual driving time to the next stop.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tripDuty">
+                Planned non-driving on-duty time
+              </label>
+
+              <input
+                id="tripDuty"
+                type="number"
+                min="0"
+                step="0.1"
+                value="0"
+              >
+
+              <div class="explain">
+                Loading, securement, inspection, fueling or other expected on-duty time.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="buffer">
+                Planning buffer
+              </label>
+
+              <input
+                id="buffer"
+                type="number"
+                min="0"
+                step="0.1"
+                value="0.5"
+              >
+
+              <div class="explain">
+                Extra cushion for traffic, check-in, parking or delays.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="breakPlanned">
+                Qualifying break planned?
+              </label>
+
+              <select id="breakPlanned">
+
+                <option value="no">
+                  No
+                </option>
+
+                <option value="yes">
+                  Yes
+                </option>
+
+              </select>
+
+            </div>
+
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateHos">
+
+              Check Trip
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetHos">
+
+              Clear
+
+            </button>
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- RESULTS SIDE -->
+
+      <aside class="calc-card result-card">
+
+        <h2>Dispatch Assessment</h2>
+
+        <p class="calc-hint">
+          Planning result based on the clocks entered above.
+        </p>
+
+
+        <div
+          class="result-status"
+          id="hosStatus">
+
+          <div class="status-label">
+            Status
+          </div>
+
+          <div
+            class="status-main"
+            id="hosStatusMain">
+
+            Enter driver clocks
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="hosStatusDetail">
+
+            Use the current ELD values before assigning or confirming the move.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Drive after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="driveAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Window after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="windowAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Cycle after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="cycleAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Trip duty demand
+            </div>
+
+            <div
+              class="metric-value"
+              id="tripDemand">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="warnings"
+          id="hosWarnings">
+        </div>
+
+
+        <div class="notice">
+
+          Dispatch planning aid only. Verify the driver's actual ELD
+          before dispatching. Sleeper-berth use, adverse-driving conditions,
+          short-haul provisions, exemptions and other HOS rules can affect
+          legal availability.
+
+        </div>
+
+      </aside>
+
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ========================================================
+       PROFIT CALCULATOR
+       ======================================================== -->
+
+  <section
+    class="calc-panel"
+    id="profitPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>Load Revenue</h2>
+
+          <p class="calc-hint">
+            Enter the agreed rate and mileage.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="linehaul">
+                Linehaul
+              </label>
+
+              <input
+                id="linehaul"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="5000"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="fuel">
+                Fuel surcharge
+              </label>
+
+              <input
+                id="fuel"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="otherRevenue">
+                Other revenue / accessorials
+              </label>
+
+              <input
+                id="otherRevenue"
+                type="number"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="loadedMiles">
+                Loaded miles
+              </label>
+
+              <input
+                id="loadedMiles"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="850"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="deadheadMiles">
+                Deadhead miles
+              </label>
+
+              <input
+                id="deadheadMiles"
+                type="number"
+                min="0"
+                step="1"
+                value="0"
+              >
+
+            </div>
+
+
+          </div>
+
+        </div>
+
+
+
+        <div class="calc-card">
+
+          <h2>Load Costs</h2>
+
+          <p class="calc-hint">
+            Enter known or estimated expenses for the load.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="fuelCost">
+                Fuel cost
+              </label>
+
+              <input
+                id="fuelCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="permitCost">
+                Permit cost
+              </label>
+
+              <input
+                id="permitCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="escortCost">
+                Escort / pilot car cost
+              </label>
+
+              <input
+                id="escortCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tollCost">
+                Tolls
+              </label>
+
+              <input
+                id="tollCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="lodgingCost">
+                Lodging / layover
+              </label>
+
+              <input
+                id="lodgingCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="otherCost">
+                Other load costs
+              </label>
+
+              <input
+                id="otherCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="dispatchRate">
+                Dispatch fee %
+              </label>
+
+              <input
+                id="dispatchRate"
+                type="number"
+                min="0"
+                step="0.1"
+                value="7"
+              >
+
+              <div class="explain">
+                Example: enter 7 for a 7% dispatch fee.
+              </div>
+
+            </div>
+
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateProfit">
+
+              Calculate Profit
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetProfit">
+
+              Clear
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- RESULTS -->
+
+      <aside class="calc-card result-card">
+
+        <h2>Load Summary</h2>
+
+        <p class="calc-hint">
+          Quick financial view of the load.
+        </p>
+
+
+        <div
+          class="result-status"
+          id="profitStatus">
+
+          <div class="status-label">
+            Estimated Load
+          </div>
+
+          <div
+            class="status-main"
+            id="profitStatusMain">
+
+            Enter rate and costs
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="profitStatusDetail">
+
+            Compare revenue against the expected load expenses.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Gross revenue
+            </div>
+
+            <div
+              class="metric-value"
+              id="grossRevenue">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              All-in RPM
+            </div>
+
+            <div
+              class="metric-value"
+              id="revenueMile">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Total load costs
+            </div>
+
+            <div
+              class="metric-value"
+              id="totalCosts">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Gross load profit
+            </div>
+
+            <div
+              class="metric-value"
+              id="grossProfit">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Profit margin
+            </div>
+
+            <div
+              class="metric-value"
+              id="profitMargin">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Dispatch fee
+            </div>
+
+            <div
+              class="metric-value"
+              id="dispatchFee">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Carrier after fee
+            </div>
+
+            <div
+              class="metric-value"
+              id="carrierAfterFee">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Profit per total mile
+            </div>
+
+            <div
+              class="metric-value"
+              id="profitPerMile">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="break-even"
+          id="breakEven">
+
+          Enter the load information to calculate the break-even rate.
+
+        </div>
+
+
+        <div class="notice">
+
+          Financial planning estimate only. Actual carrier profitability
+          may also include equipment payments, insurance, maintenance,
+          depreciation, payroll, taxes and other business overhead.
+
+        </div>
+
+      </aside>
+
+
+    </div>
+
+  </section>
+
+
+</main>
+
+
+
+<!-- ==========================================================
+     SCRIPTS
+     ========================================================== -->
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+<script src="nav.js"></script>
+
+
+<script>
+
+/* ============================================================
+   GLOBAL NAV
+   ============================================================ */
+
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+let db =
+  null;
+
+
+async function startPage() {
+
+  if (
+    typeof window.supabase ===
+    'undefined'
+  ) {
+
+    return;
+
+  }
+
+
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+
+  const session =
+    await db.auth.getSession();
+
+
+  if (
+    !session.data.session
+  ) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  await buildNav(
+    db,
+    'Calculators'
+  );
+
+}
+
+
+startPage();
+
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+const $ =
+  id =>
+    document.getElementById(id);
+
+
+function n(id) {
+
+  const value =
+    parseFloat(
+      $(id).value
+    );
+
+
+  return (
+    Number.isFinite(value)
+      ? value
+      : 0
+  );
+
+}
+
+
+function hours(value) {
+
+  const safe =
+    Math.max(
+      0,
+      value
+    );
+
+
+  const whole =
+    Math.floor(safe);
+
+
+  const mins =
+    Math.round(
+      (
+        safe -
+        whole
+      )
+      *
+      60
+    );
+
+
+  if (
+    mins === 60
+  ) {
+
+    return (
+      whole + 1
+    ) +
+    'h 00m';
+
+  }
+
+
+  return (
+    whole +
+    'h ' +
+    String(mins)
+      .padStart(
+        2,
+        '0'
+      ) +
+    'm'
+  );
+
+}
+
+
+function money(value) {
+
+  return new Intl.NumberFormat(
+    'en-US',
+    {
+      style:
+        'currency',
+
+      currency:
+        'USD',
+
+      maximumFractionDigits:
+        2
+    }
+  ).format(
+    value || 0
+  );
+
+}
+
+
+
+/* ============================================================
+   CALCULATOR SWITCHER
+   ============================================================ */
+
+function showTool(tool) {
+
+
+  const hos =
+    tool ===
+    'hos';
+
+
+  $('hosPanel')
+    .classList
+    .toggle(
+      'active',
+      hos
+    );
+
+
+  $('profitPanel')
+    .classList
+    .toggle(
+      'active',
+      !hos
+    );
+
+
+  $('hosTab')
+    .classList
+    .toggle(
+      'active',
+      hos
+    );
+
+
+  $('profitTab')
+    .classList
+    .toggle(
+      'active',
+      !hos
+    );
+
+}
+
+
+$('hosTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'hos'
+      )
+  );
+
+
+$('profitTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'profit'
+      )
+  );
+
+
+
+/* ============================================================
+   HOS CALCULATOR
+   ============================================================ */
+
+function calculateHos() {
+
+
+  const driveRemaining =
+    n(
+      'driveRemaining'
+    );
+
+
+  const windowRemaining =
+    n(
+      'windowRemaining'
+    );
+
+
+  const cycleRemaining =
+    n(
+      'cycleRemaining'
+    );
+
+
+  const driveSinceBreak =
+    n(
+      'driveSinceBreak'
+    );
+
+
+  const tripDrive =
+    n(
+      'tripDrive'
+    );
+
+
+  const tripDuty =
+    n(
+      'tripDuty'
+    );
+
+
+  const buffer =
+    n(
+      'buffer'
+    );
+
+
+  const breakPlanned =
+
+    $('breakPlanned').value ===
+    'yes';
+
+
+
+  if (
+    driveRemaining <= 0 ||
+    windowRemaining <= 0 ||
+    cycleRemaining <= 0 ||
+    tripDrive <= 0
+  ) {
+
+    $('hosStatus')
+      .className =
+      'result-status tight';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'More information needed';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'Enter positive remaining ELD clocks and planned driving time.';
+
+
+    return;
+
+  }
+
+
+
+  const breakTime =
+    breakPlanned
+      ? 0.5
+      : 0;
+
+
+
+  const totalWindowDemand =
+
+    tripDrive +
+    tripDuty +
+    buffer +
+    breakTime;
+
+
+
+  const totalCycleDemand =
+
+    tripDrive +
+    tripDuty +
+    breakTime;
+
+
+
+  const driveAfter =
+
+    driveRemaining -
+    tripDrive;
+
+
+
+  const windowAfter =
+
+    windowRemaining -
+    totalWindowDemand;
+
+
+
+  const cycleAfter =
+
+    cycleRemaining -
+    totalCycleDemand;
+
+
+
+  const breakNeeded =
+
+    (
+      driveSinceBreak +
+      tripDrive
+    ) > 8;
+
+
+
+  const warnings =
+    [];
+
+
+
+  if (
+    driveAfter < 0
+  ) {
+
+    warnings.push(
+      'Planned driving exceeds the remaining driving clock.'
+    );
+
+  }
+
+
+
+  if (
+    windowAfter < 0
+  ) {
+
+    warnings.push(
+      'The planned move exceeds the remaining 14-hour window.'
+    );
+
+  }
+
+
+
+  if (
+    cycleAfter < 0
+  ) {
+
+    warnings.push(
+      'The planned move exceeds the remaining cycle hours.'
+    );
+
+  }
+
+
+
+  if (
+    breakNeeded &&
+    !breakPlanned
+  ) {
+
+    warnings.push(
+      'A qualifying 30-minute interruption appears necessary before completing the planned driving.'
+    );
+
+  }
+
+
+
+  if (
+    breakPlanned &&
+    windowRemaining <
+    totalWindowDemand
+  ) {
+
+    warnings.push(
+      'Remember that the planned break still uses time inside the ordinary 14-hour window.'
+    );
+
+  }
+
+
+
+  const feasible =
+
+    driveAfter >= 0 &&
+
+    windowAfter >= 0 &&
+
+    cycleAfter >= 0 &&
+
+    (
+      !breakNeeded ||
+      breakPlanned
+    );
+
+
+
+  const tight =
+
+    feasible &&
+
+    (
+      driveAfter < 1 ||
+      windowAfter < 1 ||
+      cycleAfter < 2
+    );
+
+
+
+  if (
+    !feasible
+  ) {
+
+    $('hosStatus')
+      .className =
+      'result-status no';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Not Feasible';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The current clocks do not support this plan as entered.';
+
+  }
+
+  else if (
+    tight
+  ) {
+
+    $('hosStatus')
+      .className =
+      'result-status tight';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Tight';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The move appears possible, but there is very little operating cushion.';
+
+  }
+
+  else {
+
+    $('hosStatus')
+      .className =
+      'result-status good';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Good';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The entered clocks support the planned move with remaining time.';
+
+  }
+
+
+
+  $('driveAfter')
+    .textContent =
+    hours(
+      driveAfter
+    );
+
+
+  $('windowAfter')
+    .textContent =
+    hours(
+      windowAfter
+    );
+
+
+  $('cycleAfter')
+    .textContent =
+    hours(
+      cycleAfter
+    );
+
+
+  $('tripDemand')
+    .textContent =
+    hours(
+      totalWindowDemand
+    );
+
+
+
+  $('hosWarnings')
+    .innerHTML =
+
+    warnings.map(
+      warning =>
+
+        '<div class="warning">' +
+        warning +
+        '</div>'
+
+    ).join('');
+
+}
+
+
+
+$('calculateHos')
+  .addEventListener(
+    'click',
+    calculateHos
+  );
+
+
+
+$('resetHos')
+  .addEventListener(
+    'click',
+    () => {
+
+
+      [
+        'driveRemaining',
+        'windowRemaining',
+        'cycleRemaining',
+        'tripDrive',
+        'tripDuty'
+      ]
+      .forEach(
+        id =>
+          $(id).value =
+          ''
+      );
+
+
+      $('driveSinceBreak').value =
+        '0';
+
+
+      $('buffer').value =
+        '0.5';
+
+
+      $('breakPlanned').value =
+        'no';
+
+
+      $('hosStatus')
+        .className =
+        'result-status';
+
+
+      $('hosStatusMain')
+        .textContent =
+        'Enter driver clocks';
+
+
+      $('hosStatusDetail')
+        .textContent =
+        'Use the current ELD values before assigning or confirming the move.';
+
+
+      [
+        'driveAfter',
+        'windowAfter',
+        'cycleAfter',
+        'tripDemand'
+      ]
+      .forEach(
+        id =>
+          $(id).textContent =
+          '—'
+      );
+
+
+      $('hosWarnings')
+        .innerHTML =
+        '';
+
+    }
+  );
+
+
+
+/* ============================================================
+   PROFIT CALCULATOR
+   ============================================================ */
+
+function calculateProfit() {
+
+
+  const linehaul =
+    n(
+      'linehaul'
+    );
+
+
+  const fuel =
+    n(
+      'fuel'
+    );
+
+
+  const otherRevenue =
+    n(
+      'otherRevenue'
+    );
+
+
+  const loadedMiles =
+    n(
+      'loadedMiles'
+    );
+
+
+  const deadheadMiles =
+    n(
+      'deadheadMiles'
+    );
+
+
+  const fuelCost =
+    n(
+      'fuelCost'
+    );
+
+
+  const permitCost =
+    n(
+      'permitCost'
+    );
+
+
+  const escortCost =
+    n(
+      'escortCost'
+    );
+
+
+  const tollCost =
+    n(
+      'tollCost'
+    );
+
+
+  const lodgingCost =
+    n(
+      'lodgingCost'
+    );
+
+
+  const otherCost =
+    n(
+      'otherCost'
+    );
+
+
+  const dispatchRate =
+    n(
+      'dispatchRate'
+    );
+
+
+
+  const grossRevenue =
+
+    linehaul +
+    fuel +
+    otherRevenue;
+
+
+
+  const totalMiles =
+
+    loadedMiles +
+    deadheadMiles;
+
+
+
+  const totalCosts =
+
+    fuelCost +
+    permitCost +
+    escortCost +
+    tollCost +
+    lodgingCost +
+    otherCost;
+
+
+
+  const grossProfit =
+
+    grossRevenue -
+    totalCosts;
+
+
+
+  const margin =
+
+    grossRevenue > 0
+
+      ? (
+          grossProfit /
+          grossRevenue
+        ) *
+        100
+
+      : 0;
+
+
+
+  const dispatchFee =
+
+    grossRevenue *
+
+    (
+      dispatchRate /
+      100
+    );
+
+
+
+  const carrierAfterFee =
+
+    grossRevenue -
+    dispatchFee -
+    totalCosts;
+
+
+
+  const rpm =
+
+    totalMiles > 0
+
+      ? grossRevenue /
+        totalMiles
+
+      : 0;
+
+
+
+  const profitPerMile =
+
+    totalMiles > 0
+
+      ? grossProfit /
+        totalMiles
+
+      : 0;
+
+
+
+  const breakEvenRevenue =
+
+    totalCosts +
+    dispatchFee;
+
+
+
+  $('grossRevenue')
+    .textContent =
+    money(
+      grossRevenue
+    );
+
+
+  $('revenueMile')
+    .textContent =
+
+    totalMiles
+
+      ? '$' +
+        rpm.toFixed(2)
+
+      : '—';
+
+
+  $('totalCosts')
+    .textContent =
+    money(
+      totalCosts
+    );
+
+
+  $('grossProfit')
+    .textContent =
+    money(
+      grossProfit
+    );
+
+
+  $('grossProfit')
+    .className =
+
+    'metric-value ' +
+
+    (
+      grossProfit >= 0
+
+        ? 'money-positive'
+
+        : 'money-negative'
+    );
+
+
+  $('profitMargin')
+    .textContent =
+
+    margin.toFixed(1) +
+    '%';
+
+
+  $('dispatchFee')
+    .textContent =
+    money(
+      dispatchFee
+    );
+
+
+  $('carrierAfterFee')
+    .textContent =
+    money(
+      carrierAfterFee
+    );
+
+
+  $('profitPerMile')
+    .textContent =
+
+    totalMiles
+
+      ? '$' +
+        profitPerMile.toFixed(2)
+
+      : '—';
+
+
+
+  if (
+    grossProfit < 0
+  ) {
+
+    $('profitStatus')
+      .className =
+      'result-status no';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Loss';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The entered load expenses exceed the gross revenue.';
+
+  }
+
+  else if (
+    margin < 10
+  ) {
+
+    $('profitStatus')
+      .className =
+      'result-status tight';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Thin Margin';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The load is positive, but the estimated margin is narrow.';
+
+  }
+
+  else {
+
+    $('profitStatus')
+      .className =
+      'result-status good';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Positive';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The entered revenue exceeds the estimated load costs.';
+
+  }
+
+
+
+  if (
+    totalMiles > 0
+  ) {
+
+    $('breakEven')
+      .textContent =
+
+      'Estimated break-even revenue: ' +
+
+      money(
+        breakEvenRevenue
+      )
+
+      +
+
+      ' · approximately $' +
+
+      (
+        breakEvenRevenue /
+        totalMiles
+      ).toFixed(2)
+
+      +
+
+      ' per total mile.';
+
+  }
+
+  else {
+
+    $('breakEven')
+      .textContent =
+
+      'Estimated break-even revenue: ' +
+
+      money(
+        breakEvenRevenue
+      )
+
+      +
+
+      '. Enter mileage to calculate break-even RPM.';
+
+  }
+
+}
+
+
+
+$('calculateProfit')
+  .addEventListener(
+    'click',
+    calculateProfit
+  );
+
+
+
+$('resetProfit')
+  .addEventListener(
+    'click',
+    () => {
+
+
+      [
+        'linehaul',
+        'otherRevenue',
+        'loadedMiles',
+        'deadheadMiles',
+        'fuelCost',
+        'permitCost',
+        'escortCost',
+        'tollCost',
+        'lodgingCost',
+        'otherCost'
+      ]
+      .forEach(
+        id =>
+          $(id).value =
+          ''
+      );
+
+
+      $('fuel').value =
+        '0';
+
+
+      $('dispatchRate').value =
+        '7';
+
+
+      [
+        'grossRevenue',
+        'revenueMile',
+        'totalCosts',
+        'grossProfit',
+        'profitMargin',
+        'dispatchFee',
+        'carrierAfterFee',
+        'profitPerMile'
+      ]
+      .forEach(
+        id => {
+
+          $(id).textContent =
+            '—';
+
+          $(id).className =
+            'metric-value';
+
+        }
+      );
+
+
+      $('profitStatus')
+        .className =
+        'result-status';
+
+
+      $('profitStatusMain')
+        .textContent =
+        'Enter rate and costs';
+
+
+      $('profitStatusDetail')
+        .textContent =
+        'Compare revenue against the expected load expenses.';
+
+
+      $('breakEven')
+        .textContent =
+        'Enter the load information to calculate the break-even rate.';
+
+    }
+  );
+
+
+</script>
+
+
+</body>
+
+</html>
