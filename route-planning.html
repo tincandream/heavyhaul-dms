@@ -1288,16 +1288,60 @@ function renderGolden(){
           </div>
         </div>
 
-        <div class="meta">
-          <b>${g.origin}</b> → <b>${g.destination}</b><br>
-          ${g.highways ? `Highways: ${g.highways}<br>` : ''}
-          Successful uses: ${g.successful_uses || 0}
-          · Last used: ${used}
-          · Last verified: ${verified}
-        </div>
+   <div class="meta">
+  <b>${g.origin}</b> → <b>${g.destination}</b><br>
 
-        ${note ? `<div class="golden-notes">${note}</div>` : ''}
-        ${heavyExtra}
+  ${g.highways
+    ? `Primary Corridor: ${g.highways}<br>`
+    : ''}
+
+  ${g.lane_type
+    ? `Lane Type: ${pretty(g.lane_type)}<br>`
+    : ''}
+
+  ${g.evidence_class
+    ? `Evidence: ${pretty(g.evidence_class)}<br>`
+    : ''}
+
+  ${g.confidence_level
+    ? `Confidence: ${pretty(g.confidence_level)}<br>`
+    : ''}
+
+  Successful uses:
+  ${g.successful_uses || 0}
+
+  · Last used:
+  ${used}
+
+  · Last verified:
+  ${verified}
+</div>
+
+
+${g.freight_reason
+  ? `
+    <div class="why-golden">
+
+      <div class="why-golden-title">
+        Why this is a Golden Route
+      </div>
+
+      <div class="why-golden-text">
+        ${g.freight_reason}
+      </div>
+
+    </div>
+  `
+  : ''
+}
+
+
+${note
+  ? `<div class="golden-notes">${note}</div>`
+  : ''}
+
+
+${heavyExtra}
 
         <div class="actions">
           <button type="button" class="action" data-do="use">Use as Starting Point</button>
