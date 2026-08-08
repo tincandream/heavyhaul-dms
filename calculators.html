@@ -1,2723 +1,4856 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Load Workspace — Heavy Haul DMS</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{
-  --bg:#f4f5f7; --card:#fff; --ink:#16181d; --muted:#6b7280; --line:#e3e6ea;
-  --accent:#1d4ed8; --accent-soft:#eef2ff;
-  --ok:#15803d; --ok-soft:#e8f5ec;
-  --warn:#b45309; --warn-soft:#fdf3e3;
-  --bad:#b91c1c; --bad-soft:#fdeaea;
-  --radius:10px; --shadow:0 1px 3px rgba(16,20,30,.08);
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 64px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-h1,h2,h3{margin:0}
-a{color:var(--accent)}
-.muted{color:var(--muted)}
-.small{font-size:12px}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.spacer{flex:1}
-.hide{display:none !important}
 
-/* hero */
-.hero{padding:16px;margin-bottom:12px}
-.hero-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.hero-num{font-size:24px;font-weight:700;letter-spacing:.2px}
-.hero-route{color:var(--muted);margin-top:2px}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;
-  text-transform:uppercase;letter-spacing:.4px;background:var(--accent-soft);color:var(--accent)}
-.pill.ok{background:var(--ok-soft);color:var(--ok)}
-.pill.warn{background:var(--warn-soft);color:var(--warn)}
-.pill.bad{background:var(--bad-soft);color:var(--bad)}
-.pill.grey{background:#eef0f3;color:var(--muted)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-.chip{background:#f0f2f5;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:12px}
-.chip b{font-weight:700}
-.chip.hot{background:var(--warn-soft);border-color:#f2dcae;color:var(--warn)}
-.chip.red{background:var(--bad-soft);border-color:#f3cccc;color:var(--bad)}
-.holdbar{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--bad-soft);
-  border:1px solid #f3cccc;color:var(--bad);font-weight:600}
-.nextbox{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--accent-soft);
-  border:1px solid #dbe2fb}
-.nextbox .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);font-weight:700}
-.flags{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-.flag{padding:8px 10px;border-radius:8px;font-size:13px;border:1px solid transparent}
-.flag.high{background:var(--bad-soft);border-color:#f3cccc;color:var(--bad)}
-.flag.med{background:var(--warn-soft);border-color:#f2dcae;color:var(--warn)}
-.flag.low{background:#eef0f3;border-color:var(--line);color:var(--muted)}
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
 
-/* actions */
-.actionbar{padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
-  background:#fff;color:var(--ink);padding:8px 13px;font-weight:600}
-button:hover{background:#f7f8fa}
-button:disabled{opacity:.5;cursor:not-allowed}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button.primary:hover{filter:brightness(1.08)}
-button.danger{background:#fff;border-color:#f0c2c2;color:var(--bad)}
-button.danger:hover{background:var(--bad-soft)}
-button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
-button.sm{padding:5px 10px;font-size:12px}
-.sep{width:1px;height:24px;background:var(--line)}
-
-/* tabs */
-.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:12px}
-.tabs button{border:none;background:none;border-radius:0;padding:9px 14px;color:var(--muted);
-  border-bottom:2px solid transparent;font-weight:600}
-.tabs button:hover{background:transparent;color:var(--ink)}
-.tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
-.tabs .cnt{display:inline-block;margin-left:6px;font-size:11px;background:#eef0f3;color:var(--muted);
-  border-radius:999px;padding:1px 6px;font-weight:700}
-.panel{display:none}
-.panel.on{display:block}
-
-/* tables */
-table{width:100%;border-collapse:collapse;background:#fff}
-th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
-  padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid #f0f2f4;vertical-align:top}
-tr.clickable{cursor:pointer}
-tr.clickable:hover td{background:#f7f9fc}
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
-.sechead{display:flex;align-items:center;gap:10px;margin:0 0 10px}
-.sechead h2{font-size:15px}
-.empty{padding:26px;text-align:center;color:var(--muted)}
-
-/* grids / cards */
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px}
-.kv dt{color:var(--muted);font-size:12px;padding-top:2px}
-.kv dd{margin:0}
-.box{padding:14px}
-.box h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
-
-/* timeline */
-.tl{position:relative;padding-left:22px}
-.tl:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
-.tl-item{position:relative;padding:0 0 18px 4px}
-.tl-item:before{content:"";position:absolute;left:-21px;top:5px;width:10px;height:10px;border-radius:50%;
-  background:#c7ccd4;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
-.tl-item.mile:before{background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.tl-when{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.tl-type{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;color:var(--muted);
-  background:#eef0f3;border-radius:4px;padding:1px 6px}
-.tl-head{font-weight:700;margin-top:2px}
-.tl-body{color:var(--muted);white-space:pre-wrap;margin-top:2px}
-.trans{font-weight:700}
-.trans .arrow{color:var(--muted);margin:0 6px;font-weight:400}
-
-/* forms + dialogs */
-dialog{border:none;border-radius:12px;padding:0;box-shadow:0 12px 40px rgba(10,14,25,.28);
-  width:min(720px,94vw);color:var(--ink)}
-dialog::backdrop{background:rgba(12,16,26,.45)}
-.dlg-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-.dlg-head h3{font-size:15px}
-.dlg-body{padding:16px;max-height:66vh;overflow:auto}
-.dlg-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;background:#fbfcfd}
-.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field.full{grid-column:1/-1}
-label{font-size:12px;font-weight:600;color:var(--muted)}
-input,select,textarea{font:inherit;padding:8px 9px;border:1px solid var(--line);border-radius:7px;
-  background:#fff;color:var(--ink);width:100%}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
-textarea{min-height:76px;resize:vertical}
-.checks{display:flex;gap:14px;flex-wrap:wrap;padding-top:4px}
-.checks label{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--ink);font-size:13px}
-.checks input{width:auto}
-.fs{border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:12px}
-.fs legend{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding:0 6px}
-.err{color:var(--bad);font-size:12px;font-weight:600}
-
-/* toast */
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
-  background:#16181d;color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;
-  opacity:0;transition:.22s;z-index:9999;pointer-events:none;max-width:90vw}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast.bad{background:var(--bad)}
-</style>
-
+<title>Calculators — Heavy Haul Command</title>
 
 <link rel="stylesheet" href="theme.css">
-  
+<link rel="stylesheet" href="dashboard.css">
+
+
+<style>
+
+/* ============================================================
+   HEAVY HAUL COMMAND
+   CALCULATORS
+   ============================================================ */
+
+:root {
+
+  --calc-ink:
+    var(--hh-ink, #3C3A4B);
+
+  --calc-blue:
+    var(--hh-blue, #7FA5B5);
+
+  --calc-blue-dark:
+    var(--hh-blue-dark, #668C9D);
+
+  --calc-blue-soft:
+    var(--hh-blue-soft, #EAF3F6);
+
+  --calc-pink:
+    var(--hh-pink, #D86A8E);
+
+  --calc-pink-soft:
+    var(--hh-pink-soft, #F8E5EC);
+
+  --calc-lime:
+    var(--hh-lime, #B8C34A);
+
+  --calc-lime-soft:
+    var(--hh-lime-soft, #F1F4D8);
+
+  --calc-white:
+    #FFFFFF;
+
+  --calc-muted:
+    #747B82;
+
+  --calc-line:
+    #D9DEE1;
+
+}
+
+
+* {
+  box-sizing:
+    border-box;
+}
+
+
+body {
+  margin:
+    0;
+}
+
+
+main {
+  width:
+    min(1400px, 100%);
+
+  margin:
+    0 auto 60px;
+
+  padding:
+    28px 24px 60px;
+}
+
+
+/* ============================================================
+   PAGE INTRO
+   ============================================================ */
+
+.calc-intro {
+  margin:
+    0 0 28px;
+}
+
+
+.calc-intro h1 {
+  margin:
+    0;
+
+  font-family:
+    "Cinzel",
+    serif;
+
+  font-size:
+    30px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    1px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-intro p {
+  max-width:
+    720px;
+
+  margin:
+    6px 0 0;
+
+  font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-size:
+    19px;
+
+  font-style:
+    italic;
+
+  color:
+    var(--calc-blue);
+}
+
+
+/* ============================================================
+   TOOL SWITCHER
+   ============================================================ */
+
+.tool-tabs {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    28px;
+
+  margin:
+    0 0 26px;
+
+  border-bottom:
+    1px solid
+    var(--calc-line);
+}
+
+
+.tool-tabs button {
+  min-height:
+    44px;
+
+  margin:
+    0;
+
+  padding:
+    0 0 10px;
+
+  background:
+    transparent;
+
+  color:
+    var(--calc-ink);
+
+  border:
+    0;
+
+  border-bottom:
+    3px solid transparent;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    13px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .8px;
+
+  cursor:
+    pointer;
+}
+
+
+.tool-tabs button:hover {
+  color:
+    var(--calc-blue-dark);
+}
+
+
+.tool-tabs button.active {
+  color:
+    var(--calc-blue-dark);
+
+  border-bottom-color:
+    var(--calc-blue);
+}
+
+
+/* ============================================================
+   CALCULATOR PANELS
+   ============================================================ */
+
+.calc-panel {
+  display:
+    none;
+}
+
+
+.calc-panel.active {
+  display:
+    block;
+}
+
+
+.calc-layout {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(300px, .9fr);
+
+  gap:
+    22px;
+
+  align-items:
+    start;
+}
+
+
+/* ============================================================
+   CARD
+   ============================================================ */
+
+.calc-card {
+  padding:
+    22px;
+
+  background:
+    var(--calc-white);
+
+  border:
+    1px solid
+    var(--calc-line);
+
+  box-shadow:
+    0 5px 18px
+    rgba(60,58,75,.05);
+}
+
+
+.calc-card + .calc-card {
+  margin-top:
+    16px;
+}
+
+
+.calc-card h2 {
+  margin:
+    0 0 4px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    17px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .5px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-card h3 {
+  margin:
+    0 0 12px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    14px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .4px;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.calc-hint {
+  margin:
+    0 0 20px;
+
+  color:
+    var(--calc-muted);
+
+  font-size:
+    12.5px;
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.form-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    15px;
+}
+
+
+.field.full {
+  grid-column:
+    1 / -1;
+}
+
+
+.field label {
+  display:
+    block;
+
+  margin:
+    0 0 5px;
+
+  color:
+    #626970;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    12px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .3px;
+}
+
+
+.field .explain {
+  margin-top:
+    4px;
+
+  color:
+    #8A9096;
+
+  font-size:
+    10.5px;
+}
+
+
+.field input,
+.field select,
+.field textarea {
+  width:
+    100%;
+
+  padding:
+    10px 11px;
+
+  background:
+    #FFFFFF;
+
+  color:
+    var(--calc-ink);
+
+  border:
+    1px solid
+    #BEC8CD;
+
+  border-radius:
+    0;
+
+  font:
+    inherit;
+
+  outline:
+    none;
+}
+
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color:
+    var(--calc-blue);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(127,165,181,.13);
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.calc-actions {
+  display:
+    flex;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    9px;
+
+  margin-top:
+    20px;
+}
+
+
+.calc-btn {
+  padding:
+    10px 18px;
+
+  background:
+    var(--calc-blue);
+
+  color:
+    white;
+
+  border:
+    1px solid
+    var(--calc-blue);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    13px;
+
+  letter-spacing:
+    .6px;
+
+  cursor:
+    pointer;
+}
+
+
+.calc-btn:hover {
+  background:
+    var(--calc-blue-dark);
+
+  border-color:
+    var(--calc-blue-dark);
+}
+
+
+.calc-btn.secondary {
+  background:
+    white;
+
+  color:
+    var(--calc-blue-dark);
+
+  border-color:
+    var(--calc-line);
+}
+
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+
+.result-card {
+  position:
+    sticky;
+
+  top:
+    20px;
+}
+
+
+.result-status {
+  margin-bottom:
+    18px;
+
+  padding:
+    16px;
+
+  border-left:
+    5px solid
+    var(--calc-blue);
+
+  background:
+    var(--calc-blue-soft);
+}
+
+
+.result-status.good {
+  border-left-color:
+    var(--calc-lime);
+
+  background:
+    var(--calc-lime-soft);
+}
+
+
+.result-status.tight {
+  border-left-color:
+    var(--calc-pink);
+
+  background:
+    var(--calc-pink-soft);
+}
+
+
+.result-status.no {
+  border-left-color:
+    #B04B5C;
+
+  background:
+    #F8E5E8;
+}
+
+
+.status-label {
+  margin-bottom:
+    2px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    11px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    1px;
+
+  text-transform:
+    uppercase;
+}
+
+
+.status-main {
+  font-family:
+    "Cinzel",
+    serif;
+
+  font-size:
+    22px;
+
+  font-weight:
+    600;
+
+  color:
+    var(--calc-ink);
+}
+
+
+.status-detail {
+  margin-top:
+    5px;
+
+  color:
+    #646B71;
+
+  font-size:
+    12px;
+}
+
+
+/* ============================================================
+   RESULT METRICS
+   ============================================================ */
+
+.metrics {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    10px;
+}
+
+
+.metric {
+  min-height:
+    86px;
+
+  padding:
+    13px;
+
+  background:
+    #FBFCFC;
+
+  border:
+    1px solid
+    var(--calc-line);
+
+  border-top:
+    3px solid
+    var(--calc-blue);
+}
+
+
+.metric:nth-child(2n) {
+  border-top-color:
+    var(--calc-lime);
+}
+
+
+.metric:nth-child(3n) {
+  border-top-color:
+    var(--calc-pink);
+}
+
+
+.metric-label {
+  color:
+    var(--calc-muted);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    10.5px;
+
+  font-weight:
+    500;
+
+  letter-spacing:
+    .6px;
+
+  text-transform:
+    uppercase;
+}
+
+
+.metric-value {
+  margin-top:
+    6px;
+
+  color:
+    var(--calc-ink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size:
+    23px;
+
+  font-weight:
+    500;
+}
+
+
+/* ============================================================
+   WARNINGS
+   ============================================================ */
+
+.warnings {
+  margin-top:
+    16px;
+}
+
+
+.warning {
+  margin-top:
+    8px;
+
+  padding:
+    10px 12px;
+
+  background:
+    var(--calc-pink-soft);
+
+  color:
+    #85455C;
+
+  border-left:
+    3px solid
+    var(--calc-pink);
+
+  font-size:
+    12px;
+}
+
+
+.notice {
+  margin-top:
+    18px;
+
+  padding-top:
+    14px;
+
+  border-top:
+    1px solid
+    var(--calc-line);
+
+  color:
+    #7B8187;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+}
+
+
+/* ============================================================
+   PROFIT SUMMARY
+   ============================================================ */
+
+.money-positive {
+  color:
+    #657025;
+}
+
+
+.money-negative {
+  color:
+    #A14666;
+}
+
+
+/* ============================================================
+   BREAK EVEN
+   ============================================================ */
+
+.break-even {
+  margin-top:
+    16px;
+
+  padding:
+    13px;
+
+  background:
+    var(--calc-blue-soft);
+
+  border-left:
+    3px solid
+    var(--calc-blue);
+
+  color:
+    var(--calc-ink);
+
+  font-size:
+    12px;
+}
+
+
+
+
+/* ============================================================
+   ACCESSORIALS / DETENTION
+   ============================================================ */
+
+.field textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.accessorial-subsection {
+  margin-top: 16px;
+  padding: 16px;
+  background: #FBFCFC;
+  border: 1px solid var(--calc-line);
+}
+
+.accessorial-subsection.hidden {
+  display: none;
+}
+
+.accessorial-subsection h3 {
+  margin: 0 0 12px;
+  color: var(--calc-blue-dark);
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  background: #FBFCFC;
+  border: 1px solid var(--calc-line);
+  color: #626970;
+  font-size: 12px;
+}
+
+.check-item input {
+  width: auto;
+  margin-top: 2px;
+}
+
+.accessorial-summary {
+  padding: 14px;
+  background: var(--calc-blue-soft);
+  border-left: 4px solid var(--calc-blue);
+  color: var(--calc-ink);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.accessorial-message {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.accessorial-message.show {
+  display: block;
+}
+
+.accessorial-message.ok {
+  background: var(--calc-lime-soft);
+  color: #5D6723;
+  border-left: 3px solid var(--calc-lime);
+}
+
+.accessorial-message.error {
+  background: var(--calc-pink-soft);
+  color: #8E3E58;
+  border-left: 3px solid var(--calc-pink);
+}
+
+@media (max-width: 560px) {
+  .check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 850px) {
+
+  .calc-layout {
+    grid-template-columns:
+      1fr;
+  }
+
+  .result-card {
+    position:
+      static;
+  }
+
+}
+
+
+@media (max-width: 560px) {
+
+  main {
+    padding:
+      20px 14px 50px;
+  }
+
+  .form-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .metrics {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+
+</style>
+
 </head>
+
+
 <body>
+
+
+<!-- Global Heavy Haul Command navigation -->
 
 <header></header>
 
-<div class="wrap">
 
-  <div id="loadErr" class="card box hide" style="border-color:#f3cccc;background:var(--bad-soft);color:var(--bad)"></div>
+<main>
 
-  <!-- HERO -->
-  <section id="hero" class="card hero">
-    <div class="muted">Loading load…</div>
+
+  <!-- ========================================================
+       PAGE HEADER
+       ======================================================== -->
+
+  <section class="calc-intro">
+
+    <h1>CALCULATORS</h1>
+
+    <p>
+      Quick planning tools for hours of service, load profitability, detention and accessorial charges.
+    </p>
+
   </section>
 
-  <!-- ACTIONS -->
-  <section id="actions" class="card actionbar"></section>
 
-  <!-- TABS -->
-  <nav class="tabs" id="tabstrip">
-    <button data-tab="overview" class="on">Overview</button>
-    <button data-tab="timeline">Timeline <span class="cnt" id="cnt-timeline">0</span></button>
-    <button data-tab="permits">Permits <span class="cnt" id="cnt-permits">0</span></button>
-    <button data-tab="escorts">Escorts <span class="cnt" id="cnt-escorts">0</span></button>
-    <button data-tab="checklist">Checklist <span class="cnt" id="cnt-checklist">0</span></button>
-    <button data-tab="expenses">Expenses</button>
-    <button data-tab="accessorials">Accessorials <span class="cnt" id="cnt-accessorials">0</span></button>
-    <button data-tab="documents">
-  Documents
-  <span class="cnt" id="cnt-documents">0</span>
-</button>
-    <button data-tab="notes">Notes <span class="cnt" id="cnt-notes">0</span></button>
+
+  <!-- ========================================================
+       CALCULATOR TABS
+       ======================================================== -->
+
+  <nav class="tool-tabs">
+
+    <button
+      type="button"
+      id="hosTab"
+      class="active">
+
+      HOS Calculator
+
+    </button>
+
+
+    <button
+      type="button"
+      id="profitTab">
+
+      Dispatch Profit Calculator
+
+    </button>
+
+
+    <button
+      type="button"
+      id="accessorialTab">
+
+      Accessorials &amp; Detention
+
+    </button>
+
   </nav>
 
-  <section class="panel on" id="tab-overview"></section>
-  <section class="panel"    id="tab-timeline"></section>
-  <section class="panel"    id="tab-permits"></section>
-  <section class="panel"    id="tab-escorts"></section>
-  <section class="panel"    id="tab-checklist"></section>
-  <section class="panel"    id="tab-expenses"></section>
-  <section class="panel"    id="tab-accessorials"></section>
-  <section class="panel" id="tab-documents"></section>
-  <section class="panel"    id="tab-notes"></section>
-  
-
-</div>
-
-  <!-- ============ DOCUMENT UPLOAD DIALOG ============ -->
-<dialog id="dlgDoc">
-  <div class="dlg-head"><h3>Upload Document</h3></div>
-  <div class="dlg-body">
-    <div class="fgrid">
-      <div class="field full"><label for="dc_file">File *</label>
-        <input type="file" id="dc_file"></div>
-      <div class="field"><label for="dc_type">Type</label>
-        <select id="dc_type">
-          <option value="rate_con">Rate confirmation</option>
-          <option value="pod">POD</option>
-          <option value="bol">BOL</option>
-          <option value="permit">Permit</option>
-          <option value="escort_agreement">Escort agreement</option>
-          <option value="insurance">Insurance</option>
-          <option value="scale_ticket">Scale ticket</option>
-          <option value="photo">Photo</option>
-          <option value="invoice">Invoice</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="field"><label for="dc_title">Title</label>
-        <input id="dc_title" placeholder="optional label"></div>
-      <div class="field full"><label for="dc_notes">Notes</label>
-        <textarea id="dc_notes"></textarea></div>
-    </div>
-    <div id="dc_err" class="err"></div>
-    <div id="dc_progress" class="small muted" style="margin-top:8px"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="dc_save">Upload</button>
-    <button onclick="dlgDoc.close()">Cancel</button>
-  </div>
-</dialog>
-
-<!-- ============ CHECK-IN DIALOG ============ -->
-<dialog id="dlgCheckIn">
-  <div class="dlg-head"><h3>Driver Check-In</h3></div>
-  <div class="dlg-body">
-    <div class="fgrid">
-      <div class="field"><label for="ci_type">Check-in type</label>
-        <select id="ci_type">
-          <option value="departure">Departure</option>
-          <option value="en_route" selected>En route</option>
-          <option value="fuel">Fuel stop</option>
-          <option value="overnight">Overnight / shutdown</option>
-          <option value="at_pickup">Arrived at pickup</option>
-          <option value="loaded">Loaded</option>
-          <option value="at_delivery">Arrived at delivery</option>
-          <option value="unloaded">Unloaded</option>
-          <option value="delay">Delay / problem</option>
-        </select>
-      </div>
-      <div class="field"><label for="ci_when">Occurred at</label>
-        <input type="datetime-local" id="ci_when"></div>
-      <div class="field"><label for="ci_city">City</label><input id="ci_city" placeholder="Birmingham"></div>
-      <div class="field"><label for="ci_state">State</label><input id="ci_state" maxlength="2" placeholder="AL" style="text-transform:uppercase"></div>
-      <div class="field"><label for="ci_miles">Odometer / miles remaining</label><input type="number" id="ci_miles" placeholder="240"></div>
-      <div class="field"><label for="ci_eta">Updated ETA</label><input type="datetime-local" id="ci_eta"></div>
-      <div class="field full"><label for="ci_notes">Notes</label>
-        <textarea id="ci_notes" placeholder="Fueled at Love's, weather clear, on schedule."></textarea></div>
-    </div>
-    <div id="ci_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="ci_save">Log Check-In</button>
-    <button onclick="dlgCheckIn.close()">Cancel</button>
-    <span class="spacer"></span>
-    <span class="small muted">Also posts a check_in event to the timeline.</span>
-  </div>
-</dialog>
-
- <!-- ============ PRIVATE NOTE DIALOG ============ -->
-<dialog id="dlgPrivate">
-  <div class="dlg-head"><h3 id="pv_title">Private Note</h3></div>
-  <div class="dlg-body">
-    <input type="hidden" id="pv_id">
-    <div class="fgrid">
-      <div class="field full"><label for="pv_body">Note *</label>
-        <textarea id="pv_body" placeholder="Just for you — never posted to the timeline."></textarea></div>
-      <div class="field full"><div class="checks">
-        <label><input type="checkbox" id="pv_pinned"> Pin to top</label>
-      </div></div>
-    </div>
-    <div id="pv_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="pv_save">Save Note</button>
-    <button onclick="dlgPrivate.close()">Cancel</button>
-    <span class="spacer"></span>
-    <button class="danger sm hide" id="pv_delbtn">Delete</button>
-  </div>
-</dialog> 
-
-<!-- ============ HOLD DIALOG ============ -->
-<dialog id="dlgHold">
-  <div class="dlg-head"><h3>Place Load On Hold</h3></div>
-  <div class="dlg-body">
-    <div class="fgrid">
-      <div class="field full"><label for="hd_reason">Reason</label>
-        <select id="hd_reason">
-          <option value="Awaiting permits">Awaiting permits</option>
-          <option value="Awaiting escorts">Awaiting escorts</option>
-          <option value="Route survey pending">Route survey pending</option>
-          <option value="Weather / wind">Weather / wind</option>
-          <option value="Curfew / travel restriction">Curfew / travel restriction</option>
-          <option value="Shipper not ready">Shipper not ready</option>
-          <option value="Consignee not ready">Consignee not ready</option>
-          <option value="Equipment issue">Equipment issue</option>
-          <option value="Credit / payment issue">Credit / payment issue</option>
-          <option value="Other">Other</option>
-        </select></div>
-      <div class="field full"><label for="hd_notes">Detail</label>
-        <textarea id="hd_notes" placeholder="TN permit rejected, reapplying Monday AM."></textarea></div>
-    </div>
-    <div id="hd_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="danger" id="hd_save">Place On Hold</button>
-    <button onclick="dlgHold.close()">Cancel</button>
-  </div>
-</dialog>
-
-<!-- ============ STATUS DIALOG ============ -->
-<dialog id="dlgStatus">
-  <div class="dlg-head"><h3 id="st_title">Change Status</h3></div>
-  <div class="dlg-body">
-    <div class="field full"><label for="st_notes">Note (optional)</label>
-      <textarea id="st_notes" placeholder="Driver dispatched, permits in hand."></textarea></div>
-    <div id="st_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="st_save">Confirm</button>
-    <button onclick="dlgStatus.close()">Cancel</button>
-  </div>
-</dialog>
-
-<!-- ============ PERMIT DIALOG ============ -->
-<dialog id="dlgPermit">
-  <div class="dlg-head"><h3 id="pm_title">Permit</h3><span class="spacer"></span>
-    <span class="small muted mono" id="pm_idlabel"></span></div>
-  <div class="dlg-body">
-    <input type="hidden" id="pm_id">
-    <div class="fgrid">
-      <div class="field"><label for="pm_state">State *</label>
-        <input id="pm_state" maxlength="2" placeholder="TN" style="text-transform:uppercase"></div>
-      <div class="field"><label for="pm_status">Status *</label>
-        <select id="pm_status">
-          <option value="not_required">Not required</option>
-          <option value="needed" selected>Needed</option>
-          <option value="applied">Applied</option>
-          <option value="pending">Pending</option>
-          <option value="issued">Issued</option>
-          <option value="rejected">Rejected</option>
-          <option value="expired">Expired</option>
-          <option value="amended">Amended</option>
-          <option value="cancelled">Cancelled</option>
-        </select></div>
-      <div class="field"><label for="pm_permit_number">Permit number</label><input id="pm_permit_number"></div>
-      <div class="field"><label for="pm_issuing_authority">Issuing authority</label>
-        <input id="pm_issuing_authority" placeholder="TDOT"></div>
-      <div class="field"><label for="pm_permit_service_id">Permit service ID (uuid)</label>
-        <input id="pm_permit_service_id" class="mono" placeholder="optional"></div>
-      <div class="field"><label for="pm_fee">State fee ($)</label><input type="number" step="0.01" id="pm_fee"></div>
-      <div class="field"><label for="pm_service_fee">Service fee ($)</label><input type="number" step="0.01" id="pm_service_fee"></div>
-    </div>
-
-    <fieldset class="fs"><legend>Dates</legend>
-      <div class="fgrid">
-        <div class="field"><label for="pm_applied_at">Applied at</label><input type="datetime-local" id="pm_applied_at"></div>
-        <div class="field"><label for="pm_issued_at">Issued at</label><input type="datetime-local" id="pm_issued_at"></div>
-        <div class="field"><label for="pm_valid_from">Valid from</label><input type="date" id="pm_valid_from"></div>
-        <div class="field"><label for="pm_valid_to">Valid to</label><input type="date" id="pm_valid_to"></div>
-      </div>
-    </fieldset>
-
-    <fieldset class="fs"><legend>Escorts required by this permit</legend>
-      <div class="checks">
-        <label><input type="checkbox" id="pm_escort_front"> Front</label>
-        <label><input type="checkbox" id="pm_escort_rear"> Rear</label>
-        <label><input type="checkbox" id="pm_escort_police"> Police</label>
-        <label><input type="checkbox" id="pm_escort_high_pole"> High pole</label>
-      </div>
-    </fieldset>
-
-    <fieldset class="fs"><legend>Travel restrictions</legend>
-      <div class="checks" style="margin-bottom:10px">
-        <label><input type="checkbox" id="pm_daylight_only"> Daylight only</label>
-        <label><input type="checkbox" id="pm_weekend_travel_allowed"> Weekend travel allowed</label>
-        <label><input type="checkbox" id="pm_holiday_travel_allowed"> Holiday travel allowed</label>
-      </div>
-      <div class="fgrid">
-        <div class="field"><label for="pm_wind_limit_mph">Wind limit (mph)</label>
-          <input type="number" id="pm_wind_limit_mph" placeholder="35"></div>
-        <div class="field full"><label for="pm_travel_time_restrictions">Travel time restrictions</label>
-          <textarea id="pm_travel_time_restrictions" placeholder="Sunrise to sunset. No travel 7-9am / 4-6pm in metro areas."></textarea></div>
-        <div class="field full"><label for="pm_curfew_notes">Curfew notes</label>
-          <textarea id="pm_curfew_notes" placeholder="No movement through Nashville during posted curfew hours."></textarea></div>
-        <div class="field full"><label for="pm_route_restrictions">Route restrictions</label>
-          <textarea id="pm_route_restrictions" placeholder="I-40 E to US-231 S. No SR-96 bridge."></textarea></div>
-      </div>
-    </fieldset>
-
-    <fieldset class="fs"><legend>Driver</legend>
-      <div class="checks" style="margin-bottom:10px">
-        <label><input type="checkbox" id="pm_driver_has_permit"> Driver has permit copy</label>
-      </div>
-      <div class="fgrid">
-        <div class="field"><label for="pm_driver_briefed_at">Driver briefed at</label>
-          <input type="datetime-local" id="pm_driver_briefed_at"></div>
-      </div>
-    </fieldset>
-
-    <div class="field full" style="margin-top:12px"><label for="pm_notes">Notes</label>
-      <textarea id="pm_notes"></textarea></div>
-    <div id="pm_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="pm_savebtn">Save Permit</button>
-    <button onclick="dlgPermit.close()">Cancel</button>
-    <span class="spacer"></span>
-    <button class="danger sm hide" id="pm_delbtn">Delete</button>
-  </div>
-</dialog>
-
-<!-- ============ ESCORT DIALOG ============ -->
-<dialog id="dlgEscort">
-  <div class="dlg-head"><h3 id="es_title">Escort Assignment</h3><span class="spacer"></span>
-    <span class="small muted mono" id="es_idlabel"></span></div>
-  <div class="dlg-body">
-    <input type="hidden" id="es_id">
-    <div class="fgrid">
-      <div class="field"><label for="es_role">Role *</label>
-        <select id="es_role">
-          <option value="front">Front / lead</option>
-          <option value="rear">Rear / chase</option>
-          <option value="high_pole">High pole</option>
-          <option value="police">Police</option>
-          <option value="steer_car">Steer car</option>
-          <option value="route_survey">Route survey</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="field"><label for="es_status">Status *</label>
-        <select id="es_status">
-          <option value="needed" selected>Needed</option>
-          <option value="quoted">Quoted</option>
-          <option value="booked">Booked</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="en_route">En route</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="no_show">No show</option>
-        </select></div>
-
-      <div class="field full"><label for="es_escort_company_id">Escort company ID (uuid)</label>
-        <input id="es_escort_company_id" class="mono" placeholder="optional — paste companies.id"></div>
-      <div class="field full"><label for="es_vehicle_info">Vehicle info</label>
-        <input id="es_vehicle_info" placeholder="White F-150, 18ft pole, AL plates"></div>
-     <div class="field"><label for="es_driver_name">Driver name</label><input id="es_driver_name"></div>
-      <div class="field"><label for="es_driver_phone">Driver phone</label><input id="es_driver_phone" placeholder="(555) 123-4567"></div>
-    </div>
-    </div>
-    <fieldset class="fs"><legend>Money</legend>
-      <div class="fgrid">
-        <div class="field"><label for="es_quoted_rate">Quoted rate ($)</label><input type="number" step="0.01" id="es_quoted_rate"></div>
-        <div class="field"><label for="es_confirmed_rate">Confirmed rate ($)</label><input type="number" step="0.01" id="es_confirmed_rate"></div>
-        <div class="field"><label for="es_actual_cost">Actual cost ($)</label><input type="number" step="0.01" id="es_actual_cost"></div>
-      </div>
-    </fieldset>
-
-    <fieldset class="fs"><legend>Schedule &amp; meet-up</legend>
-      <div class="fgrid">
-        <div class="field"><label for="es_scheduled_start">Scheduled start</label><input type="datetime-local" id="es_scheduled_start"></div>
-        <div class="field"><label for="es_scheduled_end">Scheduled end</label><input type="datetime-local" id="es_scheduled_end"></div>
-        <div class="field"><label for="es_meeting_time">Meeting time</label><input type="datetime-local" id="es_meeting_time"></div>
-        <div class="field full"><label for="es_meeting_location">Meeting location</label>
-          <input id="es_meeting_location" placeholder="Pilot #412, Exit 22 I-40, Jackson TN"></div>
-      </div>
-      <div class="checks" style="margin-top:10px">
-        <label><input type="checkbox" id="es_contacts_exchanged"> Contacts exchanged with driver</label>
-        <label><input type="checkbox" id="es_confirmed_day_before"> Confirmed day before</label>
-      </div>
-    </fieldset>
-
-    <div class="field full" style="margin-top:12px"><label for="es_notes">Notes</label>
-      <textarea id="es_notes"></textarea></div>
-    <div id="es_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="es_savebtn">Save Escort</button>
-    <button onclick="dlgEscort.close()">Cancel</button>
-    <span class="spacer"></span>
-    <button class="danger sm hide" id="es_delbtn">Delete</button>
-  </div>
-</dialog>
-
-<!-- ============ CHARGE DIALOG ============ -->
-<dialog id="dlgCharge">
-  <div class="dlg-head"><h3 id="ch_title">Add Charge</h3></div>
-  <div class="dlg-body">
-    <input type="hidden" id="ch_id">
-    <div class="fgrid">
-      <div class="field"><label for="ch_kind">Kind *</label>
-        <select id="ch_kind">
-          <option value="revenue">Revenue</option>
-          <option value="cost" selected>Cost</option>
-        </select></div>
-      <div class="field"><label for="ch_category">Category *</label>
-        <select id="ch_category">
-          <option value="linehaul">Linehaul</option>
-          <option value="fuel">Fuel</option>
-          <option value="detention">Detention</option>
-          <option value="layover">Layover</option>
-          <option value="tarp">Tarp</option>
-          <option value="permit_fee">Permit fee</option>
-          <option value="permit_service_fee">Permit service fee</option>
-          <option value="escort">Escort</option>
-          <option value="pilot_car">Pilot car</option>
-          <option value="police">Police</option>
-          <option value="driver_pay">Driver pay</option>
-          <option value="fuel_purchase">Fuel purchase</option>
-          <option value="tolls">Tolls</option>
-          <option value="lumper">Lumper</option>
-          <option value="repair">Repair</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="field"><label for="ch_amount">Amount ($) *</label><input type="number" step="0.01" id="ch_amount"></div>
-      <div class="field"><label for="ch_incurred_on">Incurred on</label><input type="date" id="ch_incurred_on"></div>
-      <div class="field full"><label for="ch_description">Description</label>
-        <input id="ch_description" placeholder="AL oversize permit — 3 day"></div>
-      <div class="field full"><div class="checks">
-        <label><input type="checkbox" id="ch_billable"> Billable to customer</label>
-      </div></div>
-    </div>
-    <div id="ch_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="ch_save">Save Charge</button>
-    <button onclick="dlgCharge.close()">Cancel</button>
-    <span class="spacer"></span>
-    <button class="danger sm hide" id="ch_delbtn">Delete</button>
-  </div>
-</dialog>
 
 
-<!-- ============ ACCESSORIAL PROCESSING DIALOG ============ -->
-<dialog id="dlgAccessorial">
-  <div class="dlg-head">
-    <h3 id="ac_title">Process Accessorial</h3>
-    <span class="spacer"></span>
-    <span class="small muted mono" id="ac_idlabel"></span>
-  </div>
-  <div class="dlg-body">
-    <input type="hidden" id="ac_id">
+  <!-- ========================================================
+       HOS CALCULATOR
+       ======================================================== -->
 
-    <div class="fgrid">
-      <div class="field">
-        <label for="ac_status">Status</label>
-        <select id="ac_status">
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="denied">Denied</option>
-          <option value="invoiced">Invoiced</option>
-          <option value="paid">Paid</option>
-        </select>
+  <section
+    class="calc-panel active"
+    id="hosPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>HOS Trip Check</h2>
+
+          <p class="calc-hint">
+            Enter the remaining clocks shown on the driver's ELD,
+            then enter the driving and on-duty time expected for the next move.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="driveRemaining">
+                Driving time remaining
+              </label>
+
+              <input
+                id="driveRemaining"
+                type="number"
+                min="0"
+                max="11"
+                step="0.1"
+                placeholder="Example: 6.5"
+              >
+
+              <div class="explain">
+                Remaining 11-hour driving clock.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="windowRemaining">
+                14-hour window remaining
+              </label>
+
+              <input
+                id="windowRemaining"
+                type="number"
+                min="0"
+                max="14"
+                step="0.1"
+                placeholder="Example: 8"
+              >
+
+              <div class="explain">
+                Time remaining before the duty window closes.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="cycleRemaining">
+                Cycle hours remaining
+              </label>
+
+              <input
+                id="cycleRemaining"
+                type="number"
+                min="0"
+                max="70"
+                step="0.1"
+                placeholder="Example: 18"
+              >
+
+              <div class="explain">
+                Remaining 60/70-hour cycle time shown by the ELD.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="driveSinceBreak">
+                Driving since last qualifying break
+              </label>
+
+              <input
+                id="driveSinceBreak"
+                type="number"
+                min="0"
+                max="8"
+                step="0.1"
+                value="0"
+              >
+
+              <div class="explain">
+                Cumulative driving since the last qualifying 30-minute interruption.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tripDrive">
+                Planned driving time
+              </label>
+
+              <input
+                id="tripDrive"
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="Example: 5.25"
+              >
+
+              <div class="explain">
+                Estimated actual driving time to the next stop.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tripDuty">
+                Planned non-driving on-duty time
+              </label>
+
+              <input
+                id="tripDuty"
+                type="number"
+                min="0"
+                step="0.1"
+                value="0"
+              >
+
+              <div class="explain">
+                Loading, securement, inspection, fueling or other expected on-duty time.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="buffer">
+                Planning buffer
+              </label>
+
+              <input
+                id="buffer"
+                type="number"
+                min="0"
+                step="0.1"
+                value="0.5"
+              >
+
+              <div class="explain">
+                Extra cushion for traffic, check-in, parking or delays.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="breakPlanned">
+                Qualifying break planned?
+              </label>
+
+              <select id="breakPlanned">
+
+                <option value="no">
+                  No
+                </option>
+
+                <option value="yes">
+                  Yes
+                </option>
+
+              </select>
+
+            </div>
+
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateHos">
+
+              Check Trip
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetHos">
+
+              Clear
+
+            </button>
+
+          </div>
+
+
+        </div>
+
+
       </div>
 
-      <div class="field">
-        <label for="ac_approved_amount">Approved Amount ($)</label>
-        <input type="number" min="0" step="0.01" id="ac_approved_amount">
-      </div>
 
-      <div class="field">
-        <label for="ac_approval_reference">Approval Reference</label>
-        <input id="ac_approval_reference" placeholder="Email, confirmation #, broker reference">
-      </div>
 
-      <div class="field">
-        <label for="ac_invoice_number">Invoice Number</label>
-        <input id="ac_invoice_number">
-      </div>
+      <!-- RESULTS SIDE -->
 
-      <div class="field">
-        <label for="ac_paid_amount">Paid Amount ($)</label>
-        <input type="number" min="0" step="0.01" id="ac_paid_amount">
-      </div>
+      <aside class="calc-card result-card">
 
-      <div class="field">
-        <label for="ac_paid_at">Paid At</label>
-        <input type="datetime-local" id="ac_paid_at">
-      </div>
+        <h2>Dispatch Assessment</h2>
 
-      <div class="field full">
-        <label for="ac_denial_reason">Denial Reason</label>
-        <textarea id="ac_denial_reason" placeholder="Complete this if the request is denied."></textarea>
-      </div>
+        <p class="calc-hint">
+          Planning result based on the clocks entered above.
+        </p>
 
-      <div class="field full">
-        <label for="ac_processing_notes">Processing Notes</label>
-        <textarea id="ac_processing_notes" placeholder="Approval conversation, invoice notes, payment details, follow-up..."></textarea>
-      </div>
+
+        <div
+          class="result-status"
+          id="hosStatus">
+
+          <div class="status-label">
+            Status
+          </div>
+
+          <div
+            class="status-main"
+            id="hosStatusMain">
+
+            Enter driver clocks
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="hosStatusDetail">
+
+            Use the current ELD values before assigning or confirming the move.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Drive after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="driveAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Window after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="windowAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Cycle after trip
+            </div>
+
+            <div
+              class="metric-value"
+              id="cycleAfter">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Trip duty demand
+            </div>
+
+            <div
+              class="metric-value"
+              id="tripDemand">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="warnings"
+          id="hosWarnings">
+        </div>
+
+
+        <div class="notice">
+
+          Dispatch planning aid only. Verify the driver's actual ELD
+          before dispatching. Sleeper-berth use, adverse-driving conditions,
+          short-haul provisions, exemptions and other HOS rules can affect
+          legal availability.
+
+        </div>
+
+      </aside>
+
+
     </div>
 
-    <div id="ac_err" class="err"></div>
-  </div>
+  </section>
 
-  <div class="dlg-foot">
-    <button class="primary" id="ac_save">Save Processing Update</button>
-    <button onclick="dlgAccessorial.close()">Cancel</button>
-  </div>
-</dialog>
 
-<!-- ============ NOTE DIALOG ============ -->
-<dialog id="dlgNote">
-  <div class="dlg-head"><h3>Add Note</h3></div>
-  <div class="dlg-body">
-    <div class="fgrid">
-      <div class="field"><label for="nt_type">Type</label>
-        <select id="nt_type">
-          <option value="note">Note</option>
-          <option value="call">Call</option>
-          <option value="email">Email</option>
-          <option value="sms">Text / SMS</option>
-          <option value="issue">Issue</option>
-        </select></div>
-      <div class="field"><label for="nt_subject">Subject</label><input id="nt_subject"></div>
-      <div class="field full"><label for="nt_body">Body *</label><textarea id="nt_body"></textarea></div>
-      <div class="field full"><div class="checks">
-        <label><input type="checkbox" id="nt_milestone"> Mark as milestone</label>
-      </div></div>
+
+  <!-- ========================================================
+       PROFIT CALCULATOR
+       ======================================================== -->
+
+  <section
+    class="calc-panel"
+    id="profitPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>Load Revenue</h2>
+
+          <p class="calc-hint">
+            Enter the agreed rate and mileage.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="linehaul">
+                Linehaul
+              </label>
+
+              <input
+                id="linehaul"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="5000"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="fuel">
+                Fuel surcharge
+              </label>
+
+              <input
+                id="fuel"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="otherRevenue">
+                Other revenue / accessorials
+              </label>
+
+              <input
+                id="otherRevenue"
+                type="number"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="loadedMiles">
+                Loaded miles
+              </label>
+
+              <input
+                id="loadedMiles"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="850"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="deadheadMiles">
+                Deadhead miles
+              </label>
+
+              <input
+                id="deadheadMiles"
+                type="number"
+                min="0"
+                step="1"
+                value="0"
+              >
+
+            </div>
+
+
+          </div>
+
+        </div>
+
+
+
+        <div class="calc-card">
+
+          <h2>Load Costs</h2>
+
+          <p class="calc-hint">
+            Enter known or estimated expenses for the load.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field">
+
+              <label for="fuelCost">
+                Fuel cost
+              </label>
+
+              <input
+                id="fuelCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="permitCost">
+                Permit cost
+              </label>
+
+              <input
+                id="permitCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="escortCost">
+                Escort / pilot car cost
+              </label>
+
+              <input
+                id="escortCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="tollCost">
+                Tolls
+              </label>
+
+              <input
+                id="tollCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="lodgingCost">
+                Lodging / layover
+              </label>
+
+              <input
+                id="lodgingCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="otherCost">
+                Other load costs
+              </label>
+
+              <input
+                id="otherCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="dispatchRate">
+                Dispatch fee %
+              </label>
+
+              <input
+                id="dispatchRate"
+                type="number"
+                min="0"
+                step="0.1"
+                value="7"
+              >
+
+              <div class="explain">
+                Example: enter 7 for a 7% dispatch fee.
+              </div>
+
+            </div>
+
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateProfit">
+
+              Calculate Profit
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetProfit">
+
+              Clear
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- RESULTS -->
+
+      <aside class="calc-card result-card">
+
+        <h2>Load Summary</h2>
+
+        <p class="calc-hint">
+          Quick financial view of the load.
+        </p>
+
+
+        <div
+          class="result-status"
+          id="profitStatus">
+
+          <div class="status-label">
+            Estimated Load
+          </div>
+
+          <div
+            class="status-main"
+            id="profitStatusMain">
+
+            Enter rate and costs
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="profitStatusDetail">
+
+            Compare revenue against the expected load expenses.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Gross revenue
+            </div>
+
+            <div
+              class="metric-value"
+              id="grossRevenue">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              All-in RPM
+            </div>
+
+            <div
+              class="metric-value"
+              id="revenueMile">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Total load costs
+            </div>
+
+            <div
+              class="metric-value"
+              id="totalCosts">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Gross load profit
+            </div>
+
+            <div
+              class="metric-value"
+              id="grossProfit">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Profit margin
+            </div>
+
+            <div
+              class="metric-value"
+              id="profitMargin">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Dispatch fee
+            </div>
+
+            <div
+              class="metric-value"
+              id="dispatchFee">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Carrier after fee
+            </div>
+
+            <div
+              class="metric-value"
+              id="carrierAfterFee">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Profit per total mile
+            </div>
+
+            <div
+              class="metric-value"
+              id="profitPerMile">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="break-even"
+          id="breakEven">
+
+          Enter the load information to calculate the break-even rate.
+
+        </div>
+
+
+        <div class="notice">
+
+          Financial planning estimate only. Actual carrier profitability
+          may also include equipment payments, insurance, maintenance,
+          depreciation, payroll, taxes and other business overhead.
+
+        </div>
+
+      </aside>
+
+
     </div>
-    <div id="nt_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="nt_save">Save Note</button>
-    <button onclick="dlgNote.close()">Cancel</button>
-  </div>
-</dialog>
+
+  </section>
+
+
+  <!-- ========================================================
+       ACCESSORIALS / DETENTION
+       ======================================================== -->
+
+  <section
+    class="calc-panel"
+    id="accessorialPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>Accessorial Calculator</h2>
+
+          <p class="calc-hint">
+            Calculate detention or another accessorial, then save it directly
+            to the correct load as a Pending accessorial record.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field full">
+
+              <label for="accessorialLoad">
+                Add to Load
+              </label>
+
+              <select id="accessorialLoad">
+
+                <option value="">
+                  — Select a load —
+                </option>
+
+              </select>
+
+              <div class="explain">
+                Saving requires a load. The charge will stay linked to this load.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialType">
+                Accessorial Type
+              </label>
+
+              <select id="accessorialType">
+
+                <option value="detention">Detention</option>
+                <option value="layover">Layover</option>
+                <option value="tonu">TONU</option>
+                <option value="lumper">Lumper</option>
+                <option value="driver_assist">Driver Assist</option>
+                <option value="extra_stop">Extra Stop</option>
+                <option value="redelivery">Redelivery</option>
+                <option value="storage">Storage</option>
+                <option value="reimbursement">Reimbursement</option>
+                <option value="other">Other</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialLocationType">
+                Location
+              </label>
+
+              <select id="accessorialLocationType">
+
+                <option value="shipper">Shipper</option>
+                <option value="receiver">Receiver</option>
+                <option value="other">Other</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialFacility">
+                Facility
+              </label>
+
+              <input
+                id="accessorialFacility"
+                type="text"
+                placeholder="Facility name"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialRateType">
+                Rate Type
+              </label>
+
+              <select id="accessorialRateType">
+
+                <option value="hourly">Hourly</option>
+                <option value="flat">Flat</option>
+                <option value="per_unit">Per Unit</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialRate">
+                Rate Amount
+              </label>
+
+              <input
+                id="accessorialRate"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="75.00"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialQuantity">
+                Quantity
+              </label>
+
+              <input
+                id="accessorialQuantity"
+                type="number"
+                min="0"
+                step="0.01"
+                value="1"
+              >
+
+              <div class="explain">
+                Used for flat/per-unit charges. Detention calculates from billable time.
+              </div>
+
+            </div>
+
+
+            <div class="field full">
+
+              <label for="accessorialDescription">
+                Reason / Description
+              </label>
+
+              <textarea
+                id="accessorialDescription"
+                placeholder="What happened and why is the charge being requested?"
+              ></textarea>
+
+            </div>
+
+
+          </div>
+
+
+          <!-- DETENTION-SPECIFIC TIMES -->
+
+          <div
+            class="accessorial-subsection"
+            id="detentionFields">
+
+            <h3>Detention Timing</h3>
+
+
+            <div class="form-grid">
+
+
+              <div class="field">
+
+                <label for="detentionAppointment">
+                  Appointment
+                </label>
+
+                <input
+                  id="detentionAppointment"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionArrival">
+                  Arrived
+                </label>
+
+                <input
+                  id="detentionArrival"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionCheckIn">
+                  Checked In
+                </label>
+
+                <input
+                  id="detentionCheckIn"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionServiceStart">
+                  Loading / Unloading Started
+                </label>
+
+                <input
+                  id="detentionServiceStart"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionReleased">
+                  Released / Departed
+                </label>
+
+                <input
+                  id="detentionReleased"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionFreeMinutes">
+                  Free Time (minutes)
+                </label>
+
+                <input
+                  id="detentionFreeMinutes"
+                  type="number"
+                  min="0"
+                  step="15"
+                  value="120"
+                >
+
+                <div class="explain">
+                  Use the rate confirmation / contract terms.
+                </div>
+
+              </div>
+
+
+            </div>
+
+          </div>
+
+
+          <!-- BROKER COMMUNICATION -->
+
+          <div class="accessorial-subsection">
+
+            <h3>Broker / Customer Communication</h3>
+
+
+            <div class="form-grid">
+
+
+              <div class="field">
+
+                <label for="notificationRequired">
+                  Notification Required?
+                </label>
+
+                <select id="notificationRequired">
+
+                  <option value="no">No / Unknown</option>
+                  <option value="yes">Yes</option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="brokerNotifiedAt">
+                  Broker Notified At
+                </label>
+
+                <input
+                  id="brokerNotifiedAt"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field full">
+
+                <label for="notifiedContact">
+                  Contact / Communication Note
+                </label>
+
+                <input
+                  id="notifiedContact"
+                  type="text"
+                  placeholder="Broker name, email, phone, message reference..."
+                >
+
+              </div>
+
+
+            </div>
+
+          </div>
+
+
+          <!-- SUPPORTING DOCUMENTATION -->
+
+          <div class="accessorial-subsection">
+
+            <h3>Supporting Documentation</h3>
+
+
+            <div class="check-grid">
+
+              <label class="check-item">
+                <input type="checkbox" id="docBol">
+                BOL documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docPod">
+                POD documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docRateCon">
+                Rate confirmation / terms documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docFacilityTimes">
+                Facility times documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docCommunication">
+                Broker/customer communication documented
+              </label>
+
+            </div>
+
+
+            <div
+              class="field full"
+              style="margin-top: 14px;">
+
+              <label for="accessorialSupportingNotes">
+                Supporting Notes
+              </label>
+
+              <textarea
+                id="accessorialSupportingNotes"
+                placeholder="BOL/POD timestamps, screenshots, approval notes, receipts, reference numbers..."
+              ></textarea>
+
+            </div>
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateAccessorial">
+
+              Calculate
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="saveAccessorial">
+
+              Add to Load
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetAccessorial">
+
+              Clear
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="openLoadAccessorials">
+
+              Open Load Accessorials
+
+            </button>
+
+          </div>
+
+
+          <div
+            class="accessorial-message"
+            id="accessorialMessage">
+          </div>
+
+
+        </div>
+
+
+      </div>
 
 
 
-  <!-- ============ CHECKLIST ITEM DIALOG ============ -->
-<dialog id="dlgChkItem">
-  <div class="dlg-head"><h3>Add Checklist Item</h3></div>
-  <div class="dlg-body">
-    <div class="fgrid">
-      <div class="field"><label for="ck_phase">Phase</label>
-        <select id="ck_phase">
-          <option value="Booking">Booking</option>
-          <option value="Permits">Permits</option>
-          <option value="Route">Route</option>
-          <option value="Escorts">Escorts</option>
-          <option value="Pre-departure">Pre-departure</option>
-          <option value="In-transit">In-transit</option>
-          <option value="Delivery">Delivery</option>
-          <option value="Other">Other</option>
-        </select></div>
-      <div class="field full"><label for="ck_item">Item *</label>
-        <input id="ck_item" placeholder="Confirm lumper with broker"></div>
+      <!-- RESULT / REQUEST SIDE -->
+
+      <aside class="calc-card result-card">
+
+        <h2>Accessorial Request</h2>
+
+        <p class="calc-hint">
+          Review the calculation before saving or sending the request.
+        </p>
+
+
+        <div
+          class="result-status"
+          id="accessorialStatus">
+
+          <div class="status-label">
+            Requested Amount
+          </div>
+
+          <div
+            class="status-main"
+            id="accessorialStatusMain">
+
+            $0.00
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="accessorialStatusDetail">
+
+            Enter the accessorial details and calculate.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Total Facility Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialTotalTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Free Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialFreeTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Billable Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialBillableTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Rate
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialRateResult">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="accessorial-summary"
+          id="accessorialSummary"
+          style="margin-top: 16px;">
+
+          No accessorial calculated yet.
+
+        </div>
+
+
+        <div class="calc-actions">
+
+          <button
+            type="button"
+            class="calc-btn secondary"
+            id="copyAccessorialRequest">
+
+            Copy Request
+
+          </button>
+
+        </div>
+
+
+        <div class="notice">
+
+          Saving creates a Pending accessorial record attached to the selected load.
+          Approval, invoicing and payment can then be processed from the load workspace.
+          Use the rate confirmation or governing agreement when determining free time,
+          notification requirements and allowable charges.
+
+        </div>
+
+      </aside>
+
+
     </div>
-    <div id="ck_err" class="err"></div>
-  </div>
-  <div class="dlg-foot">
-    <button class="primary" id="ck_save">Add Item</button>
-    <button onclick="dlgChkItem.close()">Cancel</button>
-  </div>
-</dialog>
 
-  
-<div id="toast"></div>
+  </section>
+
+
+</main>
+
+
+
+<!-- ==========================================================
+     SCRIPTS
+     ========================================================== -->
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
 
 <script src="nav.js"></script>
+
+
 <script>
+
 /* ============================================================
-   HEAVY HAUL DMS — LOAD WORKSPACE
-   Part 1: config, helpers, data load, hero, actions bar
+   GLOBAL NAV
    ============================================================ */
 
-/* ---------- CREDENTIALS ---------- */
-const SUPABASE_URL      = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ---------- LOADS TABLE FIELD MAP ----------
-   Only the loads + check_ins tables use fallbacks, because their exact
-   column names weren't specified. First matching key wins. Edit here only. */
-const F = {
-  number:      ['load_number','load_no','reference','ref_number','number'],
-  status:      ['status','load_status'],
-  onHold:      ['on_hold','is_on_hold','hold'],
-  holdReason:  ['hold_reason','hold_notes'],
-  holdAt:      ['hold_since','hold_started_at','held_at','hold_at'],
-  oCity:       ['origin_city','pickup_city'],
-  oState:      ['origin_state','pickup_state'],
-  dCity:       ['dest_city','destination_city','delivery_city'],
-  dState:      ['dest_state','destination_state','delivery_state'],
-  pickup:      ['pickup_date','pickup_at','ship_date'],
-  delivery:    ['delivery_date','delivery_at','due_date'],
-  miles:       ['miles','total_miles','distance_miles'],
-  commodity:   ['commodity','commodity_description','description'],
-  equipment:   ['equipment_type','trailer_type','equipment'],
-  lengthFt:    ['length_ft','load_length_ft'],
-  widthFt:     ['width_ft','load_width_ft'],
-  heightFt:    ['height_ft','load_height_ft'],
-  weightLbs:   ['weight_lbs','gross_weight_lbs','weight'],
-  axles:       ['axle_count','axles'],
-  oversize:    ['is_oversize','oversize'],
-  overweight:  ['is_overweight','overweight'],
-  superload:   ['is_superload','superload'],
-  permitsReq:  ['permits_required','permit_required'],
-  escortsReq:  ['escorts_required','escort_count'],
-  routeSurvey: ['route_survey_required','route_survey'],
-  customer:    ['broker_company_id','customer_id','broker_id'],
-  carrier:     ['carrier_company_id','carrier_id'],
-  driver:      ['driver_name','driver'],
-  driverPhone: ['driver_phone'],
-  truck:       ['truck_number','tractor_number','power_unit'],
-  trailer:     ['trailer_number']
-};
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 
-/* check_ins insert shape — adjust keys to match your table if it differs */
-const CHECKIN = {
-  type:     'check_in_type',
-  when:     'occurred_at',
-  city:     'location_text',
-  state:    'state',
-  miles:    'odometer',
-  eta:      'eta',
-  notes:    'note',
-  source:   'source'
-};
 
-/* ---------- LOAD STATUS STATE MACHINE ----------
-   Edit to match your loads.status check constraint. */
-const STATUS_FLOW = {
-  quoted:      ['booked','cancelled'],
-  booked:      ['dispatched','cancelled'],
-  dispatched:  ['at_pickup','cancelled'],
-  at_pickup:   ['loaded','cancelled'],
-  loaded:      ['in_transit'],
-  in_transit:  ['at_delivery'],
-  at_delivery: ['delivered'],
-  delivered:   ['invoiced'],
-  invoiced:    ['paid'],
-  paid:        [],
-  cancelled:   []
-};
-const STATUS_TONE = {
-  quoted:'grey', booked:'', dispatched:'', at_pickup:'warn', loaded:'warn',
-  in_transit:'warn', at_delivery:'warn', delivered:'ok', invoiced:'ok',
-  paid:'ok', cancelled:'bad'
-};
+let db =
+  null;
 
-/* ---------- STATE ---------- */
-let TENANT_ID = null;
-let APP_USER_ID = null;
-let LOAD_ID = null;
-let LOAD = null;
-let RED_FLAGS = [];
-let NEXT_ACTION = null;
-let PERMITS = [];
-let ESCORTS = [];
-let EVENTS = [];
-let CHARGES = [];
-let ACCESSORIALS = [];
-let MARGIN = null;
-let CHECKLIST = [];
-let PRIVATE_NOTES = [];  
-let ACTIVE_TAB = 'overview';
-let PENDING_STATUS = null;
+let tenant =
+  null;
 
-/* ---------- HELPERS ---------- */
-const $  = (id) => document.getElementById(id);
-const $$ = (sel, root) => Array.from((root||document).querySelectorAll(sel));
+let lastAccessorialCalculation =
+  null;
 
-function esc(s){
-  if (s === null || s === undefined) return '';
-  return String(s).replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function pick(obj, keys){
-  if (!obj) return null;
-  for (const k of keys){
-    const v = obj[k];
-    if (v !== undefined && v !== null && v !== '') return v;
+
+async function startPage() {
+
+  if (
+    typeof window.supabase ===
+    'undefined'
+  ) {
+
+    return;
+
   }
-  return null;
-}
-function pickKey(obj, keys){
-  if (!obj) return null;
-  for (const k of keys) if (k in obj) return k;
-  return null;
-}
-function titleize(s){
-  if (!s) return '';
-  return String(s).replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-function money(n){
-  if (n === null || n === undefined || n === '') return '—';
-  const v = Number(n);
-  if (isNaN(v)) return '—';
-  return v.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
-}
-function num(v){
-  if (v === null || v === undefined || v === '') return null;
-  const n = Number(v);
-  return isNaN(n) ? null : n;
-}
-function txt(v){
-  const s = (v === null || v === undefined) ? '' : String(v).trim();
-  return s === '' ? null : s;
-}
-function upper(v){
-  const s = txt(v);
-  return s ? s.toUpperCase() : null;
-}
-function fmtDate(v){
-  if (!v) return '—';
-  const d = new Date(v);
-  if (isNaN(d)) return String(v);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-}
-function fmtDT(v){
-  if (!v) return '—';
-  const d = new Date(v);
-  if (isNaN(d)) return String(v);
-  return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-}
-function ago(v){
-  if (!v) return '';
-  const d = new Date(v); if (isNaN(d)) return '';
-  const s = (Date.now() - d.getTime())/1000;
-  if (s < 60) return 'just now';
-  if (s < 3600) return Math.floor(s/60)+'m ago';
-  if (s < 86400) return Math.floor(s/3600)+'h ago';
-  if (s < 604800) return Math.floor(s/86400)+'d ago';
-  return fmtDate(v);
-}
-/* datetime-local <-> ISO */
-function toLocalInput(v){
-  if (!v) return '';
-  const d = new Date(v); if (isNaN(d)) return '';
-  const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-function fromLocalInput(v){
-  const s = txt(v);
-  if (!s) return null;
-  const d = new Date(s);
-  return isNaN(d) ? null : d.toISOString();
-}
-function toDateInput(v){
-  if (!v) return '';
-  const s = String(v);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const d = new Date(v); if (isNaN(d)) return '';
-  const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-}
-function todayISO(){ return toDateInput(new Date()); }
 
-let toastTimer = null;
-function toast(msg, bad){
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'show' + (bad ? ' bad' : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 3400);
-}
-function fail(where, error){
-  console.error(where, error);
-  toast((error && (error.message || error.hint)) || ('Error in ' + where), true);
-}
-function showErr(elId, error){
-  const el = $(elId);
-  if (el) el.textContent = (error && (error.message || error.details || error.hint)) || String(error);
-}
-function clearErr(elId){ const el = $(elId); if (el) el.textContent = ''; }
 
-  /* ============================================================
-   DOCUMENTS
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+
+  const session =
+    await db.auth.getSession();
+
+
+  if (
+    !session.data.session
+  ) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  const navTenant =
+    await buildNav(
+      db,
+      'Calculators'
+    );
+
+
+  tenant =
+    navTenant ||
+    null;
+
+
+  if (
+    !tenant
+  ) {
+
+    const profile =
+      await db
+        .from('app_users')
+        .select('tenant_id')
+        .eq(
+          'auth_uid',
+          session.data.session.user.id
+        )
+        .maybeSingle();
+
+
+    if (
+      !profile.error &&
+      profile.data
+    ) {
+
+      tenant =
+        profile.data.tenant_id;
+
+    }
+
+  }
+
+
+  await loadAccessorialLoads();
+
+
+  const requestedTool =
+    new URLSearchParams(
+      location.search
+    )
+      .get(
+        'tab'
+      );
+
+
+  if (
+    requestedTool ===
+    'accessorial'
+  ) {
+
+    showTool(
+      'accessorial'
+    );
+
+  }
+  else if (
+    requestedTool ===
+    'profit'
+  ) {
+
+    showTool(
+      'profit'
+    );
+
+  }
+  else if (
+    requestedTool ===
+    'hos'
+  ) {
+
+    showTool(
+      'hos'
+    );
+
+  }
+
+}
+
+
+startPage();
+
+
+
+/* ============================================================
+   HELPERS
    ============================================================ */
-let DOCUMENTS = [];
 
-async function fetchDocuments(){
-  // get link rows for this load, then their documents
-  const links = await db.from('document_links').select('document_id')
-    .eq('entity_type','load').eq('entity_id', LOAD_ID);
-  if (links.error){ console.warn('doc links', links.error); DOCUMENTS = []; return; }
-  const ids = (links.data||[]).map(l=>l.document_id);
-  if (!ids.length){ DOCUMENTS = []; return; }
-  const docs = await db.from('documents').select('*')
-    .in('id', ids).is('archived_at', null).order('uploaded_at',{ascending:false});
-  if (docs.error){ console.warn('documents', docs.error); DOCUMENTS = []; return; }
-  DOCUMENTS = docs.data || [];
+const $ =
+  id =>
+    document.getElementById(id);
+
+
+function n(id) {
+
+  const value =
+    parseFloat(
+      $(id).value
+    );
+
+
+  return (
+    Number.isFinite(value)
+      ? value
+      : 0
+  );
+
 }
 
-function fmtBytes(n){
-  if (!n) return '—';
-  if (n < 1024) return n+' B';
-  if (n < 1048576) return (n/1024).toFixed(0)+' KB';
-  return (n/1048576).toFixed(1)+' MB';
-}
 
-function drawDocuments(){
-  const rows = DOCUMENTS.map(d=>`
-    <tr>
-      <td><b>${esc(d.title || d.filename || '(file)')}</b>
-        ${d.filename && d.title ? `<div class="small muted">${esc(d.filename)}</div>`:''}</td>
-      <td>${esc(titleize(d.doc_type)||'—')}</td>
-      <td>${esc(fmtBytes(d.byte_size))}</td>
-      <td class="small muted">${esc(fmtDT(d.uploaded_at))}</td>
-      <td style="white-space:nowrap;text-align:right">
-        <button class="sm" data-view="${esc(d.id)}" data-key="${esc(d.storage_key)}">View</button>
-        <button class="danger sm" data-deldoc="${esc(d.id)}">Remove</button>
-      </td>
-    </tr>`).join('');
+function hours(value) {
 
-  $('tab-documents').innerHTML = `
-    <div class="sechead"><h2>Documents</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openDoc()">+ Upload</button></div>
-    ${DOCUMENTS.length ? `
-    <div class="tablewrap"><table>
-      <thead><tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`
-    : '<div class="card"><div class="empty">No documents on this load. Click “+ Upload”.</div></div>'}
-  `;
+  const safe =
+    Math.max(
+      0,
+      value
+    );
 
-  $$('#tab-documents button[data-view]').forEach(b=>
-    b.addEventListener('click', ()=>viewDoc(b.dataset.key)));
-  $$('#tab-documents button[data-deldoc]').forEach(b=>
-    b.addEventListener('click', ()=>deleteDoc(b.dataset.deldoc)));
-}
 
-function openDoc(){
-  clearErr('dc_err');
-  $('dc_progress').textContent = '';
-  $('dc_file').value = '';
-  $('dc_type').value = 'rate_con';
-  $('dc_title').value = '';
-  $('dc_notes').value = '';
-  dlgDoc.showModal();
-}
+  const whole =
+    Math.floor(safe);
 
-async function sha256hex(file){
-  const buf = await file.arrayBuffer();
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
 
-async function saveDoc(){
-  clearErr('dc_err');
-  const fileInput = $('dc_file');
-  if (!fileInput.files || !fileInput.files.length){
-    showErr('dc_err', { message:'Choose a file first.' }); return;
+  const mins =
+    Math.round(
+      (
+        safe -
+        whole
+      )
+      *
+      60
+    );
+
+
+  if (
+    mins === 60
+  ) {
+
+    return (
+      whole + 1
+    ) +
+    'h 00m';
+
   }
-  const file = fileInput.files[0];
-  const btn = $('dc_save'); btn.disabled = true;
-  $('dc_progress').textContent = 'Hashing…';
 
-  try {
-    const hash = await sha256hex(file);
-    const ext = (file.name.split('.').pop()||'bin').toLowerCase();
-    const key = `${TENANT_ID}/${LOAD_ID}/${hash.slice(0,16)}-${Date.now()}.${ext}`;
 
-    $('dc_progress').textContent = 'Uploading…';
-    const up = await db.storage.from('documents').upload(key, file, {
-      contentType: file.type || 'application/octet-stream',
-      upsert: false
-    });
-    if (up.error){ throw up.error; }
+  return (
+    whole +
+    'h ' +
+    String(mins)
+      .padStart(
+        2,
+        '0'
+      ) +
+    'm'
+  );
 
-    $('dc_progress').textContent = 'Saving record…';
-    const docIns = await db.from('documents').insert({
-      tenant_id:   TENANT_ID,
-      sha256:      hash,
-      storage_key: key,
-      filename:    file.name,
-      mime_type:   file.type || null,
-      byte_size:   file.size,
-      doc_type:    $('dc_type').value,
-      title:       txt($('dc_title').value),
-      notes:       txt($('dc_notes').value),
-      uploaded_by: APP_USER_ID || null,
-      uploaded_at: new Date().toISOString(),
-      is_current:  true
-    }).select().single();
-    if (docIns.error){ throw docIns.error; }
-
-    const linkIns = await db.from('document_links').insert({
-      tenant_id:   TENANT_ID,
-      document_id: docIns.data.id,
-      entity_type: 'load',
-      entity_id:   LOAD_ID
-    });
- if (linkIns.error){ throw linkIns.error; }
-
-    await logEvent({
-      event_type: 'upload',
-      subject: 'Document uploaded: ' + titleize($('dc_type').value),
-      body: file.name + ' (' + fmtBytes(file.size) + ')',
-      is_milestone: ['pod','rate_con'].includes($('dc_type').value)
-    });
-
-    dlgDoc.close();
-    toast('Document uploaded');
-    await fetchDocuments(); drawCounts(); drawDocuments();
-  } catch (e){
-    showErr('dc_err', e);
-    $('dc_progress').textContent = '';
-  } finally {
-    btn.disabled = false;
-  }
 }
 
-async function viewDoc(storageKey){
-  const { data, error } = await db.storage.from('documents')
-    .createSignedUrl(storageKey, 300); // 5-minute link
-  if (error){ toast('Could not open file'); console.error(error); return; }
-  window.open(data.signedUrl, '_blank');
+
+function money(value) {
+
+  return new Intl.NumberFormat(
+    'en-US',
+    {
+      style:
+        'currency',
+
+      currency:
+        'USD',
+
+      maximumFractionDigits:
+        2
+    }
+  ).format(
+    value || 0
+  );
+
 }
 
-async function deleteDoc(docId){
-  if (!confirm('Remove this document from the load?')) return;
-  const d = DOCUMENTS.find(x=>x.id===docId);
-  // remove the link, archive the doc, delete the file
-  await db.from('document_links').delete()
-    .eq('document_id', docId).eq('entity_type','load').eq('entity_id', LOAD_ID);
-  await db.from('documents').update({ archived_at: new Date().toISOString() }).eq('id', docId);
-  if (d && d.storage_key){
-    await db.storage.from('documents').remove([d.storage_key]);
-  }
-  toast('Document removed');
-  await fetchDocuments(); drawCounts(); drawDocuments();
-}
 
-/* ---------- EVENT LOGGER ---------- */
-async function logEvent({ event_type, subject, body, is_milestone }){
-  const row = {
-    tenant_id:   TENANT_ID,
-    entity_type: 'load',
-    entity_id:   LOAD_ID,
-    load_id:     LOAD_ID,
-    event_type:  event_type,
-    direction:   'internal',
-    subject:     subject || null,
-    body:        body || null,
-    is_milestone: !!is_milestone,
-    user_id:     APP_USER_ID
+
+/* ============================================================
+   CALCULATOR SWITCHER
+   ============================================================ */
+
+function showTool(tool) {
+
+  const map = {
+    hos: [
+      'hosPanel',
+      'hosTab'
+    ],
+    profit: [
+      'profitPanel',
+      'profitTab'
+    ],
+    accessorial: [
+      'accessorialPanel',
+      'accessorialTab'
+    ]
   };
-  const { error } = await db.from('events').insert(row);
-  if (error) console.error('logEvent failed', event_type, error);
-  return !error;
-}
-
-/* ---------- BOOT ---------- */
-async function boot(){
-  const params = new URLSearchParams(location.search);
-  LOAD_ID = params.get('id');
-
-  TENANT_ID = await buildNav(db, 'Load Workspace');
-
-  if (!LOAD_ID){
-    const e = $('loadErr');
-    e.classList.remove('hide');
-    e.innerHTML = 'No load selected. Open this page as <span class="mono">workspace.html?id=&lt;load uuid&gt;</span>.';
-    $('hero').innerHTML = '<div class="muted">No load id in the URL.</div>';
-    return;
-  }
-
-  await lookupAppUser();
-
-  $$('#tabstrip button').forEach(b => {
-    b.addEventListener('click', () => switchTab(b.dataset.tab));
-  });
-
-  await refreshAll();
-}
-
-async function lookupAppUser(){
-  try {
-    const { data: sess } = await db.auth.getUser();
-    const authId = sess && sess.user ? sess.user.id : null;
-    if (!authId) return;
-    let q = await db.from('app_users').select('id').eq('auth_user_id', authId).maybeSingle();
-    if (q.error || !q.data){
-      q = await db.from('app_users').select('id').eq('id', authId).maybeSingle();
-    }
-    if (q.data) APP_USER_ID = q.data.id;
-  } catch (e){
-    console.warn('app_users lookup skipped', e);
-  }
-}
-
-/* ---------- DATA ---------- */
-
-async function refreshAll(){
-  await Promise.all([
-    fetchLoad(),
-    fetchRedFlags(),
-    fetchNextAction(),
-    fetchPermits(),
-    fetchEscorts(),
-    fetchEvents(),
-    fetchCharges(),
-    fetchAccessorials(),
-    fetchMargin(),
-    fetchChecklist(),
-    fetchPrivateNotes(),
-    fetchDocuments()
-  ]);
-  drawHero();
-  drawActions();
-  drawCounts();
-  drawActiveTab();
-}
-
-async function fetchLoad(){
-  const { data, error } = await db.from('loads').select('*').eq('id', LOAD_ID).maybeSingle();
-  if (error){ fail('fetchLoad', error); return; }
-  LOAD = data;
-  if (!LOAD){
-    const e = $('loadErr');
-    e.classList.remove('hide');
-    e.textContent = 'Load not found (or blocked by RLS): ' + LOAD_ID;
-  }
-}
-
-async function fetchRedFlags(){
-  const { data, error } = await db.from('v_load_red_flags').select('*').eq('load_id', LOAD_ID);
-  if (error){ console.warn('red flags', error); RED_FLAGS = []; return; }
-  RED_FLAGS = data || [];
-}
-
-async function fetchNextAction(){
-  let res = await db.rpc('load_next_action', { p_load_id: LOAD_ID });
-  if (res.error) res = await db.rpc('load_next_action', { load_id: LOAD_ID });
-  if (res.error){ console.warn('load_next_action', res.error); NEXT_ACTION = null; return; }
-  let d = res.data;
-  if (Array.isArray(d)) d = d[0] || null;
-  NEXT_ACTION = d;
-}
-
-async function fetchPermits(){
-  const { data, error } = await db.from('permits').select('*')
-    .eq('load_id', LOAD_ID).order('state', { ascending: true });
-  if (error){ fail('fetchPermits', error); PERMITS = []; return; }
-  PERMITS = data || [];
-}
-
-async function fetchEscorts(){
-  const { data, error } = await db.from('escort_assignments').select('*')
-    .eq('load_id', LOAD_ID).order('created_at', { ascending: true });
-  if (error){ fail('fetchEscorts', error); ESCORTS = []; return; }
-  ESCORTS = data || [];
-}
-
-async function fetchEvents(){
-  const { data, error } = await db.from('events').select('*')
-    .eq('load_id', LOAD_ID).order('created_at', { ascending: false }).limit(300);
-  if (error){ console.warn('events', error); EVENTS = []; return; }
-  EVENTS = data || [];
-}
-
-async function fetchCharges(){
-  const { data, error } = await db.from('load_charges').select('*')
-    .eq('load_id', LOAD_ID).order('incurred_on', { ascending: true });
-  if (error){ console.warn('load_charges', error); CHARGES = []; return; }
-  CHARGES = data || [];
-}
 
 
-async function fetchAccessorials(){
-  const { data, error } = await db.from('accessorials').select('*')
-    .eq('load_id', LOAD_ID).order('created_at', { ascending: false });
+  Object.entries(map)
+    .forEach(
+      ([name, ids]) => {
 
-  if (error){
-    console.warn('accessorials', error);
-    ACCESSORIALS = [];
-    return;
-  }
+        const active =
+          name === tool;
 
-  ACCESSORIALS = data || [];
-}
 
-async function fetchMargin(){
-  const { data, error } = await db.from('v_load_margin')
-    .select('load_id,total_revenue,total_cost').eq('load_id', LOAD_ID).maybeSingle();
-  if (error){ console.warn('v_load_margin', error); MARGIN = null; return; }
-  MARGIN = data;
-}
+        $(ids[0])
+          .classList
+          .toggle(
+            'active',
+            active
+          );
 
-async function fetchChecklist(){
-  const { data, error } = await db.from('load_checklist_items').select('*')
-    .eq('load_id', LOAD_ID).order('seq', { ascending: true });
-  if (error){ console.warn('checklist', error); CHECKLIST = []; return; }
-  CHECKLIST = data || [];
-}
-  async function fetchPrivateNotes(){
-  const { data, error } = await db.from('load_private_notes').select('*')
-    .eq('load_id', LOAD_ID)
-    .order('pinned', { ascending: false })
-    .order('created_at', { ascending: false });
-  if (error){ console.warn('private notes', error); PRIVATE_NOTES = []; return; }
-  PRIVATE_NOTES = data || [];
-}
 
-/* ---------- TABS ---------- */
-function switchTab(name){
-  ACTIVE_TAB = name;
-  $$('#tabstrip button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
-  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
-  drawActiveTab();
-}
-function drawCounts(){
-  const set = (id, n) => { const el = $(id); if (el) el.textContent = n; };
-  set('cnt-permits', PERMITS.length);
-  set('cnt-escorts', ESCORTS.length);
-  set('cnt-timeline', EVENTS.length);
-  set('cnt-checklist', CHECKLIST.length);
-  set('cnt-notes', PRIVATE_NOTES.length);
-  set('cnt-documents', DOCUMENTS.length);
-  set('cnt-accessorials', ACCESSORIALS.length);
-}
+        $(ids[1])
+          .classList
+          .toggle(
+            'active',
+            active
+          );
 
-/* ---------- HERO ---------- */
-function isOnHold(){
-  const k = pickKey(LOAD, F.onHold);
-  return k ? !!LOAD[k] : false;
-}
-function currentStatus(){
-  return pick(LOAD, F.status) || 'unknown';
-}
-
-function drawHero(){
-  if (!LOAD){ $('hero').innerHTML = '<div class="muted">Load unavailable.</div>'; return; }
-
-  const number = pick(LOAD, F.number) || LOAD_ID.slice(0,8);
-  const status = currentStatus();
-  const tone   = STATUS_TONE[status] !== undefined ? STATUS_TONE[status] : 'grey';
-  const held   = isOnHold();
-
-  const oc = pick(LOAD, F.oCity), os = pick(LOAD, F.oState);
-  const dc = pick(LOAD, F.dCity), ds = pick(LOAD, F.dState);
-  const route = (oc || os || dc || ds)
-    ? `${esc(oc||'?')}${os?', '+esc(os):''} &rarr; ${esc(dc||'?')}${ds?', '+esc(ds):''}`
-    : '<span class="muted">Route not set</span>';
-
-  const pickupD = pick(LOAD, F.pickup), delivD = pick(LOAD, F.delivery);
-  const miles = pick(LOAD, F.miles);
-
-  /* dimension chips */
-  const chips = [];
-  const L = pick(LOAD, F.lengthFt), W = pick(LOAD, F.widthFt),
-        H = pick(LOAD, F.heightFt), WT = pick(LOAD, F.weightLbs);
-  if (L)  chips.push(`<span class="chip">L <b>${esc(L)}'</b></span>`);
-  if (W)  chips.push(`<span class="chip${Number(W) > 8.5 ? ' hot' : ''}">W <b>${esc(W)}'</b></span>`);
-  if (H)  chips.push(`<span class="chip${Number(H) > 13.5 ? ' hot' : ''}">H <b>${esc(H)}'</b></span>`);
-  if (WT) chips.push(`<span class="chip${Number(WT) > 80000 ? ' hot' : ''}">GVW <b>${Number(WT).toLocaleString()} lb</b></span>`);
-  const ax = pick(LOAD, F.axles);
-  if (ax) chips.push(`<span class="chip">${esc(ax)} axles</span>`);
-  const eq = pick(LOAD, F.equipment);
-  if (eq) chips.push(`<span class="chip">${esc(titleize(eq))}</span>`);
-  if (pick(LOAD, F.superload))   chips.push('<span class="chip red">SUPERLOAD</span>');
-  else if (pick(LOAD, F.oversize)) chips.push('<span class="chip hot">Oversize</span>');
-  if (pick(LOAD, F.overweight))  chips.push('<span class="chip hot">Overweight</span>');
-  if (pick(LOAD, F.permitsReq))  chips.push('<span class="chip">Permits req.</span>');
-  const escReq = pick(LOAD, F.escortsReq);
-  if (escReq) chips.push(`<span class="chip">${esc(escReq)} escort${Number(escReq)===1?'':'s'}</span>`);
-  if (pick(LOAD, F.routeSurvey)) chips.push('<span class="chip hot">Route survey</span>');
-  if (miles) chips.push(`<span class="chip">${Number(miles).toLocaleString()} mi</span>`);
-
-  /* next action */
-  let nextHTML = '';
-  if (NEXT_ACTION){
-    let label = '', detail = '';
-    if (typeof NEXT_ACTION === 'string'){
-      label = NEXT_ACTION;
-    } else {
-      label  = NEXT_ACTION.next_action || NEXT_ACTION.action || NEXT_ACTION.label ||
-               NEXT_ACTION.message || NEXT_ACTION.description || '';
-      detail = NEXT_ACTION.detail || NEXT_ACTION.due_at || NEXT_ACTION.due_date || '';
-    }
-    if (label){
-      nextHTML = `<div class="nextbox">
-        <div class="lbl">Next Action</div>
-        <div style="font-weight:600;margin-top:2px">${esc(label)}</div>
-        ${detail ? `<div class="small muted">${esc(detail)}</div>` : ''}
-      </div>`;
-    }
-  }
-
-  /* red flags */
-  let flagHTML = '';
-  if (RED_FLAGS.length){
-    const items = RED_FLAGS.map(f => {
-      const msg = f.message || f.flag_message || f.description || f.flag || f.label || f.reason || '';
-      const sev = String(f.severity || f.level || 'med').toLowerCase();
-      const cls = sev.startsWith('h') || sev.startsWith('crit') ? 'high'
-                : sev.startsWith('l') || sev.startsWith('info') ? 'low' : 'med';
-      const kind = f.flag_type || f.flag_code || f.category || '';
-      if (!msg && !kind) return '';
-      return `<div class="flag ${cls}">${kind ? `<b>${esc(titleize(kind))}:</b> ` : ''}${esc(msg)}</div>`;
-    }).filter(Boolean).join('');
-    if (items) flagHTML = `<div class="flags">${items}</div>`;
-  }
-
-  const holdHTML = held
-    ? `<div class="holdbar">ON HOLD${pick(LOAD, F.holdReason) ? ' — ' + esc(pick(LOAD, F.holdReason)) : ''}
-        ${pick(LOAD, F.holdAt) ? `<span class="small" style="font-weight:400"> · since ${esc(fmtDT(pick(LOAD, F.holdAt)))}</span>` : ''}</div>`
-    : '';
-
-  $('hero').innerHTML = `
-    <div class="hero-top">
-      <div>
-        <div class="hero-num">Load ${esc(number)}</div>
-        <div class="hero-route">${route}</div>
-        <div class="small muted" style="margin-top:4px">
-          Pickup ${esc(fmtDate(pickupD))} · Delivery ${esc(fmtDate(delivD))}
-          ${pick(LOAD, F.commodity) ? ' · ' + esc(pick(LOAD, F.commodity)) : ''}
-        </div>
-      </div>
-      <div class="spacer"></div>
-      <div style="text-align:right">
-        <span class="pill ${tone}">${esc(titleize(status))}</span>
-        ${held ? '<span class="pill bad" style="margin-left:6px">On Hold</span>' : ''}
-        <div class="small muted mono" style="margin-top:6px">${esc(LOAD_ID.slice(0,8))}</div>
-      </div>
-    </div>
-    ${holdHTML}
-    <div class="chips">${chips.join('') || '<span class="muted small">No dimensions recorded</span>'}</div>
-    ${nextHTML}
-    ${flagHTML}
-  `;
-}
-
-/* ---------- ACTIONS BAR ---------- */
-function drawActions(){
-  if (!LOAD){ $('actions').innerHTML = ''; return; }
-
-  const status = currentStatus();
-  const held   = isOnHold();
-  const nexts  = STATUS_FLOW[status] || [];
-
-  const statusBtns = nexts.map(s => {
-    const danger = (s === 'cancelled');
-    return `<button class="${danger ? 'danger' : 'primary'}" data-status="${esc(s)}">
-      ${danger ? 'Cancel Load' : '&rarr; ' + esc(titleize(s))}</button>`;
-  }).join('');
-
-  $('actions').innerHTML = `
-    <button class="primary" id="btnCheckIn">Check In</button>
-    <span class="sep"></span>
-    ${statusBtns || '<span class="small muted">No further status transitions</span>'}
-    <span class="sep"></span>
-    ${held
-      ? '<button id="btnClearHold">Clear Hold</button>'
-      : '<button class="danger" id="btnHold">Put On Hold</button>'}
-    <span class="spacer"></span>
-    <button class="ghost sm" id="btnRefresh">Refresh</button>
-  `;
-
-  $('btnCheckIn').addEventListener('click', openCheckIn);
-  $('btnRefresh').addEventListener('click', async () => { await refreshAll(); toast('Refreshed'); });
-  if ($('btnHold'))      $('btnHold').addEventListener('click', openHold);
-  if ($('btnClearHold')) $('btnClearHold').addEventListener('click', clearHold);
-
-  $$('#actions button[data-status]').forEach(b => {
-    b.addEventListener('click', () => openStatus(b.dataset.status));
-  });
-
-  if (held){
-    $$('#actions button[data-status]').forEach(b => {
-      if (b.dataset.status !== 'cancelled'){
-        b.disabled = true;
-        b.title = 'Clear the hold before advancing status';
       }
-    });
-  }
+    );
+
 }
-  /* ============================================================
-   Part 2: action handlers, tab renderers, permit/escort/charge/note editors
-   ============================================================ */
+
+
+$('hosTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'hos'
+      )
+  );
+
+
+$('profitTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'profit'
+      )
+  );
+
+
+$('accessorialTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'accessorial'
+      )
+  );
+
 
 
 /* ============================================================
-   ACTION HANDLERS
+   HOS CALCULATOR
    ============================================================ */
 
-function openCheckIn(){
-  clearErr('ci_err');
-  $('ci_type').value  = 'en_route';
-  $('ci_when').value  = toLocalInput(new Date());
-  $('ci_city').value  = '';
-  $('ci_state').value = '';
-  $('ci_miles').value = '';
-  $('ci_eta').value   = '';
-  $('ci_notes').value = '';
-  dlgCheckIn.showModal();
-}
+function calculateHos() {
 
-async function saveCheckIn(){
-  clearErr('ci_err');
-  const btn = $('ci_save'); btn.disabled = true;
 
-  const type  = $('ci_type').value;
-  const when  = fromLocalInput($('ci_when').value) || new Date().toISOString();
-  const city  = txt($('ci_city').value);
-  const state = upper($('ci_state').value);
-  const notes = txt($('ci_notes').value);
+  const driveRemaining =
+    n(
+      'driveRemaining'
+    );
 
-  const row = { tenant_id: TENANT_ID, load_id: LOAD_ID };
-  row[CHECKIN.type]  = type;
-  row[CHECKIN.when]  = when;
-  row[CHECKIN.city]  = city;
-  row[CHECKIN.state] = state;
-  row[CHECKIN.miles] = num($('ci_miles').value);
-  row[CHECKIN.eta]   = fromLocalInput($('ci_eta').value);
-  row[CHECKIN.notes] = notes;
-  row[CHECKIN.source] = 'dispatcher';
 
-  const { error } = await db.from('check_ins').insert(row);
-  if (error){ showErr('ci_err', error); btn.disabled = false; return; }
+  const windowRemaining =
+    n(
+      'windowRemaining'
+    );
 
-  const where = [city, state].filter(Boolean).join(', ');
-  await logEvent({
-    event_type: 'check_in',
-    subject: titleize(type) + (where ? ' — ' + where : ''),
-    body: notes,
-    is_milestone: ['at_pickup','loaded','at_delivery','unloaded'].includes(type)
-  });
 
-  btn.disabled = false;
-  dlgCheckIn.close();
-  toast('Check-in logged');
-  await refreshAll();
-}
+  const cycleRemaining =
+    n(
+      'cycleRemaining'
+    );
 
-function openStatus(newStatus){
-  PENDING_STATUS = newStatus;
-  clearErr('st_err');
-  $('st_notes').value = '';
-  $('st_title').textContent =
-    newStatus === 'cancelled'
-      ? 'Cancel Load'
-      : `${titleize(currentStatus())} → ${titleize(newStatus)}`;
-  $('st_save').textContent = newStatus === 'cancelled' ? 'Cancel Load' : 'Confirm';
-  $('st_save').className = newStatus === 'cancelled' ? 'danger' : 'primary';
-  dlgStatus.showModal();
-}
 
-async function saveStatus(){
-  if (!PENDING_STATUS) return;
-  clearErr('st_err');
-  const btn = $('st_save'); btn.disabled = true;
+  const driveSinceBreak =
+    n(
+      'driveSinceBreak'
+    );
 
-  const from = currentStatus();
-  const to   = PENDING_STATUS;
-  const statusKey = pickKey(LOAD, F.status) || 'status';
 
-  const patch = {};
-  patch[statusKey] = to;
-  patch.updated_at = new Date().toISOString();
+  const tripDrive =
+    n(
+      'tripDrive'
+    );
 
-  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
-  if (error){ showErr('st_err', error); btn.disabled = false; return; }
 
-  /* subject carries the transition so the timeline can render it directly */
-  await logEvent({
-    event_type: 'status_change',
-    subject: `${from} → ${to}`,
-    body: txt($('st_notes').value),
-    is_milestone: true
-  });
+  const tripDuty =
+    n(
+      'tripDuty'
+    );
 
-  PENDING_STATUS = null;
-  btn.disabled = false;
-  dlgStatus.close();
-  toast(`Status → ${titleize(to)}`);
-  await refreshAll();
-}
 
-function openHold(){
-  clearErr('hd_err');
-  $('hd_reason').selectedIndex = 0;
-  $('hd_notes').value = '';
-  dlgHold.showModal();
-}
+  const buffer =
+    n(
+      'buffer'
+    );
 
-async function saveHold(){
-  clearErr('hd_err');
-  const btn = $('hd_save'); btn.disabled = true;
 
-  const reason = $('hd_reason').value;
-  const detail = txt($('hd_notes').value);
+  const breakPlanned =
 
-  const holdKey   = pickKey(LOAD, F.onHold)     || 'on_hold';
-  const reasonKey = pickKey(LOAD, F.holdReason) || 'hold_reason';
-  const atKey     = pickKey(LOAD, F.holdAt)     || 'hold_started_at';
+    $('breakPlanned').value ===
+    'yes';
 
-  const patch = { updated_at: new Date().toISOString() };
-  patch[holdKey]   = true;
-  patch[reasonKey] = detail ? `${reason} — ${detail}` : reason;
-  patch[atKey]     = new Date().toISOString();
 
-  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
-  if (error){ showErr('hd_err', error); btn.disabled = false; return; }
 
-  await logEvent({
-    event_type: 'hold_started',
-    subject: reason,
-    body: detail,
-    is_milestone: true
-  });
+  if (
+    driveRemaining <= 0 ||
+    windowRemaining <= 0 ||
+    cycleRemaining <= 0 ||
+    tripDrive <= 0
+  ) {
 
-  btn.disabled = false;
-  dlgHold.close();
-  toast('Load placed on hold');
-  await refreshAll();
-}
+    $('hosStatus')
+      .className =
+      'result-status tight';
 
-async function clearHold(){
-  if (!confirm('Clear the hold on this load?')) return;
 
-  const holdKey   = pickKey(LOAD, F.onHold)     || 'on_hold';
-  const reasonKey = pickKey(LOAD, F.holdReason) || 'hold_reason';
-  const atKey     = pickKey(LOAD, F.holdAt)     || 'hold_started_at';
-  const prior     = pick(LOAD, F.holdReason);
+    $('hosStatusMain')
+      .textContent =
+      'More information needed';
 
-  const patch = { updated_at: new Date().toISOString() };
-  patch[holdKey]   = false;
-  patch[reasonKey] = null;
-  patch[atKey]     = null;
 
-  const { error } = await db.from('loads').update(patch).eq('id', LOAD_ID);
-  if (error){ fail('clearHold', error); return; }
+    $('hosStatusDetail')
+      .textContent =
+      'Enter positive remaining ELD clocks and planned driving time.';
 
-  await logEvent({
-    event_type: 'hold_cleared',
-    subject: 'Hold cleared',
-    body: prior ? `Was: ${prior}` : null,
-    is_milestone: true
-  });
 
-  toast('Hold cleared');
-  await refreshAll();
-}
-
-/* ============================================================
-   TAB DISPATCH
-   ============================================================ */
-function drawActiveTab(){
-  switch (ACTIVE_TAB){
-    case 'overview':  drawOverview();  break;
-    case 'timeline':  drawTimeline();  break;
-    case 'permits':   drawPermits();   break;
-    case 'escorts':   drawEscorts();   break;
-    case 'checklist': drawChecklist(); break;
-    case 'expenses':  drawExpenses();  break;
-    case 'accessorials': drawAccessorials(); break;
-    case 'notes':     drawNotes();     break;
-    case 'documents': drawDocuments(); break;
-  }
-}
-
-/* ============================================================
-   OVERVIEW
-   ============================================================ */
-function drawOverview(){
-  if (!LOAD){ $('tab-overview').innerHTML = '<div class="empty">No load.</div>'; return; }
-
-  const permIssued = PERMITS.filter(p => p.status === 'issued').length;
-  const permOpen   = PERMITS.filter(p => !['issued','not_required','cancelled'].includes(p.status)).length;
-  const escOK      = ESCORTS.filter(e => ['confirmed','en_route','completed'].includes(e.status)).length;
-  const escOpen    = ESCORTS.filter(e => ['needed','quoted','booked'].includes(e.status)).length;
-  const clDone     = CHECKLIST.filter(c => !!c.done_at).length;
-
-  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
-  const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
-  const mar = rev - cst;
-  const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
-
-  $('tab-overview').innerHTML = `
-  <div class="grid2">
-
-    <div class="card box">
-      <h3>Route &amp; Schedule</h3>
-      <dl class="kv">
-        <dt>Origin</dt><dd>${esc(pick(LOAD,F.oCity)||'—')}${pick(LOAD,F.oState)?', '+esc(pick(LOAD,F.oState)):''}</dd>
-        <dt>Destination</dt><dd>${esc(pick(LOAD,F.dCity)||'—')}${pick(LOAD,F.dState)?', '+esc(pick(LOAD,F.dState)):''}</dd>
-        <dt>Pickup</dt><dd>${esc(fmtDate(pick(LOAD,F.pickup)))}</dd>
-        <dt>Delivery</dt><dd>${esc(fmtDate(pick(LOAD,F.delivery)))}</dd>
-        <dt>Miles</dt><dd>${pick(LOAD,F.miles) ? Number(pick(LOAD,F.miles)).toLocaleString() : '—'}</dd>
-        <dt>Commodity</dt><dd>${esc(pick(LOAD,F.commodity)||'—')}</dd>
-        <dt>Equipment</dt><dd>${esc(titleize(pick(LOAD,F.equipment))||'—')}</dd>
-      </dl>
-    </div>
-
-    <div class="card box">
-      <h3>Dimensions</h3>
-      <dl class="kv">
-        <dt>Length</dt><dd>${pick(LOAD,F.lengthFt) ? esc(pick(LOAD,F.lengthFt))+" ft" : '—'}</dd>
-        <dt>Width</dt><dd>${pick(LOAD,F.widthFt) ? esc(pick(LOAD,F.widthFt))+" ft" : '—'}</dd>
-        <dt>Height</dt><dd>${pick(LOAD,F.heightFt) ? esc(pick(LOAD,F.heightFt))+" ft" : '—'}</dd>
-        <dt>Weight</dt><dd>${pick(LOAD,F.weightLbs) ? Number(pick(LOAD,F.weightLbs)).toLocaleString()+' lb' : '—'}</dd>
-        <dt>Axles</dt><dd>${esc(pick(LOAD,F.axles)||'—')}</dd>
-        <dt>Classification</dt><dd>
-          ${pick(LOAD,F.superload) ? '<span class="pill bad">Superload</span> ' : ''}
-          ${pick(LOAD,F.oversize) ? '<span class="pill warn">Oversize</span> ' : ''}
-          ${pick(LOAD,F.overweight) ? '<span class="pill warn">Overweight</span> ' : ''}
-          ${(!pick(LOAD,F.superload) && !pick(LOAD,F.oversize) && !pick(LOAD,F.overweight)) ? '—' : ''}
-        </dd>
-        <dt>Route survey</dt><dd>${pick(LOAD,F.routeSurvey) ? 'Required' : 'Not required'}</dd>
-      </dl>
-    </div>
-
-    <div class="card box">
-      <h3>Truck &amp; Driver</h3>
-      <dl class="kv">
-        <dt>Driver</dt><dd>${esc(pick(LOAD,F.driver)||'—')}</dd>
-        <dt>Driver phone</dt><dd>${esc(pick(LOAD,F.driverPhone)||'—')}</dd>
-        <dt>Truck</dt><dd>${esc(pick(LOAD,F.truck)||'—')}</dd>
-        <dt>Trailer</dt><dd>${esc(pick(LOAD,F.trailer)||'—')}</dd>
-      </dl>
-    </div>
-
-    <div class="card box">
-      <h3>Readiness</h3>
-      <dl class="kv">
-        <dt>Permits</dt><dd>${permIssued} issued${permOpen ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>` : ''} of ${PERMITS.length}</dd>
-        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${ESCORTS.length}</dd>
-        <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
-        <dt>Revenue</dt><dd>${money(rev)}</dd>
-        <dt>Cost</dt><dd>${money(cst)}</dd>
-        <dt>Margin</dt><dd style="font-weight:700;color:${mar >= 0 ? 'var(--ok)' : 'var(--bad)'}">
-          ${money(mar)}${pct !== null ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
-      </dl>
-    </div>
-
-  </div>`;
-}
-
-/* ============================================================
-   TIMELINE
-   ============================================================ */
-function drawTimeline(){
-  if (!EVENTS.length){
-    $('tab-timeline').innerHTML = '<div class="card"><div class="empty">No events yet.</div></div>';
     return;
+
   }
 
-  const items = EVENTS.map(ev => {
-    const when = ev.occurred_at || ev.created_at;
-    const type = ev.event_type || 'note';
-    let headHTML = '';
 
-    if (type === 'status_change'){
-      /* transition is the heading; no repeated "Status changed" label */
-      const raw = String(ev.subject || ev.body || '');
-      const m = raw.split(/\s*(?:→|->|»)\s*/);
-      headHTML = (m.length >= 2)
-        ? `<div class="tl-head trans">${esc(titleize(m[0]))}<span class="arrow">→</span>${esc(titleize(m[1]))}</div>`
-        : `<div class="tl-head trans">${esc(titleize(raw))}</div>`;
-    } else if (ev.subject){
-      headHTML = `<div class="tl-head">${esc(ev.subject)}</div>`;
+
+  const breakTime =
+    breakPlanned
+      ? 0.5
+      : 0;
+
+
+
+  const totalWindowDemand =
+
+    tripDrive +
+    tripDuty +
+    buffer +
+    breakTime;
+
+
+
+  const totalCycleDemand =
+
+    tripDrive +
+    tripDuty +
+    breakTime;
+
+
+
+  const driveAfter =
+
+    driveRemaining -
+    tripDrive;
+
+
+
+  const windowAfter =
+
+    windowRemaining -
+    totalWindowDemand;
+
+
+
+  const cycleAfter =
+
+    cycleRemaining -
+    totalCycleDemand;
+
+
+
+  const breakNeeded =
+
+    (
+      driveSinceBreak +
+      tripDrive
+    ) > 8;
+
+
+
+  const warnings =
+    [];
+
+
+
+  if (
+    driveAfter < 0
+  ) {
+
+    warnings.push(
+      'Planned driving exceeds the remaining driving clock.'
+    );
+
+  }
+
+
+
+  if (
+    windowAfter < 0
+  ) {
+
+    warnings.push(
+      'The planned move exceeds the remaining 14-hour window.'
+    );
+
+  }
+
+
+
+  if (
+    cycleAfter < 0
+  ) {
+
+    warnings.push(
+      'The planned move exceeds the remaining cycle hours.'
+    );
+
+  }
+
+
+
+  if (
+    breakNeeded &&
+    !breakPlanned
+  ) {
+
+    warnings.push(
+      'A qualifying 30-minute interruption appears necessary before completing the planned driving.'
+    );
+
+  }
+
+
+
+  if (
+    breakPlanned &&
+    windowRemaining <
+    totalWindowDemand
+  ) {
+
+    warnings.push(
+      'Remember that the planned break still uses time inside the ordinary 14-hour window.'
+    );
+
+  }
+
+
+
+  const feasible =
+
+    driveAfter >= 0 &&
+
+    windowAfter >= 0 &&
+
+    cycleAfter >= 0 &&
+
+    (
+      !breakNeeded ||
+      breakPlanned
+    );
+
+
+
+  const tight =
+
+    feasible &&
+
+    (
+      driveAfter < 1 ||
+      windowAfter < 1 ||
+      cycleAfter < 2
+    );
+
+
+
+  if (
+    !feasible
+  ) {
+
+    $('hosStatus')
+      .className =
+      'result-status no';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Not Feasible';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The current clocks do not support this plan as entered.';
+
+  }
+
+  else if (
+    tight
+  ) {
+
+    $('hosStatus')
+      .className =
+      'result-status tight';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Tight';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The move appears possible, but there is very little operating cushion.';
+
+  }
+
+  else {
+
+    $('hosStatus')
+      .className =
+      'result-status good';
+
+
+    $('hosStatusMain')
+      .textContent =
+      'Good';
+
+
+    $('hosStatusDetail')
+      .textContent =
+      'The entered clocks support the planned move with remaining time.';
+
+  }
+
+
+
+  $('driveAfter')
+    .textContent =
+    hours(
+      driveAfter
+    );
+
+
+  $('windowAfter')
+    .textContent =
+    hours(
+      windowAfter
+    );
+
+
+  $('cycleAfter')
+    .textContent =
+    hours(
+      cycleAfter
+    );
+
+
+  $('tripDemand')
+    .textContent =
+    hours(
+      totalWindowDemand
+    );
+
+
+
+  $('hosWarnings')
+    .innerHTML =
+
+    warnings.map(
+      warning =>
+
+        '<div class="warning">' +
+        warning +
+        '</div>'
+
+    ).join('');
+
+}
+
+
+
+$('calculateHos')
+  .addEventListener(
+    'click',
+    calculateHos
+  );
+
+
+
+$('resetHos')
+  .addEventListener(
+    'click',
+    () => {
+
+
+      [
+        'driveRemaining',
+        'windowRemaining',
+        'cycleRemaining',
+        'tripDrive',
+        'tripDuty'
+      ]
+      .forEach(
+        id =>
+          $(id).value =
+          ''
+      );
+
+
+      $('driveSinceBreak').value =
+        '0';
+
+
+      $('buffer').value =
+        '0.5';
+
+
+      $('breakPlanned').value =
+        'no';
+
+
+      $('hosStatus')
+        .className =
+        'result-status';
+
+
+      $('hosStatusMain')
+        .textContent =
+        'Enter driver clocks';
+
+
+      $('hosStatusDetail')
+        .textContent =
+        'Use the current ELD values before assigning or confirming the move.';
+
+
+      [
+        'driveAfter',
+        'windowAfter',
+        'cycleAfter',
+        'tripDemand'
+      ]
+      .forEach(
+        id =>
+          $(id).textContent =
+          '—'
+      );
+
+
+      $('hosWarnings')
+        .innerHTML =
+        '';
+
+    }
+  );
+
+
+
+/* ============================================================
+   PROFIT CALCULATOR
+   ============================================================ */
+
+function calculateProfit() {
+
+
+  const linehaul =
+    n(
+      'linehaul'
+    );
+
+
+  const fuel =
+    n(
+      'fuel'
+    );
+
+
+  const otherRevenue =
+    n(
+      'otherRevenue'
+    );
+
+
+  const loadedMiles =
+    n(
+      'loadedMiles'
+    );
+
+
+  const deadheadMiles =
+    n(
+      'deadheadMiles'
+    );
+
+
+  const fuelCost =
+    n(
+      'fuelCost'
+    );
+
+
+  const permitCost =
+    n(
+      'permitCost'
+    );
+
+
+  const escortCost =
+    n(
+      'escortCost'
+    );
+
+
+  const tollCost =
+    n(
+      'tollCost'
+    );
+
+
+  const lodgingCost =
+    n(
+      'lodgingCost'
+    );
+
+
+  const otherCost =
+    n(
+      'otherCost'
+    );
+
+
+  const dispatchRate =
+    n(
+      'dispatchRate'
+    );
+
+
+
+  const grossRevenue =
+
+    linehaul +
+    fuel +
+    otherRevenue;
+
+
+
+  const totalMiles =
+
+    loadedMiles +
+    deadheadMiles;
+
+
+
+  const totalCosts =
+
+    fuelCost +
+    permitCost +
+    escortCost +
+    tollCost +
+    lodgingCost +
+    otherCost;
+
+
+
+  const grossProfit =
+
+    grossRevenue -
+    totalCosts;
+
+
+
+  const margin =
+
+    grossRevenue > 0
+
+      ? (
+          grossProfit /
+          grossRevenue
+        ) *
+        100
+
+      : 0;
+
+
+
+  const dispatchFee =
+
+    grossRevenue *
+
+    (
+      dispatchRate /
+      100
+    );
+
+
+
+  const carrierAfterFee =
+
+    grossRevenue -
+    dispatchFee -
+    totalCosts;
+
+
+
+  const rpm =
+
+    totalMiles > 0
+
+      ? grossRevenue /
+        totalMiles
+
+      : 0;
+
+
+
+  const profitPerMile =
+
+    totalMiles > 0
+
+      ? grossProfit /
+        totalMiles
+
+      : 0;
+
+
+
+  const breakEvenRevenue =
+
+    totalCosts +
+    dispatchFee;
+
+
+
+  $('grossRevenue')
+    .textContent =
+    money(
+      grossRevenue
+    );
+
+
+  $('revenueMile')
+    .textContent =
+
+    totalMiles
+
+      ? '$' +
+        rpm.toFixed(2)
+
+      : '—';
+
+
+  $('totalCosts')
+    .textContent =
+    money(
+      totalCosts
+    );
+
+
+  $('grossProfit')
+    .textContent =
+    money(
+      grossProfit
+    );
+
+
+  $('grossProfit')
+    .className =
+
+    'metric-value ' +
+
+    (
+      grossProfit >= 0
+
+        ? 'money-positive'
+
+        : 'money-negative'
+    );
+
+
+  $('profitMargin')
+    .textContent =
+
+    margin.toFixed(1) +
+    '%';
+
+
+  $('dispatchFee')
+    .textContent =
+    money(
+      dispatchFee
+    );
+
+
+  $('carrierAfterFee')
+    .textContent =
+    money(
+      carrierAfterFee
+    );
+
+
+  $('profitPerMile')
+    .textContent =
+
+    totalMiles
+
+      ? '$' +
+        profitPerMile.toFixed(2)
+
+      : '—';
+
+
+
+  if (
+    grossProfit < 0
+  ) {
+
+    $('profitStatus')
+      .className =
+      'result-status no';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Loss';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The entered load expenses exceed the gross revenue.';
+
+  }
+
+  else if (
+    margin < 10
+  ) {
+
+    $('profitStatus')
+      .className =
+      'result-status tight';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Thin Margin';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The load is positive, but the estimated margin is narrow.';
+
+  }
+
+  else {
+
+    $('profitStatus')
+      .className =
+      'result-status good';
+
+
+    $('profitStatusMain')
+      .textContent =
+      'Positive';
+
+
+    $('profitStatusDetail')
+      .textContent =
+      'The entered revenue exceeds the estimated load costs.';
+
+  }
+
+
+
+  if (
+    totalMiles > 0
+  ) {
+
+    $('breakEven')
+      .textContent =
+
+      'Estimated break-even revenue: ' +
+
+      money(
+        breakEvenRevenue
+      )
+
+      +
+
+      ' · approximately $' +
+
+      (
+        breakEvenRevenue /
+        totalMiles
+      ).toFixed(2)
+
+      +
+
+      ' per total mile.';
+
+  }
+
+  else {
+
+    $('breakEven')
+      .textContent =
+
+      'Estimated break-even revenue: ' +
+
+      money(
+        breakEvenRevenue
+      )
+
+      +
+
+      '. Enter mileage to calculate break-even RPM.';
+
+  }
+
+}
+
+
+
+$('calculateProfit')
+  .addEventListener(
+    'click',
+    calculateProfit
+  );
+
+
+
+$('resetProfit')
+  .addEventListener(
+    'click',
+    () => {
+
+
+      [
+        'linehaul',
+        'otherRevenue',
+        'loadedMiles',
+        'deadheadMiles',
+        'fuelCost',
+        'permitCost',
+        'escortCost',
+        'tollCost',
+        'lodgingCost',
+        'otherCost'
+      ]
+      .forEach(
+        id =>
+          $(id).value =
+          ''
+      );
+
+
+      $('fuel').value =
+        '0';
+
+
+      $('dispatchRate').value =
+        '7';
+
+
+      [
+        'grossRevenue',
+        'revenueMile',
+        'totalCosts',
+        'grossProfit',
+        'profitMargin',
+        'dispatchFee',
+        'carrierAfterFee',
+        'profitPerMile'
+      ]
+      .forEach(
+        id => {
+
+          $(id).textContent =
+            '—';
+
+          $(id).className =
+            'metric-value';
+
+        }
+      );
+
+
+      $('profitStatus')
+        .className =
+        'result-status';
+
+
+      $('profitStatusMain')
+        .textContent =
+        'Enter rate and costs';
+
+
+      $('profitStatusDetail')
+        .textContent =
+        'Compare revenue against the expected load expenses.';
+
+
+      $('breakEven')
+        .textContent =
+        'Enter the load information to calculate the break-even rate.';
+
+    }
+  );
+
+
+/* ============================================================
+   ACCESSORIALS / DETENTION
+   ============================================================ */
+
+async function loadAccessorialLoads() {
+
+  if (
+    !db ||
+    !tenant
+  ) {
+
+    return;
+
+  }
+
+
+  const result =
+    await db
+      .from('loads')
+      .select(
+        'id,load_number,commodity,created_at'
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .order(
+        'created_at',
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(
+        250
+      );
+
+
+  if (
+    result.error
+  ) {
+
+    console.warn(
+      'Could not load loads for accessorials:',
+      result.error.message
+    );
+
+    return;
+
+  }
+
+
+  const select =
+    $('accessorialLoad');
+
+
+  select.innerHTML =
+    '<option value="">— Select a load —</option>' +
+    (result.data || [])
+      .map(
+        load => {
+
+          const number =
+            load.load_number ||
+            'Load';
+
+          const commodity =
+            load.commodity
+              ? ' · ' +
+                load.commodity
+              : '';
+
+          return (
+            '<option value="' +
+            load.id +
+            '">' +
+            number +
+            commodity +
+            '</option>'
+          );
+
+        }
+      )
+      .join('');
+
+}
+
+
+function accessorialPretty(value) {
+
+  return String(
+    value ||
+    ''
+  )
+    .replace(
+      /_/g,
+      ' '
+    )
+    .replace(
+      /\b\w/g,
+      c =>
+        c.toUpperCase()
+    );
+
+}
+
+
+function localDateTimeToIso(value) {
+
+  if (
+    !value
+  ) {
+
+    return null;
+
+  }
+
+
+  const d =
+    new Date(
+      value
+    );
+
+
+  return Number.isNaN(
+    d.getTime()
+  )
+    ? null
+    : d.toISOString();
+
+}
+
+
+function minutesBetween(start, end) {
+
+  if (
+    !start ||
+    !end
+  ) {
+
+    return 0;
+
+  }
+
+
+  const a =
+    new Date(
+      start
+    );
+
+
+  const b =
+    new Date(
+      end
+    );
+
+
+  if (
+    Number.isNaN(a.getTime()) ||
+    Number.isNaN(b.getTime()) ||
+    b <= a
+  ) {
+
+    return 0;
+
+  }
+
+
+  return Math.round(
+    (
+      b.getTime() -
+      a.getTime()
+    ) /
+    60000
+  );
+
+}
+
+
+function formatMinutes(totalMinutes) {
+
+  const safe =
+    Math.max(
+      0,
+      Math.round(
+        totalMinutes ||
+        0
+      )
+    );
+
+
+  const h =
+    Math.floor(
+      safe /
+      60
+    );
+
+
+  const m =
+    safe %
+    60;
+
+
+  return (
+    h +
+    'h ' +
+    String(m)
+      .padStart(
+        2,
+        '0'
+      ) +
+    'm'
+  );
+
+}
+
+
+function setAccessorialMessage(
+  text,
+  type
+) {
+
+  const box =
+    $('accessorialMessage');
+
+
+  box.className =
+    'accessorial-message';
+
+
+  box.textContent =
+    text ||
+    '';
+
+
+  if (
+    text
+  ) {
+
+    box.classList.add(
+      'show',
+      type ===
+      'error'
+        ? 'error'
+        : 'ok'
+    );
+
+  }
+
+}
+
+
+function toggleAccessorialFields() {
+
+  const detention =
+    $('accessorialType')
+      .value ===
+      'detention';
+
+
+  $('detentionFields')
+    .classList
+    .toggle(
+      'hidden',
+      !detention
+    );
+
+
+  if (
+    detention
+  ) {
+
+    $('accessorialRateType')
+      .value =
+      'hourly';
+
+  }
+
+}
+
+
+function selectedLoadText() {
+
+  const option =
+    $('accessorialLoad')
+      .selectedOptions[0];
+
+
+  if (
+    !option ||
+    !option.value
+  ) {
+
+    return 'No load selected';
+
+  }
+
+
+  return option.textContent
+    .trim();
+
+}
+
+
+function calculateAccessorial() {
+
+  setAccessorialMessage(
+    '',
+    'ok'
+  );
+
+
+  const type =
+    $('accessorialType')
+      .value;
+
+
+  const rateType =
+    $('accessorialRateType')
+      .value;
+
+
+  const rate =
+    n(
+      'accessorialRate'
+    );
+
+
+  const quantity =
+    Math.max(
+      0,
+      n(
+        'accessorialQuantity'
+      )
+    );
+
+
+  let totalMinutes =
+    null;
+
+
+  let freeMinutes =
+    null;
+
+
+  let billableMinutes =
+    null;
+
+
+  let requestedAmount =
+    0;
+
+
+  if (
+    type ===
+    'detention'
+  ) {
+
+    const arrival =
+      $('detentionArrival')
+        .value;
+
+
+    const released =
+      $('detentionReleased')
+        .value;
+
+
+    if (
+      !arrival ||
+      !released
+    ) {
+
+      setAccessorialMessage(
+        'Enter both arrival and release/departure times for detention.',
+        'error'
+      );
+
+      return null;
+
     }
 
-    const bodyHTML = (type === 'status_change')
-      ? (ev.body ? `<div class="tl-body">${esc(ev.body)}</div>` : '')
-      : (ev.body ? `<div class="tl-body">${esc(ev.body)}</div>` : '');
 
-    return `<div class="tl-item${ev.is_milestone ? ' mile' : ''}">
-      <div class="tl-when">
-        <span>${esc(fmtDT(when))}</span>
-        <span class="tl-type">${esc(String(type).replace(/_/g,' '))}</span>
-        <span class="muted">${esc(ago(when))}</span>
-      </div>
-      ${headHTML}
-      ${bodyHTML}
-    </div>`;
-  }).join('');
+    totalMinutes =
+      minutesBetween(
+        arrival,
+        released
+      );
 
-  $('tab-timeline').innerHTML = `
-    <div class="sechead"><h2>Timeline</h2><span class="spacer"></span>
-      <button class="sm" onclick="openNote()">Add Note</button></div>
-    <div class="card box"><div class="tl">${items}</div></div>`;
-}
- const NOTE_TYPES = ['note','call','email','sms','issue'];
 
-function openNote(){
-  clearErr('nt_err');
-  $('nt_type').value = 'note';
-  $('nt_subject').value = '';
-  $('nt_body').value = '';
-  $('nt_milestone').checked = false;
-  dlgNote.showModal();
-}
+    if (
+      totalMinutes <= 0
+    ) {
 
-async function saveNote(){
-  clearErr('nt_err');
-  const body = txt($('nt_body').value);
-  if (!body){ showErr('nt_err', { message: 'Body is required.' }); return; }
-  const btn = $('nt_save'); btn.disabled = true;
+      setAccessorialMessage(
+        'Release/departure must be later than arrival.',
+        'error'
+      );
 
-  const ok = await logEvent({
-    event_type:   $('nt_type').value,
-    subject:      txt($('nt_subject').value),
-    body:         body,
-    is_milestone: $('nt_milestone').checked
-  });
+      return null;
 
-  btn.disabled = false;
-  if (!ok){ showErr('nt_err', { message: 'Save failed — see console.' }); return; }
-
-  dlgNote.close();
-  toast('Note saved');
-  await refreshAll();
-} 
-
-/* ============================================================
-   PERMITS
-   ============================================================ */
-const PERMIT_TONE = {
-  not_required:'grey', needed:'warn', applied:'', pending:'warn',
-  issued:'ok', rejected:'bad', expired:'bad', amended:'warn', cancelled:'grey'
-};
-
-function drawPermits(){
-  const rows = PERMITS.map(p => {
-    const escorts = [
-      p.escort_front && 'F', p.escort_rear && 'R',
-      p.escort_police && 'P', p.escort_high_pole && 'HP'
-    ].filter(Boolean).join(' / ') || '—';
-
-    const restr = [
-      p.daylight_only && 'Daylight only',
-      p.wind_limit_mph && `${p.wind_limit_mph} mph wind`,
-      p.weekend_travel_allowed === false && 'No weekend',
-      p.holiday_travel_allowed === false && 'No holiday'
-    ].filter(Boolean).join(' · ') || '—';
-
-    const cost = (Number(p.fee) || 0) + (Number(p.service_fee) || 0);
-
-    return `<tr class="clickable" data-permit="${esc(p.id)}">
-      <td><b>${esc(p.state || '—')}</b></td>
-      <td><span class="pill ${PERMIT_TONE[p.status] !== undefined ? PERMIT_TONE[p.status] : 'grey'}">${esc(titleize(p.status))}</span></td>
-      <td class="mono">${esc(p.permit_number || '—')}</td>
-      <td>${esc(p.issuing_authority || '—')}</td>
-      <td>${esc(toDateInput(p.valid_from) || '—')} → ${esc(toDateInput(p.valid_to) || '—')}</td>
-      <td>${escorts}</td>
-      <td class="small">${esc(restr)}</td>
-      <td>${p.driver_has_permit ? '<span class="pill ok">Yes</span>' : '<span class="pill grey">No</span>'}</td>
-      <td style="text-align:right">${cost ? money(cost) : '—'}</td>
-    </tr>`;
-  }).join('');
-
-  $('tab-permits').innerHTML = `
-    <div class="sechead"><h2>Permits</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openPermit(null)">+ Add Permit</button></div>
-    ${PERMITS.length ? `
-    <div class="tablewrap"><table>
-      <thead><tr>
-        <th>State</th><th>Status</th><th>Permit #</th><th>Authority</th>
-        <th>Valid</th><th>Escorts</th><th>Restrictions</th><th>Driver copy</th>
-        <th style="text-align:right">Cost</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`
-    : '<div class="card"><div class="empty">No permits on this load yet.</div></div>'}
-  `;
-
-  $$('#tab-permits tr[data-permit]').forEach(tr => {
-    tr.addEventListener('click', () => openPermit(tr.dataset.permit));
-  });
-}
-
-function openPermit(id){
-  clearErr('pm_err');
-  const p = id ? PERMITS.find(x => x.id === id) : null;
-
-  $('pm_id').value      = p ? p.id : '';
-  $('pm_title').textContent = p ? `Permit — ${p.state || ''}` : 'New Permit';
-  $('pm_idlabel').textContent = p ? p.id.slice(0,8) : '';
-  $('pm_delbtn').classList.toggle('hide', !p);
-
-  $('pm_state').value                     = p ? (p.state || '') : '';
-  $('pm_status').value                    = p ? (p.status || 'needed') : 'needed';
-  $('pm_permit_number').value             = p ? (p.permit_number || '') : '';
-  $('pm_issuing_authority').value         = p ? (p.issuing_authority || '') : '';
-  $('pm_permit_service_id').value         = p ? (p.permit_service_id || '') : '';
-  $('pm_fee').value                       = p && p.fee !== null && p.fee !== undefined ? p.fee : '';
-  $('pm_service_fee').value               = p && p.service_fee !== null && p.service_fee !== undefined ? p.service_fee : '';
-
-  $('pm_applied_at').value                = p ? toLocalInput(p.applied_at) : '';
-  $('pm_issued_at').value                 = p ? toLocalInput(p.issued_at) : '';
-  $('pm_valid_from').value                = p ? toDateInput(p.valid_from) : '';
-  $('pm_valid_to').value                  = p ? toDateInput(p.valid_to) : '';
-
-  $('pm_escort_front').checked            = p ? !!p.escort_front : false;
-  $('pm_escort_rear').checked             = p ? !!p.escort_rear : false;
-  $('pm_escort_police').checked           = p ? !!p.escort_police : false;
-  $('pm_escort_high_pole').checked        = p ? !!p.escort_high_pole : false;
-
-  $('pm_daylight_only').checked           = p ? !!p.daylight_only : false;
-  $('pm_weekend_travel_allowed').checked  = p ? !!p.weekend_travel_allowed : false;
-  $('pm_holiday_travel_allowed').checked  = p ? !!p.holiday_travel_allowed : false;
-  $('pm_wind_limit_mph').value            = p && p.wind_limit_mph !== null && p.wind_limit_mph !== undefined ? p.wind_limit_mph : '';
-
-  $('pm_travel_time_restrictions').value  = p ? (p.travel_time_restrictions || '') : '';
-  $('pm_curfew_notes').value              = p ? (p.curfew_notes || '') : '';
-  $('pm_route_restrictions').value        = p ? (p.route_restrictions || '') : '';
-
-  $('pm_driver_has_permit').checked       = p ? !!p.driver_has_permit : false;
-  $('pm_driver_briefed_at').value         = p ? toLocalInput(p.driver_briefed_at) : '';
-
-  $('pm_notes').value                     = p ? (p.notes || '') : '';
-
-  dlgPermit.showModal();
-}
-
-/* --- PERMIT SAVE — standalone. Touches only the permits table. --- */
-async function pm_save(){
-  clearErr('pm_err');
-  const btn = $('pm_savebtn');
-  btn.disabled = true;
-
-  const pm_id = txt($('pm_id').value);
-  const pm_priorStatus = pm_id
-    ? (PERMITS.find(x => x.id === pm_id) || {}).status || null
-    : null;
-
-  const pm_state  = upper($('pm_state').value);
-  const pm_status = $('pm_status').value;
-
-  if (!pm_state){
-    showErr('pm_err', { message: 'State is required.' });
-    btn.disabled = false;
-    return;
-  }
-
-  const pm_row = {
-    state:                     pm_state,
-    permit_number:             txt($('pm_permit_number').value),
-    issuing_authority:         txt($('pm_issuing_authority').value),
-    permit_service_id:         txt($('pm_permit_service_id').value),
-    status:                    pm_status,
-    applied_at:                fromLocalInput($('pm_applied_at').value),
-    issued_at:                 fromLocalInput($('pm_issued_at').value),
-    valid_from:                txt($('pm_valid_from').value),
-    valid_to:                  txt($('pm_valid_to').value),
-    fee:                       num($('pm_fee').value),
-    service_fee:               num($('pm_service_fee').value),
-    route_restrictions:        txt($('pm_route_restrictions').value),
-    travel_time_restrictions:  txt($('pm_travel_time_restrictions').value),
-    escort_front:              $('pm_escort_front').checked,
-    escort_rear:               $('pm_escort_rear').checked,
-    escort_police:             $('pm_escort_police').checked,
-    escort_high_pole:          $('pm_escort_high_pole').checked,
-    daylight_only:             $('pm_daylight_only').checked,
-    wind_limit_mph:            num($('pm_wind_limit_mph').value),
-    curfew_notes:              txt($('pm_curfew_notes').value),
-    weekend_travel_allowed:    $('pm_weekend_travel_allowed').checked,
-    holiday_travel_allowed:    $('pm_holiday_travel_allowed').checked,
-    driver_has_permit:         $('pm_driver_has_permit').checked,
-    driver_briefed_at:         fromLocalInput($('pm_driver_briefed_at').value),
-    notes:                     txt($('pm_notes').value),
-    updated_at:                new Date().toISOString()
-  };
-
-  /* stamp issued_at automatically when flipping to issued without a date */
-  if (pm_status === 'issued' && !pm_row.issued_at){
-    pm_row.issued_at = new Date().toISOString();
-  }
-
-  let pm_err = null;
-  if (pm_id){
-    const r = await db.from('permits').update(pm_row).eq('id', pm_id);
-    pm_err = r.error;
-  } else {
-    pm_row.tenant_id = TENANT_ID;
-    pm_row.load_id   = LOAD_ID;
-    const r = await db.from('permits').insert(pm_row);
-    pm_err = r.error;
-  }
-
-  if (pm_err){ showErr('pm_err', pm_err); btn.disabled = false; return; }
-
-  /* milestone fires only on the actual transition INTO issued */
-  if (pm_status === 'issued' && pm_priorStatus !== 'issued'){
-    await logEvent({
-      event_type: 'permit_approved',
-      subject: `${pm_state} permit issued`,
-      body: [
-        pm_row.permit_number ? 'Permit #' + pm_row.permit_number : null,
-        pm_row.issuing_authority,
-        (pm_row.valid_from || pm_row.valid_to)
-          ? `Valid ${pm_row.valid_from || '?'} to ${pm_row.valid_to || '?'}` : null
-      ].filter(Boolean).join(' · ') || null,
-      is_milestone: true
-    });
-  }
-
-  btn.disabled = false;
-  dlgPermit.close();
-  toast(pm_id ? 'Permit updated' : 'Permit added');
-  await refreshAll();
-}
-
-async function pm_delete(){
-  const pm_id = txt($('pm_id').value);
-  if (!pm_id) return;
-  if (!confirm('Delete this permit? This cannot be undone.')) return;
-
-  const { error } = await db.from('permits').delete().eq('id', pm_id);
-  if (error){ showErr('pm_err', error); return; }
-
-  dlgPermit.close();
-  toast('Permit deleted');
-  await refreshAll();
-}
-
-/* ============================================================
-   ESCORTS
-   ============================================================ */
-const ESCORT_TONE = {
-  needed:'warn', quoted:'warn', booked:'', confirmed:'ok',
-  en_route:'ok', completed:'ok', cancelled:'grey', no_show:'bad'
-};
-const ESCORT_MILESTONE = ['confirmed','en_route','completed'];
-
-function drawEscorts(){
-  const rows = ESCORTS.map(e => {
-    const rate = e.actual_cost != null ? e.actual_cost
-               : e.confirmed_rate != null ? e.confirmed_rate
-               : e.quoted_rate;
-    const rateLabel = e.actual_cost != null ? 'actual'
-                    : e.confirmed_rate != null ? 'confirmed'
-                    : e.quoted_rate != null ? 'quoted' : '';
-    const ready = [
-      e.contacts_exchanged && 'Contacts',
-      e.confirmed_day_before && 'Day-before'
-    ].filter(Boolean).join(' · ') || '—';
-
-    return `<tr class="clickable" data-escort="${esc(e.id)}">
-      <td><b>${esc(titleize(e.role))}</b></td>
-      <td><span class="pill ${ESCORT_TONE[e.status] !== undefined ? ESCORT_TONE[e.status] : 'grey'}">${esc(titleize(e.status))}</span></td>
-      <td>${esc(e.vehicle_info || '—')}</td>
-      <td>${esc(e.driver_name || '—')}${e.driver_phone ? `<div class="small muted">${esc(e.driver_phone)}</div>` : ''}</td>
-      <td>${esc(fmtDT(e.scheduled_start))}</td>
-      <td>${esc(e.meeting_location || '—')}${e.meeting_time ? `<div class="small muted">${esc(fmtDT(e.meeting_time))}</div>` : ''}</td>
-      <td class="small">${ready}</td>
-      <td style="text-align:right">${rate != null ? money(rate) : '—'}
-        ${rateLabel ? `<div class="small muted">${rateLabel}</div>` : ''}</td>
-    </tr>`;
-  }).join('');
-
-  $('tab-escorts').innerHTML = `
-    <div class="sechead"><h2>Escort Assignments</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openEscort(null)">+ Add Escort</button></div>
-    ${ESCORTS.length ? `
-    <div class="tablewrap"><table>
-      <thead><tr>
-        <th>Role</th><th>Status</th><th>Vehicle</th><th>Driver</th>
-        <th>Scheduled</th><th>Meet-up</th><th>Ready</th>
-        <th style="text-align:right">Rate</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`
-    : '<div class="card"><div class="empty">No escorts assigned yet.</div></div>'}
-  `;
-
-  $$('#tab-escorts tr[data-escort]').forEach(tr => {
-    tr.addEventListener('click', () => openEscort(tr.dataset.escort));
-  });
-}
-
-function openEscort(id){
-  clearErr('es_err');
-  const e = id ? ESCORTS.find(x => x.id === id) : null;
-
-  $('es_id').value      = e ? e.id : '';
-  $('es_title').textContent = e ? `Escort — ${titleize(e.role || '')}` : 'New Escort Assignment';
-  $('es_idlabel').textContent = e ? e.id.slice(0,8) : '';
-  $('es_delbtn').classList.toggle('hide', !e);
-
-  $('es_role').value              = e ? (e.role || 'front') : 'front';
-  $('es_status').value            = e ? (e.status || 'needed') : 'needed';
-  $('es_escort_company_id').value = e ? (e.escort_company_id || '') : '';
-  $('es_vehicle_info').value      = e ? (e.vehicle_info || '') : '';
-  $('es_driver_name').value       = e ? (e.driver_name || '') : '';
-  $('es_driver_phone').value      = e ? (e.driver_phone || '') : '';
-
-  $('es_quoted_rate').value       = e && e.quoted_rate != null ? e.quoted_rate : '';
-  $('es_confirmed_rate').value    = e && e.confirmed_rate != null ? e.confirmed_rate : '';
-  $('es_actual_cost').value       = e && e.actual_cost != null ? e.actual_cost : '';
-
-  $('es_scheduled_start').value   = e ? toLocalInput(e.scheduled_start) : '';
-  $('es_scheduled_end').value     = e ? toLocalInput(e.scheduled_end) : '';
-  $('es_meeting_time').value      = e ? toLocalInput(e.meeting_time) : '';
-  $('es_meeting_location').value  = e ? (e.meeting_location || '') : '';
-
-  $('es_contacts_exchanged').checked   = e ? !!e.contacts_exchanged : false;
-  $('es_confirmed_day_before').checked = e ? !!e.confirmed_day_before : false;
-
-  $('es_notes').value = e ? (e.notes || '') : '';
-
-  dlgEscort.showModal();
-}
-
-/* --- ESCORT SAVE — standalone. Touches only escort_assignments. --- */
-async function es_save(){
-  clearErr('es_err');
-  const btn = $('es_savebtn');
-  btn.disabled = true;
-
-  const es_id = txt($('es_id').value);
-  const es_priorStatus = es_id
-    ? (ESCORTS.find(x => x.id === es_id) || {}).status || null
-    : null;
-
-  const es_role   = $('es_role').value;
-  const es_status = $('es_status').value;
-
-  const es_row = {
-    role:                 es_role,
-    status:               es_status,
-    escort_company_id:    txt($('es_escort_company_id').value),
-    vehicle_info:         txt($('es_vehicle_info').value),
-    driver_name:          txt($('es_driver_name').value),
-    driver_phone:         txt($('es_driver_phone').value),
-    quoted_rate:          num($('es_quoted_rate').value),
-    confirmed_rate:       num($('es_confirmed_rate').value),
-    actual_cost:          num($('es_actual_cost').value),
-    scheduled_start:      fromLocalInput($('es_scheduled_start').value),
-    scheduled_end:        fromLocalInput($('es_scheduled_end').value),
-    meeting_location:     txt($('es_meeting_location').value),
-    meeting_time:         fromLocalInput($('es_meeting_time').value),
-    contacts_exchanged:   $('es_contacts_exchanged').checked,
-    confirmed_day_before: $('es_confirmed_day_before').checked,
-    notes:                txt($('es_notes').value),
-    updated_at:           new Date().toISOString()
-  };
-
-  let es_err = null;
-  if (es_id){
-    const r = await db.from('escort_assignments').update(es_row).eq('id', es_id);
-    es_err = r.error;
-  } else {
-    es_row.tenant_id = TENANT_ID;
-    es_row.load_id   = LOAD_ID;
-    const r = await db.from('escort_assignments').insert(es_row);
-    es_err = r.error;
-  }
-
-  if (es_err){ showErr('es_err', es_err); btn.disabled = false; return; }
-
-  /* milestone fires once — on first entry into the confirmed family */
-  const es_wasConfirmed = ESCORT_MILESTONE.includes(es_priorStatus);
-  const es_nowConfirmed = ESCORT_MILESTONE.includes(es_status);
-  if (es_nowConfirmed && !es_wasConfirmed){
-    await logEvent({
-      event_type: 'escort_confirmed',
-      subject: `${titleize(es_role)} escort ${es_status === 'confirmed' ? 'confirmed' : titleize(es_status)}`,
-      body: [
-        es_row.vehicle_info,
-        es_row.driver_name ? `Driver: ${es_row.driver_name}` : null,
-        es_row.driver_phone,
-        es_row.meeting_location ? `Meet: ${es_row.meeting_location}` : null
-      ].filter(Boolean).join(' · ') || null,
-      is_milestone: true
-    });
-  }
-
-  btn.disabled = false;
-  dlgEscort.close();
-  toast(es_id ? 'Escort updated' : 'Escort added');
-  await refreshAll();
-}
-
-async function es_delete(){
-  const es_id = txt($('es_id').value);
-  if (!es_id) return;
-  if (!confirm('Delete this escort assignment? This cannot be undone.')) return;
-
-  const { error } = await db.from('escort_assignments').delete().eq('id', es_id);
-  if (error){ showErr('es_err', error); return; }
-
-  dlgEscort.close();
-  toast('Escort deleted');
-  await refreshAll();
-}
-
-/* ============================================================
-   CHECKLIST
-   ============================================================ */
-const CHECKLIST_TEMPLATE = [
-  { phase:'Booking',       item:'Rate con signed' },
-  { phase:'Booking',       item:'Carrier packet on file' },
-  { phase:'Booking',       item:'Insurance verified' },
-  { phase:'Permits',       item:'All permits applied' },
-  { phase:'Permits',       item:'All permits issued' },
-  { phase:'Permits',       item:'Permits sent to driver' },
-  { phase:'Route',         item:'Route survey ordered' },
-  { phase:'Route',         item:'Route survey complete' },
-  { phase:'Route',         item:'Restrictions briefed to driver' },
-  { phase:'Escorts',       item:'Escorts booked' },
-  { phase:'Escorts',       item:'Escorts confirmed day-before' },
-  { phase:'Pre-departure', item:'Driver dispatched' },
-  { phase:'Pre-departure', item:'Banners/flags on' },
-  { phase:'Pre-departure', item:'Lights/rotator working' },
-  { phase:'Pre-departure', item:'Load secured (tarps/straps/chains)' },
-  { phase:'Pre-departure', item:'Permits in cab' },
-  { phase:'In-transit',    item:'Daily check-in' },
-  { phase:'In-transit',    item:'Delivery appointment confirmed' },
-  { phase:'Delivery',      item:'POD received' },
-  { phase:'Delivery',      item:'Detention/delays noted' },
-  { phase:'Delivery',      item:'Invoice sent' }
-];
-const PHASE_ORDER = ['Booking','Permits','Route','Escorts','Pre-departure','In-transit','Delivery','Other'];
-
-function drawChecklist(){
-  const head = `
-    <div class="sechead"><h2>Pre-Trip Checklist</h2>
-      <span class="pill ${CHECKLIST.length && CHECKLIST.every(c=>c.done_at||c.not_applicable) ? 'ok':'warn'}">
-        ${CHECKLIST.filter(c=>c.done_at||c.not_applicable).length} / ${CHECKLIST.length}</span>
-      <span class="spacer"></span>
-      ${CHECKLIST.length ? '' : '<button class="primary sm" onclick="seedChecklist()">Apply standard checklist</button>'}
-      <button class="sm" onclick="openChkItem()">+ Add item</button>
-    </div>`;
-
-  if (!CHECKLIST.length){
-    $('tab-checklist').innerHTML = head +
-      '<div class="card"><div class="empty">No checklist yet. Click “Apply standard checklist” to start.</div></div>';
-    return;
-  }
-
-  // group by phase in defined order
-  const groups = {};
-  CHECKLIST.forEach(c => { const p = c.phase || 'Other'; (groups[p] = groups[p] || []).push(c); });
-  const orderedPhases = PHASE_ORDER.filter(p => groups[p])
-    .concat(Object.keys(groups).filter(p => !PHASE_ORDER.includes(p)));
-
-  const sections = orderedPhases.map(phase => {
-    const rows = groups[phase]
-      .sort((a,b) => (a.seq||0) - (b.seq||0))
-      .map(c => {
-        const done = !!c.done_at, na = !!c.not_applicable;
-        const label = na ? `<span style="color:var(--muted)">${esc(c.item||'(untitled)')} <span class="small">(N/A)</span></span>`
-                    : done ? `<span style="text-decoration:line-through;color:var(--muted)">${esc(c.item||'(untitled)')}</span>`
-                    : `<span style="font-weight:600">${esc(c.item||'(untitled)')}</span>`;
-        return `<tr>
-          <td style="width:34px"><input type="checkbox" data-cl="${esc(c.id)}" ${done?'checked':''} ${na?'disabled':''}></td>
-          <td>${label}${c.note ? `<div class="small muted">${esc(c.note)}</div>`:''}</td>
-          <td style="width:60px;text-align:center">
-            <button class="ghost sm" data-na="${esc(c.id)}" title="Toggle N/A"
-              style="${na?'color:var(--accent)':''}">N/A</button></td>
-          <td style="width:40px;text-align:center">
-            <button class="ghost sm" data-del="${esc(c.id)}" title="Remove">×</button></td>
-        </tr>`;
-      }).join('');
-    return `<tr><td colspan="4" style="background:#f7f8fa;font-size:11px;text-transform:uppercase;
-      letter-spacing:.5px;font-weight:700;color:var(--muted);padding:8px 10px">${esc(phase)}</td></tr>${rows}`;
-  }).join('');
-
-  $('tab-checklist').innerHTML = head + `
-    <div class="tablewrap"><table>
-      <thead><tr><th></th><th>Item</th><th style="text-align:center">N/A</th><th></th></tr></thead>
-      <tbody>${sections}</tbody>
-    </table></div>`;
-
-  $$('#tab-checklist input[data-cl]').forEach(cb =>
-    cb.addEventListener('change', () => toggleChecklist(cb.dataset.cl, cb.checked)));
-  $$('#tab-checklist button[data-na]').forEach(b =>
-    b.addEventListener('click', () => toggleChecklistNA(b.dataset.na)));
-  $$('#tab-checklist button[data-del]').forEach(b =>
-    b.addEventListener('click', () => deleteChecklistItem(b.dataset.del)));
-}
-
-async function toggleChecklist(id, checked){
-  const patch = { done_at: checked ? new Date().toISOString() : null };
-  if (checked) patch.not_applicable = false;   // checking clears N/A
-
-  const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
-  if (error){ fail('toggleChecklist', error); return; }
-  await fetchChecklist(); drawCounts(); drawChecklist();
-}
-
-  async function seedChecklist(){
-  const rows = CHECKLIST_TEMPLATE.map((t, i) => ({
-    tenant_id: TENANT_ID,
-    load_id:   LOAD_ID,
-    phase:     t.phase,
-    seq:       (i + 1) * 10,
-    item:      t.item
-  }));
-  const { error } = await db.from('load_checklist_items').insert(rows);
-  if (error){ fail('seedChecklist', error); return; }
-  toast('Standard checklist added');
-  await fetchChecklist(); drawCounts(); drawChecklist();
-}
-
-async function toggleChecklistNA(id){
-  const item = CHECKLIST.find(c => c.id === id);
-  const patch = { not_applicable: !item.not_applicable };
-  if (patch.not_applicable) patch.done_at = null; // N/A clears done
-  const { error } = await db.from('load_checklist_items').update(patch).eq('id', id);
-  if (error){ fail('toggleChecklistNA', error); return; }
-  await fetchChecklist(); drawCounts(); drawChecklist();
-}
-
-function openChkItem(){
-  clearErr('ck_err');
-  $('ck_phase').value = 'Pre-departure';
-  $('ck_item').value = '';
-  dlgChkItem.showModal();
-}
-
-async function saveChkItem(){
-  clearErr('ck_err');
-  const item = txt($('ck_item').value);
-  if (!item){ showErr('ck_err', { message: 'Item text is required.' }); return; }
-  const btn = $('ck_save'); btn.disabled = true;
-
-  const maxSeq = CHECKLIST.reduce((m,c) => Math.max(m, c.seq||0), 0);
-  const { error } = await db.from('load_checklist_items').insert({
-    tenant_id: TENANT_ID,
-    load_id:   LOAD_ID,
-    phase:     $('ck_phase').value,
-    seq:       maxSeq + 10,
-    item
-  });
-  btn.disabled = false;
-  if (error){ showErr('ck_err', error); return; }
-  dlgChkItem.close();
-  toast('Item added');
-  await fetchChecklist(); drawCounts(); drawChecklist();
-}
-
-async function deleteChecklistItem(id){
-  if (!confirm('Remove this checklist item?')) return;
-  const { error } = await db.from('load_checklist_items').delete().eq('id', id);
-  if (error){ fail('deleteChecklistItem', error); return; }
-  await fetchChecklist(); drawCounts(); drawChecklist();
-}
-
-/* ============================================================
-   EXPENSES
-   ============================================================ */
-const CHARGE_CATEGORIES = ['linehaul','fuel','detention','layover','tarp','permit_fee',
-  'permit_service_fee','escort','pilot_car','police','driver_pay','fuel_purchase',
-  'tolls','lumper','repair','other'];
-
-
-/* ============================================================
-   ACCESSORIAL PROCESSING
-   ============================================================ */
-
-function accessorialStatusPill(status){
-  const st = status || 'pending';
-  const tone =
-    st === 'paid' || st === 'approved' ? 'ok' :
-    st === 'denied' ? 'bad' :
-    st === 'invoiced' ? 'warn' : 'grey';
-
-  return `<span class="pill ${tone}">${esc(titleize(st))}</span>`;
-}
-
-function accessorialDocSummary(a){
-  const docs = [
-    a.bol_documented ? 'BOL' : null,
-    a.pod_documented ? 'POD' : null,
-    a.rate_confirmation_documented ? 'Rate con' : null,
-    a.facility_times_documented ? 'Facility times' : null,
-    a.communication_documented ? 'Communication' : null
-  ].filter(Boolean);
-
-  return docs.length ? docs.join(', ') : '—';
-}
-
-function drawAccessorials(){
-  const requested = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.requested_amount)||0),0);
-  const approved = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.approved_amount)||0),0);
-  const paid = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.paid_amount)||0),0);
-  const pending = ACCESSORIALS.filter(a => (a.status || 'pending') === 'pending').length;
-
-  const rows = ACCESSORIALS.map(a => `
-    <tr class="clickable" data-accessorial="${esc(a.id)}">
-      <td>
-        <b>${esc(titleize(a.accessorial_type || 'accessorial'))}</b>
-        ${a.facility_name ? `<div class="small muted">${esc(a.facility_name)}</div>` : ''}
-      </td>
-      <td>${accessorialStatusPill(a.status)}</td>
-      <td style="font-weight:700">${money(a.requested_amount)}</td>
-      <td>${money(a.approved_amount)}</td>
-      <td>${money(a.paid_amount)}</td>
-      <td class="small">${esc(accessorialDocSummary(a))}</td>
-      <td class="small muted">${esc(fmtDT(a.created_at))}</td>
-    </tr>`).join('');
-
-  $('tab-accessorials').innerHTML = `
-    <div class="grid2" style="margin-bottom:12px">
-      <div class="card box">
-        <h3>Accessorial Summary</h3>
-        <dl class="kv">
-          <dt>Requested</dt><dd style="font-weight:700">${money(requested)}</dd>
-          <dt>Approved</dt><dd style="font-weight:700;color:var(--ok)">${money(approved)}</dd>
-          <dt>Paid</dt><dd style="font-weight:700">${money(paid)}</dd>
-          <dt>Pending requests</dt><dd style="font-weight:700">${pending}</dd>
-        </dl>
-      </div>
-
-      <div class="card box">
-        <h3>Processing Flow</h3>
-        <div class="small muted">
-          Calculator → <b>Pending</b> → <b>Approved / Denied</b> →
-          <b>Invoiced</b> → <b>Paid</b>
-        </div>
-        <div style="margin-top:12px">
-          <button class="primary sm" onclick="location.href='calculators.html'">
-            Open Accessorial Calculator
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="sechead">
-      <h2>Accessorials &amp; Detention</h2>
-      <span class="spacer"></span>
-      <span class="small muted">Click a record to process it.</span>
-    </div>
-
-    ${ACCESSORIALS.length ? `
-      <div class="tablewrap"><table>
-        <thead>
-          <tr>
-            <th>Type / Facility</th>
-            <th>Status</th>
-            <th>Requested</th>
-            <th>Approved</th>
-            <th>Paid</th>
-            <th>Documentation</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table></div>`
-      :
-      `<div class="card"><div class="empty">
-        No accessorials are attached to this load yet.
-        Use the Accessorial Calculator and choose this load when you click “Add to Load”.
-      </div></div>`
     }
-  `;
 
-  $$('#tab-accessorials tr[data-accessorial]').forEach(tr => {
-    tr.addEventListener('click', () => openAccessorial(tr.dataset.accessorial));
-  });
-}
 
-function openAccessorial(id){
-  clearErr('ac_err');
-  const a = ACCESSORIALS.find(x => x.id === id);
-  if (!a) return;
+    freeMinutes =
+      Math.max(
+        0,
+        Math.round(
+          n(
+            'detentionFreeMinutes'
+          )
+        )
+      );
 
-  $('ac_id').value = a.id;
-  $('ac_idlabel').textContent = a.id.slice(0,8);
-  $('ac_title').textContent = 'Process ' + titleize(a.accessorial_type || 'Accessorial');
 
-  $('ac_status').value = a.status || 'pending';
-  $('ac_approved_amount').value = a.approved_amount != null ? a.approved_amount : '';
-  $('ac_approval_reference').value = a.approval_reference || '';
-  $('ac_invoice_number').value = a.invoice_number || '';
-  $('ac_paid_amount').value = a.paid_amount != null ? a.paid_amount : '';
-  $('ac_paid_at').value = toLocalInput(a.paid_at);
-  $('ac_denial_reason').value = a.denial_reason || '';
-  $('ac_processing_notes').value = a.processing_notes || '';
+    billableMinutes =
+      Math.max(
+        0,
+        totalMinutes -
+        freeMinutes
+      );
 
-  dlgAccessorial.showModal();
-}
 
-async function saveAccessorialProcessing(){
-  clearErr('ac_err');
+    requestedAmount =
+      (
+        billableMinutes /
+        60
+      ) *
+      rate;
 
-  const btn = $('ac_save');
-  btn.disabled = true;
+  }
+  else {
 
-  const id = txt($('ac_id').value);
-  const status = $('ac_status').value;
-  const a = ACCESSORIALS.find(x => x.id === id);
+    requestedAmount =
+      rate *
+      (
+        quantity ||
+        1
+      );
 
-  if (!id || !a){
-    showErr('ac_err', {message:'Accessorial record not found.'});
-    btn.disabled = false;
-    return;
   }
 
-  const patch = {
-    status,
-    approved_amount: num($('ac_approved_amount').value),
-    approval_reference: txt($('ac_approval_reference').value),
-    denial_reason: txt($('ac_denial_reason').value),
-    invoice_number: txt($('ac_invoice_number').value),
-    paid_amount: num($('ac_paid_amount').value),
-    paid_at: fromLocalInput($('ac_paid_at').value),
-    processing_notes: txt($('ac_processing_notes').value)
+
+  const loadText =
+    selectedLoadText();
+
+
+  const description =
+    $('accessorialDescription')
+      .value
+      .trim();
+
+
+  const facility =
+    $('accessorialFacility')
+      .value
+      .trim();
+
+
+  const typeLabel =
+    accessorialPretty(
+      type
+    );
+
+
+  const summaryLines =
+    [
+      typeLabel.toUpperCase(),
+      '',
+      'Load: ' +
+        loadText,
+      facility
+        ? 'Facility: ' +
+          facility
+        : '',
+      description
+        ? 'Reason: ' +
+          description
+        : ''
+    ]
+      .filter(
+        Boolean
+      );
+
+
+  if (
+    type ===
+    'detention'
+  ) {
+
+    summaryLines.push(
+      '',
+      'Total facility time: ' +
+        formatMinutes(
+          totalMinutes
+        ),
+      'Free time: ' +
+        formatMinutes(
+          freeMinutes
+        ),
+      'Billable detention: ' +
+        formatMinutes(
+          billableMinutes
+        ),
+      'Rate: ' +
+        money(
+          rate
+        ) +
+        ' / hour'
+    );
+
+  }
+  else {
+
+    summaryLines.push(
+      '',
+      'Rate: ' +
+        money(
+          rate
+        ),
+      'Quantity: ' +
+        (
+          quantity ||
+          1
+        )
+    );
+
+  }
+
+
+  summaryLines.push(
+    '',
+    'AMOUNT REQUESTED: ' +
+      money(
+        requestedAmount
+      )
+  );
+
+
+  if (
+    $('brokerNotifiedAt')
+      .value
+  ) {
+
+    summaryLines.push(
+      'Broker/customer notified: ' +
+      new Date(
+        $('brokerNotifiedAt')
+          .value
+      )
+        .toLocaleString()
+    );
+
+  }
+
+
+  if (
+    $('notifiedContact')
+      .value
+      .trim()
+  ) {
+
+    summaryLines.push(
+      'Notification/contact: ' +
+      $('notifiedContact')
+        .value
+        .trim()
+    );
+
+  }
+
+
+  lastAccessorialCalculation = {
+    type,
+    rateType,
+    rate,
+    quantity:
+      quantity ||
+      1,
+    totalMinutes,
+    freeMinutes,
+    billableMinutes,
+    requestedAmount,
+    summary:
+      summaryLines
+        .join('\n')
   };
 
-  if (status === 'approved' && patch.approved_amount === null){
-    patch.approved_amount = num(a.requested_amount);
+
+  $('accessorialStatus')
+    .className =
+    requestedAmount > 0
+      ? 'result-status good'
+      : 'result-status tight';
+
+
+  $('accessorialStatusMain')
+    .textContent =
+    money(
+      requestedAmount
+    );
+
+
+  $('accessorialStatusDetail')
+    .textContent =
+    type ===
+    'detention'
+      ? (
+          billableMinutes > 0
+            ? 'Billable detention calculated after free time.'
+            : 'Facility time does not exceed the entered free-time allowance.'
+        )
+      : (
+          typeLabel +
+          ' request calculated.'
+        );
+
+
+  $('accessorialTotalTime')
+    .textContent =
+    totalMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          totalMinutes
+        );
+
+
+  $('accessorialFreeTime')
+    .textContent =
+    freeMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          freeMinutes
+        );
+
+
+  $('accessorialBillableTime')
+    .textContent =
+    billableMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          billableMinutes
+        );
+
+
+  $('accessorialRateResult')
+    .textContent =
+    rateType ===
+    'hourly'
+      ? (
+          money(
+            rate
+          ) +
+          '/hr'
+        )
+      : money(
+          rate
+        );
+
+
+  $('accessorialSummary')
+    .textContent =
+    lastAccessorialCalculation
+      .summary;
+
+
+  return lastAccessorialCalculation;
+
+}
+
+
+async function copyTextSafe(text) {
+
+  try {
+
+    await navigator.clipboard
+      .writeText(
+        text
+      );
+
+    return true;
+
+  }
+  catch (error) {
+
+    const area =
+      document.createElement(
+        'textarea'
+      );
+
+
+    area.value =
+      text;
+
+
+    document.body
+      .appendChild(
+        area
+      );
+
+
+    area.select();
+
+
+    const ok =
+      document.execCommand(
+        'copy'
+      );
+
+
+    area.remove();
+
+
+    return ok;
+
   }
 
-  if (status === 'denied' && !patch.denial_reason){
-    showErr('ac_err', {message:'Enter the denial reason before marking this request Denied.'});
-    btn.disabled = false;
+}
+
+
+async function saveAccessorialToLoad() {
+
+  if (
+    !db ||
+    !tenant
+  ) {
+
+    setAccessorialMessage(
+      'The database connection is not ready.',
+      'error'
+    );
+
     return;
+
   }
 
-  if (status === 'paid' && patch.paid_amount === null){
-    patch.paid_amount = patch.approved_amount !== null
-      ? patch.approved_amount
-      : num(a.approved_amount);
-  }
 
-  if (status === 'paid' && !patch.paid_at){
-    patch.paid_at = new Date().toISOString();
-  }
+  const loadId =
+    $('accessorialLoad')
+      .value;
 
-  const { error } = await db.from('accessorials').update(patch)
-    .eq('id', id)
-    .eq('load_id', LOAD_ID);
 
-  if (error){
-    showErr('ac_err', error);
-    btn.disabled = false;
+  if (
+    !loadId
+  ) {
+
+    setAccessorialMessage(
+      'Select the load this accessorial belongs to.',
+      'error'
+    );
+
     return;
+
   }
 
-  await logEvent({
-    event_type: 'accessorial_updated',
-    subject: `${titleize(a.accessorial_type || 'accessorial')} → ${titleize(status)}`,
-    body: [
-      `Requested: ${money(a.requested_amount)}`,
-      patch.approved_amount !== null ? `Approved: ${money(patch.approved_amount)}` : null,
-      patch.invoice_number ? `Invoice: ${patch.invoice_number}` : null,
-      patch.paid_amount !== null ? `Paid: ${money(patch.paid_amount)}` : null,
-      patch.denial_reason ? `Denial: ${patch.denial_reason}` : null,
-      patch.processing_notes
-    ].filter(Boolean).join('\n'),
-    is_milestone: ['approved','denied','paid'].includes(status)
-  });
 
-  btn.disabled = false;
-  dlgAccessorial.close();
-  toast('Accessorial → ' + titleize(status));
+  const calculation =
+    calculateAccessorial();
 
-  await fetchAccessorials();
-  await fetchEvents();
-  drawCounts();
-  drawAccessorials();
-}
 
-function drawExpenses(){
-  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
-  const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
-  const mar = rev - cst;
-  const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
+  if (
+    !calculation
+  ) {
 
-  /* derived costs already tracked on the permit / escort records */
-  const permitFee    = PERMITS.reduce((s,p) => s + (Number(p.fee) || 0), 0);
-  const permitSvc    = PERMITS.reduce((s,p) => s + (Number(p.service_fee) || 0), 0);
-  const escortCost   = ESCORTS.reduce((s,e) => s +
-    (e.actual_cost != null ? Number(e.actual_cost)
-     : e.confirmed_rate != null ? Number(e.confirmed_rate)
-     : Number(e.quoted_rate) || 0), 0);
+    return;
 
-  const chargeRows = CHARGES.map(c => `
-    <tr class="clickable" data-charge="${esc(c.id)}">
-      <td><span class="pill ${c.kind === 'revenue' ? 'ok' : 'grey'}">${esc(titleize(c.kind))}</span></td>
-      <td><b>${esc(titleize(c.category))}</b></td>
-      <td>${esc(c.description || '—')}</td>
-      <td>${esc(toDateInput(c.incurred_on) || '—')}</td>
-      <td>${c.billable ? '<span class="pill ok">Billable</span>' : '<span class="pill grey">No</span>'}</td>
-      <td style="text-align:right;font-weight:700;color:${c.kind === 'revenue' ? 'var(--ok)' : 'var(--ink)'}">
-        ${money(c.amount)}</td>
-    </tr>`).join('');
-
-  $('tab-expenses').innerHTML = `
-    <div class="grid2" style="margin-bottom:12px">
-      <div class="card box">
-        <h3>Margin (v_load_margin)</h3>
-        <dl class="kv">
-          <dt>Total revenue</dt><dd style="font-weight:700;color:var(--ok)">${money(rev)}</dd>
-          <dt>Total cost</dt><dd style="font-weight:700">${money(cst)}</dd>
-          <dt>Margin</dt><dd style="font-weight:700;font-size:16px;color:${mar >= 0 ? 'var(--ok)' : 'var(--bad)'}">
-            ${money(mar)}${pct !== null ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
-        </dl>
-      </div>
-      <div class="card box">
-        <h3>Costs Carried On Permit / Escort Records</h3>
-        <dl class="kv">
-          <dt>Permit state fees</dt><dd>${money(permitFee)}</dd>
-          <dt>Permit service fees</dt><dd>${money(permitSvc)}</dd>
-          <dt>Escort cost</dt><dd>${money(escortCost)}</dd>
-        </dl>
-        <div class="small muted" style="margin-top:10px">
-          These are stored on the permit and escort records themselves. Only add a
-          <b>permit_fee</b>, <b>permit_service_fee</b>, <b>escort</b>, <b>pilot_car</b> or
-          <b>police</b> charge below if <span class="mono">v_load_margin</span> does
-          <i>not</i> already pull from those tables — otherwise it double-counts.
-        </div>
-      </div>
-    </div>
-
-    <div class="sechead"><h2>Charges (load_charges)</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openCharge(null)">+ Add Charge</button></div>
-    ${CHARGES.length ? `
-    <div class="tablewrap"><table>
-      <thead><tr><th>Kind</th><th>Category</th><th>Description</th><th>Incurred</th>
-        <th>Billable</th><th style="text-align:right">Amount</th></tr></thead>
-      <tbody>${chargeRows}</tbody>
-    </table></div>`
-    : '<div class="card"><div class="empty">No charges recorded yet.</div></div>'}
-  `;
-
-  $$('#tab-expenses tr[data-charge]').forEach(tr => {
-    tr.addEventListener('click', () => openCharge(tr.dataset.charge));
-  });
-}
-
-function openCharge(id){
-  clearErr('ch_err');
-  const c = id ? CHARGES.find(x => x.id === id) : null;
-
-  $('ch_id').value = c ? c.id : '';
-  $('ch_title').textContent = c ? 'Edit Charge' : 'Add Charge';
-  $('ch_delbtn').classList.toggle('hide', !c);
-
-  $('ch_kind').value        = c ? (c.kind || 'cost') : 'cost';
-  $('ch_category').value    = c ? (c.category || 'other') : 'linehaul';
-  $('ch_amount').value      = c && c.amount != null ? c.amount : '';
-  $('ch_incurred_on').value = c ? toDateInput(c.incurred_on) : todayISO();
-  $('ch_description').value = c ? (c.description || '') : '';
-  $('ch_billable').checked  = c ? !!c.billable : true;
-
-  dlgCharge.showModal();
-}
-
-async function saveCharge(){
-  clearErr('ch_err');
-  const btn = $('ch_save'); btn.disabled = true;
-
-  const id       = txt($('ch_id').value);
-  const kind     = $('ch_kind').value;
-  const category = $('ch_category').value;
-  const amount   = num($('ch_amount').value);
-
-  if (amount === null){
-    showErr('ch_err', { message: 'Amount is required.' });
-    btn.disabled = false; return;
-  }
-  if (!CHARGE_CATEGORIES.includes(category)){
-    showErr('ch_err', { message: 'Invalid category.' });
-    btn.disabled = false; return;
   }
 
-  const row = {
-    kind, category, amount,
-    description: txt($('ch_description').value),
-    billable:    $('ch_billable').checked,
-    incurred_on: txt($('ch_incurred_on').value) || todayISO()
+
+  const record = {
+
+    tenant_id:
+      tenant,
+
+    load_id:
+      loadId,
+
+    accessorial_type:
+      calculation.type,
+
+    status:
+      'pending',
+
+    location_type:
+      $('accessorialLocationType')
+        .value ||
+      null,
+
+    facility_name:
+      $('accessorialFacility')
+        .value
+        .trim() ||
+      null,
+
+    description:
+      $('accessorialDescription')
+        .value
+        .trim() ||
+      null,
+
+    appointment_at:
+      localDateTimeToIso(
+        $('detentionAppointment')
+          .value
+      ),
+
+    arrived_at:
+      localDateTimeToIso(
+        $('detentionArrival')
+          .value
+      ),
+
+    checked_in_at:
+      localDateTimeToIso(
+        $('detentionCheckIn')
+          .value
+      ),
+
+    service_started_at:
+      localDateTimeToIso(
+        $('detentionServiceStart')
+          .value
+      ),
+
+    released_at:
+      localDateTimeToIso(
+        $('detentionReleased')
+          .value
+      ),
+
+    free_minutes:
+      calculation.freeMinutes,
+
+    total_minutes:
+      calculation.totalMinutes,
+
+    billable_minutes:
+      calculation.billableMinutes,
+
+    rate_type:
+      calculation.rateType,
+
+    rate_amount:
+      calculation.rate,
+
+    quantity:
+      calculation.quantity,
+
+    requested_amount:
+      calculation.requestedAmount,
+
+    notification_required:
+      $('notificationRequired')
+        .value ===
+      'yes',
+
+    broker_notified_at:
+      localDateTimeToIso(
+        $('brokerNotifiedAt')
+          .value
+      ),
+
+    notified_contact:
+      $('notifiedContact')
+        .value
+        .trim() ||
+      null,
+
+    bol_documented:
+      $('docBol')
+        .checked,
+
+    pod_documented:
+      $('docPod')
+        .checked,
+
+    rate_confirmation_documented:
+      $('docRateCon')
+        .checked,
+
+    facility_times_documented:
+      $('docFacilityTimes')
+        .checked,
+
+    communication_documented:
+      $('docCommunication')
+        .checked,
+
+    supporting_notes:
+      $('accessorialSupportingNotes')
+        .value
+        .trim() ||
+      null
+
   };
 
-  let error = null;
-  if (id){
-    const r = await db.from('load_charges').update(row).eq('id', id);
-    error = r.error;
-  } else {
-    row.tenant_id = TENANT_ID;
-    row.load_id   = LOAD_ID;
-    const r = await db.from('load_charges').insert(row);
-    error = r.error;
+
+  const result =
+    await db
+      .from(
+        'accessorials'
+      )
+      .insert(
+        record
+      )
+      .select(
+        'id,accessorial_type,status,requested_amount'
+      )
+      .single();
+
+
+  if (
+    result.error
+  ) {
+
+    setAccessorialMessage(
+      result.error.message,
+      'error'
+    );
+
+    return;
+
   }
-  if (error){ showErr('ch_err', error); btn.disabled = false; return; }
 
-  if (!id){
-    await logEvent({
-      event_type: 'charge_added',
-      subject: `${titleize(kind)} — ${titleize(category)} ${money(amount)}`,
-      body: row.description,
-      is_milestone: false
-    });
-  }
 
-  btn.disabled = false;
-  dlgCharge.close();
-  toast(id ? 'Charge updated' : 'Charge added');
-  await refreshAll();
+  setAccessorialMessage(
+    'Added to load as Pending ' +
+    accessorialPretty(
+      result.data.accessorial_type
+    ) +
+    ' · ' +
+    money(
+      result.data.requested_amount
+    ) +
+    '.',
+    'ok'
+  );
+
 }
 
-async function deleteCharge(){
-  const id = txt($('ch_id').value);
-  if (!id) return;
-  if (!confirm('Delete this charge?')) return;
 
-  const { error } = await db.from('load_charges').delete().eq('id', id);
-  if (error){ showErr('ch_err', error); return; }
+function resetAccessorial() {
 
-  dlgCharge.close();
-  toast('Charge deleted');
-  await refreshAll();
+  [
+    'accessorialFacility',
+    'accessorialRate',
+    'accessorialDescription',
+    'detentionAppointment',
+    'detentionArrival',
+    'detentionCheckIn',
+    'detentionServiceStart',
+    'detentionReleased',
+    'brokerNotifiedAt',
+    'notifiedContact',
+    'accessorialSupportingNotes'
+  ]
+    .forEach(
+      id => {
+
+        $(id).value =
+          '';
+
+      }
+    );
+
+
+  [
+    'docBol',
+    'docPod',
+    'docRateCon',
+    'docFacilityTimes',
+    'docCommunication'
+  ]
+    .forEach(
+      id => {
+
+        $(id).checked =
+          false;
+
+      }
+    );
+
+
+  $('accessorialType')
+    .value =
+    'detention';
+
+
+  $('accessorialLocationType')
+    .value =
+    'shipper';
+
+
+  $('accessorialRateType')
+    .value =
+    'hourly';
+
+
+  $('accessorialQuantity')
+    .value =
+    '1';
+
+
+  $('detentionFreeMinutes')
+    .value =
+    '120';
+
+
+  $('notificationRequired')
+    .value =
+    'no';
+
+
+  $('accessorialStatus')
+    .className =
+    'result-status';
+
+
+  $('accessorialStatusMain')
+    .textContent =
+    '$0.00';
+
+
+  $('accessorialStatusDetail')
+    .textContent =
+    'Enter the accessorial details and calculate.';
+
+
+  [
+    'accessorialTotalTime',
+    'accessorialFreeTime',
+    'accessorialBillableTime',
+    'accessorialRateResult'
+  ]
+    .forEach(
+      id => {
+
+        $(id).textContent =
+          '—';
+
+      }
+    );
+
+
+  $('accessorialSummary')
+    .textContent =
+    'No accessorial calculated yet.';
+
+
+  lastAccessorialCalculation =
+    null;
+
+
+  setAccessorialMessage(
+    '',
+    'ok'
+  );
+
+
+  toggleAccessorialFields();
+
 }
 
-/* ============================================================
-   NOTES
-   ============================================================ */
-function drawNotes(){
-  const notes = PRIVATE_NOTES;
 
-  const items = notes.map(n => `
-    <div class="card box" style="margin-bottom:10px${n.pinned ? ';border-color:#dbe2fb;background:#fafbff' : ''}">
-      <div class="row" style="align-items:flex-start">
-        <div style="flex:1">
-          ${n.pinned ? '<span class="pill" style="margin-bottom:6px;display:inline-block">Pinned</span><br>' : ''}
-          <div class="tl-body" style="color:var(--ink);white-space:pre-wrap">${esc(n.body)}</div>
-          <div class="small muted" style="margin-top:6px">${esc(fmtDT(n.created_at))} · ${esc(ago(n.created_at))}</div>
-        </div>
-        <button class="ghost sm" data-pv="${esc(n.id)}">Edit</button>
-      </div>
-    </div>`).join('');
+$('accessorialType')
+  .addEventListener(
+    'change',
+    toggleAccessorialFields
+  );
 
-  $('tab-notes').innerHTML = `
-    <div class="sechead"><h2>Private Notes</h2><span class="spacer"></span>
-      <button class="primary sm" onclick="openPrivate(null)">+ Add Note</button></div>
-    <div class="small muted" style="margin-bottom:12px">
-      Only visible here — never posted to the timeline or shared. For a note that belongs in
-      the shared load history, use <b>Add Note</b> on the Timeline tab instead.</div>
-    ${notes.length
-      ? items
-      : '<div class="card"><div class="empty">No private notes yet.</div></div>'}`;
 
-  $$('#tab-notes button[data-pv]').forEach(b => {
-    b.addEventListener('click', () => openPrivate(b.dataset.pv));
-  });
-}
+$('calculateAccessorial')
+  .addEventListener(
+    'click',
+    calculateAccessorial
+  );
 
-function openPrivate(id){
-  clearErr('pv_err');
-  const n = id ? PRIVATE_NOTES.find(x => x.id === id) : null;
-  $('pv_id').value = n ? n.id : '';
-  $('pv_title').textContent = n ? 'Edit Private Note' : 'Private Note';
-  $('pv_delbtn').classList.toggle('hide', !n);
-  $('pv_body').value = n ? (n.body || '') : '';
-  $('pv_pinned').checked = n ? !!n.pinned : false;
-  dlgPrivate.showModal();
-}
 
-async function savePrivate(){
-  clearErr('pv_err');
-  const body = txt($('pv_body').value);
-  if (!body){ showErr('pv_err', { message: 'Note is required.' }); return; }
-  const btn = $('pv_save'); btn.disabled = true;
+$('saveAccessorial')
+  .addEventListener(
+    'click',
+    saveAccessorialToLoad
+  );
 
-  const id = txt($('pv_id').value);
-  const row = { body, pinned: $('pv_pinned').checked, updated_at: new Date().toISOString() };
 
-  let error = null;
-  if (id){
-    const r = await db.from('load_private_notes').update(row).eq('id', id);
-    error = r.error;
-  } else {
-    row.tenant_id  = TENANT_ID;
-    row.load_id    = LOAD_ID;
-    row.created_by = APP_USER_ID;
-    const r = await db.from('load_private_notes').insert(row);
-    error = r.error;
-  }
-  btn.disabled = false;
-  if (error){ showErr('pv_err', error); return; }
+$('copyAccessorialRequest')
+  .addEventListener(
+    'click',
+    async () => {
 
-  dlgPrivate.close();
-  toast(id ? 'Note updated' : 'Note saved');
-  await refreshAll();
-}
+      const calculation =
+        calculateAccessorial();
 
-async function deletePrivate(){
-  const id = txt($('pv_id').value);
-  if (!id) return;
-  if (!confirm('Delete this private note?')) return;
-  const { error } = await db.from('load_private_notes').delete().eq('id', id);
-  if (error){ showErr('pv_err', error); return; }
-  dlgPrivate.close();
-  toast('Note deleted');
-  await refreshAll();
-}
 
-/* ============================================================
-   WIRE UP + START
-   ============================================================ */
-$('ci_save').addEventListener('click', saveCheckIn);
-$('hd_save').addEventListener('click', saveHold);
-$('st_save').addEventListener('click', saveStatus);
+      if (
+        !calculation
+      ) {
 
-$('pm_savebtn').addEventListener('click', pm_save);
-$('pm_delbtn').addEventListener('click', pm_delete);
+        return;
 
-$('es_savebtn').addEventListener('click', es_save);
-$('es_delbtn').addEventListener('click', es_delete);
+      }
 
-$('ch_save').addEventListener('click', saveCharge);
-$('ch_delbtn').addEventListener('click', deleteCharge);
 
-$('nt_save').addEventListener('click', saveNote);
+      const ok =
+        await copyTextSafe(
+          calculation.summary
+        );
 
-$('pv_save').addEventListener('click', savePrivate);
-$('pv_delbtn').addEventListener('click', deletePrivate);
 
-$('ck_save').addEventListener('click', saveChkItem);
-$('dc_save').addEventListener('click', saveDoc);
+      setAccessorialMessage(
+        ok
+          ? 'Accessorial request copied.'
+          : 'Could not copy the request.',
+        ok
+          ? 'ok'
+          : 'error'
+      );
 
-$('ac_save').addEventListener('click', saveAccessorialProcessing);
+    }
+  );
 
-boot();
+
+$('resetAccessorial')
+  .addEventListener(
+    'click',
+    resetAccessorial
+  );
+
+
+
+
+$('openLoadAccessorials')
+  .addEventListener(
+    'click',
+    () => {
+
+      const loadId =
+        $('accessorialLoad')
+          .value;
+
+      if (
+        !loadId
+      ) {
+
+        setAccessorialMessage(
+          'Select a load first.',
+          'error'
+        );
+
+        return;
+
+      }
+
+      location.href =
+        'workspace.html?id=' +
+        encodeURIComponent(loadId) +
+        '&tab=accessorials';
+
+    }
+  );
+
+toggleAccessorialFields();
+
+
 </script>
+
+
 </body>
+
 </html>
