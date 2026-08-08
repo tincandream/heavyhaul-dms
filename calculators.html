@@ -2589,50 +2589,38 @@ async function startPage() {
   await loadAccessorialLoads();
 
 
-  const requestedTool =
+  const pageParams =
     new URLSearchParams(
       location.search
-    )
-      .get(
-        'tab'
-      );
+    );
+
+
+  const requestedLoadId =
+    pageParams.get(
+      'load_id'
+    );
 
 
   if (
-    requestedTool ===
-    'accessorial'
+    requestedLoadId &&
+    $('accessorialLoad') &&
+    Array.from(
+      $('accessorialLoad').options
+    ).some(
+      option =>
+        option.value ===
+        requestedLoadId
+    )
   ) {
 
-    showTool(
-      'accessorial'
-    );
-
-  }
-  else if (
-    requestedTool ===
-    'profit'
-  ) {
-
-    showTool(
-      'profit'
-    );
-
-  }
-  else if (
-    requestedTool ===
-    'hos'
-  ) {
-
-    showTool(
-      'hos'
-    );
+    $('accessorialLoad')
+      .value =
+      requestedLoadId;
 
   }
 
 }
 
-
-startPage();
 
 
 
@@ -2813,6 +2801,29 @@ $('accessorialTab')
         'accessorial'
       )
   );
+
+
+function applyRequestedCalculatorTab() {
+
+  const requestedTool =
+    new URLSearchParams(
+      location.search
+    ).get('tab');
+
+  if (
+    requestedTool === 'accessorial' ||
+    requestedTool === 'profit' ||
+    requestedTool === 'hos'
+  ) {
+
+    showTool(requestedTool);
+
+  }
+
+}
+
+
+applyRequestedCalculatorTab();
 
 
 
@@ -4846,6 +4857,9 @@ $('openLoadAccessorials')
   );
 
 toggleAccessorialFields();
+
+
+startPage();
 
 
 </script>
