@@ -111,77 +111,6 @@
   letter-spacing: .4px;
 }
 
-  /* ============================================================
-   SEARCH RESULTS
-   ============================================================ */
-
-.search-results {
-  margin-top: 14px;
-  display: none;
-}
-
-<div
-  class="search-results"
-  id="searchResults">
-</div>
-  
-.search-results.show {
-  display: block;
-}
-
-.search-result {
-  display: block;
-
-  width: 100%;
-
-  margin-bottom: 8px;
-
-  padding: 12px 14px;
-
-  background: #FFFFFF;
-
-  border: 1px solid var(--manual-line);
-
-  text-align: left;
-
-  cursor: pointer;
-}
-
-.search-result:hover {
-  background: var(--manual-blue-soft);
-
-  border-color: var(--manual-blue);
-}
-
-.search-result-title {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: var(--manual-blue-dark);
-
-  font-family: "Oswald", sans-serif;
-
-  font-size: 13px;
-
-  font-weight: 500;
-}
-
-.search-result-snippet {
-  display: block;
-
-  color: var(--manual-muted);
-
-  font-size: 12px;
-
-  line-height: 1.5;
-}
-
-.search-result-snippet mark {
-  background: #FFF0A8;
-  color: inherit;
-}
-
 /* ============================================================
    HEAVY HAUL COMMAND
    FIELD MANUAL
@@ -2456,627 +2385,117 @@ startPage();
 
 
 /* ============================================================
-   SEARCH
+   FIELD MANUAL SEARCH
    ============================================================ */
 
-const searchInput =
-  document.getElementById(
-    'manualSearch'
-  );
+const searchInput = document.getElementById('manualSearch');
+const sections = Array.from(document.querySelectorAll('.manual-section'));
+const searchCount = document.getElementById('searchCount');
+const searchResults = document.getElementById('searchResults');
+const noResults = document.getElementById('noResults');
 
-
-const sections =
-  Array.from(
-    document.querySelectorAll(
-      '.manual-section'
-    )
-  );
-
-
-const searchCount =
-  document.getElementById(
-    'searchCount'
-  );
-
-
-const noResults =
-  document.getElementById(
-    'noResults'
-  );
-
-  const searchResults =
-  document.getElementById(
-    'searchResults'
-  );
-
-
-
-function normalize(text) {
-
-  return String(
-    text || ''
-  )
-  .toLowerCase()
-  .replace(
-    /\s+/g,
-    ' '
-  )
-  .trim();
-
+function cleanText(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
 }
 
-
-
-function clearHighlights() {
-
-  document
-    .querySelectorAll(
-      'mark.manual-hit'
-    )
-    .forEach(
-      mark => {
-
-        const parent =
-          mark.parentNode;
-
-
-        parent.replaceChild(
-          document.createTextNode(
-            mark.textContent
-          ),
-          mark
-        );
-
-
-        parent.normalize();
-
-      }
-    );
-
+function escapeHTML(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-
-
-function highlightText(
-  root,
-  term
-) {
-
-  if (
-    !term ||
-    term.length < 2
-  ) {
-
-    return;
-
-  }
-
-
-  const walker =
-    document.createTreeWalker(
-
-      root,
-
-      NodeFilter.SHOW_TEXT,
-
-      {
-        acceptNode(node) {
-
-          if (
-            !node.nodeValue.trim()
-          ) {
-
-            return (
-              NodeFilter.FILTER_REJECT
-            );
-
-          }
-
-
-          if (
-            node.parentElement &&
-            (
-              node.parentElement.tagName ===
-              'SCRIPT' ||
-              node.parentElement.tagName ===
-              'STYLE' ||
-              node.parentElement.tagName ===
-              'MARK'
-            )
-          ) {
-
-            return (
-              NodeFilter.FILTER_REJECT
-            );
-
-          }
-
-
-          return (
-            NodeFilter.FILTER_ACCEPT
-          );
-
-        }
-      }
-
-    );
-
-
-  const nodes =
-    [];
-
-
-  while (
-    walker.nextNode()
-  ) {
-
-    nodes.push(
-      walker.currentNode
-    );
-
-  }
-
-
-  const escaped =
-    term.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      '\\$&'
-    );
-
-
-  const regex =
-    new RegExp(
-      '(' +
-      escaped +
-      ')',
-      'gi'
-    );
-
-
-  nodes.forEach(
-    node => {
-
-
-      if (
-        !regex.test(
-          node.nodeValue
-        )
-      ) {
-
-        regex.lastIndex =
-          0;
-
-        return;
-
-      }
-
-
-      regex.lastIndex =
-        0;
-
-
-      const span =
-        document.createElement(
-          'span'
-        );
-
-
-      span.innerHTML =
-
-        node.nodeValue.replace(
-
-          regex,
-
-          '<mark class="manual-hit">$1</mark>'
-
-        );
-
-
-      node.parentNode.replaceChild(
-        span,
-        node
-      );
-
-    }
-  );
-
+function highlightSnippet(text, query) {
+  const safe = escapeHTML(text);
+  if (!query) return safe;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
 }
 
-function makeSnippet(
-  text,
-  term
-) {
+function getSnippet(section, query) {
+  const text = cleanText(section.innerText);
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const index = lowerText.indexOf(lowerQuery);
 
-  const clean =
-    String(text || '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-
-  const lower =
-    clean.toLowerCase();
-
-
-  const needle =
-    term.toLowerCase();
-
-
-  const index =
-    lower.indexOf(
-      needle
-    );
-
-
-  if (
-    index === -1
-  ) {
-
-    return clean.slice(
-      0,
-      180
-    );
-
+  if (index !== -1) {
+    const start = Math.max(0, index - 90);
+    const end = Math.min(text.length, index + query.length + 220);
+    let snippet = text.slice(start, end);
+    if (start > 0) snippet = '…' + snippet;
+    if (end < text.length) snippet += '…';
+    return highlightSnippet(snippet, query);
   }
 
-
-  const start =
-    Math.max(
-      0,
-      index - 75
-    );
-
-
-  const end =
-    Math.min(
-      clean.length,
-      index + needle.length + 105
-    );
-
-
-  let snippet =
-    clean.slice(
-      start,
-      end
-    );
-
-
-  if (
-    start > 0
-  ) {
-
-    snippet =
-      '…' + snippet;
-
-  }
-
-
-  if (
-    end < clean.length
-  ) {
-
-    snippet +=
-      '…';
-
-  }
-
-
-  const escaped =
-    term.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      '\\$&'
-    );
-
-
-  const regex =
-    new RegExp(
-      '(' + escaped + ')',
-      'gi'
-    );
-
-
-  return snippet.replace(
-    regex,
-    '<mark>$1</mark>'
-  );
-
+  return escapeHTML(text.slice(0, 300)) + (text.length > 300 ? '…' : '');
 }
 
 function runSearch() {
-
-  clearHighlights();
-
-
-  const raw =
-    searchInput.value.trim();
-
-
-  const query =
-    normalize(raw);
-
-
-
-  /* ----------------------------------------------------------
-     EMPTY SEARCH
-     ---------------------------------------------------------- */
+  const query = cleanText(searchInput.value);
 
   if (!query) {
-
-
-    sections.forEach(
-      section => {
-
-        section.classList.remove(
-          'hidden'
-        );
-
-      }
-    );
-
-
-    searchCount.textContent =
-      '';
-
-
-    searchResults.innerHTML =
-      '';
-
-
-    searchResults.classList.remove(
-      'show'
-    );
-
-
-    noResults.style.display =
-      'none';
-
-
+    sections.forEach(section => section.classList.remove('hidden'));
+    searchCount.textContent = '';
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('show');
+    noResults.style.display = 'none';
     return;
-
   }
 
-
-
-  const terms =
-    query
-      .split(' ')
-      .filter(Boolean);
-
-
-
-  let matches =
-    0;
-
-
-  const results =
-    [];
-
-
-
-  sections.forEach(
-    section => {
-
-
-      const searchable =
-
-        normalize(
-          section.innerText +
-          ' ' +
-          (
-            section.dataset.keywords ||
-            ''
-          )
-        );
-
-
-
-      const matched =
-
-        terms.every(
-          term =>
-            searchable.includes(
-              term
-            )
-        );
-
-
-
-      section.classList.toggle(
-        'hidden',
-        !matched
-      );
-
-
-
-      if (
-        matched
-      ) {
-
-
-        matches++;
-
-
-
-        const number =
-          section.querySelector(
-            '.section-number'
-          )
-          ?.textContent
-          ?.trim()
-          || '';
-
-
-        const title =
-          section.querySelector(
-            'h2'
-          )
-          ?.textContent
-          ?.trim()
-          || 'Manual Section';
-
-
-
-        const bodyText =
-          section.innerText;
-
-
-
-        results.push({
-
-          id:
-            section.id,
-
-          number:
-            number,
-
-          title:
-            title,
-
-          snippet:
-            makeSnippet(
-              bodyText,
-              raw
-            )
-
-        });
-
-
-
-        if (
-          raw.length >= 2
-        ) {
-
-          highlightText(
-            section,
-            raw
-          );
-
-        }
-
-      }
-
-    }
-  );
-
-
-
-  /* ----------------------------------------------------------
-     RESULT COUNT
-     ---------------------------------------------------------- */
-
-  searchCount.textContent =
-
-    matches === 1
-
-      ? '1 matching section'
-
-      : matches +
-        ' matching sections';
-
-
-
-  /* ----------------------------------------------------------
-     BUILD CLICKABLE SEARCH RESULTS
-     ---------------------------------------------------------- */
-
-  searchResults.innerHTML =
-
-    results.map(
-      result =>
-
-        '<button ' +
-
-          'type="button" ' +
-
-          'class="search-result" ' +
-
-          'data-target="' +
-          result.id +
-          '">' +
-
-
-          '<span class="search-result-title">' +
-
-            result.number +
-            ' · ' +
-            result.title +
-
-          '</span>' +
-
-
-          '<span class="search-result-snippet">' +
-
-            result.snippet +
-
-          '</span>' +
-
-
-        '</button>'
-
-    ).join('');
-
-
-
-  searchResults.classList.toggle(
-    'show',
-    results.length > 0
-  );
-
-
-
-  /* ----------------------------------------------------------
-     CLICK RESULT → JUMP TO SECTION
-     ---------------------------------------------------------- */
-
-  searchResults
-    .querySelectorAll(
-      '.search-result'
-    )
-    .forEach(
-      button => {
-
-
-        button.addEventListener(
-          'click',
-          () => {
-
-
-            const section =
-              document.getElementById(
-                button.dataset.target
-              );
-
-
-            if (section) {
-
-              section.scrollIntoView(
-                {
-                  behavior:
-                    'smooth',
-
-                  block:
-                    'start'
-                }
-              );
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-
-
-  noResults.style.display =
-
-    matches === 0
-
-      ? 'block'
-
-      : 'none';
-
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = [];
+
+  sections.forEach(section => {
+    const visibleText = cleanText(section.innerText);
+    const keywords = cleanText(section.dataset.keywords || '');
+    const searchable = (visibleText + ' ' + keywords).toLowerCase();
+    const matched = words.every(word => searchable.includes(word));
+
+    section.classList.toggle('hidden', !matched);
+    if (!matched) return;
+
+    const number = section.querySelector('.section-number')?.textContent?.trim() || '';
+    const title = section.querySelector('h2')?.textContent?.trim() || 'Field Manual';
+
+    matches.push({
+      id: section.id,
+      number,
+      title,
+      snippet: getSnippet(section, query)
+    });
+  });
+
+  searchCount.textContent = matches.length === 1
+    ? '1 result'
+    : matches.length + ' results';
+
+  if (matches.length) {
+    searchResults.innerHTML = matches.map(result => `
+      <button type="button" class="search-result" data-target="${escapeHTML(result.id)}">
+        <span class="search-result-title">${escapeHTML(result.number)} · ${escapeHTML(result.title)}</span>
+        <span class="search-result-snippet">${result.snippet}</span>
+        <span class="search-result-open">Open section →</span>
+      </button>
+    `).join('');
+    searchResults.classList.add('show');
+  } else {
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('show');
+  }
+
+  noResults.style.display = matches.length ? 'none' : 'block';
 }
+
+searchInput.addEventListener('input', runSearch);
+
+searchResults.addEventListener('click', event => {
+  const button = event.target.closest('.search-result');
+  if (!button) return;
+  const target = document.getElementById(button.dataset.target);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 /* ============================================================
    QUICK TOPICS
