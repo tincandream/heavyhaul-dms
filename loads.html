@@ -1,325 +1,2393 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <link rel="stylesheet" href="css/theme.css">
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
 <title>All Loads — Dispatch</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+
 <style>
-  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
-          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
-          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
-          --ok:#0f6e56; --okbg:#e4f4ee; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink);
-         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  main { padding:18px; max-width:1400px; margin:0 auto 40px; }
 
-  .tiles { display:grid; gap:10px; margin-bottom:16px;
-           grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
-  .tile { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; padding:12px 14px; cursor:pointer; }
-  .tile .n { font-size:21px; font-weight:600; line-height:1.2; }
-  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
-  .tile.on { border-color:var(--accent); background:var(--accentbg); }
+  /* ==========================================================
+     ALL LOADS — PAGE-SPECIFIC STYLES
+     ========================================================== */
 
-  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-         margin-bottom:12px; }
-  select, input { padding:7px 10px; border:1px solid var(--line2);
-                  border-radius:7px; font-size:13px; background:var(--card);
-                  color:var(--ink); font-family:inherit; }
-  .search { min-width:210px; }
-  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
+  :root {
+    --bg: #f5f4f0;
+    --card: #fff;
+    --ink: #22221f;
+    --muted: #73726c;
+    --line: #e2e0da;
+    --line2: #cfccc4;
+    --accent: #185fa5;
+    --accentbg: #e7f0f9;
 
-  .wrap { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; min-width:1080px; }
-  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
-       padding:10px 12px; border-bottom:1px solid var(--line);
-       white-space:nowrap; cursor:pointer; user-select:none; }
-  th:hover { color:var(--ink); }
-  td { padding:11px 12px; border-bottom:1px solid var(--line);
-       font-size:13px; vertical-align:top; }
-  tr:last-child td { border-bottom:0; }
-  tr.row { cursor:pointer; }
-  tr.row:hover { background:#faf9f6; }
-  .sub2 { font-size:11.5px; color:var(--muted); }
-  .ldnum { color:var(--accent); font-weight:500; }
+    --danger: #a32d2d;
+    --dangerbg: #fcebeb;
 
-  .pill { display:inline-block; padding:2px 8px; border-radius:11px;
-          font-size:11.5px; white-space:nowrap; }
-  .p-red { background:var(--dangerbg); color:var(--danger); }
-  .p-amb { background:var(--warnbg); color:var(--warn); }
-  .p-blu { background:var(--accentbg); color:var(--accent); }
-  .p-grn { background:var(--okbg); color:var(--ok); }
-  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
+    --warn: #8a5a10;
+    --warnbg: #fdf3e3;
 
-  .num { font-variant-numeric:tabular-nums; text-align:right; }
-  .pos { color:var(--ok); } .neg { color:var(--danger); }
-  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
-  .msg.bad { color:var(--danger); }
+    --ok: #0f6e56;
+    --okbg: #e4f4ee;
+  }
+
+
+  * {
+    box-sizing: border-box;
+  }
+
+
+  body {
+    margin: 0;
+
+    background:
+      var(--bg);
+
+    color:
+      var(--ink);
+
+    font:
+      14px/1.5
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+  }
+
+
+  main {
+    max-width: 1400px;
+
+    margin:
+      0 auto 40px;
+
+    padding: 18px;
+  }
+
+
+  /* ==========================================================
+     LOAD GROUP TILES
+     ========================================================== */
+
+  .tiles {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(140px, 1fr)
+      );
+
+    gap: 10px;
+
+    margin-bottom: 16px;
+  }
+
+
+  .tile {
+    padding:
+      12px 14px;
+
+    background:
+      var(--card);
+
+    border:
+      1px solid
+      var(--line);
+
+    border-radius: 0;
+
+    cursor: pointer;
+  }
+
+
+  .tile .n {
+    font-size: 21px;
+
+    font-weight: 600;
+
+    line-height: 1.2;
+  }
+
+
+  .tile .l {
+    margin-top: 2px;
+
+    color:
+      var(--muted);
+
+    font-size: 12px;
+  }
+
+
+  .tile.on {
+    background:
+      var(--hh-blue-soft, #EAF3F6);
+
+    border-color:
+      var(--hh-blue, #7FA5B5);
+  }
+
+
+  /* ==========================================================
+     FILTER BAR
+     ========================================================== */
+
+  .bar {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+  }
+
+
+  .search {
+    min-width: 210px;
+  }
+
+
+  .count {
+    margin-left: auto;
+
+    color:
+      var(--muted);
+
+    font-size: 12.5px;
+  }
+
+
+  /* ==========================================================
+     TABLE
+     ========================================================== */
+
+  .wrap {
+    overflow-x: auto;
+
+    background:
+      var(--card);
+
+    border:
+      1px solid
+      var(--line);
+
+    border-radius: 0;
+  }
+
+
+  table {
+    width: 100%;
+
+    min-width: 1080px;
+
+    border-collapse:
+      collapse;
+  }
+
+
+  th {
+    padding:
+      10px 12px;
+
+    color:
+      var(--muted);
+
+    border-bottom:
+      1px solid
+      var(--line);
+
+    font-size: 11.5px;
+
+    font-weight: 500;
+
+    text-align: left;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    user-select: none;
+  }
+
+
+  th:hover {
+    color:
+      var(--ink);
+  }
+
+
+  td {
+    padding:
+      11px 12px;
+
+    border-bottom:
+      1px solid
+      var(--line);
+
+    font-size: 13px;
+
+    vertical-align: top;
+  }
+
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+
+  tr.row {
+    cursor: pointer;
+  }
+
+
+  tr.row:hover {
+    background:
+      #faf9f6;
+  }
+
+
+  .sub2 {
+    color:
+      var(--muted);
+
+    font-size: 11.5px;
+  }
+
+
+  .ldnum {
+    color:
+      var(--hh-blue-dark, #668C9D);
+
+    font-weight: 500;
+  }
+
+
+  /* ==========================================================
+     STATUS PILLS
+     ========================================================== */
+
+  .pill {
+    display: inline-block;
+
+    padding:
+      2px 8px;
+
+    border-radius: 0;
+
+    font-size: 11.5px;
+
+    white-space: nowrap;
+  }
+
+
+  .p-red {
+    background:
+      var(--hh-pink-soft, #F8E5EC);
+
+    color:
+      var(--hh-pink-dark, #A14666);
+  }
+
+
+  .p-amb {
+    background:
+      var(--hh-lime-soft, #F1F4D8);
+
+    color:
+      #71752A;
+  }
+
+
+  .p-blu {
+    background:
+      var(--hh-blue-soft, #EAF3F6);
+
+    color:
+      var(--hh-blue-dark, #668C9D);
+  }
+
+
+  .p-grn {
+    background:
+      var(--hh-lime-soft, #F1F4D8);
+
+    color:
+      #687025;
+  }
+
+
+  .p-gry {
+    background:
+      #f0efeb;
+
+    color:
+      var(--muted);
+
+    border:
+      1px solid
+      var(--line);
+  }
+
+
+  /* ==========================================================
+     NUMERIC COLUMNS
+     ========================================================== */
+
+  .num {
+    text-align: right;
+
+    font-variant-numeric:
+      tabular-nums;
+  }
+
+
+  .pos {
+    color:
+      var(--ok);
+  }
+
+
+  .neg {
+    color:
+      var(--danger);
+  }
+
+
+  /* ==========================================================
+     MESSAGES
+     ========================================================== */
+
+  .msg {
+    padding: 26px;
+
+    color:
+      var(--muted);
+
+    font-size: 13px;
+
+    text-align: center;
+  }
+
+
+  .msg.bad {
+    color:
+      var(--danger);
+  }
+
 </style>
+
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
 </head>
+
+
 <body>
+
+
+<!-- ==========================================================
+     GLOBAL APPLICATION HEADER
+     nav.js owns this.
+     ========================================================== -->
 
 <header></header>
 
+
+
+<!-- ==========================================================
+     DISPATCH WORKSPACE
+     ========================================================== -->
+
 <main>
 
-  <div id="dispatchShell"></div>
 
-  <!-- existing All Loads content starts here -->
-  
-  <div class="tiles" id="tiles"></div>
-<div id="dispatchShell"></div>
-  <div class="bar">
-    <input class="search" id="q" placeholder="Search load, commodity, broker…">
-    <select id="fstatus"><option value="">All statuses</option></select>
-    <select id="fcarrier"><option value="">All carriers</option></select>
-    <select id="fbroker"><option value="">All brokers</option></select>
-    <select id="fdriver"><option value="">All drivers</option></select>
-    <input id="from" type="date" title="Pickup from">
-    <input id="to" type="date" title="Pickup to">
-    <span class="count" id="count"></span>
+  <!-- SAME HEADER AS FLEET BOARD + NEW LOAD -->
+
+  <section class="page-header">
+
+    <h1>
+      DISPATCH
+    </h1>
+
+    <p>
+      Manage loads and daily dispatch activity.
+    </p>
+
+  </section>
+
+
+
+  <!-- SAME THREE DISPATCH TABS -->
+
+  <nav
+    class="dispatch-tabs"
+    id="dispatchTabs">
+  </nav>
+
+
+
+  <!-- ========================================================
+       LOAD GROUP TILES
+       ======================================================== -->
+
+  <div
+    class="tiles"
+    id="tiles">
   </div>
+
+
+
+  <!-- ========================================================
+       FILTER BAR
+       ======================================================== -->
+
+  <div class="bar">
+
+
+    <input
+      class="search"
+      id="q"
+      placeholder="Search load, commodity, broker…"
+    >
+
+
+    <select id="fstatus">
+
+      <option value="">
+        All statuses
+      </option>
+
+    </select>
+
+
+    <select id="fcarrier">
+
+      <option value="">
+        All carriers
+      </option>
+
+    </select>
+
+
+    <select id="fbroker">
+
+      <option value="">
+        All brokers
+      </option>
+
+    </select>
+
+
+    <select id="fdriver">
+
+      <option value="">
+        All drivers
+      </option>
+
+    </select>
+
+
+    <input
+      id="from"
+      type="date"
+      title="Pickup from"
+    >
+
+
+    <input
+      id="to"
+      type="date"
+      title="Pickup to"
+    >
+
+
+    <span
+      class="count"
+      id="count">
+    </span>
+
+
+  </div>
+
+
+
+  <!-- ========================================================
+       LOAD TABLE
+       ======================================================== -->
 
   <div class="wrap">
+
     <table>
-      <thead><tr>
-        <th data-k="load_number">Load</th>
-        <th data-k="status">Status</th>
-        <th data-k="commodity">Commodity</th>
-        <th data-k="carrier_name">Carrier</th>
-        <th data-k="broker_name">Broker</th>
-        <th data-k="driver_name">Driver</th>
-        <th data-k="route">Route</th>
-        <th data-k="pickup_appt_start">Pickup</th>
-        <th data-k="delivery_appt_start">Delivery</th>
-        <th data-k="linehaul_rate">Rate</th>
-        <th data-k="margin">Margin</th>
-      </tr></thead>
-      <tbody id="body"><tr><td colspan="11" class="msg">Loading…</td></tr></tbody>
+
+      <thead>
+
+        <tr>
+
+          <th data-k="load_number">
+            Load
+          </th>
+
+          <th data-k="status">
+            Status
+          </th>
+
+          <th data-k="commodity">
+            Commodity
+          </th>
+
+          <th data-k="carrier_name">
+            Carrier
+          </th>
+
+          <th data-k="broker_name">
+            Broker
+          </th>
+
+          <th data-k="driver_name">
+            Driver
+          </th>
+
+          <th data-k="route">
+            Route
+          </th>
+
+          <th data-k="pickup_appt_start">
+            Pickup
+          </th>
+
+          <th data-k="delivery_appt_start">
+            Delivery
+          </th>
+
+          <th data-k="linehaul_rate">
+            Rate
+          </th>
+
+          <th data-k="margin">
+            Margin
+          </th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody id="body">
+
+        <tr>
+
+          <td
+            colspan="11"
+            class="msg">
+
+            Loading…
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
     </table>
+
   </div>
+
+
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="dispatch-tabs.js"></script>
+
+
+<!-- ==========================================================
+     SHARED APPLICATION SCRIPTS
+     ========================================================== -->
+
 <script src="nav.js"></script>
+
+<script src="dispatch-tabs.js"></script>
+
+
+
 <script>
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 
-const $ = id => document.getElementById(id);
-let db=null, rows=[], sortKey='pickup_appt_start', sortDir=-1, group='all';
+/* ============================================================
+   SUPABASE
+   ============================================================ */
 
-const ACTIVE = ['dispatched','en_route_to_pickup','at_shipper','loading','loaded',
-  'in_transit','at_weigh_station','under_inspection','at_receiver','unloading'];
-const PIPELINE = ['quoted','booked','permits_pending'];
-const CLOSED = ['delivered','pod_pending','paperwork','invoiced','paid',
-                'cancelled','tonu'];
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
 
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
-  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function pretty(s){ return String(s||'').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); }
-function money(n){ return n==null?'—':'$'+Math.round(Number(n)).toLocaleString(); }
-function day(iso){ if(!iso) return '—'; const d=new Date(iso);
-  return d.toLocaleDateString([],{month:'numeric',day:'numeric',year:'2-digit'}); }
-function fail(t){ $('body').innerHTML='<tr><td colspan="11" class="msg bad">'+esc(t)+'</td></tr>'; }
 
-window.onerror = m => fail('JS error: '+m);
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 
-if (typeof window.supabase === 'undefined') {
-  fail('Supabase library did not load.');
-} else if (SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
-  fail('Edit loads.html and fill in SUPABASE_ANON_KEY.');
-} else {
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+const $ =
+  id =>
+    document.getElementById(id);
+
+
+let db =
+  null;
+
+
+let rows =
+  [];
+
+
+let sortKey =
+  'pickup_appt_start';
+
+
+let sortDir =
+  -1;
+
+
+let group =
+  'all';
+
+
+
+/* ============================================================
+   LOAD STATUS GROUPS
+   ============================================================ */
+
+const ACTIVE = [
+
+  'dispatched',
+
+  'en_route_to_pickup',
+
+  'at_shipper',
+
+  'loading',
+
+  'loaded',
+
+  'in_transit',
+
+  'at_weigh_station',
+
+  'under_inspection',
+
+  'at_receiver',
+
+  'unloading'
+
+];
+
+
+const PIPELINE = [
+
+  'quoted',
+
+  'booked',
+
+  'permits_pending'
+
+];
+
+
+const CLOSED = [
+
+  'delivered',
+
+  'pod_pending',
+
+  'paperwork',
+
+  'invoiced',
+
+  'paid',
+
+  'cancelled',
+
+  'tonu'
+
+];
+
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function esc(s) {
+
+  return String(
+    s == null
+      ? ''
+      : s
+  ).replace(
+    /[&<>"]/g,
+
+    c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;'
+    }[c])
+
+  );
+
+}
+
+
+
+function pretty(s) {
+
+  return String(
+    s || ''
+  )
+  .replace(
+    /_/g,
+    ' '
+  )
+  .replace(
+    /^./,
+    c =>
+      c.toUpperCase()
+  );
+
+}
+
+
+
+function money(n) {
+
+  return (
+    n == null
+
+      ? '—'
+
+      : '$' +
+        Math.round(
+          Number(n)
+        ).toLocaleString()
+  );
+
+}
+
+
+
+function day(iso) {
+
+  if (!iso) {
+
+    return '—';
+
+  }
+
+
+  const d =
+    new Date(iso);
+
+
+  return d.toLocaleDateString(
+    [],
+    {
+      month: 'numeric',
+      day: 'numeric',
+      year: '2-digit'
+    }
+  );
+
+}
+
+
+
+function fail(text) {
+
+  $('body').innerHTML =
+
+    '<tr>' +
+
+      '<td colspan="11" class="msg bad">' +
+
+        esc(text) +
+
+      '</td>' +
+
+    '</tr>';
+
+}
+
+
+
+window.onerror =
+  message => {
+
+    fail(
+      'JS error: ' +
+      message
+    );
+
+  };
+
+
+
+/* ============================================================
+   CONNECT SUPABASE
+   ============================================================ */
+
+if (
+  typeof window.supabase ===
+  'undefined'
+) {
+
+  fail(
+    'Supabase library did not load.'
+  );
+
+}
+
+else {
+
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+
   start();
+
 }
 
-async function start(){
-  const s = await db.auth.getSession();
-  if (!s.data.session) { location.href='index.html'; return; }
-  const t = await buildNav(db, 'All Loads');
 
-buildDispatchTabs('loads.html');
-  
-  if (!t) { fail('No profile linked to this login.'); return; }
+
+/* ============================================================
+   START
+   ============================================================ */
+
+async function start() {
+
+
+  const session =
+    await db.auth.getSession();
+
+
+  if (
+    !session.data.session
+  ) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+
+  /* ----------------------------------------------------------
+     Global Heavy Haul Command navigation
+     ---------------------------------------------------------- */
+
+  const tenant =
+    await buildNav(
+      db,
+      'Dispatch'
+    );
+
+
+  if (!tenant) {
+
+    fail(
+      'No profile linked to this login.'
+    );
+
+    return;
+
+  }
+
+
+
+  /* ----------------------------------------------------------
+     Shared Dispatch tabs
+     ---------------------------------------------------------- */
+
+  buildDispatchTabs(
+    'loads.html'
+  );
+
+
+
+  /* ----------------------------------------------------------
+     Load table
+     ---------------------------------------------------------- */
+
   await load();
+
 }
 
-async function load(){
-  const r = await db.from('loads')
-    .select('id, load_number, broker_load_number, status, commodity, priority,'+
-            'width_in, height_in, weight_lb, linehaul_rate, fuel_surcharge,'+
-            'total_miles, pickup_appt_start, delivery_appt_start,'+
-            'actual_pickup_at, actual_delivery_at, hold_reason, created_at,'+
-            'carrier_id, broker_id, driver_id, origin_facility_id, dest_facility_id')
-    .is('archived_at', null)
-    .order('created_at', { ascending:false });
 
-  if (r.error) { fail('Query failed: '+r.error.message); return; }
-  const base = r.data || [];
 
-  const [cs, bs, ds, fs, ms] = await Promise.all([
-    db.from('carriers').select('id, legal_name'),
-    db.from('brokers').select('id, name'),
-    db.from('drivers').select('id, first_name, last_name'),
-    db.from('facilities').select('id, city, state'),
-    db.from('v_load_margin').select('load_id, total_revenue, total_cost')
-  ]);
+/* ============================================================
+   LOAD ALL LOADS DATA
+   ============================================================ */
 
-  const carrier={}, broker={}, driver={}, fac={}, marg={};
-  (cs.data||[]).forEach(x => carrier[x.id] = x.legal_name);
-  (bs.data||[]).forEach(x => broker[x.id] = x.name);
-  (ds.data||[]).forEach(x => driver[x.id] = x.first_name+' '+x.last_name);
-  (fs.data||[]).forEach(x => fac[x.id] = (x.city||'')+', '+(x.state||''));
-  (ms.data||[]).forEach(x => marg[x.load_id] = x.total_revenue - x.total_cost);
+async function load() {
 
-  rows = base.map(x => ({
-    ...x,
-    carrier_name: carrier[x.carrier_id] || null,
-    broker_name:  broker[x.broker_id] || null,
-    driver_name:  driver[x.driver_id] || null,
-    route: (fac[x.origin_facility_id] && fac[x.dest_facility_id])
-      ? fac[x.origin_facility_id] + ' → ' + fac[x.dest_facility_id] : null,
-    margin: marg[x.id] != null ? marg[x.id] : null
-  }));
+
+  const result =
+    await db
+      .from('loads')
+      .select(
+
+        'id,' +
+
+        ' load_number,' +
+
+        ' broker_load_number,' +
+
+        ' status,' +
+
+        ' commodity,' +
+
+        ' priority,' +
+
+        ' width_in,' +
+
+        ' height_in,' +
+
+        ' weight_lb,' +
+
+        ' linehaul_rate,' +
+
+        ' fuel_surcharge,' +
+
+        ' total_miles,' +
+
+        ' pickup_appt_start,' +
+
+        ' delivery_appt_start,' +
+
+        ' actual_pickup_at,' +
+
+        ' actual_delivery_at,' +
+
+        ' hold_reason,' +
+
+        ' created_at,' +
+
+        ' carrier_id,' +
+
+        ' broker_id,' +
+
+        ' driver_id,' +
+
+        ' origin_facility_id,' +
+
+        ' dest_facility_id'
+
+      )
+      .is(
+        'archived_at',
+        null
+      )
+      .order(
+        'created_at',
+        {
+          ascending: false
+        }
+      );
+
+
+
+  if (
+    result.error
+  ) {
+
+    fail(
+
+      'Query failed: ' +
+
+      result.error.message
+
+    );
+
+    return;
+
+  }
+
+
+
+  const base =
+    result.data || [];
+
+
+
+  /* ----------------------------------------------------------
+     Related records
+     ---------------------------------------------------------- */
+
+  const [
+    carriersResult,
+    brokersResult,
+    driversResult,
+    facilitiesResult,
+    marginsResult
+  ] =
+
+    await Promise.all([
+
+
+      db
+        .from('carriers')
+        .select(
+          'id, legal_name'
+        ),
+
+
+      db
+        .from('brokers')
+        .select(
+          'id, name'
+        ),
+
+
+      db
+        .from('drivers')
+        .select(
+          'id, first_name, last_name'
+        ),
+
+
+      db
+        .from('facilities')
+        .select(
+          'id, city, state'
+        ),
+
+
+      db
+        .from('v_load_margin')
+        .select(
+          'load_id, total_revenue, total_cost'
+        )
+
+
+    ]);
+
+
+
+  /* ----------------------------------------------------------
+     Lookup maps
+     ---------------------------------------------------------- */
+
+  const carrier =
+    {};
+
+
+  const broker =
+    {};
+
+
+  const driver =
+    {};
+
+
+  const facility =
+    {};
+
+
+  const margin =
+    {};
+
+
+
+  (
+    carriersResult.data || []
+  )
+  .forEach(
+    item => {
+
+      carrier[item.id] =
+        item.legal_name;
+
+    }
+  );
+
+
+
+  (
+    brokersResult.data || []
+  )
+  .forEach(
+    item => {
+
+      broker[item.id] =
+        item.name;
+
+    }
+  );
+
+
+
+  (
+    driversResult.data || []
+  )
+  .forEach(
+    item => {
+
+      driver[item.id] =
+
+        item.first_name +
+
+        ' ' +
+
+        item.last_name;
+
+    }
+  );
+
+
+
+  (
+    facilitiesResult.data || []
+  )
+  .forEach(
+    item => {
+
+      facility[item.id] =
+
+        (
+          item.city || ''
+        )
+
+        +
+
+        ', '
+
+        +
+
+        (
+          item.state || ''
+        );
+
+    }
+  );
+
+
+
+  (
+    marginsResult.data || []
+  )
+  .forEach(
+    item => {
+
+      margin[item.load_id] =
+
+        item.total_revenue -
+
+        item.total_cost;
+
+    }
+  );
+
+
+
+  /* ----------------------------------------------------------
+     Combined display rows
+     ---------------------------------------------------------- */
+
+  rows =
+
+    base.map(
+      item => ({
+
+
+        ...item,
+
+
+        carrier_name:
+
+          carrier[
+            item.carrier_id
+          ]
+
+          || null,
+
+
+        broker_name:
+
+          broker[
+            item.broker_id
+          ]
+
+          || null,
+
+
+        driver_name:
+
+          driver[
+            item.driver_id
+          ]
+
+          || null,
+
+
+        route:
+
+          (
+            facility[
+              item.origin_facility_id
+            ]
+
+            &&
+
+            facility[
+              item.dest_facility_id
+            ]
+          )
+
+            ? facility[
+                item.origin_facility_id
+              ]
+
+              +
+
+              ' → '
+
+              +
+
+              facility[
+                item.dest_facility_id
+              ]
+
+            : null,
+
+
+        margin:
+
+          margin[item.id] != null
+
+            ? margin[item.id]
+
+            : null
+
+
+      })
+    );
+
+
 
   fillFilters();
+
   render();
+
 }
 
-function uniq(k){ return [...new Set(rows.map(r=>r[k]).filter(Boolean))].sort(); }
 
-function fillFilters(){
-  const map = { fstatus:'status', fcarrier:'carrier_name',
-                fbroker:'broker_name', fdriver:'driver_name' };
-  for (const id in map) {
-    const sel=$(id), keep=sel.value, first=sel.options[0].textContent;
-    sel.innerHTML = '<option value="">'+first+'</option>' +
-      uniq(map[id]).map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
-    sel.value = keep;
-  }
+
+/* ============================================================
+   UNIQUE VALUES
+   ============================================================ */
+
+function uniq(key) {
+
+  return [
+
+    ...new Set(
+
+      rows
+
+        .map(
+          row =>
+            row[key]
+        )
+
+        .filter(Boolean)
+
+    )
+
+  ].sort();
+
 }
 
-function statusClass(r){
-  if (r.hold_reason) return 'p-amb';
-  const s = r.status;
-  if (['cancelled','tonu'].includes(s)) return 'p-red';
-  if (['paid','invoiced','delivered','pod_pending','paperwork'].includes(s)) return 'p-grn';
-  if (ACTIVE.includes(s)) return 'p-blu';
-  return 'p-gry';
-}
 
-function tiles(){
-  const counts = {
-    all: rows.length,
-    active: rows.filter(r=>ACTIVE.includes(r.status)).length,
-    pipeline: rows.filter(r=>PIPELINE.includes(r.status)).length,
-    closed: rows.filter(r=>CLOSED.includes(r.status)).length
+
+/* ============================================================
+   FILTER OPTIONS
+   ============================================================ */
+
+function fillFilters() {
+
+
+  const map = {
+
+    fstatus:
+      'status',
+
+    fcarrier:
+      'carrier_name',
+
+    fbroker:
+      'broker_name',
+
+    fdriver:
+      'driver_name'
+
   };
-  const defs = [
-    ['all','Total loads'],
-    ['active','Active'],
-    ['pipeline','Pipeline'],
-    ['closed','Completed']
-  ];
-  $('tiles').innerHTML = defs.map(function(d){
-    const k = d[0], label = d[1];
-    return '<div class="tile'+(group===k?' on':'')+'" data-g="'+k+'">'+
-      '<div class="n">'+counts[k]+'</div><div class="l">'+label+'</div></div>';
-  }).join('');
-  document.querySelectorAll('.tile[data-g]').forEach(function(t){
-    t.addEventListener('click', function(){ group = t.dataset.g; render(); });
-  });
+
+
+  for (
+    const id in map
+  ) {
+
+
+    const select =
+      $(id);
+
+
+    const keep =
+      select.value;
+
+
+    const first =
+      select.options[0]
+        .textContent;
+
+
+
+    select.innerHTML =
+
+      '<option value="">' +
+
+      first +
+
+      '</option>'
+
+      +
+
+      uniq(
+        map[id]
+      )
+      .map(
+        value =>
+
+          '<option value="' +
+
+          esc(value) +
+
+          '">' +
+
+          esc(
+            pretty(value)
+          ) +
+
+          '</option>'
+
+      )
+      .join('');
+
+
+
+    select.value =
+      keep;
+
+  }
+
 }
 
-function render(){
-  const q = $('q').value.toLowerCase().trim();
-  const from = $('from').value, to = $('to').value;
 
-  let list = rows.filter(r => {
-    if (group==='active'   && !ACTIVE.includes(r.status)) return false;
-    if (group==='pipeline' && !PIPELINE.includes(r.status)) return false;
-    if (group==='closed'   && !CLOSED.includes(r.status)) return false;
-    if ($('fstatus').value  && r.status !== $('fstatus').value) return false;
-    if ($('fcarrier').value && r.carrier_name !== $('fcarrier').value) return false;
-    if ($('fbroker').value  && r.broker_name !== $('fbroker').value) return false;
-    if ($('fdriver').value  && r.driver_name !== $('fdriver').value) return false;
-    if (from && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) < from)) return false;
-    if (to   && (!r.pickup_appt_start || r.pickup_appt_start.slice(0,10) > to)) return false;
-    if (q) {
-      const hay = [r.load_number, r.broker_load_number, r.commodity, r.carrier_name,
-                   r.broker_name, r.driver_name, r.route]
-                  .filter(Boolean).join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
+
+/* ============================================================
+   STATUS CLASS
+   ============================================================ */
+
+function statusClass(row) {
+
+
+  if (
+    row.hold_reason
+  ) {
+
+    return 'p-amb';
+
+  }
+
+
+
+  const status =
+    row.status;
+
+
+
+  if (
+    [
+      'cancelled',
+      'tonu'
+    ].includes(status)
+  ) {
+
+    return 'p-red';
+
+  }
+
+
+
+  if (
+    [
+      'paid',
+      'invoiced',
+      'delivered',
+      'pod_pending',
+      'paperwork'
+    ].includes(status)
+  ) {
+
+    return 'p-grn';
+
+  }
+
+
+
+  if (
+    ACTIVE.includes(
+      status
+    )
+  ) {
+
+    return 'p-blu';
+
+  }
+
+
+
+  return 'p-gry';
+
+}
+
+
+
+/* ============================================================
+   GROUP TILES
+   ============================================================ */
+
+function tiles() {
+
+
+  const counts = {
+
+
+    all:
+      rows.length,
+
+
+    active:
+
+      rows.filter(
+        row =>
+          ACTIVE.includes(
+            row.status
+          )
+      ).length,
+
+
+    pipeline:
+
+      rows.filter(
+        row =>
+          PIPELINE.includes(
+            row.status
+          )
+      ).length,
+
+
+    closed:
+
+      rows.filter(
+        row =>
+          CLOSED.includes(
+            row.status
+          )
+      ).length
+
+  };
+
+
+
+  const defs = [
+
+    [
+      'all',
+      'Total loads'
+    ],
+
+    [
+      'active',
+      'Active'
+    ],
+
+    [
+      'pipeline',
+      'Pipeline'
+    ],
+
+    [
+      'closed',
+      'Completed'
+    ]
+
+  ];
+
+
+
+  $('tiles').innerHTML =
+
+    defs.map(
+      item => {
+
+
+        const key =
+          item[0];
+
+
+        const label =
+          item[1];
+
+
+        return (
+
+          '<div class="tile' +
+
+          (
+            group === key
+              ? ' on'
+              : ''
+          )
+
+          +
+
+          '" data-g="' +
+
+          key +
+
+          '">' +
+
+            '<div class="n">' +
+
+              counts[key] +
+
+            '</div>' +
+
+            '<div class="l">' +
+
+              label +
+
+            '</div>' +
+
+          '</div>'
+
+        );
+
+      }
+
+    ).join('');
+
+
+
+  document
+    .querySelectorAll(
+      '.tile[data-g]'
+    )
+    .forEach(
+      tile => {
+
+
+        tile.addEventListener(
+          'click',
+          function () {
+
+
+            group =
+              tile.dataset.g;
+
+
+            render();
+
+          }
+        );
+
+      }
+    );
+
+}
+
+
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+
+function render() {
+
+
+  const search =
+
+    $('q')
+      .value
+      .toLowerCase()
+      .trim();
+
+
+
+  const from =
+    $('from').value;
+
+
+  const to =
+    $('to').value;
+
+
+
+  let list =
+
+    rows.filter(
+      row => {
+
+
+        /* ------------------------------------------------------
+           Group filter
+           ------------------------------------------------------ */
+
+        if (
+          group === 'active' &&
+          !ACTIVE.includes(
+            row.status
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          group === 'pipeline' &&
+          !PIPELINE.includes(
+            row.status
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          group === 'closed' &&
+          !CLOSED.includes(
+            row.status
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+
+        /* ------------------------------------------------------
+           Dropdown filters
+           ------------------------------------------------------ */
+
+        if (
+          $('fstatus').value &&
+          row.status !==
+          $('fstatus').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fcarrier').value &&
+          row.carrier_name !==
+          $('fcarrier').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fbroker').value &&
+          row.broker_name !==
+          $('fbroker').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fdriver').value &&
+          row.driver_name !==
+          $('fdriver').value
+        ) {
+
+          return false;
+
+        }
+
+
+
+        /* ------------------------------------------------------
+           Date filters
+           ------------------------------------------------------ */
+
+        if (
+          from &&
+          (
+            !row.pickup_appt_start ||
+
+            row.pickup_appt_start
+              .slice(0, 10) <
+            from
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          to &&
+          (
+            !row.pickup_appt_start ||
+
+            row.pickup_appt_start
+              .slice(0, 10) >
+            to
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+
+        /* ------------------------------------------------------
+           Search
+           ------------------------------------------------------ */
+
+        if (search) {
+
+
+          const haystack = [
+
+            row.load_number,
+
+            row.broker_load_number,
+
+            row.commodity,
+
+            row.carrier_name,
+
+            row.broker_name,
+
+            row.driver_name,
+
+            row.route
+
+          ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+
+
+          if (
+            !haystack.includes(
+              search
+            )
+          ) {
+
+            return false;
+
+          }
+
+        }
+
+
+
+        return true;
+
+      }
+    );
+
+
+
+  /* ----------------------------------------------------------
+     Sort
+     ---------------------------------------------------------- */
+
+  list.sort(
+    (a, b) => {
+
+
+      const x =
+        a[sortKey];
+
+
+      const y =
+        b[sortKey];
+
+
+      if (
+        x == null
+      ) {
+
+        return 1;
+
+      }
+
+
+      if (
+        y == null
+      ) {
+
+        return -1;
+
+      }
+
+
+      return (
+
+        (
+          x > y
+            ? 1
+            : x < y
+              ? -1
+              : 0
+        )
+
+        *
+
+        sortDir
+
+      );
+
     }
-    return true;
-  });
+  );
 
-  list.sort((a,b) => {
-    const x=a[sortKey], y=b[sortKey];
-    if (x==null) return 1;
-    if (y==null) return -1;
-    return (x>y?1:x<y?-1:0)*sortDir;
-  });
+
+
+  /* ----------------------------------------------------------
+     Refresh group tiles
+     ---------------------------------------------------------- */
 
   tiles();
-  $('count').textContent = list.length + ' of ' + rows.length + ' loads';
 
-  if (!list.length) {
-    $('body').innerHTML = '<tr><td colspan="11" class="msg">No loads match.</td></tr>';
+
+
+  /* ----------------------------------------------------------
+     Count
+     ---------------------------------------------------------- */
+
+  $('count').textContent =
+
+    list.length +
+
+    ' of ' +
+
+    rows.length +
+
+    ' loads';
+
+
+
+  /* ----------------------------------------------------------
+     Empty results
+     ---------------------------------------------------------- */
+
+  if (
+    !list.length
+  ) {
+
+
+    $('body').innerHTML =
+
+      '<tr>' +
+
+        '<td colspan="11" class="msg">' +
+
+          'No loads match.' +
+
+        '</td>' +
+
+      '</tr>';
+
+
     return;
+
   }
 
-  $('body').innerHTML = list.map(r => {
-    const over = (r.width_in>102)||(r.height_in>162)||(r.weight_lb>80000);
-    const mg = r.margin;
-    return '<tr class="row" data-id="'+r.id+'">'+
-      '<td><span class="ldnum">'+esc(r.load_number)+'</span>'+
-        (r.broker_load_number?'<div class="sub2">'+esc(r.broker_load_number)+'</div>':'')+
-        '</td>'+
-      '<td><span class="pill '+statusClass(r)+'">'+
-        pretty(r.hold_reason || r.status)+'</span></td>'+
-      '<td>'+esc(r.commodity||'—')+
-        (over?'<div class="sub2">oversize</div>':'')+'</td>'+
-      '<td>'+esc(r.carrier_name||'—')+'</td>'+
-      '<td>'+esc(r.broker_name||'—')+'</td>'+
-      '<td>'+esc(r.driver_name||'—')+'</td>'+
-      '<td>'+esc(r.route||'—')+
-        (r.total_miles?'<div class="sub2">'+r.total_miles.toLocaleString()+' mi</div>':'')+
-        '</td>'+
-      '<td>'+day(r.pickup_appt_start)+
-        (r.actual_pickup_at?'<div class="sub2">act '+day(r.actual_pickup_at)+'</div>':'')+
-        '</td>'+
-      '<td>'+day(r.delivery_appt_start)+
-        (r.actual_delivery_at?'<div class="sub2">act '+day(r.actual_delivery_at)+'</div>':'')+
-        '</td>'+
-      '<td class="num">'+money((Number(r.linehaul_rate)||0)+(Number(r.fuel_surcharge)||0))+'</td>'+
-      '<td class="num '+(mg==null?'':mg>=0?'pos':'neg')+'">'+money(mg)+'</td>'+
-      '</tr>';
-  }).join('');
+
+
+  /* ----------------------------------------------------------
+     Table rows
+     ---------------------------------------------------------- */
+
+  $('body').innerHTML =
+
+    list.map(
+      row => {
+
+
+        const oversize =
+
+          (
+            row.width_in >
+            102
+          )
+
+          ||
+
+          (
+            row.height_in >
+            162
+          )
+
+          ||
+
+          (
+            row.weight_lb >
+            80000
+          );
+
+
+
+        const margin =
+          row.margin;
+
+
+
+        return (
+
+          '<tr class="row" data-id="' +
+
+          row.id +
+
+          '">' +
+
+
+
+          /* Load */
+
+          '<td>' +
+
+            '<span class="ldnum">' +
+
+              esc(
+                row.load_number
+              ) +
+
+            '</span>' +
+
+            (
+              row.broker_load_number
+
+                ? '<div class="sub2">' +
+
+                    esc(
+                      row.broker_load_number
+                    ) +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Status */
+
+          '<td>' +
+
+            '<span class="pill ' +
+
+            statusClass(
+              row
+            )
+
+            +
+
+            '">' +
+
+              pretty(
+                row.hold_reason ||
+                row.status
+              ) +
+
+            '</span>' +
+
+          '</td>' +
+
+
+
+          /* Commodity */
+
+          '<td>' +
+
+            esc(
+              row.commodity ||
+              '—'
+            ) +
+
+            (
+              oversize
+
+                ? '<div class="sub2">' +
+                    'oversize' +
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Carrier */
+
+          '<td>' +
+
+            esc(
+              row.carrier_name ||
+              '—'
+            ) +
+
+          '</td>' +
+
+
+
+          /* Broker */
+
+          '<td>' +
+
+            esc(
+              row.broker_name ||
+              '—'
+            ) +
+
+          '</td>' +
+
+
+
+          /* Driver */
+
+          '<td>' +
+
+            esc(
+              row.driver_name ||
+              '—'
+            ) +
+
+          '</td>' +
+
+
+
+          /* Route */
+
+          '<td>' +
+
+            esc(
+              row.route ||
+              '—'
+            ) +
+
+            (
+              row.total_miles
+
+                ? '<div class="sub2">' +
+
+                    row.total_miles
+                      .toLocaleString()
+
+                    +
+
+                    ' mi' +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Pickup */
+
+          '<td>' +
+
+            day(
+              row.pickup_appt_start
+            ) +
+
+            (
+              row.actual_pickup_at
+
+                ? '<div class="sub2">' +
+
+                    'act ' +
+
+                    day(
+                      row.actual_pickup_at
+                    ) +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Delivery */
+
+          '<td>' +
+
+            day(
+              row.delivery_appt_start
+            ) +
+
+            (
+              row.actual_delivery_at
+
+                ? '<div class="sub2">' +
+
+                    'act ' +
+
+                    day(
+                      row.actual_delivery_at
+                    ) +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Rate */
+
+          '<td class="num">' +
+
+            money(
+
+              (
+                Number(
+                  row.linehaul_rate
+                ) || 0
+              )
+
+              +
+
+              (
+                Number(
+                  row.fuel_surcharge
+                ) || 0
+              )
+
+            ) +
+
+          '</td>' +
+
+
+
+          /* Margin */
+
+          '<td class="num ' +
+
+            (
+              margin == null
+
+                ? ''
+
+                : margin >= 0
+
+                  ? 'pos'
+
+                  : 'neg'
+            )
+
+          +
+
+          '">' +
+
+            money(
+              margin
+            ) +
+
+          '</td>' +
+
+
+          '</tr>'
+
+        );
+
+      }
+
+    ).join('');
+
 }
 
-['q','fstatus','fcarrier','fbroker','fdriver','from','to'].forEach(id => {
-  $(id).addEventListener('input', render);
-  $(id).addEventListener('change', render);
-});
 
-document.querySelectorAll('th[data-k]').forEach(th => {
-  th.addEventListener('click', () => {
-    const k = th.dataset.k;
-    if (sortKey===k) sortDir=-sortDir; else { sortKey=k; sortDir=1; }
-    render();
-  });
-});
 
-$('body').addEventListener('click', e => {
-  const tr = e.target.closest('tr[data-id]');
-  if (tr) location.href = 'workspace.html?id=' + tr.dataset.id;
-});
+/* ============================================================
+   FILTER EVENTS
+   ============================================================ */
+
+[
+  'q',
+  'fstatus',
+  'fcarrier',
+  'fbroker',
+  'fdriver',
+  'from',
+  'to'
+]
+.forEach(
+  id => {
+
+
+    $(id).addEventListener(
+      'input',
+      render
+    );
+
+
+    $(id).addEventListener(
+      'change',
+      render
+    );
+
+  }
+);
+
+
+
+/* ============================================================
+   TABLE SORTING
+   ============================================================ */
+
+document
+  .querySelectorAll(
+    'th[data-k]'
+  )
+  .forEach(
+    th => {
+
+
+      th.addEventListener(
+        'click',
+        () => {
+
+
+          const key =
+            th.dataset.k;
+
+
+          if (
+            sortKey === key
+          ) {
+
+            sortDir =
+              -sortDir;
+
+          }
+
+          else {
+
+            sortKey =
+              key;
+
+            sortDir =
+              1;
+
+          }
+
+
+          render();
+
+        }
+      );
+
+    }
+  );
+
+
+
+/* ============================================================
+   OPEN LOAD WORKSPACE
+   ============================================================ */
+
+$('body')
+  .addEventListener(
+    'click',
+    event => {
+
+
+      const row =
+        event.target.closest(
+          'tr[data-id]'
+        );
+
+
+      if (row) {
+
+        location.href =
+
+          'workspace.html?id=' +
+
+          row.dataset.id;
+
+      }
+
+    }
+  );
+
+
 </script>
+
+
 </body>
+
 </html>
