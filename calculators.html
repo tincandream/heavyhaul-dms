@@ -1,3 +1,144 @@
+Thursday 6:32 PM
+
+export default function LoginPage() {
+return (
+<main
+className="min-h-screen bg-cover bg-center flex items-center justify-center px-4"
+style={{
+backgroundImage:
+"linear-gradient(rgba(15,23,42,.72), rgba(15,23,42,.82)), url('/heavy-haul-bg.jpg')",
+}}
+>
+
+Heavy Haul Command
+
+Dispatch Management System
+
+    <form className="space-y-5">
+      <div>
+        <label className="mb-2 block text-sm text-slate-200">
+          Email
+        </label>
+        <input
+          type="email"
+          placeholder="you@company.com"
+          className="w-full rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-3 text-white outline-none focus:border-orange-500"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm text-slate-200">
+          Password
+        </label>
+        <input
+          type="password"
+          placeholder="••••••••"
+          className="w-full rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-3 text-white outline-none focus:border-orange-500"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full rounded-lg bg-orange-500 py-3 font-semibold text-white hover:bg-orange-600"
+      >
+        Sign In
+      </button>
+    </form>
+  </div>
+</main>
+
+
+);
+} <--wanting to make this something similar to this for the sign on to my hh management system. ive been creating it with claude, github and supabase
+
+Let’s try this color palette it’s the same from my site
+Edit
+Edit
+Edit
+Edit
+Pasted text(20260807-035444).txt
+Document
+Yesterday 8:47 AM
+Pasted text(20260807-134744).txt
+Document
+are you able to see the code?
+Pasted text(20260807-224449).txt
+Document
+Pasted text(20260807-230138).txt
+Document
+Pasted text(20260808-022408).txt
+Document
+Pasted text(20260808-180839).txt
+Document
+Pasted text(20260808-185101).txt
+Document
+Pasted text(20260808-192013).txt
+Document
+Pasted text(20260808-215140).txt
+Document
+
+Perfect — I have the complete current calculators.html. It contains the existing HOS Calculator and Dispatch Profit Calculator, so we can preserve both exactly while adding the new Accessorial tool.
+
+One thing I also confirmed: this page is already connected to Supabase and checks authentication on startup, so Add to Load can be a real database action rather than a pretend/local-only button.
+
+What I'm adding
+
+The third tab will be:
+
+Accessorials & Detention
+
+It'll handle Detention, Layover, TONU, Lumper, Driver Assist, Extra Stop, Redelivery, Storage, Reimbursement, and Other.
+
+For Detention, selecting it will expose the detailed timing section:
+
+Appointment → Arrival/Check-in → Service Start → Released → Free Time → Billable Time → Rate → Requested Amount
+
+The right side will produce an Accessorial Summary with the amount being requested and enough information to support the request.
+
+Most importantly, this won't stop at calculation. We'll have:
+
+Calculate → Add to Load
+
+When Add to Load is selected, we'll save it into the accessorial database structure we created in 028. Then the load itself becomes where we process that charge through Pending → Approved/Denied → Invoiced → Paid.
+
+That's the piece that turns this from another calculator into an actual dispatch-management workflow.
+
+I'm ready to modify this exact file rather than having you splice several code fragments into a 2,878-line page.
+
+ok lets do it
+Worked for 21s
+
+Done — I updated your actual calculators.html and kept the existing HOS Calculator and Dispatch Profit Calculator intact. Your original page already had both tools and the shared Supabase/nav setup, so I built the new workflow into that structure rather than starting over.
+
+Download the updated calculators.html
+
+The new third tab is Accessorials & Detention. It now supports Detention, Layover, TONU, Lumper, Driver Assist, Extra Stop, Redelivery, Storage, Reimbursement, and Other. For detention, it calculates arrival-to-release time, subtracts free time, calculates billable time, applies the hourly rate, and shows the requested amount.
+
+More importantly, it is connected to the accessorials table from migration 028. You can choose a load and click Add to Load, and it saves the charge as Pending with the timing, rate, requested amount, broker notification, supporting-document checklist, and notes.
+
+Replace your current GitHub calculators.html with this complete file and commit it. Then open Calculators → Accessorials & Detention and we’ll test one detention record together before we build the Accessorial Processing section inside the Load Workspace. 
+
+calculators.html
+HTML
+
+bookmark: Could not find the 'check_in_type' column of 'check_ins' in the schema cache (moving freight along in fleet board i am not able to make the updates)
+
+Memory updated
+
+Bookmarked. We’ll come back to this Fleet Board issue:
+
+Could not find the 'check_in_type' column of 'check_ins' in the schema cache
+
+That means the freight-status/check-in update flow is currently blocked, most likely because the front-end expects check_ins.check_in_type but Supabase doesn’t currently expose that column.
+
+We’ll leave it in the queue and keep moving on the Accessorials build for now.
+
+Library
+/
+calculators.html
+Library
+/
+calculators.html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -396,7 +537,8 @@ main {
 
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   width:
     100%;
 
@@ -425,7 +567,8 @@ main {
 
 
 .field input:focus,
-.field select:focus {
+.field select:focus,
+.field textarea:focus {
   border-color:
     var(--calc-blue);
 
@@ -798,6 +941,95 @@ main {
 }
 
 
+
+
+/* ============================================================
+   ACCESSORIALS / DETENTION
+   ============================================================ */
+
+.field textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.accessorial-subsection {
+  margin-top: 16px;
+  padding: 16px;
+  background: #FBFCFC;
+  border: 1px solid var(--calc-line);
+}
+
+.accessorial-subsection.hidden {
+  display: none;
+}
+
+.accessorial-subsection h3 {
+  margin: 0 0 12px;
+  color: var(--calc-blue-dark);
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  background: #FBFCFC;
+  border: 1px solid var(--calc-line);
+  color: #626970;
+  font-size: 12px;
+}
+
+.check-item input {
+  width: auto;
+  margin-top: 2px;
+}
+
+.accessorial-summary {
+  padding: 14px;
+  background: var(--calc-blue-soft);
+  border-left: 4px solid var(--calc-blue);
+  color: var(--calc-ink);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.accessorial-message {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.accessorial-message.show {
+  display: block;
+}
+
+.accessorial-message.ok {
+  background: var(--calc-lime-soft);
+  color: #5D6723;
+  border-left: 3px solid var(--calc-lime);
+}
+
+.accessorial-message.error {
+  background: var(--calc-pink-soft);
+  color: #8E3E58;
+  border-left: 3px solid var(--calc-pink);
+}
+
+@media (max-width: 560px) {
+  .check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */
@@ -861,7 +1093,7 @@ main {
     <h1>CALCULATORS</h1>
 
     <p>
-      Quick planning tools for hours of service and load profitability.
+      Quick planning tools for hours of service, load profitability, detention and accessorial charges.
     </p>
 
   </section>
@@ -889,6 +1121,15 @@ main {
       id="profitTab">
 
       Dispatch Profit Calculator
+
+    </button>
+
+
+    <button
+      type="button"
+      id="accessorialTab">
+
+      Accessorials &amp; Detention
 
     </button>
 
@@ -1760,6 +2001,608 @@ main {
   </section>
 
 
+  <!-- ========================================================
+       ACCESSORIALS / DETENTION
+       ======================================================== -->
+
+  <section
+    class="calc-panel"
+    id="accessorialPanel">
+
+
+    <div class="calc-layout">
+
+
+      <!-- INPUT SIDE -->
+
+      <div>
+
+
+        <div class="calc-card">
+
+          <h2>Accessorial Calculator</h2>
+
+          <p class="calc-hint">
+            Calculate detention or another accessorial, then save it directly
+            to the correct load as a Pending accessorial record.
+          </p>
+
+
+          <div class="form-grid">
+
+
+            <div class="field full">
+
+              <label for="accessorialLoad">
+                Add to Load
+              </label>
+
+              <select id="accessorialLoad">
+
+                <option value="">
+                  — Select a load —
+                </option>
+
+              </select>
+
+              <div class="explain">
+                Saving requires a load. The charge will stay linked to this load.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialType">
+                Accessorial Type
+              </label>
+
+              <select id="accessorialType">
+
+                <option value="detention">Detention</option>
+                <option value="layover">Layover</option>
+                <option value="tonu">TONU</option>
+                <option value="lumper">Lumper</option>
+                <option value="driver_assist">Driver Assist</option>
+                <option value="extra_stop">Extra Stop</option>
+                <option value="redelivery">Redelivery</option>
+                <option value="storage">Storage</option>
+                <option value="reimbursement">Reimbursement</option>
+                <option value="other">Other</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialLocationType">
+                Location
+              </label>
+
+              <select id="accessorialLocationType">
+
+                <option value="shipper">Shipper</option>
+                <option value="receiver">Receiver</option>
+                <option value="other">Other</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialFacility">
+                Facility
+              </label>
+
+              <input
+                id="accessorialFacility"
+                type="text"
+                placeholder="Facility name"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialRateType">
+                Rate Type
+              </label>
+
+              <select id="accessorialRateType">
+
+                <option value="hourly">Hourly</option>
+                <option value="flat">Flat</option>
+                <option value="per_unit">Per Unit</option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialRate">
+                Rate Amount
+              </label>
+
+              <input
+                id="accessorialRate"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="75.00"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="accessorialQuantity">
+                Quantity
+              </label>
+
+              <input
+                id="accessorialQuantity"
+                type="number"
+                min="0"
+                step="0.01"
+                value="1"
+              >
+
+              <div class="explain">
+                Used for flat/per-unit charges. Detention calculates from billable time.
+              </div>
+
+            </div>
+
+
+            <div class="field full">
+
+              <label for="accessorialDescription">
+                Reason / Description
+              </label>
+
+              <textarea
+                id="accessorialDescription"
+                placeholder="What happened and why is the charge being requested?"
+              ></textarea>
+
+            </div>
+
+
+          </div>
+
+
+          <!-- DETENTION-SPECIFIC TIMES -->
+
+          <div
+            class="accessorial-subsection"
+            id="detentionFields">
+
+            <h3>Detention Timing</h3>
+
+
+            <div class="form-grid">
+
+
+              <div class="field">
+
+                <label for="detentionAppointment">
+                  Appointment
+                </label>
+
+                <input
+                  id="detentionAppointment"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionArrival">
+                  Arrived
+                </label>
+
+                <input
+                  id="detentionArrival"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionCheckIn">
+                  Checked In
+                </label>
+
+                <input
+                  id="detentionCheckIn"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionServiceStart">
+                  Loading / Unloading Started
+                </label>
+
+                <input
+                  id="detentionServiceStart"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionReleased">
+                  Released / Departed
+                </label>
+
+                <input
+                  id="detentionReleased"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="detentionFreeMinutes">
+                  Free Time (minutes)
+                </label>
+
+                <input
+                  id="detentionFreeMinutes"
+                  type="number"
+                  min="0"
+                  step="15"
+                  value="120"
+                >
+
+                <div class="explain">
+                  Use the rate confirmation / contract terms.
+                </div>
+
+              </div>
+
+
+            </div>
+
+          </div>
+
+
+          <!-- BROKER COMMUNICATION -->
+
+          <div class="accessorial-subsection">
+
+            <h3>Broker / Customer Communication</h3>
+
+
+            <div class="form-grid">
+
+
+              <div class="field">
+
+                <label for="notificationRequired">
+                  Notification Required?
+                </label>
+
+                <select id="notificationRequired">
+
+                  <option value="no">No / Unknown</option>
+                  <option value="yes">Yes</option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="brokerNotifiedAt">
+                  Broker Notified At
+                </label>
+
+                <input
+                  id="brokerNotifiedAt"
+                  type="datetime-local"
+                >
+
+              </div>
+
+
+              <div class="field full">
+
+                <label for="notifiedContact">
+                  Contact / Communication Note
+                </label>
+
+                <input
+                  id="notifiedContact"
+                  type="text"
+                  placeholder="Broker name, email, phone, message reference..."
+                >
+
+              </div>
+
+
+            </div>
+
+          </div>
+
+
+          <!-- SUPPORTING DOCUMENTATION -->
+
+          <div class="accessorial-subsection">
+
+            <h3>Supporting Documentation</h3>
+
+
+            <div class="check-grid">
+
+              <label class="check-item">
+                <input type="checkbox" id="docBol">
+                BOL documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docPod">
+                POD documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docRateCon">
+                Rate confirmation / terms documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docFacilityTimes">
+                Facility times documented
+              </label>
+
+              <label class="check-item">
+                <input type="checkbox" id="docCommunication">
+                Broker/customer communication documented
+              </label>
+
+            </div>
+
+
+            <div
+              class="field full"
+              style="margin-top: 14px;">
+
+              <label for="accessorialSupportingNotes">
+                Supporting Notes
+              </label>
+
+              <textarea
+                id="accessorialSupportingNotes"
+                placeholder="BOL/POD timestamps, screenshots, approval notes, receipts, reference numbers..."
+              ></textarea>
+
+            </div>
+
+          </div>
+
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateAccessorial">
+
+              Calculate
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="saveAccessorial">
+
+              Add to Load
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetAccessorial">
+
+              Clear
+
+            </button>
+
+          </div>
+
+
+          <div
+            class="accessorial-message"
+            id="accessorialMessage">
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- RESULT / REQUEST SIDE -->
+
+      <aside class="calc-card result-card">
+
+        <h2>Accessorial Request</h2>
+
+        <p class="calc-hint">
+          Review the calculation before saving or sending the request.
+        </p>
+
+
+        <div
+          class="result-status"
+          id="accessorialStatus">
+
+          <div class="status-label">
+            Requested Amount
+          </div>
+
+          <div
+            class="status-main"
+            id="accessorialStatusMain">
+
+            $0.00
+
+          </div>
+
+          <div
+            class="status-detail"
+            id="accessorialStatusDetail">
+
+            Enter the accessorial details and calculate.
+
+          </div>
+
+        </div>
+
+
+        <div class="metrics">
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Total Facility Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialTotalTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Free Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialFreeTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Billable Time
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialBillableTime">
+
+              —
+
+            </div>
+
+          </div>
+
+
+          <div class="metric">
+
+            <div class="metric-label">
+              Rate
+            </div>
+
+            <div
+              class="metric-value"
+              id="accessorialRateResult">
+
+              —
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          class="accessorial-summary"
+          id="accessorialSummary"
+          style="margin-top: 16px;">
+
+          No accessorial calculated yet.
+
+        </div>
+
+
+        <div class="calc-actions">
+
+          <button
+            type="button"
+            class="calc-btn secondary"
+            id="copyAccessorialRequest">
+
+            Copy Request
+
+          </button>
+
+        </div>
+
+
+        <div class="notice">
+
+          Saving creates a Pending accessorial record attached to the selected load.
+          Approval, invoicing and payment can then be processed from the load workspace.
+          Use the rate confirmation or governing agreement when determining free time,
+          notification requirements and allowable charges.
+
+        </div>
+
+      </aside>
+
+
+    </div>
+
+  </section>
+
+
 </main>
 
 
@@ -1790,6 +2633,12 @@ const SUPABASE_ANON_KEY =
 
 
 let db =
+  null;
+
+let tenant =
+  null;
+
+let lastAccessorialCalculation =
   null;
 
 
@@ -1828,10 +2677,47 @@ async function startPage() {
   }
 
 
-  await buildNav(
-    db,
-    'Calculators'
-  );
+  const navTenant =
+    await buildNav(
+      db,
+      'Calculators'
+    );
+
+
+  tenant =
+    navTenant ||
+    null;
+
+
+  if (
+    !tenant
+  ) {
+
+    const profile =
+      await db
+        .from('app_users')
+        .select('tenant_id')
+        .eq(
+          'auth_uid',
+          session.data.session.user.id
+        )
+        .maybeSingle();
+
+
+    if (
+      !profile.error &&
+      profile.data
+    ) {
+
+      tenant =
+        profile.data.tenant_id;
+
+    }
+
+  }
+
+
+  await loadAccessorialLoads();
 
 }
 
@@ -1944,41 +2830,46 @@ function money(value) {
 
 function showTool(tool) {
 
-
-  const hos =
-    tool ===
-    'hos';
-
-
-  $('hosPanel')
-    .classList
-    .toggle(
-      'active',
-      hos
-    );
-
-
-  $('profitPanel')
-    .classList
-    .toggle(
-      'active',
-      !hos
-    );
+  const map = {
+    hos: [
+      'hosPanel',
+      'hosTab'
+    ],
+    profit: [
+      'profitPanel',
+      'profitTab'
+    ],
+    accessorial: [
+      'accessorialPanel',
+      'accessorialTab'
+    ]
+  };
 
 
-  $('hosTab')
-    .classList
-    .toggle(
-      'active',
-      hos
-    );
+  Object.entries(map)
+    .forEach(
+      ([name, ids]) => {
+
+        const active =
+          name === tool;
 
 
-  $('profitTab')
-    .classList
-    .toggle(
-      'active',
-      !hos
+        $(ids[0])
+          .classList
+          .toggle(
+            'active',
+            active
+          );
+
+
+        $(ids[1])
+          .classList
+          .toggle(
+            'active',
+            active
+          );
+
+      }
     );
 
 }
@@ -2000,6 +2891,16 @@ $('profitTab')
     () =>
       showTool(
         'profit'
+      )
+  );
+
+
+$('accessorialTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'accessorial'
       )
   );
 
@@ -2868,6 +3769,1141 @@ $('resetProfit')
 
     }
   );
+
+
+/* ============================================================
+   ACCESSORIALS / DETENTION
+   ============================================================ */
+
+async function loadAccessorialLoads() {
+
+  if (
+    !db ||
+    !tenant
+  ) {
+
+    return;
+
+  }
+
+
+  const result =
+    await db
+      .from('loads')
+      .select(
+        'id,load_number,commodity,created_at'
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .order(
+        'created_at',
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(
+        250
+      );
+
+
+  if (
+    result.error
+  ) {
+
+    console.warn(
+      'Could not load loads for accessorials:',
+      result.error.message
+    );
+
+    return;
+
+  }
+
+
+  const select =
+    $('accessorialLoad');
+
+
+  select.innerHTML =
+    '<option value="">— Select a load —</option>' +
+    (result.data || [])
+      .map(
+        load => {
+
+          const number =
+            load.load_number ||
+            'Load';
+
+          const commodity =
+            load.commodity
+              ? ' · ' +
+                load.commodity
+              : '';
+
+          return (
+            '<option value="' +
+            load.id +
+            '">' +
+            number +
+            commodity +
+            '</option>'
+          );
+
+        }
+      )
+      .join('');
+
+}
+
+
+function accessorialPretty(value) {
+
+  return String(
+    value ||
+    ''
+  )
+    .replace(
+      /_/g,
+      ' '
+    )
+    .replace(
+      /\b\w/g,
+      c =>
+        c.toUpperCase()
+    );
+
+}
+
+
+function localDateTimeToIso(value) {
+
+  if (
+    !value
+  ) {
+
+    return null;
+
+  }
+
+
+  const d =
+    new Date(
+      value
+    );
+
+
+  return Number.isNaN(
+    d.getTime()
+  )
+    ? null
+    : d.toISOString();
+
+}
+
+
+function minutesBetween(start, end) {
+
+  if (
+    !start ||
+    !end
+  ) {
+
+    return 0;
+
+  }
+
+
+  const a =
+    new Date(
+      start
+    );
+
+
+  const b =
+    new Date(
+      end
+    );
+
+
+  if (
+    Number.isNaN(a.getTime()) ||
+    Number.isNaN(b.getTime()) ||
+    b <= a
+  ) {
+
+    return 0;
+
+  }
+
+
+  return Math.round(
+    (
+      b.getTime() -
+      a.getTime()
+    ) /
+    60000
+  );
+
+}
+
+
+function formatMinutes(totalMinutes) {
+
+  const safe =
+    Math.max(
+      0,
+      Math.round(
+        totalMinutes ||
+        0
+      )
+    );
+
+
+  const h =
+    Math.floor(
+      safe /
+      60
+    );
+
+
+  const m =
+    safe %
+    60;
+
+
+  return (
+    h +
+    'h ' +
+    String(m)
+      .padStart(
+        2,
+        '0'
+      ) +
+    'm'
+  );
+
+}
+
+
+function setAccessorialMessage(
+  text,
+  type
+) {
+
+  const box =
+    $('accessorialMessage');
+
+
+  box.className =
+    'accessorial-message';
+
+
+  box.textContent =
+    text ||
+    '';
+
+
+  if (
+    text
+  ) {
+
+    box.classList.add(
+      'show',
+      type ===
+      'error'
+        ? 'error'
+        : 'ok'
+    );
+
+  }
+
+}
+
+
+function toggleAccessorialFields() {
+
+  const detention =
+    $('accessorialType')
+      .value ===
+      'detention';
+
+
+  $('detentionFields')
+    .classList
+    .toggle(
+      'hidden',
+      !detention
+    );
+
+
+  if (
+    detention
+  ) {
+
+    $('accessorialRateType')
+      .value =
+      'hourly';
+
+  }
+
+}
+
+
+function selectedLoadText() {
+
+  const option =
+    $('accessorialLoad')
+      .selectedOptions[0];
+
+
+  if (
+    !option ||
+    !option.value
+  ) {
+
+    return 'No load selected';
+
+  }
+
+
+  return option.textContent
+    .trim();
+
+}
+
+
+function calculateAccessorial() {
+
+  setAccessorialMessage(
+    '',
+    'ok'
+  );
+
+
+  const type =
+    $('accessorialType')
+      .value;
+
+
+  const rateType =
+    $('accessorialRateType')
+      .value;
+
+
+  const rate =
+    n(
+      'accessorialRate'
+    );
+
+
+  const quantity =
+    Math.max(
+      0,
+      n(
+        'accessorialQuantity'
+      )
+    );
+
+
+  let totalMinutes =
+    null;
+
+
+  let freeMinutes =
+    null;
+
+
+  let billableMinutes =
+    null;
+
+
+  let requestedAmount =
+    0;
+
+
+  if (
+    type ===
+    'detention'
+  ) {
+
+    const arrival =
+      $('detentionArrival')
+        .value;
+
+
+    const released =
+      $('detentionReleased')
+        .value;
+
+
+    if (
+      !arrival ||
+      !released
+    ) {
+
+      setAccessorialMessage(
+        'Enter both arrival and release/departure times for detention.',
+        'error'
+      );
+
+      return null;
+
+    }
+
+
+    totalMinutes =
+      minutesBetween(
+        arrival,
+        released
+      );
+
+
+    if (
+      totalMinutes <= 0
+    ) {
+
+      setAccessorialMessage(
+        'Release/departure must be later than arrival.',
+        'error'
+      );
+
+      return null;
+
+    }
+
+
+    freeMinutes =
+      Math.max(
+        0,
+        Math.round(
+          n(
+            'detentionFreeMinutes'
+          )
+        )
+      );
+
+
+    billableMinutes =
+      Math.max(
+        0,
+        totalMinutes -
+        freeMinutes
+      );
+
+
+    requestedAmount =
+      (
+        billableMinutes /
+        60
+      ) *
+      rate;
+
+  }
+  else {
+
+    requestedAmount =
+      rate *
+      (
+        quantity ||
+        1
+      );
+
+  }
+
+
+  const loadText =
+    selectedLoadText();
+
+
+  const description =
+    $('accessorialDescription')
+      .value
+      .trim();
+
+
+  const facility =
+    $('accessorialFacility')
+      .value
+      .trim();
+
+
+  const typeLabel =
+    accessorialPretty(
+      type
+    );
+
+
+  const summaryLines =
+    [
+      typeLabel.toUpperCase(),
+      '',
+      'Load: ' +
+        loadText,
+      facility
+        ? 'Facility: ' +
+          facility
+        : '',
+      description
+        ? 'Reason: ' +
+          description
+        : ''
+    ]
+      .filter(
+        Boolean
+      );
+
+
+  if (
+    type ===
+    'detention'
+  ) {
+
+    summaryLines.push(
+      '',
+      'Total facility time: ' +
+        formatMinutes(
+          totalMinutes
+        ),
+      'Free time: ' +
+        formatMinutes(
+          freeMinutes
+        ),
+      'Billable detention: ' +
+        formatMinutes(
+          billableMinutes
+        ),
+      'Rate: ' +
+        money(
+          rate
+        ) +
+        ' / hour'
+    );
+
+  }
+  else {
+
+    summaryLines.push(
+      '',
+      'Rate: ' +
+        money(
+          rate
+        ),
+      'Quantity: ' +
+        (
+          quantity ||
+          1
+        )
+    );
+
+  }
+
+
+  summaryLines.push(
+    '',
+    'AMOUNT REQUESTED: ' +
+      money(
+        requestedAmount
+      )
+  );
+
+
+  if (
+    $('brokerNotifiedAt')
+      .value
+  ) {
+
+    summaryLines.push(
+      'Broker/customer notified: ' +
+      new Date(
+        $('brokerNotifiedAt')
+          .value
+      )
+        .toLocaleString()
+    );
+
+  }
+
+
+  if (
+    $('notifiedContact')
+      .value
+      .trim()
+  ) {
+
+    summaryLines.push(
+      'Notification/contact: ' +
+      $('notifiedContact')
+        .value
+        .trim()
+    );
+
+  }
+
+
+  lastAccessorialCalculation = {
+    type,
+    rateType,
+    rate,
+    quantity:
+      quantity ||
+      1,
+    totalMinutes,
+    freeMinutes,
+    billableMinutes,
+    requestedAmount,
+    summary:
+      summaryLines
+        .join('\n')
+  };
+
+
+  $('accessorialStatus')
+    .className =
+    requestedAmount > 0
+      ? 'result-status good'
+      : 'result-status tight';
+
+
+  $('accessorialStatusMain')
+    .textContent =
+    money(
+      requestedAmount
+    );
+
+
+  $('accessorialStatusDetail')
+    .textContent =
+    type ===
+    'detention'
+      ? (
+          billableMinutes > 0
+            ? 'Billable detention calculated after free time.'
+            : 'Facility time does not exceed the entered free-time allowance.'
+        )
+      : (
+          typeLabel +
+          ' request calculated.'
+        );
+
+
+  $('accessorialTotalTime')
+    .textContent =
+    totalMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          totalMinutes
+        );
+
+
+  $('accessorialFreeTime')
+    .textContent =
+    freeMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          freeMinutes
+        );
+
+
+  $('accessorialBillableTime')
+    .textContent =
+    billableMinutes ===
+    null
+      ? '—'
+      : formatMinutes(
+          billableMinutes
+        );
+
+
+  $('accessorialRateResult')
+    .textContent =
+    rateType ===
+    'hourly'
+      ? (
+          money(
+            rate
+          ) +
+          '/hr'
+        )
+      : money(
+          rate
+        );
+
+
+  $('accessorialSummary')
+    .textContent =
+    lastAccessorialCalculation
+      .summary;
+
+
+  return lastAccessorialCalculation;
+
+}
+
+
+async function copyTextSafe(text) {
+
+  try {
+
+    await navigator.clipboard
+      .writeText(
+        text
+      );
+
+    return true;
+
+  }
+  catch (error) {
+
+    const area =
+      document.createElement(
+        'textarea'
+      );
+
+
+    area.value =
+      text;
+
+
+    document.body
+      .appendChild(
+        area
+      );
+
+
+    area.select();
+
+
+    const ok =
+      document.execCommand(
+        'copy'
+      );
+
+
+    area.remove();
+
+
+    return ok;
+
+  }
+
+}
+
+
+async function saveAccessorialToLoad() {
+
+  if (
+    !db ||
+    !tenant
+  ) {
+
+    setAccessorialMessage(
+      'The database connection is not ready.',
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  const loadId =
+    $('accessorialLoad')
+      .value;
+
+
+  if (
+    !loadId
+  ) {
+
+    setAccessorialMessage(
+      'Select the load this accessorial belongs to.',
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  const calculation =
+    calculateAccessorial();
+
+
+  if (
+    !calculation
+  ) {
+
+    return;
+
+  }
+
+
+  const record = {
+
+    tenant_id:
+      tenant,
+
+    load_id:
+      loadId,
+
+    accessorial_type:
+      calculation.type,
+
+    status:
+      'pending',
+
+    location_type:
+      $('accessorialLocationType')
+        .value ||
+      null,
+
+    facility_name:
+      $('accessorialFacility')
+        .value
+        .trim() ||
+      null,
+
+    description:
+      $('accessorialDescription')
+        .value
+        .trim() ||
+      null,
+
+    appointment_at:
+      localDateTimeToIso(
+        $('detentionAppointment')
+          .value
+      ),
+
+    arrived_at:
+      localDateTimeToIso(
+        $('detentionArrival')
+          .value
+      ),
+
+    checked_in_at:
+      localDateTimeToIso(
+        $('detentionCheckIn')
+          .value
+      ),
+
+    service_started_at:
+      localDateTimeToIso(
+        $('detentionServiceStart')
+          .value
+      ),
+
+    released_at:
+      localDateTimeToIso(
+        $('detentionReleased')
+          .value
+      ),
+
+    free_minutes:
+      calculation.freeMinutes,
+
+    total_minutes:
+      calculation.totalMinutes,
+
+    billable_minutes:
+      calculation.billableMinutes,
+
+    rate_type:
+      calculation.rateType,
+
+    rate_amount:
+      calculation.rate,
+
+    quantity:
+      calculation.quantity,
+
+    requested_amount:
+      calculation.requestedAmount,
+
+    notification_required:
+      $('notificationRequired')
+        .value ===
+      'yes',
+
+    broker_notified_at:
+      localDateTimeToIso(
+        $('brokerNotifiedAt')
+          .value
+      ),
+
+    notified_contact:
+      $('notifiedContact')
+        .value
+        .trim() ||
+      null,
+
+    bol_documented:
+      $('docBol')
+        .checked,
+
+    pod_documented:
+      $('docPod')
+        .checked,
+
+    rate_confirmation_documented:
+      $('docRateCon')
+        .checked,
+
+    facility_times_documented:
+      $('docFacilityTimes')
+        .checked,
+
+    communication_documented:
+      $('docCommunication')
+        .checked,
+
+    supporting_notes:
+      $('accessorialSupportingNotes')
+        .value
+        .trim() ||
+      null
+
+  };
+
+
+  const result =
+    await db
+      .from(
+        'accessorials'
+      )
+      .insert(
+        record
+      )
+      .select(
+        'id,accessorial_type,status,requested_amount'
+      )
+      .single();
+
+
+  if (
+    result.error
+  ) {
+
+    setAccessorialMessage(
+      result.error.message,
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  setAccessorialMessage(
+    'Added to load as Pending ' +
+    accessorialPretty(
+      result.data.accessorial_type
+    ) +
+    ' · ' +
+    money(
+      result.data.requested_amount
+    ) +
+    '.',
+    'ok'
+  );
+
+}
+
+
+function resetAccessorial() {
+
+  [
+    'accessorialFacility',
+    'accessorialRate',
+    'accessorialDescription',
+    'detentionAppointment',
+    'detentionArrival',
+    'detentionCheckIn',
+    'detentionServiceStart',
+    'detentionReleased',
+    'brokerNotifiedAt',
+    'notifiedContact',
+    'accessorialSupportingNotes'
+  ]
+    .forEach(
+      id => {
+
+        $(id).value =
+          '';
+
+      }
+    );
+
+
+  [
+    'docBol',
+    'docPod',
+    'docRateCon',
+    'docFacilityTimes',
+    'docCommunication'
+  ]
+    .forEach(
+      id => {
+
+        $(id).checked =
+          false;
+
+      }
+    );
+
+
+  $('accessorialType')
+    .value =
+    'detention';
+
+
+  $('accessorialLocationType')
+    .value =
+    'shipper';
+
+
+  $('accessorialRateType')
+    .value =
+    'hourly';
+
+
+  $('accessorialQuantity')
+    .value =
+    '1';
+
+
+  $('detentionFreeMinutes')
+    .value =
+    '120';
+
+
+  $('notificationRequired')
+    .value =
+    'no';
+
+
+  $('accessorialStatus')
+    .className =
+    'result-status';
+
+
+  $('accessorialStatusMain')
+    .textContent =
+    '$0.00';
+
+
+  $('accessorialStatusDetail')
+    .textContent =
+    'Enter the accessorial details and calculate.';
+
+
+  [
+    'accessorialTotalTime',
+    'accessorialFreeTime',
+    'accessorialBillableTime',
+    'accessorialRateResult'
+  ]
+    .forEach(
+      id => {
+
+        $(id).textContent =
+          '—';
+
+      }
+    );
+
+
+  $('accessorialSummary')
+    .textContent =
+    'No accessorial calculated yet.';
+
+
+  lastAccessorialCalculation =
+    null;
+
+
+  setAccessorialMessage(
+    '',
+    'ok'
+  );
+
+
+  toggleAccessorialFields();
+
+}
+
+
+$('accessorialType')
+  .addEventListener(
+    'change',
+    toggleAccessorialFields
+  );
+
+
+$('calculateAccessorial')
+  .addEventListener(
+    'click',
+    calculateAccessorial
+  );
+
+
+$('saveAccessorial')
+  .addEventListener(
+    'click',
+    saveAccessorialToLoad
+  );
+
+
+$('copyAccessorialRequest')
+  .addEventListener(
+    'click',
+    async () => {
+
+      const calculation =
+        calculateAccessorial();
+
+
+      if (
+        !calculation
+      ) {
+
+        return;
+
+      }
+
+
+      const ok =
+        await copyTextSafe(
+          calculation.summary
+        );
+
+
+      setAccessorialMessage(
+        ok
+          ? 'Accessorial request copied.'
+          : 'Could not copy the request.',
+        ok
+          ? 'ok'
+          : 'error'
+      );
+
+    }
+  );
+
+
+$('resetAccessorial')
+  .addEventListener(
+    'click',
+    resetAccessorial
+  );
+
+
+toggleAccessorialFields();
 
 
 </script>
