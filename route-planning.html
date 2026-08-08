@@ -1,1 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<title>Route Planning — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+:root{
+  --rp-ink:var(--hh-ink,#3C3A4B);
+  --rp-blue:var(--hh-blue,#7FA5B5);
+  --rp-blue-dark:var(--hh-blue-dark,#668C9D);
+  --rp-blue-soft:var(--hh-blue-soft,#EAF3F6);
+  --rp-pink:var(--hh-pink,#D86A8E);
+  --rp-pink-soft:var(--hh-pink-soft,#F8E5EC);
+  --rp-lime:var(--hh-lime,#B8C34A);
+  --rp-lime-soft:var(--hh-lime-soft,#F1F4D8);
+  --rp-line:#D9DEE1;
+  --rp-muted:#747B82;
+  --rp-white:#fff;
+  --rp-bg:#F7F7F5;
+}
+
+*{box-sizing:border-box}
+
+body{margin:0;color:var(--rp-ink)}
+
+main{
+  width:min(1400px,100%);
+  margin:0 auto 70px;
+  padding:28px 24px 70px;
+}
+
+.page-intro{margin-bottom:22px}
+.page-intro h1{
+  margin:0;
+  font-family:"Cinzel",Georgia,serif;
+  font-size:30px;
+  font-weight:600;
+  letter-spacing:1px;
+}
+.page-intro p{
+  margin:5px 0 0;
+  color:var(--rp-blue);
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:19px;
+  font-style:italic;
+}
+
+.route-tabs{
+  display:flex;
+  gap:28px;
+  border-bottom:1px solid var(--rp-line);
+  margin-bottom:24px;
+}
+.route-tabs button{
+  padding:0 0 10px;
+  min-height:42px;
+  border:0;
+  border-bottom:3px solid transparent;
+  background:transparent;
+  color:var(--rp-ink);
+  font-family:"Oswald",sans-serif;
+  font-size:13px;
+  letter-spacing:.7px;
+  cursor:pointer;
+}
+.route-tabs button.on{
+  color:var(--rp-blue-dark);
+  border-bottom-color:var(--rp-blue);
+}
+
+.panel{display:none}
+.panel.on{display:block}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);
+  gap:18px;
+  align-items:start;
+}
+
+.card{
+  background:var(--rp-white);
+  border:1px solid var(--rp-line);
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 4px 14px rgba(60,58,75,.04);
+}
+
+.card h2{
+  margin:0 0 4px;
+  font-family:"Oswald",sans-serif;
+  font-size:17px;
+  font-weight:500;
+}
+.card h3{
+  margin:18px 0 8px;
+  color:var(--rp-blue-dark);
+  font-family:"Oswald",sans-serif;
+  font-size:13px;
+  font-weight:500;
+}
+.hint{
+  margin:0 0 15px;
+  color:var(--rp-muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+.field.full{grid-column:1/-1}
+
+label{
+  display:block;
+  margin-bottom:4px;
+  color:#626970;
+  font-family:"Oswald",sans-serif;
+  font-size:11.5px;
+  letter-spacing:.25px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #BEC8CD;
+  background:#fff;
+  color:var(--rp-ink);
+  font:inherit;
+  border-radius:0;
+}
+textarea{min-height:78px;resize:vertical}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:var(--rp-blue);
+  box-shadow:0 0 0 2px rgba(127,165,181,.13);
+}
+
+.checks{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.check{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  padding:9px 10px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+  font-size:12px;
+}
+.check input{width:auto;margin-top:2px}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:16px;
+}
+button.action,a.action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:37px;
+  padding:8px 13px;
+  border:1px solid var(--rp-blue);
+  background:var(--rp-blue);
+  color:#fff;
+  font-family:"Oswald",sans-serif;
+  font-size:12px;
+  letter-spacing:.4px;
+  text-decoration:none;
+  cursor:pointer;
+}
+button.action.secondary,a.action.secondary{
+  background:#fff;
+  color:var(--rp-blue-dark);
+  border-color:var(--rp-line);
+}
+button.action.danger{
+  background:#fff;
+  color:#9A4059;
+  border-color:#E3BBC6;
+}
+
+.route-preview{
+  padding:14px;
+  background:var(--rp-blue-soft);
+  border-left:4px solid var(--rp-blue);
+  font-size:12px;
+  line-height:1.6;
+}
+.route-preview strong{
+  display:block;
+  font-family:"Oswald",sans-serif;
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.warning{
+  margin-top:12px;
+  padding:11px 13px;
+  background:var(--rp-pink-soft);
+  border-left:4px solid var(--rp-pink);
+  color:#7D4A5B;
+  font-size:11.5px;
+  line-height:1.5;
+}
+
+.okmsg,.errmsg{
+  display:none;
+  margin-top:12px;
+  padding:10px 12px;
+  font-size:12px;
+}
+.okmsg{background:var(--rp-lime-soft);color:#5D6723}
+.errmsg{background:var(--rp-pink-soft);color:#8E3E58}
+.okmsg.show,.errmsg.show{display:block}
+
+/* Golden routes */
+.filters{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr;
+  gap:9px;
+  margin-bottom:14px;
+}
+
+.golden-list{display:grid;gap:12px}
+
+.golden{
+  background:#fff;
+  border:1px solid var(--rp-line);
+  border-left:5px solid var(--rp-lime);
+  padding:16px;
+}
+.golden-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.golden h3{
+  margin:0;
+  color:var(--rp-ink);
+  font-family:"Oswald",sans-serif;
+  font-size:16px;
+}
+.tags{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  margin-top:7px;
+}
+.tag{
+  padding:3px 7px;
+  background:var(--rp-blue-soft);
+  color:var(--rp-blue-dark);
+  font-family:"Oswald",sans-serif;
+  font-size:10px;
+  letter-spacing:.35px;
+}
+.tag.freight{background:var(--rp-lime-soft);color:#606B24}
+.meta{
+  margin-top:9px;
+  color:var(--rp-muted);
+  font-size:11.5px;
+  line-height:1.55;
+}
+.golden-notes{
+  margin-top:10px;
+  font-size:12px;
+  line-height:1.55;
+}
+.empty{
+  padding:25px;
+  border:1px dashed var(--rp-line);
+  color:var(--rp-muted);
+  text-align:center;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  background:rgba(30,32,35,.45);
+  overflow:auto;
+  padding:30px 15px;
+}
+.modal.show{display:block}
+.modal-box{
+  width:min(880px,100%);
+  margin:0 auto;
+  background:#fff;
+  border:1px solid var(--rp-line);
+  padding:22px;
+}
+.modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:16px;
+}
+.modal-head h2{
+  margin:0;
+  font-family:"Oswald",sans-serif;
+  font-size:18px;
+}
+.close{
+  border:0;
+  background:transparent;
+  font-size:24px;
+  cursor:pointer;
+}
+
+.special{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+}
+.special.hidden{display:none}
+
+.smallnote{
+  color:var(--rp-muted);
+  font-size:10.5px;
+  line-height:1.45;
+  margin-top:5px;
+}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .filters{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  main{padding:20px 14px 50px}
+  .grid,.checks,.filters{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<header></header>
+
+<main>
+  <section class="page-intro">
+    <h1>ROUTE PLANNING</h1>
+    <p>Plan the current move, then preserve the route knowledge worth using again.</p>
+  </section>
+
+  <nav class="route-tabs">
+    <button type="button" class="on" data-panel="planPanel">Plan Route</button>
+    <button type="button" data-panel="goldenPanel">Golden Routes</button>
+  </nav>
+
+  <!-- ========================================================
+       PLAN ROUTE
+       ======================================================== -->
+  <section class="panel on" id="planPanel">
+    <div class="layout">
+
+      <div>
+        <div class="card">
+          <h2>Load & Route</h2>
+          <p class="hint">Choose an existing load when available, or plan a route manually.</p>
+
+          <div class="grid">
+            <div class="field full">
+              <label>Existing Load</label>
+              <select id="loadSelect">
+                <option value="">— Manual route —</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Route Name</label>
+              <input id="routeName" placeholder="Little Rock → Nashville">
+            </div>
+
+            <div class="field">
+              <label>Freight Type</label>
+              <select id="freightType">
+                <option value="heavy_haul">Heavy Haul / Oversize</option>
+                <option value="reefer">Reefer</option>
+                <option value="dry_van">Dry Van</option>
+                <option value="flatbed">Flatbed</option>
+                <option value="step_deck">Step Deck</option>
+                <option value="specialized">Specialized</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Equipment / Trailer</label>
+              <input id="equipmentType" placeholder="RGN, 53' Reefer, Flatbed...">
+            </div>
+
+            <div class="field">
+              <label>Loaded Miles</label>
+              <input id="loadedMiles" type="number" min="0">
+            </div>
+
+            <div class="field">
+              <label>Origin</label>
+              <input id="origin" placeholder="Little Rock, AR">
+            </div>
+
+            <div class="field">
+              <label>Destination</label>
+              <input id="destination" placeholder="Nashville, TN">
+            </div>
+
+            <div class="field full">
+              <label>States Traveled</label>
+              <input id="states" placeholder="AR, TN">
+              <div class="smallnote">Comma-separated, in travel order.</div>
+            </div>
+
+            <div class="field full">
+              <label>Waypoints / Shaping Points</label>
+              <textarea id="waypoints" placeholder="Memphis, TN&#10;Jackson, TN"></textarea>
+              <div class="smallnote">
+                One waypoint per line. For the most reliable shared Google Maps link on mobile browsers,
+                keep the route to 3 or fewer waypoints.
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Pickup</label>
+              <input id="pickupAt" type="datetime-local">
+            </div>
+
+            <div class="field">
+              <label>Delivery</label>
+              <input id="deliveryAt" type="datetime-local">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Route Review</h2>
+          <p class="hint">Use this as the dispatch planning record. Heavy haul permit instructions remain controlling.</p>
+
+          <div class="checks">
+            <label class="check"><input id="permitRouteConfirmed" type="checkbox"> Permit route confirmed</label>
+            <label class="check"><input id="stateRulesReviewed" type="checkbox"> State restrictions reviewed</label>
+            <label class="check"><input id="bridgeTunnelReviewed" type="checkbox"> Bridges / tunnels reviewed</label>
+            <label class="check"><input id="constructionReviewed" type="checkbox"> Construction checked</label>
+            <label class="check"><input id="travelWindowsReviewed" type="checkbox"> Travel windows / curfews checked</label>
+            <label class="check"><input id="escortsReviewed" type="checkbox"> Escort requirements checked</label>
+          </div>
+
+          <div class="grid" style="margin-top:14px">
+            <div class="field full">
+              <label>Route Notes</label>
+              <textarea id="routeNotes" placeholder="Restrictions, approaches, turns, construction, permit notes..."></textarea>
+            </div>
+            <div class="field">
+              <label>Parking / Staging</label>
+              <textarea id="parkingStaging" placeholder="Safe staging, overnight parking, pull-offs..."></textarea>
+            </div>
+            <div class="field">
+              <label>Fuel / Service Notes</label>
+              <textarea id="fuelServiceNotes" placeholder="Preferred fuel, washout, repair, service stops..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Escort / Meeting Details</h2>
+
+          <div class="grid">
+            <div class="field">
+              <label>Escort Company</label>
+              <input id="escortCompany">
+            </div>
+            <div class="field">
+              <label>Contact</label>
+              <input id="escortContact">
+            </div>
+            <div class="field">
+              <label>Phone</label>
+              <input id="escortPhone">
+            </div>
+            <div class="field">
+              <label>Meeting Location</label>
+              <input id="escortMeetingLocation">
+            </div>
+            <div class="field">
+              <label>Meeting Time</label>
+              <input id="escortMeetingTime" type="datetime-local">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card">
+          <h2>Route Preview</h2>
+          <p class="hint">Generate a shareable Google Maps directions link.</p>
+
+          <div class="route-preview" id="routePreview">
+            <strong>No route yet</strong>
+            Enter an origin and destination.
+          </div>
+
+          <div class="warning" id="heavyWarning">
+            Heavy haul / oversize: Google Maps is navigation reference only. Verify the current
+            permit-approved route, travel restrictions and clearances before movement.
+          </div>
+
+          <div class="actions">
+            <button class="action" type="button" id="openMaps">Open in Google Maps</button>
+            <button class="action secondary" type="button" id="copyRoute">Copy Link</button>
+            <button class="action secondary" type="button" id="emailRoute">Email Route</button>
+            <button class="action secondary" type="button" id="textRoute">Text Route</button>
+            <button class="action secondary" type="button" id="shareRoute">Share</button>
+          </div>
+
+          <div class="actions">
+            <button class="action" type="button" id="savePlan">Save Route Plan</button>
+            <button class="action secondary" type="button" id="saveGoldenFromPlan">Save as Golden Route</button>
+          </div>
+
+          <div class="okmsg" id="planOk"></div>
+          <div class="errmsg" id="planErr"></div>
+        </div>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ========================================================
+       GOLDEN ROUTES
+       ======================================================== -->
+  <section class="panel" id="goldenPanel">
+    <div class="card">
+      <h2>Golden Routes</h2>
+      <p class="hint">
+        Reusable route intelligence by freight type. A Golden Route means “previously useful or successful” —
+        not automatically legal or current.
+      </p>
+
+      <div class="filters">
+        <input id="gSearch" type="search" placeholder="Search city, route, highway, corridor...">
+
+        <select id="gFreight">
+          <option value="">All Freight Types</option>
+          <option value="heavy_haul">Heavy Haul / Oversize</option>
+          <option value="reefer">Reefer</option>
+          <option value="dry_van">Dry Van</option>
+          <option value="flatbed">Flatbed</option>
+          <option value="step_deck">Step Deck</option>
+          <option value="specialized">Specialized</option>
+          <option value="other">Other</option>
+        </select>
+
+        <input id="gOriginState" maxlength="2" placeholder="Origin State">
+        <input id="gDestinationState" maxlength="2" placeholder="Destination State">
+      </div>
+
+      <div class="actions">
+        <button class="action" type="button" id="newGolden">+ New Golden Route</button>
+      </div>
+    </div>
+
+    <div class="golden-list" id="goldenList"></div>
+  </section>
+</main>
+
+<!-- ==========================================================
+     GOLDEN ROUTE EDITOR
+     ========================================================== -->
+<div class="modal" id="goldenModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="goldenModalTitle">New Golden Route</h2>
+      <button class="close" type="button" id="closeGolden">&times;</button>
+    </div>
+
+    <input id="goldenId" type="hidden">
+
+    <div class="grid">
+      <div class="field">
+        <label>Route Name</label>
+        <input id="gRouteName" placeholder="Little Rock → Nashville I-40">
+      </div>
+
+      <div class="field">
+        <label>Freight Type</label>
+        <select id="gFreightType">
+          <option value="heavy_haul">Heavy Haul / Oversize</option>
+          <option value="reefer">Reefer</option>
+          <option value="dry_van">Dry Van</option>
+          <option value="flatbed">Flatbed</option>
+          <option value="step_deck">Step Deck</option>
+          <option value="specialized">Specialized</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Equipment / Trailer</label>
+        <input id="gEquipmentType">
+      </div>
+
+      <div class="field">
+        <label>Corridor / Nickname</label>
+        <input id="gCorridor" placeholder="I-40 corridor">
+      </div>
+
+      <div class="field">
+        <label>Origin</label>
+        <input id="gOrigin">
+      </div>
+
+      <div class="field">
+        <label>Destination</label>
+        <input id="gDestination">
+      </div>
+
+      <div class="field">
+        <label>Origin State</label>
+        <input id="gOriginStateEdit" maxlength="2" placeholder="AR">
+      </div>
+
+      <div class="field">
+        <label>Destination State</label>
+        <input id="gDestinationStateEdit" maxlength="2" placeholder="TN">
+      </div>
+
+      <div class="field full">
+        <label>States Traveled</label>
+        <input id="gStates" placeholder="AR, TN">
+      </div>
+
+      <div class="field full">
+        <label>Highways</label>
+        <input id="gHighways" placeholder="I-40, I-240">
+      </div>
+
+      <div class="field full">
+        <label>Waypoints / Shaping Points</label>
+        <textarea id="gWaypoints" placeholder="Memphis, TN&#10;Jackson, TN"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Last Used</label>
+        <input id="gLastUsed" type="date">
+      </div>
+
+      <div class="field">
+        <label>Last Verified</label>
+        <input id="gLastVerified" type="date">
+      </div>
+
+      <div class="field">
+        <label>Successful Uses</label>
+        <input id="gSuccessfulUses" type="number" min="0" value="0">
+      </div>
+
+      <div class="field full">
+        <label>Parking / Staging</label>
+        <textarea id="gParking"></textarea>
+      </div>
+
+      <div class="field full">
+        <label>Fuel / Service Notes</label>
+        <textarea id="gFuel"></textarea>
+      </div>
+
+      <div class="field full">
+        <label>Problem Areas / Avoid</label>
+        <textarea id="gProblems"></textarea>
+      </div>
+
+      <div class="field full">
+        <label>General Route Notes</label>
+        <textarea id="gGeneralNotes"></textarea>
+      </div>
+    </div>
+
+    <div class="special" id="heavyFields">
+      <h3>Heavy Haul / Oversize Knowledge</h3>
+
+      <div class="grid">
+        <div class="field">
+          <label>Previous Length (inches)</label>
+          <input id="gLength" type="number">
+        </div>
+        <div class="field">
+          <label>Previous Width (inches)</label>
+          <input id="gWidth" type="number">
+        </div>
+        <div class="field">
+          <label>Previous Height (inches)</label>
+          <input id="gHeight" type="number">
+        </div>
+        <div class="field">
+          <label>Previous Gross Weight (lb)</label>
+          <input id="gWeight" type="number">
+        </div>
+
+        <div class="field full">
+          <label>Axle / Configuration Notes</label>
+          <textarea id="gAxleNotes"></textarea>
+        </div>
+        <div class="field full">
+          <label>Permit Notes</label>
+          <textarea id="gPermitNotes"></textarea>
+        </div>
+        <div class="field full">
+          <label>Escort Notes</label>
+          <textarea id="gEscortNotes"></textarea>
+        </div>
+        <div class="field full">
+          <label>Clearance / Bridge / Tunnel Notes</label>
+          <textarea id="gClearanceNotes"></textarea>
+        </div>
+        <div class="field full">
+          <label>Travel Restriction Notes</label>
+          <textarea id="gTravelNotes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="special hidden" id="reeferFields">
+      <h3>Reefer Knowledge</h3>
+
+      <div class="grid">
+        <div class="field full">
+          <label>Reefer Notes</label>
+          <textarea id="gReeferNotes" placeholder="Temperature-sensitive delays, preferred fuel strategy..."></textarea>
+        </div>
+        <div class="field full">
+          <label>Washout / Reefer Service</label>
+          <textarea id="gWashoutNotes"></textarea>
+        </div>
+        <div class="field full">
+          <label>Receiver Approach / Delivery Notes</label>
+          <textarea id="gReceiverNotes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning">
+      Golden Routes are a reference database. Reverify current restrictions, road conditions,
+      permits and appointment requirements for every new load.
+    </div>
+
+    <div class="actions">
+      <button class="action" type="button" id="saveGolden">Save Golden Route</button>
+      <button class="action secondary" type="button" id="verifyToday">Verified Today</button>
+      <button class="action secondary" type="button" id="cancelGolden">Cancel</button>
+    </div>
+
+    <div class="okmsg" id="goldenOk"></div>
+    <div class="errmsg" id="goldenErr"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+
+<script>
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+
+let db = null;
+let tenant = null;
+let facilities = {};
+let goldenRoutes = [];
+
+function pretty(v){
+  return String(v || '')
+    .replace(/_/g,' ')
+    .replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function arrFromComma(v){
+  return String(v || '')
+    .split(',')
+    .map(x=>x.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function arrFromLines(v){
+  return String(v || '')
+    .split(/\r?\n/)
+    .map(x=>x.trim())
+    .filter(Boolean);
+}
+
+function dateOnly(d){
+  if(!d) return null;
+  return new Date(d).toISOString().slice(0,10);
+}
+
+function dateTimeValue(v){
+  return v ? new Date(v).toISOString() : null;
+}
+
+function setMsg(okId,errId,text,isError){
+  $(okId).classList.remove('show');
+  $(errId).classList.remove('show');
+
+  if(!text) return;
+
+  const el = isError ? $(errId) : $(okId);
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+function routeUrl(origin,destination,waypoints){
+  if(!origin || !destination) return '';
+
+  const params = new URLSearchParams();
+  params.set('api','1');
+  params.set('origin',origin);
+  params.set('destination',destination);
+  params.set('travelmode','driving');
+
+  if(waypoints && waypoints.length){
+    params.set('waypoints',waypoints.join('|'));
+  }
+
+  return 'https://www.google.com/maps/dir/?' + params.toString();
+}
+
+function currentRoute(){
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+  const waypoints = arrFromLines($('waypoints').value);
+
+  return {
+    origin,
+    destination,
+    waypoints,
+    url: routeUrl(origin,destination,waypoints)
+  };
+}
+
+function shareText(prefix='Route'){
+  const r = currentRoute();
+  const freight = pretty($('freightType').value);
+  const warning = $('freightType').value === 'heavy_haul'
+    ? '\nHeavy haul: follow the current permit-approved route and permit restrictions. Google Maps is navigation reference only.'
+    : '';
+
+  return `${prefix}: ${r.origin} → ${r.destination}\nFreight: ${freight}\n${r.url}${warning}`;
+}
+
+function drawPreview(){
+  const r = currentRoute();
+  const freight = $('freightType').value;
+
+  $('heavyWarning').style.display =
+    freight === 'heavy_haul' ? 'block' : 'none';
+
+  if(!r.origin || !r.destination){
+    $('routePreview').innerHTML =
+      '<strong>No route yet</strong>Enter an origin and destination.';
+    return;
+  }
+
+  const via = r.waypoints.length
+    ? '<br>Via: ' + r.waypoints.join(' → ')
+    : '';
+
+  $('routePreview').innerHTML =
+    '<strong>' + r.origin + ' → ' + r.destination + '</strong>' +
+    pretty(freight) + via;
+}
+
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  }
+}
+
+function facilityLabel(id){
+  const f = facilities[id];
+  if(!f) return '';
+  return [f.name, f.city, f.state].filter(Boolean).join(', ');
+}
+
+async function start(){
+  if(typeof window.supabase === 'undefined') return;
+
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  const session = await db.auth.getSession();
+
+  if(!session.data.session){
+    location.href = 'index.html';
+    return;
+  }
+
+  tenant = await buildNav(db,'Route Planning');
+
+  if(!tenant){
+    alert('No app_users profile is linked to this login.');
+    return;
+  }
+
+  await loadFacilities();
+  await loadLoads();
+  await loadGoldenRoutes();
+
+  drawPreview();
+}
+
+async function loadFacilities(){
+  const r = await db
+    .from('facilities')
+    .select('id,name,city,state')
+    .is('archived_at',null);
+
+  if(r.error){
+    console.warn('Facilities:',r.error.message);
+    return;
+  }
+
+  facilities = {};
+
+  (r.data || []).forEach(f=>{
+    facilities[f.id] = f;
+  });
+}
+
+async function loadLoads(){
+  const r = await db
+    .from('loads')
+    .select(
+      'id,load_number,commodity,origin_facility_id,dest_facility_id,total_miles,pickup_appt_start,delivery_appt_start,trailer_id'
+    )
+    .eq('tenant_id',tenant)
+    .order('created_at',{ascending:false})
+    .limit(250);
+
+  if(r.error){
+    console.warn('Loads:',r.error.message);
+    return;
+  }
+
+  $('loadSelect').innerHTML =
+    '<option value="">— Manual route —</option>' +
+    (r.data || []).map(load=>{
+      const origin = facilityLabel(load.origin_facility_id);
+      const dest = facilityLabel(load.dest_facility_id);
+      const label =
+        `${load.load_number || 'Load'} · ${load.commodity || ''}` +
+        (origin || dest ? ` · ${origin} → ${dest}` : '');
+
+      return `<option value="${load.id}"
+        data-origin="${encodeURIComponent(origin)}"
+        data-destination="${encodeURIComponent(dest)}"
+        data-miles="${load.total_miles || ''}"
+        data-pickup="${load.pickup_appt_start || ''}"
+        data-delivery="${load.delivery_appt_start || ''}"
+        data-number="${load.load_number || ''}"
+        data-commodity="${encodeURIComponent(load.commodity || '')}">
+        ${label}
+      </option>`;
+    }).join('');
+}
+
+$('loadSelect').addEventListener('change',()=>{
+  const opt = $('loadSelect').selectedOptions[0];
+
+  if(!opt || !opt.value) return;
+
+  $('origin').value = decodeURIComponent(opt.dataset.origin || '');
+  $('destination').value = decodeURIComponent(opt.dataset.destination || '');
+  $('loadedMiles').value = opt.dataset.miles || '';
+
+  if(opt.dataset.pickup){
+    $('pickupAt').value = opt.dataset.pickup.slice(0,16);
+  }
+
+  if(opt.dataset.delivery){
+    $('deliveryAt').value = opt.dataset.delivery.slice(0,16);
+  }
+
+  const number = opt.dataset.number || '';
+  const commodity = decodeURIComponent(opt.dataset.commodity || '');
+
+  if(!$('routeName').value.trim()){
+    $('routeName').value = [number,commodity].filter(Boolean).join(' · ');
+  }
+
+  drawPreview();
+});
+
+[
+  'origin','destination','waypoints','freightType'
+].forEach(id=>{
+  $(id).addEventListener('input',drawPreview);
+  $(id).addEventListener('change',drawPreview);
+});
+
+/* ------------------------------------------------------------
+   PLAN ROUTE SHARING
+   ------------------------------------------------------------ */
+
+$('openMaps').addEventListener('click',()=>{
+  const r = currentRoute();
+  if(!r.url){
+    setMsg('planOk','planErr','Enter an origin and destination first.',true);
+    return;
+  }
+  window.open(r.url,'_blank','noopener');
+});
+
+$('copyRoute').addEventListener('click',async()=>{
+  const r = currentRoute();
+  if(!r.url){
+    setMsg('planOk','planErr','Enter an origin and destination first.',true);
+    return;
+  }
+
+  const ok = await copyText(r.url);
+  setMsg('planOk','planErr',ok ? 'Route link copied.' : 'Could not copy the route link.',!ok);
+});
+
+$('emailRoute').addEventListener('click',()=>{
+  const r = currentRoute();
+  if(!r.url) return;
+
+  const subject = encodeURIComponent(
+    'Route: ' + r.origin + ' to ' + r.destination
+  );
+
+  const body = encodeURIComponent(shareText('Route'));
+  location.href = `mailto:?subject=${subject}&body=${body}`;
+});
+
+$('textRoute').addEventListener('click',()=>{
+  const r = currentRoute();
+  if(!r.url) return;
+
+  const body = encodeURIComponent(shareText('Route'));
+  location.href = `sms:?&body=${body}`;
+});
+
+$('shareRoute').addEventListener('click',async()=>{
+  const r = currentRoute();
+  if(!r.url) return;
+
+  const text = shareText('Route');
+
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title:'Heavy Haul Command Route',
+        text,
+        url:r.url
+      });
+      return;
+    }catch(e){}
+  }
+
+  const ok = await copyText(text);
+
+  setMsg(
+    'planOk',
+    'planErr',
+    ok ? 'Share message copied. Paste it into text or email.' : 'Could not copy the route.',
+    !ok
+  );
+});
+
+/* ------------------------------------------------------------
+   SAVE ROUTE PLAN
+   ------------------------------------------------------------ */
+
+$('savePlan').addEventListener('click',async()=>{
+  setMsg('planOk','planErr','',false);
+
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+
+  if(!origin || !destination){
+    setMsg('planOk','planErr','Origin and destination are required.',true);
+    return;
+  }
+
+  const r = currentRoute();
+
+  const rec = {
+    tenant_id:tenant,
+    load_id:$('loadSelect').value || null,
+    route_name:$('routeName').value.trim() || null,
+    freight_type:$('freightType').value,
+    equipment_type:$('equipmentType').value.trim() || null,
+    origin,
+    destination,
+    states:arrFromComma($('states').value),
+    waypoints:r.waypoints,
+    loaded_miles:$('loadedMiles').value ? Number($('loadedMiles').value) : null,
+    pickup_at:dateTimeValue($('pickupAt').value),
+    delivery_at:dateTimeValue($('deliveryAt').value),
+
+    permit_route_confirmed:$('permitRouteConfirmed').checked,
+    state_rules_reviewed:$('stateRulesReviewed').checked,
+    bridge_tunnel_reviewed:$('bridgeTunnelReviewed').checked,
+    construction_reviewed:$('constructionReviewed').checked,
+    travel_windows_reviewed:$('travelWindowsReviewed').checked,
+    escorts_reviewed:$('escortsReviewed').checked,
+
+    parking_staging:$('parkingStaging').value.trim() || null,
+    fuel_service_notes:$('fuelServiceNotes').value.trim() || null,
+    route_notes:$('routeNotes').value.trim() || null,
+
+    escort_company:$('escortCompany').value.trim() || null,
+    escort_contact:$('escortContact').value.trim() || null,
+    escort_phone:$('escortPhone').value.trim() || null,
+    escort_meeting_location:$('escortMeetingLocation').value.trim() || null,
+    escort_meeting_time:dateTimeValue($('escortMeetingTime').value),
+
+    google_maps_url:r.url
+  };
+
+  const q = await db
+    .from('route_plans')
+    .insert(rec);
+
+  if(q.error){
+    setMsg('planOk','planErr',q.error.message,true);
+    return;
+  }
+
+  setMsg('planOk','planErr','Route plan saved.',false);
+});
+
+/* ------------------------------------------------------------
+   GOLDEN ROUTES
+   ------------------------------------------------------------ */
+
+function goldenMapsUrl(g){
+  return g.google_maps_url ||
+    routeUrl(g.origin,g.destination,g.waypoints || []);
+}
+
+async function loadGoldenRoutes(){
+  const r = await db
+    .from('golden_routes')
+    .select('*')
+    .eq('tenant_id',tenant)
+    .eq('active',true)
+    .order('updated_at',{ascending:false});
+
+  if(r.error){
+    $('goldenList').innerHTML =
+      '<div class="empty">Golden Routes could not load: ' +
+      r.error.message +
+      '</div>';
+    return;
+  }
+
+  goldenRoutes = r.data || [];
+  renderGolden();
+}
+
+function renderGolden(){
+  const q = $('gSearch').value.trim().toLowerCase();
+  const freight = $('gFreight').value;
+  const os = $('gOriginState').value.trim().toUpperCase();
+  const ds = $('gDestinationState').value.trim().toUpperCase();
+
+  const list = goldenRoutes.filter(g=>{
+    if(freight && g.freight_type !== freight) return false;
+    if(os && String(g.origin_state || '').toUpperCase() !== os) return false;
+    if(ds && String(g.destination_state || '').toUpperCase() !== ds) return false;
+
+    if(q){
+      const hay = [
+        g.route_name,
+        g.freight_type,
+        g.equipment_type,
+        g.origin,
+        g.destination,
+        g.corridor,
+        g.highways,
+        ...(g.states || []),
+        ...(g.waypoints || []),
+        g.general_notes,
+        g.problem_areas,
+        g.permit_notes,
+        g.escort_notes,
+        g.reefer_notes
+      ].join(' ').toLowerCase();
+
+      if(!hay.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  if(!list.length){
+    $('goldenList').innerHTML =
+      '<div class="empty">No Golden Routes match these filters.</div>';
+    return;
+  }
+
+  $('goldenList').innerHTML = list.map(g=>{
+    const route = goldenMapsUrl(g);
+    const verified = g.last_verified_on || 'not recorded';
+    const used = g.last_used_on || 'not recorded';
+
+    const heavyExtra = g.freight_type === 'heavy_haul'
+      ? `<div class="warning">
+           Previously successful/reference route only. Reverify current permits,
+           restrictions, clearances and travel conditions.
+         </div>`
+      : '';
+
+    const note = g.general_notes || g.problem_areas || g.permit_notes ||
+      g.reefer_notes || '';
+
+    return `
+      <article class="golden" data-id="${g.id}">
+        <div class="golden-top">
+          <div>
+            <h3>${g.route_name}</h3>
+            <div class="tags">
+              <span class="tag freight">${pretty(g.freight_type)}</span>
+              ${g.equipment_type ? `<span class="tag">${g.equipment_type}</span>` : ''}
+              ${g.origin_state || g.destination_state
+                ? `<span class="tag">${g.origin_state || '?'} → ${g.destination_state || '?'}</span>`
+                : ''}
+              ${g.corridor ? `<span class="tag">${g.corridor}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <b>${g.origin}</b> → <b>${g.destination}</b><br>
+          ${g.highways ? `Highways: ${g.highways}<br>` : ''}
+          Successful uses: ${g.successful_uses || 0}
+          · Last used: ${used}
+          · Last verified: ${verified}
+        </div>
+
+        ${note ? `<div class="golden-notes">${note}</div>` : ''}
+        ${heavyExtra}
+
+        <div class="actions">
+          <button type="button" class="action" data-do="use">Use as Starting Point</button>
+          <button type="button" class="action secondary" data-do="maps">Open in Google Maps</button>
+          <button type="button" class="action secondary" data-do="copy">Copy Link</button>
+          <button type="button" class="action secondary" data-do="email">Email</button>
+          <button type="button" class="action secondary" data-do="text">Text</button>
+          <button type="button" class="action secondary" data-do="share">Share</button>
+          <button type="button" class="action secondary" data-do="edit">Edit</button>
+          <button type="button" class="action secondary" data-do="used">+ Successful Use</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+['gSearch','gFreight','gOriginState','gDestinationState']
+  .forEach(id=>{
+    $(id).addEventListener('input',renderGolden);
+    $(id).addEventListener('change',renderGolden);
+  });
+
+$('goldenList').addEventListener('click',async e=>{
+  const btn = e.target.closest('button[data-do]');
+  if(!btn) return;
+
+  const article = btn.closest('.golden');
+  const g = goldenRoutes.find(x=>x.id === article.dataset.id);
+  if(!g) return;
+
+  const url = goldenMapsUrl(g);
+  const warning = g.freight_type === 'heavy_haul'
+    ? '\nHeavy haul: follow the current permit-approved route and permit restrictions. Google Maps is navigation reference only.'
+    : '';
+
+  const text =
+    `Golden Route: ${g.route_name}\n` +
+    `${g.origin} → ${g.destination}\n` +
+    `Freight: ${pretty(g.freight_type)}\n` +
+    `${url}${warning}`;
+
+  switch(btn.dataset.do){
+
+    case 'use':
+      useGolden(g);
+      break;
+
+    case 'maps':
+      window.open(url,'_blank','noopener');
+      break;
+
+    case 'copy':
+      await copyText(url);
+      alert('Route link copied.');
+      break;
+
+    case 'email':
+      location.href =
+        'mailto:?subject=' +
+        encodeURIComponent('Route: ' + g.route_name) +
+        '&body=' +
+        encodeURIComponent(text);
+      break;
+
+    case 'text':
+      location.href = 'sms:?&body=' + encodeURIComponent(text);
+      break;
+
+    case 'share':
+      if(navigator.share){
+        try{
+          await navigator.share({
+            title:g.route_name,
+            text,
+            url
+          });
+          break;
+        }catch(err){}
+      }
+      await copyText(text);
+      alert('Share message copied.');
+      break;
+
+    case 'edit':
+      openGolden(g);
+      break;
+
+    case 'used':
+      await markGoldenUsed(g);
+      break;
+  }
+});
+
+function useGolden(g){
+  $('routeName').value = g.route_name || '';
+  $('freightType').value = g.freight_type || 'heavy_haul';
+  $('equipmentType').value = g.equipment_type || '';
+  $('origin').value = g.origin || '';
+  $('destination').value = g.destination || '';
+  $('states').value = (g.states || []).join(', ');
+  $('waypoints').value = (g.waypoints || []).join('\n');
+  $('parkingStaging').value = g.parking_staging || '';
+  $('fuelServiceNotes').value = g.fuel_service_notes || '';
+
+  const notes = [
+    g.general_notes,
+    g.problem_areas ? 'Problem areas: ' + g.problem_areas : '',
+    g.permit_notes ? 'Permit history: ' + g.permit_notes : '',
+    g.clearance_notes ? 'Clearance history: ' + g.clearance_notes : '',
+    g.travel_restriction_notes ? 'Travel restrictions: ' + g.travel_restriction_notes : '',
+    g.reefer_notes ? 'Reefer notes: ' + g.reefer_notes : ''
+  ].filter(Boolean).join('\n\n');
+
+  $('routeNotes').value = notes;
+
+  document.querySelector('[data-panel="planPanel"]').click();
+  drawPreview();
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
+
+async function markGoldenUsed(g){
+  const next = Number(g.successful_uses || 0) + 1;
+  const today = new Date().toISOString().slice(0,10);
+
+  const r = await db
+    .from('golden_routes')
+    .update({
+      successful_uses:next,
+      last_used_on:today
+    })
+    .eq('id',g.id)
+    .eq('tenant_id',tenant);
+
+  if(r.error){
+    alert(r.error.message);
+    return;
+  }
+
+  await loadGoldenRoutes();
+}
+
+/* ------------------------------------------------------------
+   GOLDEN EDITOR
+   ------------------------------------------------------------ */
+
+function clearGoldenForm(){
+  [
+    'goldenId','gRouteName','gEquipmentType','gCorridor',
+    'gOrigin','gDestination','gOriginStateEdit','gDestinationStateEdit',
+    'gStates','gHighways','gWaypoints','gLastUsed','gLastVerified',
+    'gParking','gFuel','gProblems','gGeneralNotes',
+    'gLength','gWidth','gHeight','gWeight','gAxleNotes',
+    'gPermitNotes','gEscortNotes','gClearanceNotes','gTravelNotes',
+    'gReeferNotes','gWashoutNotes','gReceiverNotes'
+  ].forEach(id=>$(id).value='');
+
+  $('gFreightType').value = 'heavy_haul';
+  $('gSuccessfulUses').value = '0';
+  setMsg('goldenOk','goldenErr','',false);
+  toggleSpecialFields();
+}
+
+function openGolden(g=null){
+  clearGoldenForm();
+
+  $('goldenModalTitle').textContent =
+    g ? 'Edit Golden Route' : 'New Golden Route';
+
+  if(g){
+    $('goldenId').value = g.id || '';
+    $('gRouteName').value = g.route_name || '';
+    $('gFreightType').value = g.freight_type || 'heavy_haul';
+    $('gEquipmentType').value = g.equipment_type || '';
+    $('gCorridor').value = g.corridor || '';
+    $('gOrigin').value = g.origin || '';
+    $('gDestination').value = g.destination || '';
+    $('gOriginStateEdit').value = g.origin_state || '';
+    $('gDestinationStateEdit').value = g.destination_state || '';
+    $('gStates').value = (g.states || []).join(', ');
+    $('gHighways').value = g.highways || '';
+    $('gWaypoints').value = (g.waypoints || []).join('\n');
+    $('gLastUsed').value = g.last_used_on || '';
+    $('gLastVerified').value = g.last_verified_on || '';
+    $('gSuccessfulUses').value = g.successful_uses || 0;
+    $('gParking').value = g.parking_staging || '';
+    $('gFuel').value = g.fuel_service_notes || '';
+    $('gProblems').value = g.problem_areas || '';
+    $('gGeneralNotes').value = g.general_notes || '';
+
+    $('gLength').value = g.previous_length_in || '';
+    $('gWidth').value = g.previous_width_in || '';
+    $('gHeight').value = g.previous_height_in || '';
+    $('gWeight').value = g.previous_gross_weight_lb || '';
+    $('gAxleNotes').value = g.axle_notes || '';
+    $('gPermitNotes').value = g.permit_notes || '';
+    $('gEscortNotes').value = g.escort_notes || '';
+    $('gClearanceNotes').value = g.clearance_notes || '';
+    $('gTravelNotes').value = g.travel_restriction_notes || '';
+
+    $('gReeferNotes').value = g.reefer_notes || '';
+    $('gWashoutNotes').value = g.washout_service_notes || '';
+    $('gReceiverNotes').value = g.receiver_approach_notes || '';
+
+    toggleSpecialFields();
+  }
+
+  $('goldenModal').classList.add('show');
+}
+
+function closeGolden(){
+  $('goldenModal').classList.remove('show');
+}
+
+function toggleSpecialFields(){
+  const type = $('gFreightType').value;
+
+  $('heavyFields').classList.toggle(
+    'hidden',
+    type !== 'heavy_haul'
+  );
+
+  $('reeferFields').classList.toggle(
+    'hidden',
+    type !== 'reefer'
+  );
+}
+
+$('gFreightType').addEventListener('change',toggleSpecialFields);
+$('newGolden').addEventListener('click',()=>openGolden());
+$('closeGolden').addEventListener('click',closeGolden);
+$('cancelGolden').addEventListener('click',closeGolden);
+
+$('goldenModal').addEventListener('click',e=>{
+  if(e.target === $('goldenModal')) closeGolden();
+});
+
+$('verifyToday').addEventListener('click',()=>{
+  $('gLastVerified').value =
+    new Date().toISOString().slice(0,10);
+});
+
+$('saveGoldenFromPlan').addEventListener('click',()=>{
+  const r = currentRoute();
+
+  if(!r.origin || !r.destination){
+    setMsg('planOk','planErr','Enter an origin and destination first.',true);
+    return;
+  }
+
+  openGolden();
+
+  $('gRouteName').value =
+    $('routeName').value.trim() ||
+    r.origin + ' → ' + r.destination;
+
+  $('gFreightType').value = $('freightType').value;
+  $('gEquipmentType').value = $('equipmentType').value;
+  $('gOrigin').value = r.origin;
+  $('gDestination').value = r.destination;
+  $('gStates').value = $('states').value;
+  $('gWaypoints').value = $('waypoints').value;
+  $('gParking').value = $('parkingStaging').value;
+  $('gFuel').value = $('fuelServiceNotes').value;
+  $('gGeneralNotes').value = $('routeNotes').value;
+  $('gLastVerified').value = new Date().toISOString().slice(0,10);
+
+  toggleSpecialFields();
+});
+
+$('saveGolden').addEventListener('click',async()=>{
+  setMsg('goldenOk','goldenErr','',false);
+
+  const routeName = $('gRouteName').value.trim();
+  const origin = $('gOrigin').value.trim();
+  const destination = $('gDestination').value.trim();
+
+  if(!routeName || !origin || !destination){
+    setMsg(
+      'goldenOk',
+      'goldenErr',
+      'Route name, origin and destination are required.',
+      true
+    );
+    return;
+  }
+
+  const waypoints = arrFromLines($('gWaypoints').value);
+  const mapsUrl = routeUrl(origin,destination,waypoints);
+
+  const rec = {
+    tenant_id:tenant,
+    route_name:routeName,
+    freight_type:$('gFreightType').value,
+    equipment_type:$('gEquipmentType').value.trim() || null,
+
+    origin,
+    destination,
+    origin_state:$('gOriginStateEdit').value.trim().toUpperCase() || null,
+    destination_state:$('gDestinationStateEdit').value.trim().toUpperCase() || null,
+
+    states:arrFromComma($('gStates').value),
+    waypoints,
+    corridor:$('gCorridor').value.trim() || null,
+    highways:$('gHighways').value.trim() || null,
+
+    parking_staging:$('gParking').value.trim() || null,
+    fuel_service_notes:$('gFuel').value.trim() || null,
+    problem_areas:$('gProblems').value.trim() || null,
+    general_notes:$('gGeneralNotes').value.trim() || null,
+
+    previous_length_in:$('gLength').value ? Number($('gLength').value) : null,
+    previous_width_in:$('gWidth').value ? Number($('gWidth').value) : null,
+    previous_height_in:$('gHeight').value ? Number($('gHeight').value) : null,
+    previous_gross_weight_lb:$('gWeight').value ? Number($('gWeight').value) : null,
+
+    axle_notes:$('gAxleNotes').value.trim() || null,
+    permit_notes:$('gPermitNotes').value.trim() || null,
+    escort_notes:$('gEscortNotes').value.trim() || null,
+    clearance_notes:$('gClearanceNotes').value.trim() || null,
+    travel_restriction_notes:$('gTravelNotes').value.trim() || null,
+
+    reefer_notes:$('gReeferNotes').value.trim() || null,
+    washout_service_notes:$('gWashoutNotes').value.trim() || null,
+    receiver_approach_notes:$('gReceiverNotes').value.trim() || null,
+
+    successful_uses:Number($('gSuccessfulUses').value || 0),
+    last_used_on:$('gLastUsed').value || null,
+    last_verified_on:$('gLastVerified').value || null,
+
+    google_maps_url:mapsUrl,
+    active:true
+  };
+
+  const id = $('goldenId').value;
+
+  let r;
+
+  if(id){
+    r = await db
+      .from('golden_routes')
+      .update(rec)
+      .eq('id',id)
+      .eq('tenant_id',tenant);
+  }else{
+    r = await db
+      .from('golden_routes')
+      .insert(rec);
+  }
+
+  if(r.error){
+    setMsg('goldenOk','goldenErr',r.error.message,true);
+    return;
+  }
+
+  setMsg('goldenOk','goldenErr','Golden Route saved.',false);
+
+  await loadGoldenRoutes();
+
+  setTimeout(()=>{
+    closeGolden();
+    document.querySelector('[data-panel="goldenPanel"]').click();
+  },600);
+});
+
+/* ------------------------------------------------------------
+   PAGE TAB SWITCHER
+   ------------------------------------------------------------ */
+
+document.querySelectorAll('.route-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.route-tabs button')
+      .forEach(b=>b.classList.remove('on'));
+
+    document.querySelectorAll('.panel')
+      .forEach(p=>p.classList.remove('on'));
+
+    btn.classList.add('on');
+    $(btn.dataset.panel).classList.add('on');
+  });
+});
+
+start();
+</script>
+</body>
+</html>
