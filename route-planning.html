@@ -27,12 +27,31 @@
 
 *{box-sizing:border-box}
 
-body{margin:0;color:var(--rp-ink)}
+body{
+  margin:0;
+  color:var(--rp-ink);
+  background:#F7F7F5;
+}
 
 main{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+
   width:min(1400px,100%);
   margin:0 auto 70px;
   padding:28px 24px 70px;
+
+  position:relative;
+  z-index:1;
+}
+
+#planPanel{
+  display:block;
+}
+
+#planPanel.on{
+  display:block !important;
 }
 
 .page-intro{margin-bottom:22px}
