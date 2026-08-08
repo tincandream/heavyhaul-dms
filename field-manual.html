@@ -18,6 +18,100 @@
 <style>
 
   /* ============================================================
+   FIELD MANUAL SEARCH RESULTS
+   ============================================================ */
+
+.search-results {
+  display: none;
+  margin-top: 14px;
+}
+
+.search-results.show {
+  display: block;
+}
+
+.search-result {
+  display: block;
+
+  width: 100%;
+
+  margin: 0 0 8px;
+
+  padding: 14px 16px;
+
+  background: #fff;
+
+  border:
+    1px solid
+    var(--manual-line);
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.search-result:hover {
+  background:
+    var(--manual-blue-soft);
+
+  border-color:
+    var(--manual-blue);
+}
+
+.search-result-title {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color:
+    var(--manual-blue-dark);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 13px;
+
+  font-weight: 500;
+}
+
+.search-result-snippet {
+  display: block;
+
+  color:
+    var(--manual-muted);
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+.search-result-snippet mark {
+  padding: 1px 2px;
+
+  background: #fff0a8;
+
+  color: inherit;
+}
+
+.search-result-open {
+  display: block;
+
+  margin-top: 7px;
+
+  color:
+    var(--manual-blue-dark);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 10.5px;
+
+  letter-spacing: .4px;
+}
+
+  /* ============================================================
    SEARCH RESULTS
    ============================================================ */
 
