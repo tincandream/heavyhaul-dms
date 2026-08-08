@@ -17,6 +17,72 @@
 
 <style>
 
+  /* ============================================================
+   SEARCH RESULTS
+   ============================================================ */
+
+.search-results {
+  margin-top: 14px;
+  display: none;
+}
+
+.search-results.show {
+  display: block;
+}
+
+.search-result {
+  display: block;
+
+  width: 100%;
+
+  margin-bottom: 8px;
+
+  padding: 12px 14px;
+
+  background: #FFFFFF;
+
+  border: 1px solid var(--manual-line);
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.search-result:hover {
+  background: var(--manual-blue-soft);
+
+  border-color: var(--manual-blue);
+}
+
+.search-result-title {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--manual-blue-dark);
+
+  font-family: "Oswald", sans-serif;
+
+  font-size: 13px;
+
+  font-weight: 500;
+}
+
+.search-result-snippet {
+  display: block;
+
+  color: var(--manual-muted);
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+.search-result-snippet mark {
+  background: #FFF0A8;
+  color: inherit;
+}
+
 /* ============================================================
    HEAVY HAUL COMMAND
    FIELD MANUAL
@@ -809,6 +875,11 @@ mark.manual-hit {
     class="search-count"
     id="searchCount">
   </div>
+
+  <div
+  class="search-results"
+  id="searchResults">
+</div>
 
 </section>
 
