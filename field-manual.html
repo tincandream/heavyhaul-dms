@@ -2385,6 +2385,11 @@ const noResults =
     'noResults'
   );
 
+  const searchResults =
+  document.getElementById(
+    'searchResults'
+  );
+
 
 
 function normalize(text) {
@@ -2578,10 +2583,106 @@ function highlightText(
 
 }
 
+function makeSnippet(
+  text,
+  term
+) {
 
+  const clean =
+    String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+
+  const lower =
+    clean.toLowerCase();
+
+
+  const needle =
+    term.toLowerCase();
+
+
+  const index =
+    lower.indexOf(
+      needle
+    );
+
+
+  if (
+    index === -1
+  ) {
+
+    return clean.slice(
+      0,
+      180
+    );
+
+  }
+
+
+  const start =
+    Math.max(
+      0,
+      index - 75
+    );
+
+
+  const end =
+    Math.min(
+      clean.length,
+      index + needle.length + 105
+    );
+
+
+  let snippet =
+    clean.slice(
+      start,
+      end
+    );
+
+
+  if (
+    start > 0
+  ) {
+
+    snippet =
+      '…' + snippet;
+
+  }
+
+
+  if (
+    end < clean.length
+  ) {
+
+    snippet +=
+      '…';
+
+  }
+
+
+  const escaped =
+    term.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+
+
+  const regex =
+    new RegExp(
+      '(' + escaped + ')',
+      'gi'
+    );
+
+
+  return snippet.replace(
+    regex,
+    '<mark>$1</mark>'
+  );
+
+}
 
 function runSearch() {
-
 
   clearHighlights();
 
@@ -2594,6 +2695,10 @@ function runSearch() {
     normalize(raw);
 
 
+
+  /* ----------------------------------------------------------
+     EMPTY SEARCH
+     ---------------------------------------------------------- */
 
   if (!query) {
 
@@ -2613,6 +2718,15 @@ function runSearch() {
       '';
 
 
+    searchResults.innerHTML =
+      '';
+
+
+    searchResults.classList.remove(
+      'show'
+    );
+
+
     noResults.style.display =
       'none';
 
@@ -2624,13 +2738,18 @@ function runSearch() {
 
 
   const terms =
-    query.split(' ')
+    query
+      .split(' ')
       .filter(Boolean);
 
 
 
   let matches =
     0;
+
+
+  const results =
+    [];
 
 
 
@@ -2650,7 +2769,9 @@ function runSearch() {
         );
 
 
+
       const matched =
+
         terms.every(
           term =>
             searchable.includes(
@@ -2659,17 +2780,66 @@ function runSearch() {
         );
 
 
+
       section.classList.toggle(
         'hidden',
         !matched
       );
 
 
+
       if (
         matched
       ) {
 
+
         matches++;
+
+
+
+        const number =
+          section.querySelector(
+            '.section-number'
+          )
+          ?.textContent
+          ?.trim()
+          || '';
+
+
+        const title =
+          section.querySelector(
+            'h2'
+          )
+          ?.textContent
+          ?.trim()
+          || 'Manual Section';
+
+
+
+        const bodyText =
+          section.innerText;
+
+
+
+        results.push({
+
+          id:
+            section.id,
+
+          number:
+            number,
+
+          title:
+            title,
+
+          snippet:
+            makeSnippet(
+              bodyText,
+              raw
+            )
+
+        });
+
 
 
         if (
@@ -2690,14 +2860,112 @@ function runSearch() {
 
 
 
+  /* ----------------------------------------------------------
+     RESULT COUNT
+     ---------------------------------------------------------- */
+
   searchCount.textContent =
 
     matches === 1
 
-      ? '1 section found'
+      ? '1 matching section'
 
       : matches +
-        ' sections found';
+        ' matching sections';
+
+
+
+  /* ----------------------------------------------------------
+     BUILD CLICKABLE SEARCH RESULTS
+     ---------------------------------------------------------- */
+
+  searchResults.innerHTML =
+
+    results.map(
+      result =>
+
+        '<button ' +
+
+          'type="button" ' +
+
+          'class="search-result" ' +
+
+          'data-target="' +
+          result.id +
+          '">' +
+
+
+          '<span class="search-result-title">' +
+
+            result.number +
+            ' · ' +
+            result.title +
+
+          '</span>' +
+
+
+          '<span class="search-result-snippet">' +
+
+            result.snippet +
+
+          '</span>' +
+
+
+        '</button>'
+
+    ).join('');
+
+
+
+  searchResults.classList.toggle(
+    'show',
+    results.length > 0
+  );
+
+
+
+  /* ----------------------------------------------------------
+     CLICK RESULT → JUMP TO SECTION
+     ---------------------------------------------------------- */
+
+  searchResults
+    .querySelectorAll(
+      '.search-result'
+    )
+    .forEach(
+      button => {
+
+
+        button.addEventListener(
+          'click',
+          () => {
+
+
+            const section =
+              document.getElementById(
+                button.dataset.target
+              );
+
+
+            if (section) {
+
+              section.scrollIntoView(
+                {
+                  behavior:
+                    'smooth',
+
+                  block:
+                    'start'
+                }
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
 
 
 
@@ -2710,15 +2978,6 @@ function runSearch() {
       : 'none';
 
 }
-
-
-
-searchInput.addEventListener(
-  'input',
-  runSearch
-);
-
-
 
 /* ============================================================
    QUICK TOPICS
