@@ -174,6 +174,7 @@ textarea{min-height:76px;resize:vertical}
     <button data-tab="escorts">Escorts <span class="cnt" id="cnt-escorts">0</span></button>
     <button data-tab="checklist">Checklist <span class="cnt" id="cnt-checklist">0</span></button>
     <button data-tab="expenses">Expenses</button>
+    <button data-tab="accessorials">Accessorials <span class="cnt" id="cnt-accessorials">0</span></button>
     <button data-tab="documents">
   Documents
   <span class="cnt" id="cnt-documents">0</span>
@@ -187,6 +188,7 @@ textarea{min-height:76px;resize:vertical}
   <section class="panel"    id="tab-escorts"></section>
   <section class="panel"    id="tab-checklist"></section>
   <section class="panel"    id="tab-expenses"></section>
+  <section class="panel"    id="tab-accessorials"></section>
   <section class="panel" id="tab-documents"></section>
   <section class="panel"    id="tab-notes"></section>
   
@@ -536,6 +538,74 @@ textarea{min-height:76px;resize:vertical}
   </div>
 </dialog>
 
+
+<!-- ============ ACCESSORIAL PROCESSING DIALOG ============ -->
+<dialog id="dlgAccessorial">
+  <div class="dlg-head">
+    <h3 id="ac_title">Process Accessorial</h3>
+    <span class="spacer"></span>
+    <span class="small muted mono" id="ac_idlabel"></span>
+  </div>
+  <div class="dlg-body">
+    <input type="hidden" id="ac_id">
+
+    <div class="fgrid">
+      <div class="field">
+        <label for="ac_status">Status</label>
+        <select id="ac_status">
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="denied">Denied</option>
+          <option value="invoiced">Invoiced</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="ac_approved_amount">Approved Amount ($)</label>
+        <input type="number" min="0" step="0.01" id="ac_approved_amount">
+      </div>
+
+      <div class="field">
+        <label for="ac_approval_reference">Approval Reference</label>
+        <input id="ac_approval_reference" placeholder="Email, confirmation #, broker reference">
+      </div>
+
+      <div class="field">
+        <label for="ac_invoice_number">Invoice Number</label>
+        <input id="ac_invoice_number">
+      </div>
+
+      <div class="field">
+        <label for="ac_paid_amount">Paid Amount ($)</label>
+        <input type="number" min="0" step="0.01" id="ac_paid_amount">
+      </div>
+
+      <div class="field">
+        <label for="ac_paid_at">Paid At</label>
+        <input type="datetime-local" id="ac_paid_at">
+      </div>
+
+      <div class="field full">
+        <label for="ac_denial_reason">Denial Reason</label>
+        <textarea id="ac_denial_reason" placeholder="Complete this if the request is denied."></textarea>
+      </div>
+
+      <div class="field full">
+        <label for="ac_processing_notes">Processing Notes</label>
+        <textarea id="ac_processing_notes" placeholder="Approval conversation, invoice notes, payment details, follow-up..."></textarea>
+      </div>
+    </div>
+
+    <div id="ac_err" class="err"></div>
+  </div>
+
+  <div class="dlg-foot">
+    <button class="primary" id="ac_save">Save Processing Update</button>
+    <button onclick="dlgAccessorial.close()">Cancel</button>
+  </div>
+</dialog>
+
 <!-- ============ NOTE DIALOG ============ -->
 <dialog id="dlgNote">
   <div class="dlg-head"><h3>Add Note</h3></div>
@@ -616,7 +686,7 @@ const F = {
   status:      ['status','load_status'],
   onHold:      ['on_hold','is_on_hold','hold'],
   holdReason:  ['hold_reason','hold_notes'],
-  holdAt:      ['hold_started_at','held_at','hold_at'],
+  holdAt:      ['hold_since','hold_started_at','held_at','hold_at'],
   oCity:       ['origin_city','pickup_city'],
   oState:      ['origin_state','pickup_state'],
   dCity:       ['dest_city','destination_city','delivery_city'],
@@ -689,6 +759,7 @@ let PERMITS = [];
 let ESCORTS = [];
 let EVENTS = [];
 let CHARGES = [];
+let ACCESSORIALS = [];
 let MARGIN = null;
 let CHECKLIST = [];
 let PRIVATE_NOTES = [];  
@@ -1030,6 +1101,7 @@ async function refreshAll(){
     fetchEscorts(),
     fetchEvents(),
     fetchCharges(),
+    fetchAccessorials(),
     fetchMargin(),
     fetchChecklist(),
     fetchPrivateNotes(),
@@ -1095,6 +1167,20 @@ async function fetchCharges(){
   CHARGES = data || [];
 }
 
+
+async function fetchAccessorials(){
+  const { data, error } = await db.from('accessorials').select('*')
+    .eq('load_id', LOAD_ID).order('created_at', { ascending: false });
+
+  if (error){
+    console.warn('accessorials', error);
+    ACCESSORIALS = [];
+    return;
+  }
+
+  ACCESSORIALS = data || [];
+}
+
 async function fetchMargin(){
   const { data, error } = await db.from('v_load_margin')
     .select('load_id,total_revenue,total_cost').eq('load_id', LOAD_ID).maybeSingle();
@@ -1132,6 +1218,7 @@ function drawCounts(){
   set('cnt-checklist', CHECKLIST.length);
   set('cnt-notes', PRIVATE_NOTES.length);
   set('cnt-documents', DOCUMENTS.length);
+  set('cnt-accessorials', ACCESSORIALS.length);
 }
 
 /* ---------- HERO ---------- */
@@ -1328,6 +1415,7 @@ async function saveCheckIn(){
   row[CHECKIN.miles] = num($('ci_miles').value);
   row[CHECKIN.eta]   = fromLocalInput($('ci_eta').value);
   row[CHECKIN.notes] = notes;
+  row[CHECKIN.source] = 'dispatcher';
 
   const { error } = await db.from('check_ins').insert(row);
   if (error){ showErr('ci_err', error); btn.disabled = false; return; }
@@ -1467,6 +1555,7 @@ function drawActiveTab(){
     case 'escorts':   drawEscorts();   break;
     case 'checklist': drawChecklist(); break;
     case 'expenses':  drawExpenses();  break;
+    case 'accessorials': drawAccessorials(); break;
     case 'notes':     drawNotes();     break;
     case 'documents': drawDocuments(); break;
   }
@@ -2159,6 +2248,215 @@ const CHARGE_CATEGORIES = ['linehaul','fuel','detention','layover','tarp','permi
   'permit_service_fee','escort','pilot_car','police','driver_pay','fuel_purchase',
   'tolls','lumper','repair','other'];
 
+
+/* ============================================================
+   ACCESSORIAL PROCESSING
+   ============================================================ */
+
+function accessorialStatusPill(status){
+  const st = status || 'pending';
+  const tone =
+    st === 'paid' || st === 'approved' ? 'ok' :
+    st === 'denied' ? 'bad' :
+    st === 'invoiced' ? 'warn' : 'grey';
+
+  return `<span class="pill ${tone}">${esc(titleize(st))}</span>`;
+}
+
+function accessorialDocSummary(a){
+  const docs = [
+    a.bol_documented ? 'BOL' : null,
+    a.pod_documented ? 'POD' : null,
+    a.rate_confirmation_documented ? 'Rate con' : null,
+    a.facility_times_documented ? 'Facility times' : null,
+    a.communication_documented ? 'Communication' : null
+  ].filter(Boolean);
+
+  return docs.length ? docs.join(', ') : '—';
+}
+
+function drawAccessorials(){
+  const requested = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.requested_amount)||0),0);
+  const approved = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.approved_amount)||0),0);
+  const paid = ACCESSORIALS.reduce((sum,a)=>sum + (num(a.paid_amount)||0),0);
+  const pending = ACCESSORIALS.filter(a => (a.status || 'pending') === 'pending').length;
+
+  const rows = ACCESSORIALS.map(a => `
+    <tr class="clickable" data-accessorial="${esc(a.id)}">
+      <td>
+        <b>${esc(titleize(a.accessorial_type || 'accessorial'))}</b>
+        ${a.facility_name ? `<div class="small muted">${esc(a.facility_name)}</div>` : ''}
+      </td>
+      <td>${accessorialStatusPill(a.status)}</td>
+      <td style="font-weight:700">${money(a.requested_amount)}</td>
+      <td>${money(a.approved_amount)}</td>
+      <td>${money(a.paid_amount)}</td>
+      <td class="small">${esc(accessorialDocSummary(a))}</td>
+      <td class="small muted">${esc(fmtDT(a.created_at))}</td>
+    </tr>`).join('');
+
+  $('tab-accessorials').innerHTML = `
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="card box">
+        <h3>Accessorial Summary</h3>
+        <dl class="kv">
+          <dt>Requested</dt><dd style="font-weight:700">${money(requested)}</dd>
+          <dt>Approved</dt><dd style="font-weight:700;color:var(--ok)">${money(approved)}</dd>
+          <dt>Paid</dt><dd style="font-weight:700">${money(paid)}</dd>
+          <dt>Pending requests</dt><dd style="font-weight:700">${pending}</dd>
+        </dl>
+      </div>
+
+      <div class="card box">
+        <h3>Processing Flow</h3>
+        <div class="small muted">
+          Calculator → <b>Pending</b> → <b>Approved / Denied</b> →
+          <b>Invoiced</b> → <b>Paid</b>
+        </div>
+        <div style="margin-top:12px">
+          <button class="primary sm" onclick="location.href='calculators.html'">
+            Open Accessorial Calculator
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sechead">
+      <h2>Accessorials &amp; Detention</h2>
+      <span class="spacer"></span>
+      <span class="small muted">Click a record to process it.</span>
+    </div>
+
+    ${ACCESSORIALS.length ? `
+      <div class="tablewrap"><table>
+        <thead>
+          <tr>
+            <th>Type / Facility</th>
+            <th>Status</th>
+            <th>Requested</th>
+            <th>Approved</th>
+            <th>Paid</th>
+            <th>Documentation</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table></div>`
+      :
+      `<div class="card"><div class="empty">
+        No accessorials are attached to this load yet.
+        Use the Accessorial Calculator and choose this load when you click “Add to Load”.
+      </div></div>`
+    }
+  `;
+
+  $$('#tab-accessorials tr[data-accessorial]').forEach(tr => {
+    tr.addEventListener('click', () => openAccessorial(tr.dataset.accessorial));
+  });
+}
+
+function openAccessorial(id){
+  clearErr('ac_err');
+  const a = ACCESSORIALS.find(x => x.id === id);
+  if (!a) return;
+
+  $('ac_id').value = a.id;
+  $('ac_idlabel').textContent = a.id.slice(0,8);
+  $('ac_title').textContent = 'Process ' + titleize(a.accessorial_type || 'Accessorial');
+
+  $('ac_status').value = a.status || 'pending';
+  $('ac_approved_amount').value = a.approved_amount != null ? a.approved_amount : '';
+  $('ac_approval_reference').value = a.approval_reference || '';
+  $('ac_invoice_number').value = a.invoice_number || '';
+  $('ac_paid_amount').value = a.paid_amount != null ? a.paid_amount : '';
+  $('ac_paid_at').value = toLocalInput(a.paid_at);
+  $('ac_denial_reason').value = a.denial_reason || '';
+  $('ac_processing_notes').value = a.processing_notes || '';
+
+  dlgAccessorial.showModal();
+}
+
+async function saveAccessorialProcessing(){
+  clearErr('ac_err');
+
+  const btn = $('ac_save');
+  btn.disabled = true;
+
+  const id = txt($('ac_id').value);
+  const status = $('ac_status').value;
+  const a = ACCESSORIALS.find(x => x.id === id);
+
+  if (!id || !a){
+    showErr('ac_err', {message:'Accessorial record not found.'});
+    btn.disabled = false;
+    return;
+  }
+
+  const patch = {
+    status,
+    approved_amount: num($('ac_approved_amount').value),
+    approval_reference: txt($('ac_approval_reference').value),
+    denial_reason: txt($('ac_denial_reason').value),
+    invoice_number: txt($('ac_invoice_number').value),
+    paid_amount: num($('ac_paid_amount').value),
+    paid_at: fromLocalInput($('ac_paid_at').value),
+    processing_notes: txt($('ac_processing_notes').value)
+  };
+
+  if (status === 'approved' && patch.approved_amount === null){
+    patch.approved_amount = num(a.requested_amount);
+  }
+
+  if (status === 'denied' && !patch.denial_reason){
+    showErr('ac_err', {message:'Enter the denial reason before marking this request Denied.'});
+    btn.disabled = false;
+    return;
+  }
+
+  if (status === 'paid' && patch.paid_amount === null){
+    patch.paid_amount = patch.approved_amount !== null
+      ? patch.approved_amount
+      : num(a.approved_amount);
+  }
+
+  if (status === 'paid' && !patch.paid_at){
+    patch.paid_at = new Date().toISOString();
+  }
+
+  const { error } = await db.from('accessorials').update(patch)
+    .eq('id', id)
+    .eq('load_id', LOAD_ID);
+
+  if (error){
+    showErr('ac_err', error);
+    btn.disabled = false;
+    return;
+  }
+
+  await logEvent({
+    event_type: 'accessorial_updated',
+    subject: `${titleize(a.accessorial_type || 'accessorial')} → ${titleize(status)}`,
+    body: [
+      `Requested: ${money(a.requested_amount)}`,
+      patch.approved_amount !== null ? `Approved: ${money(patch.approved_amount)}` : null,
+      patch.invoice_number ? `Invoice: ${patch.invoice_number}` : null,
+      patch.paid_amount !== null ? `Paid: ${money(patch.paid_amount)}` : null,
+      patch.denial_reason ? `Denial: ${patch.denial_reason}` : null,
+      patch.processing_notes
+    ].filter(Boolean).join('\n'),
+    is_milestone: ['approved','denied','paid'].includes(status)
+  });
+
+  btn.disabled = false;
+  dlgAccessorial.close();
+  toast('Accessorial → ' + titleize(status));
+
+  await fetchAccessorials();
+  await fetchEvents();
+  drawCounts();
+  drawAccessorials();
+}
+
 function drawExpenses(){
   const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
   const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
@@ -2416,6 +2714,9 @@ $('pv_delbtn').addEventListener('click', deletePrivate);
 
 $('ck_save').addEventListener('click', saveChkItem);
 $('dc_save').addEventListener('click', saveDoc);
+
+$('ac_save').addEventListener('click', saveAccessorialProcessing);
+
 boot();
 </script>
 </body>
