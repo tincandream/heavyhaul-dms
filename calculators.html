@@ -3998,371 +3998,145 @@ function selectedLoadText() {
 
 function calculateAccessorial() {
 
-  setAccessorialMessage(
-    '',
-    'ok'
-  );
+  setAccessorialMessage('', 'ok');
 
+  const type = $('accessorialType').value;
+  const rateType = $('accessorialRateType').value;
+  const rate = Number($('accessorialRate').value || 0);
+  const quantity = Number($('accessorialQuantity').value || 1);
 
-  const type =
-    $('accessorialType')
-      .value;
+  let totalMinutes = null;
+  let freeMinutes = null;
+  let billableMinutes = null;
+  let requestedAmount = 0;
 
+  if (!Number.isFinite(rate) || rate < 0) {
+    setAccessorialMessage('Enter a valid rate amount.', 'error');
+    return null;
+  }
 
-  const rateType =
-    $('accessorialRateType')
-      .value;
+  if (type === 'detention') {
+    const arrival = $('detentionArrival').value;
+    const released = $('detentionReleased').value;
 
-
-  const rate =
-    n(
-      'accessorialRate'
-    );
-
-
-  const quantity =
-    Math.max(
-      0,
-      n(
-        'accessorialQuantity'
-      )
-    );
-
-
-  let totalMinutes =
-    null;
-
-
-  let freeMinutes =
-    null;
-
-
-  let billableMinutes =
-    null;
-
-
-  let requestedAmount =
-    0;
-
-
-  if (
-    type ===
-    'detention'
-  ) {
-
-    const arrival =
-      $('detentionArrival')
-        .value;
-
-
-    const released =
-      $('detentionReleased')
-        .value;
-
-
-    if (
-      !arrival ||
-      !released
-    ) {
-
+    if (!arrival || !released) {
       setAccessorialMessage(
-        'Enter both arrival and release/departure times for detention.',
+        'Enter both Arrived and Released / Departed times to calculate detention.',
         'error'
       );
-
       return null;
-
     }
 
+    const arrivalMs = new Date(arrival).getTime();
+    const releasedMs = new Date(released).getTime();
 
-    totalMinutes =
-      minutesBetween(
-        arrival,
-        released
-      );
-
-
-    if (
-      totalMinutes <= 0
-    ) {
-
-      setAccessorialMessage(
-        'Release/departure must be later than arrival.',
-        'error'
-      );
-
+    if (!Number.isFinite(arrivalMs) || !Number.isFinite(releasedMs)) {
+      setAccessorialMessage('One of the detention times is not valid.', 'error');
       return null;
-
     }
 
+    if (releasedMs <= arrivalMs) {
+      setAccessorialMessage('Released / Departed must be later than Arrived.', 'error');
+      return null;
+    }
 
-    freeMinutes =
-      Math.max(
-        0,
-        Math.round(
-          n(
-            'detentionFreeMinutes'
-          )
-        )
-      );
+    totalMinutes = Math.round((releasedMs - arrivalMs) / 60000);
+    freeMinutes = Math.max(0, Number($('detentionFreeMinutes').value || 0));
+    billableMinutes = Math.max(0, totalMinutes - freeMinutes);
 
-
-    billableMinutes =
-      Math.max(
-        0,
-        totalMinutes -
-        freeMinutes
-      );
-
-
-    requestedAmount =
-      (
-        billableMinutes /
-        60
-      ) *
-      rate;
-
-  }
-  else {
-
-    requestedAmount =
-      rate *
-      (
-        quantity ||
-        1
-      );
-
+    requestedAmount = (billableMinutes / 60) * rate;
+  } else {
+    const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+    requestedAmount = rate * safeQuantity;
   }
 
+  requestedAmount = Math.round((requestedAmount + Number.EPSILON) * 100) / 100;
 
-  const loadText =
-    selectedLoadText();
+  const loadText = selectedLoadText();
+  const description = $('accessorialDescription').value.trim();
+  const facility = $('accessorialFacility').value.trim();
+  const typeLabel = accessorialPretty(type);
 
-
-  const description =
-    $('accessorialDescription')
-      .value
-      .trim();
-
-
-  const facility =
-    $('accessorialFacility')
-      .value
-      .trim();
-
-
-  const typeLabel =
-    accessorialPretty(
-      type
-    );
-
-
-  const summaryLines =
-    [
-      typeLabel.toUpperCase(),
-      '',
-      'Load: ' +
-        loadText,
-      facility
-        ? 'Facility: ' +
-          facility
-        : '',
-      description
-        ? 'Reason: ' +
-          description
-        : ''
-    ]
-      .filter(
-        Boolean
-      );
-
-
-  if (
-    type ===
-    'detention'
-  ) {
-
-    summaryLines.push(
-      '',
-      'Total facility time: ' +
-        formatMinutes(
-          totalMinutes
-        ),
-      'Free time: ' +
-        formatMinutes(
-          freeMinutes
-        ),
-      'Billable detention: ' +
-        formatMinutes(
-          billableMinutes
-        ),
-      'Rate: ' +
-        money(
-          rate
-        ) +
-        ' / hour'
-    );
-
-  }
-  else {
-
-    summaryLines.push(
-      '',
-      'Rate: ' +
-        money(
-          rate
-        ),
-      'Quantity: ' +
-        (
-          quantity ||
-          1
-        )
-    );
-
-  }
-
-
-  summaryLines.push(
+  const summaryLines = [
+    typeLabel.toUpperCase(),
     '',
-    'AMOUNT REQUESTED: ' +
-      money(
-        requestedAmount
-      )
-  );
+    'Load: ' + loadText,
+    facility ? 'Facility: ' + facility : '',
+    description ? 'Reason: ' + description : ''
+  ].filter(Boolean);
 
+  if (type === 'detention') {
+    summaryLines.push(
+      '',
+      'Total facility time: ' + formatMinutes(totalMinutes),
+      'Free time: ' + formatMinutes(freeMinutes),
+      'Billable detention: ' + formatMinutes(billableMinutes),
+      'Rate: ' + money(rate) + ' / hour'
+    );
+  } else {
+    summaryLines.push(
+      '',
+      'Rate: ' + money(rate),
+      'Quantity: ' + (Number.isFinite(quantity) && quantity > 0 ? quantity : 1)
+    );
+  }
 
-  if (
-    $('brokerNotifiedAt')
-      .value
-  ) {
+  summaryLines.push('', 'AMOUNT REQUESTED: ' + money(requestedAmount));
 
+  if ($('brokerNotifiedAt').value) {
     summaryLines.push(
       'Broker/customer notified: ' +
-      new Date(
-        $('brokerNotifiedAt')
-          .value
-      )
-        .toLocaleString()
+      new Date($('brokerNotifiedAt').value).toLocaleString()
     );
-
   }
 
-
-  if (
-    $('notifiedContact')
-      .value
-      .trim()
-  ) {
-
-    summaryLines.push(
-      'Notification/contact: ' +
-      $('notifiedContact')
-        .value
-        .trim()
-    );
-
+  if ($('notifiedContact').value.trim()) {
+    summaryLines.push('Notification/contact: ' + $('notifiedContact').value.trim());
   }
-
 
   lastAccessorialCalculation = {
     type,
     rateType,
     rate,
-    quantity:
-      quantity ||
-      1,
+    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
     totalMinutes,
     freeMinutes,
     billableMinutes,
     requestedAmount,
-    summary:
-      summaryLines
-        .join('\n')
+    summary: summaryLines.join('\n')
   };
 
+  $('accessorialStatus').className = requestedAmount > 0
+    ? 'result-status good'
+    : 'result-status tight';
 
-  $('accessorialStatus')
-    .className =
-    requestedAmount > 0
-      ? 'result-status good'
-      : 'result-status tight';
+  $('accessorialStatusMain').textContent = money(requestedAmount);
+  $('accessorialStatusDetail').textContent = type === 'detention'
+    ? (billableMinutes > 0
+        ? 'Billable detention calculated after free time.'
+        : 'No billable detention remains after the free-time allowance.')
+    : typeLabel + ' request calculated.';
 
+  $('accessorialTotalTime').textContent = totalMinutes === null
+    ? '—'
+    : formatMinutes(totalMinutes);
 
-  $('accessorialStatusMain')
-    .textContent =
-    money(
-      requestedAmount
-    );
+  $('accessorialFreeTime').textContent = freeMinutes === null
+    ? '—'
+    : formatMinutes(freeMinutes);
 
+  $('accessorialBillableTime').textContent = billableMinutes === null
+    ? '—'
+    : formatMinutes(billableMinutes);
 
-  $('accessorialStatusDetail')
-    .textContent =
-    type ===
-    'detention'
-      ? (
-          billableMinutes > 0
-            ? 'Billable detention calculated after free time.'
-            : 'Facility time does not exceed the entered free-time allowance.'
-        )
-      : (
-          typeLabel +
-          ' request calculated.'
-        );
+  $('accessorialRateResult').textContent = rateType === 'hourly'
+    ? money(rate) + '/hr'
+    : money(rate);
 
+  $('accessorialSummary').textContent = lastAccessorialCalculation.summary;
 
-  $('accessorialTotalTime')
-    .textContent =
-    totalMinutes ===
-    null
-      ? '—'
-      : formatMinutes(
-          totalMinutes
-        );
-
-
-  $('accessorialFreeTime')
-    .textContent =
-    freeMinutes ===
-    null
-      ? '—'
-      : formatMinutes(
-          freeMinutes
-        );
-
-
-  $('accessorialBillableTime')
-    .textContent =
-    billableMinutes ===
-    null
-      ? '—'
-      : formatMinutes(
-          billableMinutes
-        );
-
-
-  $('accessorialRateResult')
-    .textContent =
-    rateType ===
-    'hourly'
-      ? (
-          money(
-            rate
-          ) +
-          '/hr'
-        )
-      : money(
-          rate
-        );
-
-
-  $('accessorialSummary')
-    .textContent =
-    lastAccessorialCalculation
-      .summary;
-
-
+  setAccessorialMessage('Calculation updated.', 'ok');
   return lastAccessorialCalculation;
-
 }
 
 
@@ -4771,6 +4545,22 @@ $('calculateAccessorial')
     'click',
     calculateAccessorial
   );
+
+[
+  'accessorialRate',
+  'accessorialQuantity',
+  'detentionArrival',
+  'detentionReleased',
+  'detentionFreeMinutes'
+].forEach(id => {
+  $(id).addEventListener('change', () => {
+    if ($('accessorialType').value !== 'detention' ||
+        ($('detentionArrival').value && $('detentionReleased').value)) {
+      calculateAccessorial();
+    }
+  });
+});
+
 
 
 $('saveAccessorial')
