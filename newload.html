@@ -1,592 +1,1732 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>Fleet Board — Dispatch</title>
 
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="dashboard.css">
 
-<title>New Load — Dispatch</title>
 
 <style>
-  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
-          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
-          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10;
-          --warnbg:#fdf3e3; --ok:#0f6e56; --okbg:#e4f4ee; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink);
-         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  header { background:var(--card); border-bottom:1px solid var(--line);
-           padding:12px 18px; display:flex; align-items:center; gap:14px; }
-  header h1 { font-size:16px; font-weight:600; margin:0; }
-  .nav { margin-left:auto; font-size:13px; }
-  .nav a { color:var(--accent); text-decoration:none; margin-left:14px; }
-  main { padding:18px; max-width:980px; margin:0 auto 60px; }
 
-  .card { background:var(--card); border:1px solid var(--line);
-          border-radius:10px; padding:18px; margin-bottom:14px; }
-  .card h2 { font-size:14px; font-weight:600; margin:0 0 3px; }
-  .card .hint { font-size:12px; color:var(--muted); margin:0 0 14px; }
+  /* ==========================================================
+     FLEET BOARD — PAGE-SPECIFIC STYLES
+     Shared application styling lives in:
+     theme.css + dashboard.css
+     ========================================================== */
 
-  .grid { display:grid; gap:12px;
-          grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
-  label { display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
-  .req label::after { content:' *'; color:var(--danger); }
-  input, select, textarea { width:100%; padding:8px 10px;
-    border:1px solid var(--line2); border-radius:7px; font-size:14px;
-    background:#fff; color:var(--ink); font-family:inherit; }
-  textarea { min-height:56px; resize:vertical; }
-  .full { grid-column:1/-1; }
-  .half { grid-column:span 2; }
+  .frac {
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+  }
 
-  .dims { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-  .dimbox { border:1px solid var(--line2); border-radius:7px; padding:8px 10px; }
-  .dimbox input { border:0; padding:0; font-size:16px;
-                  font-variant-numeric:tabular-nums; }
-  .dimbox .u { font-size:11px; color:var(--muted); }
-  .conv { font-size:11.5px; color:var(--accent); margin-top:4px; min-height:15px; }
+  .f-ok {
+    color: var(--hh-lime-dark, #687025);
+  }
 
-  .legal { margin-top:10px; padding:10px 12px; border-radius:7px;
-           font-size:12.5px; display:none; }
-  .legal.over { display:block; background:var(--warnbg); color:var(--warn); }
-  .legal.ok { display:block; background:var(--okbg); color:var(--ok); }
+  .f-warn {
+    color: #8a5a10;
+  }
 
-  .states { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
-  .st { padding:4px 10px; border:1px solid var(--line2); border-radius:14px;
-        font-size:12.5px; background:var(--card); cursor:pointer; }
-  .st.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-  .route { font-size:12.5px; color:var(--muted); margin-top:8px; }
+  .f-bad {
+    color: var(--hh-pink-dark, #A14666);
+  }
 
-  .pref { background:var(--warnbg); border:1px solid #e8d5ac; color:var(--warn);
-          padding:10px 12px; border-radius:7px; font-size:12.5px;
-          margin-top:10px; display:none; }
-  .pref.show { display:block; }
+  .f-non {
+    color: #747B82;
+  }
 
-  button { padding:10px 20px; border:0; border-radius:7px; background:var(--accent);
-           color:#fff; font-size:14px; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:default; }
-  .bar { position:sticky; bottom:0; background:var(--card);
-         border-top:1px solid var(--line); padding:12px 18px;
-         display:flex; align-items:center; gap:12px; }
-  .msg { font-size:13px; padding:8px 12px; border-radius:7px; display:none; }
-  .msg.err { display:block; background:var(--dangerbg); color:var(--danger); }
-  .msg.ok { display:block; background:var(--okbg); color:var(--ok); }
+  .stale {
+    color: #8a5a10;
+    font-size: 11.5px;
+  }
+
+  .verystale {
+    color: var(--hh-pink-dark, #A14666);
+    font-size: 11.5px;
+  }
+
+  .unit {
+    font-weight: 600;
+  }
+
+  .act {
+    font-size: 12.5px;
+  }
+
+  .act.need {
+    color: var(--hh-pink-dark, #A14666);
+  }
+
+  .crit {
+    border-left:
+      3px solid
+      var(--hh-pink, #D86A8E);
+  }
+
+  tr.row {
+    cursor: pointer;
+  }
+
 </style>
+
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
 </head>
+
+
 <body>
 
-<header>
 
-  <nav class="dispatch-tabs">
+<!-- ==========================================================
+     GLOBAL APPLICATION HEADER
 
-    <a href="board.html">
-        Fleet Board
-    </a>
+     nav.js owns this element.
+     Do not place navigation links directly inside it.
+     ========================================================== -->
 
-    <a
-        href="newload.html"
-        class="active"
-    >
-        New Load
-    </a>
+<header></header>
 
-    <a href="loads.html">
-        All Loads
-    </a>
 
-</nav>
 
-</header>
+<!-- ==========================================================
+     DISPATCH WORKSPACE
+     ========================================================== -->
 
 <main>
 
 
-  
-<nav class="dispatch-tabs" id="dispatchTabs"></nav>
-  
-  <div class="card">
-    <h2>Parties</h2>
-    <p class="hint">Carrier first — their preferences will flag anything out of range.</p>
-    <div class="grid">
-      <div class="req"><label>Carrier</label><select id="carrier"></select></div>
-      <div><label>Broker</label><select id="broker"></select></div>
-      <div><label>Broker load number</label><input id="brokerload"></div>
-      <div><label>Driver</label><select id="driver"></select></div>
-      <div><label>Truck</label><select id="tractor"></select></div>
-      <div><label>Trailer</label><select id="trailer"></select></div>
-    </div>
-    <div class="pref" id="prefbox"></div>
+  <!-- ========================================================
+       UNIFORM DISPATCH HEADER
+       Same on Fleet Board, New Load and All Loads
+       ======================================================== -->
+
+  <section class="page-header">
+
+    <h1>DISPATCH</h1>
+
+    <p>
+      Manage loads and daily dispatch activity.
+    </p>
+
+  </section>
+
+
+  <!-- ========================================================
+       SHARED DISPATCH TABS
+
+       dispatch-tabs.js populates this element.
+       ======================================================== -->
+
+  <nav
+    class="dispatch-tabs"
+    id="dispatchTabs">
+  </nav>
+
+
+
+  <!-- ========================================================
+       FLEET BOARD SUMMARY TILES
+       ======================================================== -->
+
+  <div
+    class="tiles"
+    id="tiles">
   </div>
 
-  <div class="card">
-    <h2>Freight</h2>
-    <div class="grid">
-      <div class="half req"><label>Commodity</label>
-        <input id="commodity" placeholder="Caterpillar 336 excavator"></div>
-      <div><label>Pieces</label><input id="pieces" type="number" value="1"></div>
-      <div><label>Declared value</label><input id="value" type="number"></div>
-    </div>
 
-    <p class="hint" style="margin-top:14px">
-      Dimensions in inches — what permit offices use. Type feet and inches
-      like <b>13'6</b> and it converts.</p>
-    <div class="dims">
-      <div>
-        <div class="dimbox"><label>Length</label>
-          <input id="len" placeholder="0"><span class="u">inches</span></div>
-        <div class="conv" id="clen"></div>
-      </div>
-      <div>
-        <div class="dimbox"><label>Width</label>
-          <input id="wid" placeholder="0"><span class="u">inches</span></div>
-        <div class="conv" id="cwid"></div>
-      </div>
-      <div>
-        <div class="dimbox"><label>Height</label>
-          <input id="hgt" placeholder="0"><span class="u">inches</span></div>
-        <div class="conv" id="chgt"></div>
-      </div>
-      <div>
-        <div class="dimbox"><label>Weight</label>
-          <input id="wgt" placeholder="0"><span class="u">pounds</span></div>
-        <div class="conv" id="cwgt"></div>
-      </div>
-    </div>
-    <div class="legal" id="legal"></div>
 
-    <div class="grid" style="margin-top:14px">
-      <div><label>Overhang front (in)</label><input id="ohf" type="number" value="0"></div>
-      <div><label>Overhang rear (in)</label><input id="ohr" type="number" value="0"></div>
-      <div><label>Axle count</label><input id="axles" type="number"></div>
-      <div class="full"><label>Axle spacings</label>
-        <input id="spacings" placeholder="3+3+3"></div>
-    </div>
+  <!-- ========================================================
+       FILTER BAR
+       ======================================================== -->
+
+  <div class="bar">
+
+    <input
+      class="search"
+      id="q"
+      placeholder="Search truck, driver, load…"
+    >
+
+
+    <select id="fstatus">
+
+      <option value="">
+        All statuses
+      </option>
+
+    </select>
+
+
+    <select id="fdriver">
+
+      <option value="">
+        All drivers
+      </option>
+
+    </select>
+
+
+    <select id="fbroker">
+
+      <option value="">
+        All brokers
+      </option>
+
+    </select>
+
+
+    <select id="fstate">
+
+      <option value="">
+        All states
+      </option>
+
+    </select>
+
+
+    <span
+      class="count"
+      id="count">
+    </span>
+
   </div>
 
-  <div class="card">
-    <h2>Route and appointments</h2>
-    <div class="grid">
-      <div class="req"><label>Origin</label><select id="origin"></select></div>
-      <div class="req"><label>Destination</label><select id="dest"></select></div>
-      <div><label>Loaded miles</label><input id="miles" type="number"></div>
-      <div><label>Pickup appointment</label><input id="pu" type="datetime-local"></div>
-      <div><label>Delivery appointment</label><input id="del" type="datetime-local"></div>
-    </div>
 
-    <p class="hint" style="margin-top:14px">
-      Click states in travel order. Each becomes a leg, and each leg gets its
-      own permit record.</p>
-    <div class="states" id="statepicker"></div>
-    <div class="route" id="routeout">No states selected.</div>
+
+  <!-- ========================================================
+       FLEET BOARD TABLE
+       ======================================================== -->
+
+  <div class="wrap">
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th data-k="truck_number">
+            Truck
+          </th>
+
+          <th data-k="driver_name">
+            Driver
+          </th>
+
+          <th data-k="load_number">
+            Load
+          </th>
+
+          <th data-k="display_status">
+            Status
+          </th>
+
+          <th data-k="current_location_text">
+            Location
+          </th>
+
+          <th data-k="destination">
+            Destination
+          </th>
+
+          <th data-k="next_event_at">
+            Next event
+          </th>
+
+          <th data-k="permits_open">
+            Prm
+          </th>
+
+          <th data-k="escorts_total">
+            Esc
+          </th>
+
+          <th data-k="next_action">
+            Next action
+          </th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody id="body">
+
+        <tr>
+
+          <td
+            colspan="10"
+            class="msg">
+
+            Loading…
+
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
   </div>
 
-  <div class="card">
-    <h2>Rate</h2>
-    <div class="grid">
-      <div class="req"><label>Linehaul rate</label><input id="rate" type="number" step="0.01"></div>
-      <div><label>Fuel surcharge</label><input id="fsc" type="number" step="0.01" value="0"></div>
-      <div><label>Rate per mile</label><input id="rpm" disabled></div>
-      <div><label>Priority</label>
-        <select id="priority">
-          <option value="normal">Normal</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
-          <option value="low">Low</option>
-        </select></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Who is handling permits</h2>
-    <p class="hint">The first question on every oversize load. The answer tells
-       you who to call.</p>
-    <div class="grid">
-      <div><label>Responsibility</label>
-        <select id="permresp">
-          <option value="dispatcher">Me (dispatcher)</option>
-          <option value="carrier">Carrier</option>
-          <option value="broker">Broker</option>
-          <option value="permit_service">Permit service</option>
-          <option value="shipper">Shipper</option>
-        </select></div>
-      <div><label>Company</label><input id="permco"></div>
-      <div><label>Contact name</label><input id="permname"></div>
-      <div><label>Phone</label><input id="permphone"></div>
-      <div><label>Email</label><input id="permemail" type="email"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Who is handling escorts</h2>
-    <p class="hint">Never assume. Confirm it for every load.</p>
-    <div class="grid">
-      <div><label>Responsibility</label>
-        <select id="escresp">
-          <option value="dispatcher">Me (dispatcher)</option>
-          <option value="carrier">Carrier</option>
-          <option value="broker">Broker</option>
-          <option value="escort_company">Escort company</option>
-          <option value="shipper">Shipper</option>
-        </select></div>
-      <div><label>Company</label><input id="escco"></div>
-      <div><label>Contact name</label><input id="escname"></div>
-      <div><label>Phone</label><input id="escphone"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Accessorial terms</h2>
-    <p class="hint">What you agreed to on the call. Six days later when the
-       driver has been sitting three hours, this is what you check.</p>
-    <div class="grid">
-      <div><label>Detention free hours</label><input id="detfree" type="number" step="0.5"></div>
-      <div><label>Detention per hour</label><input id="detrate" type="number" step="0.01"></div>
-      <div><label>Layover rate</label><input id="layrate" type="number" step="0.01"></div>
-      <div><label>Layover needs approval</label>
-        <select id="layappr"><option value="true">Yes</option>
-        <option value="false">No</option></select></div>
-      <div><label>TONU rate</label><input id="tonu" type="number" step="0.01"></div>
-      <div><label>Rate con matches agreement</label>
-        <select id="ratecon">
-          <option value="">Not reviewed yet</option>
-          <option value="true">Yes, matches</option>
-          <option value="false">No, discrepancy</option>
-        </select></div>
-      <div class="full"><label>Notes on terms</label><textarea id="accnotes"></textarea></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Carrier approval</h2>
-    <div class="grid">
-      <div><label>Carrier approved this load</label>
-        <select id="appr"><option value="false">Not yet</option>
-        <option value="true">Yes</option></select></div>
-      <div><label>Approved by</label><input id="apprby" placeholder="Name"></div>
-      <div><label>Starting status</label>
-        <select id="status">
-          <option value="quoted">Quoted</option>
-          <option value="booked">Booked</option>
-        </select></div>
-      <div><label>Customer reference</label><input id="custref"></div>
-      <div><label>Purchase order</label><input id="po"></div>
-      <div class="full"><label>Load notes</label><textarea id="notes"></textarea></div>
-    </div>
-  </div>
 
 </main>
 
-<div class="bar">
-  <button id="save">Create load</button>
-  <div class="msg" id="msg"></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<!-- ==========================================================
+     SHARED APPLICATION SCRIPTS
+     ========================================================== -->
+
+<script src="nav.js"></script>
 
 <script src="dispatch-tabs.js"></script>
-<script><script src="nav.js"></script>
+
+
+
 <script>
-// ===== FILL IN THESE TWO VALUES =====
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
-// ====================================
 
-const $ = id => document.getElementById(id);
-let db=null, tenant=null, carriers=[], route=[];
+/* ============================================================
+   SUPABASE
+   ============================================================ */
 
-const STATES = ['AL','AR','AZ','CA','CO','CT','DE','FL','GA','IA','ID','IL','IN',
-  'KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ',
-  'NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA',
-  'WI','WV','WY'];
-const TRAILERS = ['rgn','lowboy','step_deck','double_drop','flatbed',
-                  'stretch_rgn','jeep','booster','dolly','other'];
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
 
-function say(t,k){ const m=$('msg'); m.textContent=t; m.className='msg '+k; }
-function val(id){ const v=$(id).value.trim(); return v===''?null:v; }
-function num(id){ const v=val(id); return v===null?null:Number(v); }
 
-window.onerror = m => say('JS error: '+m,'err');
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 
-if (typeof window.supabase === 'undefined') {
-  say('Supabase library failed to load.','err');
-} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID')!==-1 ||
-           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR')!==-1) {
-  say('Edit newload.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.','err');
-} else {
-  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+/* ============================================================
+   GLOBAL VARIABLES
+   ============================================================ */
+
+const $ =
+  id => document.getElementById(id);
+
+
+let db = null;
+
+let rows = [];
+
+let sortKey = null;
+
+let sortDir = 1;
+
+
+
+/* ============================================================
+   ERROR HANDLING
+   ============================================================ */
+
+function fail(text) {
+
+  $('body').innerHTML =
+    '<tr>' +
+      '<td colspan="10" class="msg bad">' +
+        text +
+      '</td>' +
+    '</tr>';
+
+}
+
+
+
+function esc(s) {
+
+  return String(
+    s == null
+      ? ''
+      : s
+  ).replace(
+    /[&<>"]/g,
+
+    c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;'
+    }[c])
+
+  );
+
+}
+
+
+
+window.onerror = m => {
+
+  fail(
+    'JS error: ' + m
+  );
+
+};
+
+
+
+/* ============================================================
+   START SUPABASE
+   ============================================================ */
+
+if (
+  typeof window.supabase === 'undefined'
+) {
+
+  fail(
+    'Supabase library did not load. Check your connection and reload.'
+  );
+
+}
+
+else {
+
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
   start();
+
 }
 
-// Accept 13'6 or 13'6" and convert to inches
-function toInches(raw){
-  if (!raw) return null;
-  const s = String(raw).trim();
-  const m = s.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
-  if (m) return Math.round(Number(m[1])*12 + Number(m[2]||0));
-  const n = Number(s.replace(/[^0-9.]/g,''));
-  return isNaN(n) ? null : Math.round(n);
-}
-function ftin(inches){
-  if (inches == null) return '';
-  return Math.floor(inches/12) + "' " + (inches%12) + '"';
-}
 
-async function start(){
-  const s = await db.auth.getSession();
-  if (!s.data.session) { location.href='index.html'; return; }
 
-tenant = await buildNav(db, 'New Load');
+/* ============================================================
+   START APPLICATION
+   ============================================================ */
 
-if (!tenant) {
-  alert('No profile linked to this login.');
-  return;
-}
+async function start() {
 
-buildDispatchTabs('newload.html');
 
-  $('statepicker').innerHTML = STATES.map(s =>
-    '<span class="st" data-s="'+s+'">'+s+'</span>').join('');
-  document.querySelectorAll('.st').forEach(el => {
-    el.addEventListener('click', () => {
-      const s = el.dataset.s, i = route.indexOf(s);
-      if (i === -1) route.push(s); else route.splice(i,1);
-      drawRoute();
-    });
-  });
+  /* ----------------------------------------------------------
+     Check login session
+     ---------------------------------------------------------- */
 
-  await loadPickers();
-}
+  const s =
+    await db.auth.getSession();
 
-function drawRoute(){
-  document.querySelectorAll('.st').forEach(el =>
-    el.classList.toggle('on', route.includes(el.dataset.s)));
-  $('routeout').textContent = route.length
-    ? route.join(' → ') + '  ·  ' + route.length + ' permit' +
-      (route.length===1?'':'s') + ' will be created'
-    : 'No states selected.';
-}
 
-async function loadPickers(){
-  const c = await db.from('carriers').select('*').is('archived_at',null).order('legal_name');
-  carriers = c.data || [];
-  if (!carriers.length) {
-    say('Add a carrier in Fleet Setup first.','err'); return;
+  if (!s.data.session) {
+
+    location.href =
+      'index.html';
+
+    return;
+
   }
-  $('carrier').innerHTML = carriers.map(x =>
-    '<option value="'+x.id+'">'+x.legal_name+'</option>').join('');
 
-  const b = await db.from('brokers').select('id,name,payment_terms_days')
-    .is('archived_at',null).order('name');
-  $('broker').innerHTML = '<option value="">— none —</option>' +
-    (b.data||[]).map(x => '<option value="'+x.id+'">'+x.name+'</option>').join('');
 
-  const f = await db.from('facilities').select('id,name,city,state')
-    .is('archived_at',null).order('name');
-  const opts = '<option value="">— select —</option>' +
-    (f.data||[]).map(x => '<option value="'+x.id+'">'+x.name+
-      ' ('+(x.city||'')+', '+(x.state||'')+')</option>').join('');
-  $('origin').innerHTML = opts;
-  $('dest').innerHTML = opts;
 
-  await onCarrier();
-}
+  /* ----------------------------------------------------------
+     Build global navigation
 
-async function onCarrier(){
-  const cid = $('carrier').value;
-  const d = await db.from('drivers').select('id,first_name,last_name')
-    .eq('carrier_id',cid).is('archived_at',null).order('last_name');
-  $('driver').innerHTML = '<option value="">— none —</option>' +
-    (d.data||[]).map(x => '<option value="'+x.id+'">'+
-      x.first_name+' '+x.last_name+'</option>').join('');
+     buildNav returns the user's tenant_id.
+     ---------------------------------------------------------- */
 
-  const e = await db.from('equipment').select('id,unit_number,equipment_type')
-    .eq('carrier_id',cid).is('archived_at',null).order('unit_number');
-  const eq = e.data || [];
-  $('tractor').innerHTML = '<option value="">— none —</option>' +
-    eq.filter(x=>x.equipment_type==='tractor').map(x =>
-      '<option value="'+x.id+'">'+x.unit_number+'</option>').join('');
-  $('trailer').innerHTML = '<option value="">— none —</option>' +
-    eq.filter(x=>TRAILERS.includes(x.equipment_type)).map(x =>
-      '<option value="'+x.id+'">'+x.unit_number+' ('+
-      x.equipment_type.replace(/_/g,' ')+')</option>').join('');
+  const t =
+    await buildNav(
+      db,
+      'Dispatch'
+    );
 
-  checkPrefs();
-}
 
-function carrier(){ return carriers.find(x => x.id === $('carrier').value); }
+  if (!t) {
 
-function checkPrefs(){
-  const c = carrier();
-  if (!c) return;
-  const w = toInches($('wid').value), h = toInches($('hgt').value);
-  const lb = num('wgt'), rate = (num('rate')||0) + (num('fsc')||0);
-  const notes = [];
+    fail(
+      'No app_users row linked to this login.'
+    );
 
-  if (c.max_width_in && w && w > c.max_width_in)
-    notes.push('Exceeds carrier max width of ' + ftin(c.max_width_in));
-  if (c.max_height_in && h && h > c.max_height_in)
-    notes.push('Exceeds carrier max height of ' + ftin(c.max_height_in));
-  if (c.max_weight_lb && lb && lb > c.max_weight_lb)
-    notes.push('Exceeds carrier max weight of ' + c.max_weight_lb.toLocaleString() + ' lb');
-  if (c.min_load_revenue && rate > 0 && rate < c.min_load_revenue)
-    notes.push('Below carrier minimum of $' + Number(c.min_load_revenue).toLocaleString());
-  if (c.target_rate_per_mile && rate > 0 && num('miles'))
-    { const rpm = rate / num('miles');
-      if (rpm < c.target_rate_per_mile)
-        notes.push('$' + rpm.toFixed(2) + '/mi is below target of $' +
-                   Number(c.target_rate_per_mile).toFixed(2)); }
-  if (c.avoided_states && c.avoided_states.length)
-    { const hit = route.filter(s => c.avoided_states.includes(s));
-      if (hit.length) notes.push('Route includes avoided states: ' + hit.join(', ')); }
-  if (c.freight_refused && c.freight_refused.length && val('commodity'))
-    { const com = val('commodity').toLowerCase();
-      const hit = c.freight_refused.filter(f => com.includes(f.toLowerCase()));
-      if (hit.length) notes.push('Carrier refuses: ' + hit.join(', ')); }
-  if (c.requires_approval_before_booking && $('appr').value !== 'true')
-    notes.push('This carrier requires approval before booking');
+    return;
 
-  const box = $('prefbox');
-  if (notes.length) { box.className='pref show'; box.innerHTML = notes.join('<br>'); }
-  else { box.className='pref'; box.innerHTML=''; }
-}
-
-function dims(){
-  [['len','clen'],['wid','cwid'],['hgt','chgt']].forEach(([i,o]) => {
-    const v = toInches($(i).value);
-    $(o).textContent = v ? ftin(v) : '';
-  });
-  const lb = num('wgt');
-  $('cwgt').textContent = lb ? lb.toLocaleString() + ' lb' : '';
-
-  const w=toInches($('wid').value), h=toInches($('hgt').value),
-        l=toInches($('len').value);
-  const over = [];
-  if (w && w > 102) over.push('width');
-  if (h && h > 162) over.push('height');
-  if (l && l > 636) over.push('length');
-  if (lb && lb > 80000) over.push('weight');
-
-  const el = $('legal');
-  if (!w && !h && !l && !lb) { el.className='legal'; el.textContent=''; }
-  else if (over.length) {
-    el.className='legal over';
-    el.textContent = 'Oversize on ' + over.join(', ') +
-      ' — permits required in every state on the route.';
-  } else {
-    el.className='legal ok';
-    el.textContent = 'Within legal limits — no oversize permits needed.';
   }
-  rpm();
-  checkPrefs();
+
+
+
+  /* ----------------------------------------------------------
+     Build Dispatch workspace tabs
+     ---------------------------------------------------------- */
+
+  buildDispatchTabs(
+    'board.html'
+  );
+
+
+
+  /* ----------------------------------------------------------
+     Load Fleet Board
+     ---------------------------------------------------------- */
+
+  load();
+
+
+
+  /* ----------------------------------------------------------
+     Refresh every 60 seconds
+     ---------------------------------------------------------- */
+
+  setInterval(
+    load,
+    60000
+  );
+
 }
 
-function rpm(){
-  const r = (num('rate')||0) + (num('fsc')||0), m = num('miles');
-  $('rpm').value = (r && m) ? '$' + (r/m).toFixed(2) : '';
+
+
+/* ============================================================
+   LOAD FLEET BOARD DATA
+   ============================================================ */
+
+async function load() {
+
+
+  const r =
+    await db
+      .from('v_fleet_board')
+      .select('*')
+      .order('attention_rank')
+      .order(
+        'next_event_at',
+        {
+          nullsFirst: false
+        }
+      );
+
+
+  if (r.error) {
+
+    fail(
+      'Fleet board query failed: ' +
+      r.error.message
+    );
+
+    return;
+
+  }
+
+
+  rows =
+    r.data || [];
+
+
+
+  /* ----------------------------------------------------------
+     Update timestamp in global navigation
+     ---------------------------------------------------------- */
+
+  const st =
+    $('stamp');
+
+
+  if (st) {
+
+    st.textContent =
+      'updated ' +
+      new Date()
+        .toLocaleTimeString(
+          [],
+          {
+            hour: 'numeric',
+            minute: '2-digit'
+          }
+        );
+
+  }
+
+
+
+  fillFilters();
+
+  tiles();
+
+  render();
+
 }
 
-['len','wid','hgt','wgt'].forEach(i => $(i).addEventListener('input', dims));
-['rate','fsc','miles'].forEach(i => $(i).addEventListener('input', () => { rpm(); checkPrefs(); }));
-['commodity','appr'].forEach(i => $(i).addEventListener('input', checkPrefs));
-$('appr').addEventListener('change', checkPrefs);
-$('carrier').addEventListener('change', onCarrier);
 
-$('save').addEventListener('click', async () => {
-  if (!val('carrier')) { say('Carrier is required.','err'); return; }
-  if (!val('commodity')) { say('Commodity is required.','err'); return; }
-  if (!val('rate')) { say('Linehaul rate is required.','err'); return; }
-  if (!val('origin') || !val('dest')) { say('Origin and destination required.','err'); return; }
 
-  $('save').disabled = true;
-  say('Creating load…','ok');
+/* ============================================================
+   FILTER HELPERS
+   ============================================================ */
 
-  // Load number: LD-#### based on the current count
-  const cnt = await db.from('loads').select('*',{count:'exact',head:true});
-  const seq = 2001 + (cnt.count || 0);
-  const loadNumber = 'LD-' + seq;
+function uniq(key) {
 
-  const rec = {
-    tenant_id: tenant,
-    load_number: loadNumber,
-    broker_load_number: val('brokerload'),
-    carrier_id: val('carrier'),
-    broker_id: val('broker'),
-    driver_id: val('driver'),
-    tractor_id: val('tractor'),
-    trailer_id: val('trailer'),
-    origin_facility_id: val('origin'),
-    dest_facility_id: val('dest'),
-    commodity: val('commodity'),
-    commodity_value: num('value'),
-    piece_count: num('pieces') || 1,
-    length_in: toInches($('len').value),
-    width_in: toInches($('wid').value),
-    height_in: toInches($('hgt').value),
-    weight_lb: num('wgt'),
-    overhang_front_in: num('ohf') || 0,
-    overhang_rear_in: num('ohr') || 0,
-    axle_count: num('axles'),
-    axle_spacings: val('spacings'),
-    linehaul_rate: num('rate'),
-    fuel_surcharge: num('fsc') || 0,
-    total_miles: num('miles'),
-    pickup_appt_start: val('pu') || null,
-    delivery_appt_start: val('del') || null,
-    status: $('status').value,
-    priority: $('priority').value,
-    permit_responsibility: $('permresp').value,
-    permit_contact_company: val('permco'),
-    permit_contact_name: val('permname'),
-    permit_contact_phone: val('permphone'),
-    permit_contact_email: val('permemail'),
-    escort_responsibility: $('escresp').value,
-    escort_contact_company: val('escco'),
-    escort_contact_name: val('escname'),
-    escort_contact_phone: val('escphone'),
-    detention_free_hours: num('detfree'),
-    detention_rate_per_hour: num('detrate'),
-    layover_rate: num('layrate'),
-    layover_requires_approval: $('layappr').value === 'true',
-    tonu_rate: num('tonu'),
-    accessorial_notes: val('accnotes'),
-    rate_con_matches_agreement: $('ratecon').value === '' ? null
-                                 : $('ratecon').value === 'true',
-    carrier_approved_at: $('appr').value === 'true' ? new Date().toISOString() : null,
-    carrier_approved_by: $('appr').value === 'true' ? val('apprby') : null,
-    customer_reference: val('custref'),
-    purchase_order: val('po'),
-    notes: val('notes')
+  return [
+    ...new Set(
+      rows
+        .map(
+          r => r[key]
+        )
+        .filter(Boolean)
+    )
+  ].sort();
+
+}
+
+
+
+function fillFilters() {
+
+
+  const map = {
+
+    fstatus:
+      'display_status',
+
+    fdriver:
+      'driver_name',
+
+    fbroker:
+      'broker_name',
+
+    fstate:
+      'current_state'
+
   };
 
-  const r = await db.from('loads').insert(rec).select('id').single();
-  if (r.error) { $('save').disabled=false; say(r.error.message,'err'); return; }
-  const loadId = r.data.id;
 
-  // Route legs
-  if (route.length) {
-    const legs = route.map((s,i) => ({
-      tenant_id: tenant, load_id: loadId, seq: i+1, state: s
-    }));
-    const lr = await db.from('load_legs').insert(legs);
-    if (lr.error) { say('Load created but legs failed: ' + lr.error.message,'err'); }
+  for (
+    const id in map
+  ) {
+
+
+    const sel =
+      $(id);
+
+
+    const keep =
+      sel.value;
+
+
+    const first =
+      sel.options[0].textContent;
+
+
+    sel.innerHTML =
+
+      '<option value="">' +
+        first +
+      '</option>' +
+
+      uniq(
+        map[id]
+      ).map(
+        v =>
+
+          '<option value="' +
+          esc(v) +
+          '">' +
+
+          esc(
+            pretty(v)
+          ) +
+
+          '</option>'
+
+      ).join('');
+
+
+    sel.value =
+      keep;
+
   }
 
-  // Permit + escort requirements from dimensions, and the checklist
-  await db.rpc('generate_permit_requirements', { p_load_id: loadId });
-  await db.rpc('generate_load_checklist', { p_load_id: loadId });
+}
 
-  // Opening timeline entry
-  await db.from('events').insert({
-    tenant_id: tenant, entity_type:'load', entity_id: loadId, load_id: loadId,
-    event_type:'load_created', direction:'internal',
-    subject:'Load created', body: loadNumber + ' · ' + val('commodity'),
-    is_milestone: true
-  });
 
-  say(loadNumber + ' created. Returning to the board…','ok');
-  setTimeout(() => { location.href = 'board.html'; }, 1200);
-});
+
+/* ============================================================
+   TEXT FORMATTING
+   ============================================================ */
+
+function pretty(s) {
+
+  if (!s) {
+
+    return '';
+
+  }
+
+
+  return String(s)
+
+    .replace(
+      /_/g,
+      ' '
+    )
+
+    .replace(
+      /^./,
+      c => c.toUpperCase()
+    );
+
+}
+
+
+
+/* ============================================================
+   SUMMARY TILES
+   ============================================================ */
+
+function tiles() {
+
+
+  const t = [
+
+
+    [
+      'Active loads',
+
+      rows.filter(
+        r => r.load_id
+      ).length,
+
+      false
+    ],
+
+
+    [
+      'Available trucks',
+
+      rows.filter(
+        r => !r.load_id
+      ).length,
+
+      false
+    ],
+
+
+    [
+      'On hold',
+
+      rows.filter(
+        r => r.hold_reason
+      ).length,
+
+      rows.some(
+        r => r.hold_reason
+      )
+    ],
+
+
+    [
+      'Waiting on permits',
+
+      rows.filter(
+        r => r.permits_open > 0
+      ).length,
+
+      rows.some(
+        r => r.permits_open > 0
+      )
+    ],
+
+
+    [
+      'Escorts unbooked',
+
+      rows.filter(
+        r =>
+          r.escorts_total >
+          r.escorts_confirmed
+      ).length,
+
+      false
+    ],
+
+
+    [
+      'Stale check-ins',
+
+      rows.filter(
+        r =>
+          r.check_in_age_min >
+          480
+      ).length,
+
+      rows.some(
+        r =>
+          r.check_in_age_min >
+          480
+      )
+    ]
+
+  ];
+
+
+
+  $('tiles').innerHTML =
+
+    t.map(
+      ([label, n, alert]) =>
+
+        '<div class="tile' +
+
+        (
+          alert && n > 0
+            ? ' alert'
+            : ''
+        ) +
+
+        '">' +
+
+          '<div class="n">' +
+            n +
+          '</div>' +
+
+          '<div class="l">' +
+            label +
+          '</div>' +
+
+        '</div>'
+
+    ).join('');
+
+}
+
+
+
+/* ============================================================
+   STATUS PILL
+   ============================================================ */
+
+function statusPill(r) {
+
+
+  const s =
+    r.display_status || '';
+
+
+  let cls =
+    'p-gry';
+
+
+
+  if (
+    [
+      'breakdown',
+      'accident',
+      'road_closure'
+    ].includes(s)
+  ) {
+
+    cls =
+      'p-red';
+
+  }
+
+
+  else if (
+    r.hold_reason
+  ) {
+
+    cls =
+      'p-amb';
+
+  }
+
+
+  else if (
+    [
+      'in_transit',
+      'loaded',
+      'dispatched',
+      'en_route_to_pickup'
+    ].includes(s)
+  ) {
+
+    cls =
+      'p-blu';
+
+  }
+
+
+  else if (
+    [
+      'delivered',
+      'pod_pending',
+      'unloading'
+    ].includes(s)
+  ) {
+
+    cls =
+      'p-grn';
+
+  }
+
+
+  else if (
+    [
+      'loading',
+      'at_shipper',
+      'at_receiver',
+      'at_weigh_station',
+      'under_inspection'
+    ].includes(s)
+  ) {
+
+    cls =
+      'p-amb';
+
+  }
+
+
+
+  let html =
+
+    '<span class="pill ' +
+    cls +
+    '">' +
+
+    pretty(s) +
+
+    '</span>';
+
+
+
+  if (
+    r.hold_reason &&
+    r.load_status
+  ) {
+
+    html +=
+
+      '<div class="sub2">' +
+
+      'was ' +
+      pretty(
+        r.load_status
+      ) +
+
+      '</div>';
+
+  }
+
+
+  return html;
+
+}
+
+
+
+/* ============================================================
+   FRACTION DISPLAY
+   ============================================================ */
+
+function frac(
+  done,
+  total
+) {
+
+
+  if (!total) {
+
+    return (
+      '<span class="frac f-non">' +
+      '—' +
+      '</span>'
+    );
+
+  }
+
+
+  const cls =
+
+    done === total
+      ? 'f-ok'
+
+      : (
+          done === 0
+            ? 'f-bad'
+            : 'f-warn'
+        );
+
+
+  return (
+
+    '<span class="frac ' +
+    cls +
+    '">' +
+
+    done +
+    '/' +
+    total +
+
+    '</span>'
+
+  );
+
+}
+
+
+
+/* ============================================================
+   DATE / TIME DISPLAY
+   ============================================================ */
+
+function when(iso) {
+
+
+  if (!iso) {
+
+    return (
+      '<span class="sub2">' +
+      '—' +
+      '</span>'
+    );
+
+  }
+
+
+  const d =
+    new Date(iso);
+
+
+  return (
+
+    d.toLocaleDateString(
+      [],
+      {
+        month: 'numeric',
+        day: 'numeric'
+      }
+    )
+
+    +
+
+    ' '
+
+    +
+
+    d.toLocaleTimeString(
+      [],
+      {
+        hour: 'numeric',
+        minute: '2-digit'
+      }
+    )
+
+  );
+
+}
+
+
+
+/* ============================================================
+   CHECK-IN AGE
+   ============================================================ */
+
+function age(min) {
+
+
+  if (
+    min == null
+  ) {
+
+    return '';
+
+  }
+
+
+  const m =
+    Math.round(min);
+
+
+  const txt =
+
+    m < 60
+
+      ? m + 'm ago'
+
+      : Math.round(
+          m / 60
+        ) + 'h ago';
+
+
+
+  const cls =
+
+    m > 480
+
+      ? 'verystale'
+
+      : (
+          m > 240
+            ? 'stale'
+            : 'sub2'
+        );
+
+
+  return (
+
+    '<div class="' +
+    cls +
+    '">' +
+
+    txt +
+
+    '</div>'
+
+  );
+
+}
+
+
+
+/* ============================================================
+   RENDER FLEET BOARD
+   ============================================================ */
+
+function render() {
+
+
+  const q =
+
+    $('q')
+      .value
+      .toLowerCase()
+      .trim();
+
+
+
+  let list =
+
+    rows.filter(
+      r => {
+
+
+        if (
+          $('fstatus').value &&
+          r.display_status !==
+          $('fstatus').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fdriver').value &&
+          r.driver_name !==
+          $('fdriver').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fbroker').value &&
+          r.broker_name !==
+          $('fbroker').value
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          $('fstate').value &&
+          r.current_state !==
+          $('fstate').value
+        ) {
+
+          return false;
+
+        }
+
+
+
+        if (q) {
+
+
+          const hay = [
+
+            r.truck_number,
+
+            r.driver_name,
+
+            r.load_number,
+
+            r.broker_name,
+
+            r.current_location_text,
+
+            r.destination
+
+          ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+
+          if (
+            !hay.includes(q)
+          ) {
+
+            return false;
+
+          }
+
+        }
+
+
+        return true;
+
+      }
+    );
+
+
+
+  /* ----------------------------------------------------------
+     Sorting
+     ---------------------------------------------------------- */
+
+  if (sortKey) {
+
+
+    list.sort(
+      (a, b) => {
+
+
+        const x =
+          a[sortKey];
+
+
+        const y =
+          b[sortKey];
+
+
+        if (
+          x == null
+        ) {
+
+          return 1;
+
+        }
+
+
+        if (
+          y == null
+        ) {
+
+          return -1;
+
+        }
+
+
+        return (
+
+          (
+            x > y
+              ? 1
+              : x < y
+                ? -1
+                : 0
+          )
+
+          *
+
+          sortDir
+
+        );
+
+      }
+    );
+
+  }
+
+
+
+  /* ----------------------------------------------------------
+     Count
+     ---------------------------------------------------------- */
+
+  $('count').textContent =
+
+    list.length +
+    ' of ' +
+    rows.length +
+    ' trucks';
+
+
+
+  /* ----------------------------------------------------------
+     Empty result
+     ---------------------------------------------------------- */
+
+  if (
+    !list.length
+  ) {
+
+
+    $('body').innerHTML =
+
+      '<tr>' +
+
+        '<td colspan="10" class="msg">' +
+
+          'No trucks match.' +
+
+        '</td>' +
+
+      '</tr>';
+
+
+    return;
+
+  }
+
+
+
+  /* ----------------------------------------------------------
+     Rows
+     ---------------------------------------------------------- */
+
+  $('body').innerHTML =
+
+    list.map(
+      r => {
+
+
+        const needs =
+
+          r.next_action &&
+
+          r.next_action !==
+          'On track';
+
+
+
+        return (
+
+          '<tr class="row' +
+
+          (
+            r.priority === 'critical'
+              ? ' crit'
+              : ''
+          ) +
+
+          '"' +
+
+          (
+            r.load_id
+
+              ? ' data-load="' +
+                r.load_id +
+                '"'
+
+              : ''
+          ) +
+
+          '>' +
+
+
+
+          /* Truck */
+
+          '<td>' +
+
+            '<span class="unit">' +
+              esc(
+                r.truck_number || ''
+              ) +
+            '</span>' +
+
+            (
+              r.trailer_type
+
+                ? '<div class="sub2">' +
+
+                    pretty(
+                      r.trailer_type
+                    ) +
+
+                    (
+                      r.trailer_number
+                        ? ' ' +
+                          esc(
+                            r.trailer_number
+                          )
+                        : ''
+                    ) +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Driver */
+
+          '<td>' +
+
+            (
+              r.driver_name
+
+                ? esc(
+                    r.driver_name
+                  )
+
+                : '<span class="sub2">' +
+                    'unassigned' +
+                  '</span>'
+            ) +
+
+            (
+              r.driver_hours_remaining_min != null
+
+                ? '<div class="sub2">' +
+
+                    Math.floor(
+                      r.driver_hours_remaining_min /
+                      60
+                    ) +
+
+                    'h ' +
+
+                    (
+                      r.driver_hours_remaining_min %
+                      60
+                    ) +
+
+                    'm HOS' +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Load */
+
+          '<td>' +
+
+            (
+              r.load_number
+
+                ? '<span class="ldnum">' +
+
+                    esc(
+                      r.load_number
+                    ) +
+
+                  '</span>' +
+
+                  (
+                    r.broker_name
+
+                      ? '<div class="sub2">' +
+
+                          esc(
+                            r.broker_name
+                          ) +
+
+                        '</div>'
+
+                      : ''
+                  )
+
+                : '<span class="sub2">' +
+                    '—' +
+                  '</span>'
+            ) +
+
+          '</td>' +
+
+
+
+          /* Status */
+
+          '<td>' +
+
+            statusPill(r) +
+
+          '</td>' +
+
+
+
+          /* Location */
+
+          '<td>' +
+
+            (
+              r.current_location_text
+
+                ? esc(
+                    r.current_location_text
+                  )
+
+                : '<span class="sub2">' +
+                    '—' +
+                  '</span>'
+            ) +
+
+            age(
+              r.check_in_age_min
+            ) +
+
+          '</td>' +
+
+
+
+          /* Destination */
+
+          '<td>' +
+
+            (
+              r.destination
+
+                ? esc(
+                    r.destination
+                  )
+
+                : '<span class="sub2">' +
+                    '—' +
+                  '</span>'
+            ) +
+
+          '</td>' +
+
+
+
+          /* Next event */
+
+          '<td>' +
+
+            when(
+              r.next_event_at
+            ) +
+
+            (
+              r.next_event_label
+
+                ? '<div class="sub2">' +
+
+                    r.next_event_label +
+
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Permits */
+
+          '<td>' +
+
+            frac(
+              r.permits_issued,
+              r.permits_total
+            ) +
+
+            (
+              r.has_window_conflict
+
+                ? '<div class="verystale">' +
+                    'window' +
+                  '</div>'
+
+                : ''
+            ) +
+
+          '</td>' +
+
+
+
+          /* Escorts */
+
+          '<td>' +
+
+            frac(
+              r.escorts_confirmed,
+              r.escorts_total
+            ) +
+
+          '</td>' +
+
+
+
+          /* Next action */
+
+          '<td>' +
+
+            '<span class="act' +
+
+            (
+              needs
+                ? ' need'
+                : ''
+            ) +
+
+            '">' +
+
+              esc(
+                r.next_action || ''
+              ) +
+
+            '</span>' +
+
+          '</td>' +
+
+
+          '</tr>'
+
+        );
+
+      }
+
+    ).join('');
+
+}
+
+
+
+/* ============================================================
+   FILTER EVENTS
+   ============================================================ */
+
+[
+  'q',
+  'fstatus',
+  'fdriver',
+  'fbroker',
+  'fstate'
+]
+.forEach(
+  id => {
+
+
+    $(id).addEventListener(
+      'input',
+      render
+    );
+
+
+    $(id).addEventListener(
+      'change',
+      render
+    );
+
+  }
+);
+
+
+
+/* ============================================================
+   TABLE SORTING
+   ============================================================ */
+
+document
+  .querySelectorAll(
+    'th[data-k]'
+  )
+  .forEach(
+    th => {
+
+
+      th.addEventListener(
+        'click',
+        () => {
+
+
+          const k =
+            th.dataset.k;
+
+
+          if (
+            sortKey === k
+          ) {
+
+            sortDir =
+              -sortDir;
+
+          }
+
+          else {
+
+            sortKey =
+              k;
+
+            sortDir =
+              1;
+
+          }
+
+
+          render();
+
+        }
+      );
+
+    }
+  );
+
+
+
+/* ============================================================
+   OPEN LOAD WORKSPACE
+   ============================================================ */
+
+$('body')
+  .addEventListener(
+    'click',
+    e => {
+
+
+      const tr =
+        e.target.closest(
+          'tr[data-load]'
+        );
+
+
+      if (tr) {
+
+        location.href =
+
+          'workspace.html?id=' +
+
+          tr.dataset.load;
+
+      }
+
+    }
+  );
+
+
 </script>
+
+
 </body>
+
 </html>
