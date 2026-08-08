@@ -1,0 +1,2725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>Field Manual — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+
+/* ============================================================
+   HEAVY HAUL COMMAND
+   FIELD MANUAL
+   ============================================================ */
+
+:root {
+  --manual-ink:
+    var(--hh-ink, #3C3A4B);
+
+  --manual-blue:
+    var(--hh-blue, #7FA5B5);
+
+  --manual-blue-dark:
+    var(--hh-blue-dark, #668C9D);
+
+  --manual-blue-soft:
+    var(--hh-blue-soft, #EAF3F6);
+
+  --manual-pink:
+    var(--hh-pink, #D86A8E);
+
+  --manual-pink-soft:
+    var(--hh-pink-soft, #F8E5EC);
+
+  --manual-lime:
+    var(--hh-lime, #B8C34A);
+
+  --manual-lime-soft:
+    var(--hh-lime-soft, #F1F4D8);
+
+  --manual-cream:
+    #FAF8F3;
+
+  --manual-white:
+    #FFFFFF;
+
+  --manual-muted:
+    #73787F;
+
+  --manual-line:
+    #D9DEE1;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+  margin: 0;
+}
+
+
+main {
+  width: min(1400px, 100%);
+  margin: 0 auto 70px;
+  padding: 28px 24px 70px;
+}
+
+
+/* ============================================================
+   INTRO
+   ============================================================ */
+
+.manual-intro {
+  margin-bottom: 24px;
+}
+
+
+.manual-intro h1 {
+  margin: 0;
+
+  font-family:
+    "Cinzel",
+    Georgia,
+    serif;
+
+  font-size: 30px;
+
+  font-weight: 600;
+
+  letter-spacing: 1px;
+
+  color: var(--manual-ink);
+}
+
+
+.manual-intro p {
+  max-width: 760px;
+
+  margin: 6px 0 0;
+
+  color: var(--manual-blue);
+
+  font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-size: 19px;
+
+  font-style: italic;
+}
+
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+
+.manual-search-wrap {
+  margin-bottom: 16px;
+
+  padding: 18px;
+
+  background: var(--manual-white);
+
+  border:
+    1px solid
+    var(--manual-line);
+}
+
+
+.manual-search-label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 12px;
+
+  font-weight: 500;
+
+  letter-spacing: .6px;
+
+  color: var(--manual-ink);
+}
+
+
+.manual-search {
+  width: 100%;
+
+  padding: 13px 14px;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid
+    #BEC8CD;
+
+  border-radius: 0;
+
+  color: var(--manual-ink);
+
+  font-size: 15px;
+
+  outline: none;
+}
+
+
+.manual-search:focus {
+  border-color: var(--manual-blue);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(127,165,181,.14);
+}
+
+
+.search-help {
+  margin-top: 7px;
+
+  color: var(--manual-muted);
+
+  font-size: 11.5px;
+}
+
+
+.search-count {
+  margin-top: 8px;
+
+  color: var(--manual-blue-dark);
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+
+/* ============================================================
+   QUICK TOPICS
+   ============================================================ */
+
+.quick-topics {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  margin-bottom: 25px;
+}
+
+
+.quick-topics button {
+  padding: 7px 11px;
+
+  background: var(--manual-white);
+
+  color: var(--manual-blue-dark);
+
+  border:
+    1px solid
+    var(--manual-line);
+
+  border-radius: 0;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 11.5px;
+
+  letter-spacing: .25px;
+
+  cursor: pointer;
+}
+
+
+.quick-topics button:hover {
+  background: var(--manual-blue-soft);
+
+  border-color: var(--manual-blue);
+}
+
+
+/* ============================================================
+   MANUAL LAYOUT
+   ============================================================ */
+
+.manual-layout {
+  display: grid;
+
+  grid-template-columns:
+    250px
+    minmax(0, 1fr);
+
+  gap: 24px;
+
+  align-items: start;
+}
+
+
+/* ============================================================
+   CONTENTS SIDEBAR
+   ============================================================ */
+
+.contents {
+  position: sticky;
+
+  top: 20px;
+
+  max-height:
+    calc(100vh - 40px);
+
+  overflow-y: auto;
+
+  padding: 16px;
+
+  background: var(--manual-white);
+
+  border:
+    1px solid
+    var(--manual-line);
+}
+
+
+.contents h2 {
+  margin:
+    0 0 10px;
+
+  color: var(--manual-ink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 12px;
+
+  letter-spacing: .8px;
+}
+
+
+.contents a {
+  display: block;
+
+  padding:
+    6px 7px;
+
+  color: var(--manual-muted);
+
+  text-decoration: none;
+
+  font-size: 11.5px;
+
+  line-height: 1.3;
+}
+
+
+.contents a:hover {
+  background:
+    var(--manual-blue-soft);
+
+  color:
+    var(--manual-blue-dark);
+}
+
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+.manual-sections {
+  min-width: 0;
+}
+
+
+.manual-section {
+  margin-bottom: 18px;
+
+  padding: 22px;
+
+  background: var(--manual-white);
+
+  border:
+    1px solid
+    var(--manual-line);
+
+  box-shadow:
+    0 4px 14px
+    rgba(60,58,75,.04);
+}
+
+
+.manual-section.hidden {
+  display: none;
+}
+
+
+.section-number {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: var(--manual-pink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 10.5px;
+
+  font-weight: 600;
+
+  letter-spacing: 1px;
+}
+
+
+.manual-section h2 {
+  margin:
+    0 0 5px;
+
+  color:
+    var(--manual-ink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 20px;
+
+  font-weight: 500;
+
+  letter-spacing: .35px;
+}
+
+
+.section-summary {
+  margin:
+    0 0 18px;
+
+  color:
+    var(--manual-muted);
+
+  font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-size: 17px;
+
+  font-style: italic;
+}
+
+
+.manual-section h3 {
+  margin:
+    20px 0 7px;
+
+  color:
+    var(--manual-blue-dark);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  letter-spacing: .3px;
+}
+
+
+.manual-section p {
+  margin:
+    7px 0;
+
+  color:
+    #525960;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+.manual-section ul,
+.manual-section ol {
+  margin:
+    8px 0 10px 20px;
+
+  padding: 0;
+
+  color:
+    #525960;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+.manual-section li {
+  margin-bottom: 4px;
+}
+
+
+/* ============================================================
+   CALLOUTS
+   ============================================================ */
+
+.tip,
+.warning,
+.system-path,
+.rule {
+  margin:
+    14px 0;
+
+  padding:
+    13px 15px;
+
+  font-size:
+    12.5px;
+
+  line-height: 1.55;
+}
+
+
+.tip {
+  background:
+    var(--manual-blue-soft);
+
+  border-left:
+    4px solid
+    var(--manual-blue);
+}
+
+
+.rule {
+  background:
+    var(--manual-lime-soft);
+
+  border-left:
+    4px solid
+    var(--manual-lime);
+}
+
+
+.warning {
+  background:
+    var(--manual-pink-soft);
+
+  border-left:
+    4px solid
+    var(--manual-pink);
+}
+
+
+.system-path {
+  background:
+    var(--manual-cream);
+
+  border-left:
+    4px solid
+    var(--manual-blue-dark);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  letter-spacing:
+    .2px;
+}
+
+
+/* ============================================================
+   MINI GRID
+   ============================================================ */
+
+.info-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(190px, 1fr)
+    );
+
+  gap: 10px;
+
+  margin: 12px 0;
+}
+
+
+.info-card {
+  padding: 13px;
+
+  background:
+    #FBFCFC;
+
+  border:
+    1px solid
+    var(--manual-line);
+
+  border-top:
+    3px solid
+    var(--manual-blue);
+}
+
+
+.info-card:nth-child(3n+2) {
+  border-top-color:
+    var(--manual-lime);
+}
+
+
+.info-card:nth-child(3n) {
+  border-top-color:
+    var(--manual-pink);
+}
+
+
+.info-card strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color:
+    var(--manual-ink);
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 12px;
+}
+
+
+.info-card span {
+  color:
+    var(--manual-muted);
+
+  font-size: 11.5px;
+
+  line-height: 1.45;
+}
+
+
+/* ============================================================
+   WORKFLOW
+   ============================================================ */
+
+.workflow {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 6px;
+
+  margin: 14px 0;
+}
+
+
+.workflow span {
+  padding:
+    7px 10px;
+
+  background:
+    var(--manual-blue-soft);
+
+  color:
+    var(--manual-blue-dark);
+
+  border:
+    1px solid
+    #D6E5EA;
+
+  font-family:
+    "Oswald",
+    sans-serif;
+
+  font-size: 11px;
+}
+
+
+.workflow b {
+  color:
+    var(--manual-muted);
+
+  font-size: 12px;
+}
+
+
+/* ============================================================
+   EMPTY SEARCH
+   ============================================================ */
+
+.no-results {
+  display: none;
+
+  padding: 30px;
+
+  background:
+    var(--manual-white);
+
+  border:
+    1px solid
+    var(--manual-line);
+
+  color:
+    var(--manual-muted);
+
+  text-align: center;
+}
+
+
+/* ============================================================
+   HIGHLIGHT
+   ============================================================ */
+
+mark.manual-hit {
+  padding:
+    0 2px;
+
+  background:
+    #FFF0A8;
+
+  color:
+    inherit;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  .manual-layout {
+    grid-template-columns:
+      1fr;
+  }
+
+  .contents {
+    position:
+      static;
+
+    max-height:
+      none;
+  }
+
+}
+
+
+@media (max-width: 560px) {
+
+  main {
+    padding:
+      20px 14px 50px;
+  }
+
+  .manual-section {
+    padding:
+      17px;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- Global Heavy Haul Command navigation -->
+
+<header></header>
+
+
+<main>
+
+
+<!-- ==========================================================
+     INTRO
+     ========================================================== -->
+
+<section class="manual-intro">
+
+  <h1>FIELD MANUAL</h1>
+
+  <p>
+    Heavy Haul Command operations guide and dispatch quick reference.
+  </p>
+
+</section>
+
+
+
+<!-- ==========================================================
+     SEARCH
+     ========================================================== -->
+
+<section class="manual-search-wrap">
+
+  <label
+    class="manual-search-label"
+    for="manualSearch">
+
+    SEARCH THE MANUAL
+
+  </label>
+
+
+  <input
+    class="manual-search"
+    id="manualSearch"
+    type="search"
+    autocomplete="off"
+    placeholder="Try: create load, permit, HOS, POD, breakdown, detention, escort, documents..."
+  >
+
+
+  <div class="search-help">
+
+    Search system instructions, procedures, terminology,
+    checklists and dispatcher guidance.
+
+  </div>
+
+
+  <div
+    class="search-count"
+    id="searchCount">
+  </div>
+
+</section>
+
+
+
+<!-- ==========================================================
+     QUICK TOPICS
+     ========================================================== -->
+
+<nav class="quick-topics">
+
+  <button data-search="system">
+    System Guide
+  </button>
+
+  <button data-search="sourcing">
+    Sourcing
+  </button>
+
+  <button data-search="broker">
+    Broker Calls
+  </button>
+
+  <button data-search="HOS">
+    HOS
+  </button>
+
+  <button data-search="permit">
+    Permits
+  </button>
+
+  <button data-search="escort">
+    Escorts
+  </button>
+
+  <button data-search="route">
+    Route
+  </button>
+
+  <button data-search="weigh station">
+    Weigh Stations
+  </button>
+
+  <button data-search="problem">
+    Problems
+  </button>
+
+  <button data-search="POD">
+    POD
+  </button>
+
+  <button data-search="document">
+    Documents
+  </button>
+
+</nav>
+
+
+
+<div class="manual-layout">
+
+
+<!-- ==========================================================
+     TABLE OF CONTENTS
+     ========================================================== -->
+
+<aside class="contents">
+
+  <h2>CONTENTS</h2>
+
+  <a href="#system">
+    01 · Using Heavy Haul Command
+  </a>
+
+  <a href="#before-sourcing">
+    02 · Before Sourcing
+  </a>
+
+  <a href="#screening">
+    03 · Screening a Load
+  </a>
+
+  <a href="#broker">
+    04 · Broker Calls & Negotiation
+  </a>
+
+  <a href="#booking">
+    05 · Booking a Load
+  </a>
+
+  <a href="#hos">
+    06 · HOS & Driver Availability
+  </a>
+
+  <a href="#permits">
+    07 · Permits
+  </a>
+
+  <a href="#escorts">
+    08 · Escorts
+  </a>
+
+  <a href="#route">
+    09 · Route & State Restrictions
+  </a>
+
+  <a href="#predeparture">
+    10 · Pre-Departure
+  </a>
+
+  <a href="#pickup">
+    11 · Pickup
+  </a>
+
+  <a href="#enroute">
+    12 · En Route
+  </a>
+
+  <a href="#weigh">
+    13 · Weigh Stations & Inspections
+  </a>
+
+  <a href="#problems">
+    14 · Problems, Holds & Delays
+  </a>
+
+  <a href="#delivery">
+    15 · Delivery
+  </a>
+
+  <a href="#documents">
+    16 · Documents, Billing & Closeout
+  </a>
+
+  <a href="#redflags">
+    17 · Dispatcher Red Flags
+  </a>
+
+  <a href="#tencs">
+    18 · 10 C's Quick Reference
+  </a>
+
+</aside>
+
+
+
+<!-- ==========================================================
+     MANUAL CONTENT
+     ========================================================== -->
+
+<div class="manual-sections">
+
+
+
+<!-- 01 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="system"
+  data-keywords="system heavy haul command navigation welcome dispatch sourcing fleet command fleet board new load all loads load workspace templates calculators field manual documents calendar state rules route planning">
+
+  <span class="section-number">
+    01
+  </span>
+
+  <h2>
+    Using Heavy Haul Command
+  </h2>
+
+  <p class="section-summary">
+    Where to go in the management system and when to use each workspace.
+  </p>
+
+
+  <h3>Welcome</h3>
+
+  <p>
+    The Welcome page is the starting point after sign-in.
+    Use it to review priorities, continue current work and see
+    recent activity.
+  </p>
+
+
+  <h3>Dispatch</h3>
+
+  <div class="info-grid">
+
+    <div class="info-card">
+      <strong>Fleet Board</strong>
+      <span>
+        Monitor active fleet and load activity. Open a load from
+        here when you need to work on the shipment.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>New Load</strong>
+      <span>
+        Create a new shipment record after the load has been
+        evaluated and is ready to enter into the system.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>All Loads</strong>
+      <span>
+        Search, filter and reopen current or historical load records.
+      </span>
+    </div>
+
+  </div>
+
+
+  <h3>Load Workspace</h3>
+
+  <p>
+    Open a specific load from Fleet Board or All Loads.
+    The Load Workspace is the operational file for that shipment.
+  </p>
+
+  <ul>
+    <li><b>Overview</b> — core load information and status.</li>
+    <li><b>Timeline</b> — important load events and communication.</li>
+    <li><b>Permits</b> — permit requirements and status.</li>
+    <li><b>Escorts</b> — pilot car and escort assignments.</li>
+    <li><b>Checklist</b> — load-specific operational checklist.</li>
+    <li><b>Expenses</b> — load expenses and cost tracking.</li>
+    <li><b>Documents</b> — rate cons, BOLs, PODs, permits, photos and other load files.</li>
+    <li><b>Notes</b> — dispatcher notes for the shipment.</li>
+  </ul>
+
+
+  <h3>Sourcing</h3>
+
+  <div class="info-grid">
+
+    <div class="info-card">
+      <strong>Opportunities</strong>
+      <span>
+        Record or review potential freight opportunities.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Call Queue</strong>
+      <span>
+        Organize broker and carrier calls that need follow-up.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Portals</strong>
+      <span>
+        Open broker, load board and external sourcing resources.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Load Emails</strong>
+      <span>
+        Work with load opportunities received through email.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Templates</strong>
+      <span>
+        Reuse standard documents and open DocuSign when signatures are needed.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Calculators</strong>
+      <span>
+        Use the HOS planning and Dispatch Profit calculators.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Field Manual</strong>
+      <span>
+        Search dispatch procedures, system instructions and quick-reference material.
+      </span>
+    </div>
+
+  </div>
+
+
+  <h3>Fleet Command</h3>
+
+  <ul>
+    <li><b>Fleet Setup</b> — carriers, drivers, trucks, trailers and fleet information.</li>
+    <li><b>Route Planning</b> — route planning workspace.</li>
+    <li><b>State Rules</b> — state-specific heavy haul information.</li>
+    <li><b>Calendar</b> — appointments, reminders and scheduled operations.</li>
+  </ul>
+
+
+  <h3>Common System Workflows</h3>
+
+
+  <div class="system-path">
+    BOOK A LOAD:
+    Sourcing → Evaluate → Calculators if needed →
+    New Load → Load Workspace → Fleet Board
+  </div>
+
+
+  <div class="system-path">
+    SIGNED DOCUMENT:
+    Templates → DocuSign → Download signed PDF →
+    Load Workspace → Documents → Upload
+  </div>
+
+
+  <div class="system-path">
+    LOAD PROBLEM:
+    Fleet Board → Open Load →
+    Timeline / Notes → Permits or Escorts if affected →
+    Document updates
+  </div>
+
+</section>
+
+
+
+<!-- 02 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="before-sourcing"
+  data-keywords="before sourcing carrier profile preferences equipment lanes rates approval availability trailer weight width avoided states">
+
+  <span class="section-number">
+    02
+  </span>
+
+  <h2>
+    Before Sourcing
+  </h2>
+
+  <p class="section-summary">
+    Know the carrier before looking for freight.
+  </p>
+
+
+  <p>
+    Before searching for a load, know what the carrier can and
+    will haul. This prevents wasted calls and bad bookings.
+  </p>
+
+
+  <h3>Know the Carrier</h3>
+
+  <ul>
+    <li>Truck and trailer type.</li>
+    <li>Trailer capacity.</li>
+    <li>Preferred freight.</li>
+    <li>Freight the carrier refuses.</li>
+    <li>Maximum preferred dimensions and weight.</li>
+    <li>Preferred lanes and states.</li>
+    <li>States or regions to avoid.</li>
+    <li>Minimum load revenue.</li>
+    <li>Target rate per mile.</li>
+    <li>Payment-term preferences.</li>
+    <li>Who normally handles permits.</li>
+    <li>Who normally handles escorts.</li>
+    <li>Whether carrier approval is required before booking.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Fleet Command → Fleet Setup
+  </div>
+
+</section>
+
+
+
+<!-- 03 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="screening"
+  data-keywords="screening load evaluate profitability deadhead rate per mile permit escort toll fuel market demand return freight dimensions equipment availability">
+
+  <span class="section-number">
+    03
+  </span>
+
+  <h2>
+    Screening a Load
+  </h2>
+
+  <p class="section-summary">
+    Decide whether an opportunity deserves a broker call.
+  </p>
+
+
+  <h3>Initial Screen</h3>
+
+  <ul>
+    <li>Commodity.</li>
+    <li>Loaded dimensions.</li>
+    <li>Gross weight.</li>
+    <li>Required equipment.</li>
+    <li>Pickup and delivery locations.</li>
+    <li>Pickup and delivery windows.</li>
+    <li>Deadhead to pickup.</li>
+    <li>Driver availability and legal hours.</li>
+    <li>Likely permits and escorts.</li>
+    <li>Rate and payment terms.</li>
+  </ul>
+
+
+  <h3>Profitability Is More Than RPM</h3>
+
+  <p>
+    Consider deadhead, permit costs, escort costs, tolls,
+    fuel, complexity of the move, driver availability,
+    market conditions and possible return freight.
+  </p>
+
+
+  <div class="workflow">
+
+    <span>Screen</span>
+    <b>→</b>
+    <span>Estimate Profit</span>
+    <b>→</b>
+    <span>Negotiate</span>
+    <b>→</b>
+    <span>Compare to Carrier Requirements</span>
+    <b>→</b>
+    <span>Book or Pass</span>
+
+  </div>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Sourcing → Opportunities → Calculators
+  </div>
+
+</section>
+
+
+
+<!-- 04 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="broker"
+  data-keywords="broker call negotiation rate pickup commodity dimensions weight permits escorts detention layover TONU rate confirmation payment terms">
+
+  <span class="section-number">
+    04
+  </span>
+
+  <h2>
+    Broker Calls & Negotiation
+  </h2>
+
+  <p class="section-summary">
+    Gather the real scope of the move before agreeing to the rate.
+  </p>
+
+
+  <h3>Confirm These Items</h3>
+
+  <ul>
+    <li>Is the load still available?</li>
+    <li>Pickup location and window.</li>
+    <li>Delivery location and appointment.</li>
+    <li>Commodity.</li>
+    <li>Length, width and height.</li>
+    <li>Gross weight.</li>
+    <li>Required equipment.</li>
+    <li>Who handles permits?</li>
+    <li>Who handles escorts?</li>
+    <li>Detention terms.</li>
+    <li>Layover terms.</li>
+    <li>TONU terms.</li>
+    <li>Payment terms.</li>
+    <li>Rate.</li>
+  </ul>
+
+
+  <h3>Negotiation</h3>
+
+  <p>
+    Understand the scope first. Negotiate after you know the
+    freight, equipment requirements, dimensions, permitting and
+    escort responsibilities.
+  </p>
+
+
+  <div class="tip">
+    Useful phrasing:
+    “What is the best you can do on the rate?”
+    or
+    “We’re going to need $___ to make this work.”
+  </div>
+
+
+  <div class="warning">
+    Do not accept a rate simply because the RPM looks attractive.
+    Heavy haul costs and operational complexity can change the value
+    of the load significantly.
+  </div>
+
+</section>
+
+
+
+<!-- 05 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="booking"
+  data-keywords="booking rate confirmation rate con carrier approval agreement detention layover tonu new load create load documents signed">
+
+  <span class="section-number">
+    05
+  </span>
+
+  <h2>
+    Booking a Load
+  </h2>
+
+  <p class="section-summary">
+    Turn the broker agreement into a controlled operational load file.
+  </p>
+
+
+  <h3>Before Booking</h3>
+
+  <ul>
+    <li>Confirm the carrier accepts the load when approval is required.</li>
+    <li>Verify the equipment is appropriate.</li>
+    <li>Verify dimensions and weight.</li>
+    <li>Confirm pickup and delivery appointments.</li>
+    <li>Confirm permit responsibility.</li>
+    <li>Confirm escort responsibility.</li>
+    <li>Review detention, layover and TONU terms.</li>
+    <li>Make sure the Rate Confirmation matches the verbal agreement.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Dispatch → New Load
+  </div>
+
+
+  <h3>After the Rate Confirmation</h3>
+
+  <p>
+    Save the signed or final Rate Confirmation to the load's
+    Documents tab so it remains part of that shipment's record.
+  </p>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Documents
+  </div>
+
+</section>
+
+
+
+<!-- 06 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="hos"
+  data-keywords="HOS hours service ELD driver availability legal hours clock favorable conditional unfavorable pickup">
+
+  <span class="section-number">
+    06
+  </span>
+
+  <h2>
+    HOS & Driver Availability
+  </h2>
+
+  <p class="section-summary">
+    Use legal availability, appointment timing and real-world travel demands together.
+  </p>
+
+
+  <h3>Planning Mindset</h3>
+
+  <ol>
+    <li>Ask driver availability first.</li>
+    <li>Review the driver's current ELD clocks.</li>
+    <li>Compare hours to deadhead and pickup timing.</li>
+    <li>Allow for loading, securement, traffic and delays.</li>
+    <li>Negotiate realistic appointments.</li>
+    <li>Never pressure the driver to violate HOS.</li>
+  </ol>
+
+
+  <div class="info-grid">
+
+    <div class="info-card">
+      <strong>7–11 Hours</strong>
+      <span>
+        Generally favorable for same-day pickup,
+        depending on deadhead and appointment timing.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>4–7 Hours</strong>
+      <span>
+        Conditional. Evaluate distance, loading time,
+        traffic and appointment windows carefully.
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>Under 4 Hours</strong>
+      <span>
+        Generally unfavorable for same-day pickup.
+        Look for a later appointment or post-reset option.
+      </span>
+    </div>
+
+  </div>
+
+
+  <div class="rule">
+    The ELD is the operational source of truth.
+    The HOS calculator is a planning aid, not a replacement for
+    the driver's actual logs.
+  </div>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Sourcing → Calculators → HOS Calculator
+  </div>
+
+</section>
+
+
+
+<!-- 07 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="permits"
+  data-keywords="permit permits oversize overweight permit responsibility state restrictions issued route legal travel window">
+
+  <span class="section-number">
+    07
+  </span>
+
+  <h2>
+    Permits
+  </h2>
+
+  <p class="section-summary">
+    First determine who owns the responsibility, then track it until the load is legal to move.
+  </p>
+
+
+  <h3>First Question</h3>
+
+  <div class="rule">
+    Who is responsible for obtaining the permits for this move?
+  </div>
+
+
+  <p>
+    Responsibility may belong to the carrier, broker,
+    dispatcher, permit service or another authorized party.
+    Never assume.
+  </p>
+
+
+  <h3>Track</h3>
+
+  <ul>
+    <li>States requiring permits.</li>
+    <li>Permit application status.</li>
+    <li>Permit issuance.</li>
+    <li>Approved route.</li>
+    <li>Travel days and hours.</li>
+    <li>Curfews or restricted travel periods.</li>
+    <li>Escort requirements.</li>
+    <li>Special instructions.</li>
+    <li>Permit expiration or travel window.</li>
+  </ul>
+
+
+  <div class="warning">
+    A route change on an oversize load may require permit review
+    or revision. Do not casually reroute a permitted load.
+  </div>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Permits
+  </div>
+
+</section>
+
+
+
+<!-- 08 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="escorts"
+  data-keywords="escort pilot car high pole front rear police utility meeting location driver phone schedule escort company">
+
+  <span class="section-number">
+    08
+  </span>
+
+  <h2>
+    Escorts
+  </h2>
+
+  <p class="section-summary">
+    Determine who is coordinating the escorts and keep every party on the same schedule.
+  </p>
+
+
+  <h3>Possible Requirements</h3>
+
+  <ul>
+    <li>No escort.</li>
+    <li>Front escort.</li>
+    <li>Rear escort.</li>
+    <li>Front and rear escorts.</li>
+    <li>High-pole escort.</li>
+    <li>Police escort.</li>
+    <li>Utility escort.</li>
+  </ul>
+
+
+  <h3>Before Calling an Escort Company</h3>
+
+  <ul>
+    <li>Commodity.</li>
+    <li>Length, width and height.</li>
+    <li>Gross weight.</li>
+    <li>Pickup and delivery locations.</li>
+    <li>States traveled.</li>
+    <li>Planned route.</li>
+    <li>Travel dates.</li>
+    <li>Driver name and phone.</li>
+    <li>Truck number if available.</li>
+  </ul>
+
+
+  <h3>Confirm</h3>
+
+  <ul>
+    <li>Number and type of escort vehicles.</li>
+    <li>Availability.</li>
+    <li>Escort driver's name and phone.</li>
+    <li>Meeting location.</li>
+    <li>Meeting time.</li>
+    <li>Pricing.</li>
+    <li>Any route concerns.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Escorts
+  </div>
+
+</section>
+
+
+
+<!-- 09 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="route"
+  data-keywords="route planning states restrictions bridge tunnel construction curfew weekend holiday permitted route detour">
+
+  <span class="section-number">
+    09
+  </span>
+
+  <h2>
+    Route & State Restrictions
+  </h2>
+
+  <p class="section-summary">
+    Heavy haul routing is a compliance issue, not just a navigation issue.
+  </p>
+
+
+  <h3>Review</h3>
+
+  <ul>
+    <li>Permit-approved route.</li>
+    <li>Bridge restrictions.</li>
+    <li>Tunnel restrictions.</li>
+    <li>Construction.</li>
+    <li>Height and clearance concerns.</li>
+    <li>Weight restrictions.</li>
+    <li>Travel-hour restrictions.</li>
+    <li>Curfews.</li>
+    <li>Weekend and holiday restrictions.</li>
+    <li>Escort requirements by state.</li>
+  </ul>
+
+
+  <div class="warning">
+    If the permitted route becomes unavailable, verify the legal
+    alternate route before instructing the driver to move.
+  </div>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Fleet Command → Route Planning / State Rules
+  </div>
+
+</section>
+
+
+
+<!-- 10 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="predeparture"
+  data-keywords="pre departure checklist permits cab banners flags lights chains securement driver dispatch escorts route">
+
+  <span class="section-number">
+    10
+  </span>
+
+  <h2>
+    Pre-Departure
+  </h2>
+
+  <p class="section-summary">
+    Make sure the load, driver and paperwork are ready before travel begins.
+  </p>
+
+
+  <ul>
+    <li>Driver accepted the load.</li>
+    <li>Driver has sufficient legal hours.</li>
+    <li>Pickup information is correct.</li>
+    <li>Driver has shipper contact/check-in information.</li>
+    <li>Required permits are available.</li>
+    <li>Driver understands permit restrictions.</li>
+    <li>Escorts are confirmed.</li>
+    <li>Escort contacts have been exchanged.</li>
+    <li>Meeting locations and times are confirmed.</li>
+    <li>Required banners, flags or warning devices are ready.</li>
+    <li>Load securement is confirmed.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Checklist
+  </div>
+
+</section>
+
+
+
+<!-- 11 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="pickup"
+  data-keywords="pickup shipper loading appointment check in gate PPE BOL bill lading loading delay detention">
+
+  <span class="section-number">
+    11
+  </span>
+
+  <h2>
+    Pickup
+  </h2>
+
+  <p class="section-summary">
+    Confirm the driver gets loaded, receives the required paperwork and can legally begin the move.
+  </p>
+
+
+  <h3>Before Arrival</h3>
+
+  <ul>
+    <li>Confirm pickup appointment.</li>
+    <li>Confirm freight is expected to be ready.</li>
+    <li>Confirm gate/check-in instructions.</li>
+    <li>Communicate PPE or site requirements.</li>
+    <li>Confirm loading instructions.</li>
+  </ul>
+
+
+  <h3>After Loading</h3>
+
+  <ul>
+    <li>Confirm successful pickup.</li>
+    <li>Confirm cargo dimensions if they changed.</li>
+    <li>Confirm load is secured.</li>
+    <li>Confirm BOL and required paperwork are received.</li>
+    <li>Confirm permits are available.</li>
+    <li>Confirm escort coordination.</li>
+    <li>Update the broker when appropriate.</li>
+  </ul>
+
+
+  <div class="warning">
+    If loading takes longer than expected, document the waiting time
+    and review detention terms.
+  </div>
+
+</section>
+
+
+
+<!-- 12 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="enroute"
+  data-keywords="en route transit check in ETA driver broker permitted route parking fuel roadside weather delay communication">
+
+  <span class="section-number">
+    12
+  </span>
+
+  <h2>
+    En Route
+  </h2>
+
+  <p class="section-summary">
+    Maintain useful communication while allowing the driver to focus on safe operation.
+  </p>
+
+
+  <h3>Driver Support</h3>
+
+  <ul>
+    <li>Check progress at reasonable intervals.</li>
+    <li>Confirm the driver remains on the permitted route.</li>
+    <li>Relay important broker updates.</li>
+    <li>Help coordinate safe parking if requested.</li>
+    <li>Assist with locating fuel, repairs or tire service if requested.</li>
+    <li>Coordinate roadside assistance when requested by the carrier.</li>
+    <li>Remind the driver of appointments or escort meeting points.</li>
+  </ul>
+
+
+  <h3>Broker Communication</h3>
+
+  <ul>
+    <li>Confirm pickup.</li>
+    <li>Provide meaningful status updates.</li>
+    <li>Report significant delays promptly.</li>
+    <li>Update ETA when needed.</li>
+    <li>Report mechanical or weather delays.</li>
+    <li>Confirm when travel resumes.</li>
+    <li>Confirm arrival and delivery.</li>
+  </ul>
+
+
+  <div class="tip">
+    Do not overwhelm the driver with unnecessary calls.
+    Communicate when information is operationally useful.
+  </div>
+
+</section>
+
+
+
+<!-- 13 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="weigh"
+  data-keywords="weigh station inspection scale ticket roadside inspection stop officer documents permits weight citation">
+
+  <span class="section-number">
+    13
+  </span>
+
+  <h2>
+    Weigh Stations & Inspections
+  </h2>
+
+  <p class="section-summary">
+    Treat a weigh-station or inspection stop as an operational event that may affect schedule and compliance.
+  </p>
+
+
+  <h3>If the Driver Is Stopped</h3>
+
+  <ol>
+    <li>Confirm the driver is safely stopped.</li>
+    <li>Ask what type of stop or inspection is occurring.</li>
+    <li>Do not interfere with the driver's interaction with enforcement.</li>
+    <li>Confirm whether paperwork, permit or weight issues were identified.</li>
+    <li>Document meaningful information in the load record.</li>
+    <li>Notify the carrier and broker if the stop affects the schedule.</li>
+    <li>Update ETA when necessary.</li>
+  </ol>
+
+
+  <h3>Possible Documents to Retain</h3>
+
+  <ul>
+    <li>Scale tickets.</li>
+    <li>Inspection paperwork.</li>
+    <li>Permit-related documents.</li>
+    <li>Receipts.</li>
+    <li>Photos when appropriate.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Timeline / Notes / Documents
+  </div>
+
+</section>
+
+
+
+<!-- 14 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="problems"
+  data-keywords="problem hold delay breakdown accident road closure weather escort missing loading detention mechanical roadside repair">
+
+  <span class="section-number">
+    14
+  </span>
+
+  <h2>
+    Problems, Holds & Delays
+  </h2>
+
+  <p class="section-summary">
+    The dispatcher coordinates the response, communication and revised plan.
+  </p>
+
+
+  <h3>Use This Mental Checklist</h3>
+
+  <ol>
+    <li>Is everyone safe?</li>
+    <li>Who needs to know?</li>
+    <li>What information do they need?</li>
+    <li>What resource or service can be coordinated?</li>
+    <li>What is the updated plan?</li>
+  </ol>
+
+
+  <h3>Road Closure</h3>
+
+  <ul>
+    <li>Keep the driver on the legal/permitted route unless an alternate route is approved.</li>
+    <li>Contact permit support if a route revision may be necessary.</li>
+    <li>Notify the broker.</li>
+    <li>Update the receiver and ETA if needed.</li>
+  </ul>
+
+
+  <h3>Mechanical Breakdown</h3>
+
+  <ul>
+    <li>Confirm the driver is in a safe location.</li>
+    <li>Notify the broker if schedule is affected.</li>
+    <li>Help locate service if the carrier requests assistance.</li>
+    <li>Track repair progress.</li>
+    <li>Update ETA.</li>
+  </ul>
+
+
+  <h3>Weather Delay</h3>
+
+  <ul>
+    <li>Do not pressure the driver to continue unsafely.</li>
+    <li>Notify the broker.</li>
+    <li>Review permit/travel restrictions if needed.</li>
+    <li>Coordinate safe waiting/parking.</li>
+    <li>Update ETA.</li>
+  </ul>
+
+
+  <h3>Escort Does Not Arrive</h3>
+
+  <ul>
+    <li>Contact the escort company.</li>
+    <li>Verify meeting location and time.</li>
+    <li>Notify the broker when the delay affects the load.</li>
+    <li>Coordinate the revised schedule.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Fleet Board → Open Load → Timeline / Notes
+  </div>
+
+</section>
+
+
+
+<!-- 15 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="delivery"
+  data-keywords="delivery receiver unloading POD proof delivery appointment signed paperwork completion">
+
+  <span class="section-number">
+    15
+  </span>
+
+  <h2>
+    Delivery
+  </h2>
+
+  <p class="section-summary">
+    Confirm successful delivery and obtain the paperwork needed to close the load.
+  </p>
+
+
+  <h3>Before Delivery</h3>
+
+  <ul>
+    <li>Confirm delivery appointment.</li>
+    <li>Confirm receiver/check-in instructions.</li>
+    <li>Confirm unloading requirements.</li>
+    <li>Notify broker of significant schedule changes.</li>
+  </ul>
+
+
+  <h3>After Delivery</h3>
+
+  <ul>
+    <li>Confirm the freight was delivered.</li>
+    <li>Obtain signed POD.</li>
+    <li>Obtain other required delivery documents.</li>
+    <li>Document detention or unloading delays.</li>
+    <li>Notify the broker.</li>
+  </ul>
+
+
+  <div class="rule">
+    The operational move may be over, but the dispatch file is not
+    complete until the required paperwork has been received.
+  </div>
+
+</section>
+
+
+
+<!-- 16 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="documents"
+  data-keywords="documents paperwork POD BOL bill lading rate confirmation signed docusign permits scale tickets invoice billing upload print resend send">
+
+  <span class="section-number">
+    16
+  </span>
+
+  <h2>
+    Documents, Billing & Closeout
+  </h2>
+
+  <p class="section-summary">
+    Keep the load record complete enough to support billing, compliance and later review.
+  </p>
+
+
+  <h3>Common Load Documents</h3>
+
+  <ul>
+    <li>Rate Confirmation.</li>
+    <li>BOL.</li>
+    <li>Signed POD.</li>
+    <li>Permits.</li>
+    <li>Escort confirmations.</li>
+    <li>Scale tickets.</li>
+    <li>Inspection paperwork.</li>
+    <li>Receipts.</li>
+    <li>Photos.</li>
+    <li>Invoices.</li>
+    <li>Other broker/carrier paperwork.</li>
+  </ul>
+
+
+  <h3>Signed Documents</h3>
+
+  <div class="system-path">
+    Templates → DocuSign → Download completed signed PDF →
+    Load Workspace → Documents → Upload
+  </div>
+
+
+  <h3>Closeout</h3>
+
+  <ul>
+    <li>Confirm POD received.</li>
+    <li>Confirm all required paperwork is present.</li>
+    <li>Document detention or accessorial charges.</li>
+    <li>Submit documents for billing.</li>
+    <li>Confirm the broker has the required paperwork.</li>
+    <li>Update the load status appropriately.</li>
+  </ul>
+
+
+  <div class="system-path">
+    SYSTEM:
+    Load Workspace → Documents / Expenses / Notes
+  </div>
+
+</section>
+
+
+
+<!-- 17 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="redflags"
+  data-keywords="red flags stop verify missing dimensions weight trailer permits HOS appointment rate confirmation escort conflict">
+
+  <span class="section-number">
+    17
+  </span>
+
+  <h2>
+    Dispatcher Red Flags
+  </h2>
+
+  <p class="section-summary">
+    Stop and verify before proceeding when critical information is missing or conflicts.
+  </p>
+
+
+  <div class="warning">
+
+    <ul>
+      <li>Missing dimensions.</li>
+      <li>Missing weight.</li>
+      <li>Wrong trailer for the load.</li>
+      <li>No permit plan for an oversize load.</li>
+      <li>Driver unavailable.</li>
+      <li>Driver lacks sufficient legal hours.</li>
+      <li>Pickup or delivery cannot realistically be met.</li>
+      <li>Rate Confirmation differs from negotiated terms.</li>
+      <li>Permit restrictions conflict with the schedule.</li>
+      <li>Required escorts are not arranged.</li>
+      <li>A route change is proposed without permit review.</li>
+    </ul>
+
+  </div>
+
+</section>
+
+
+
+<!-- 18 ====================================================== -->
+
+<section
+  class="manual-section"
+  id="tencs"
+  data-keywords="10 C ten c carrier cargo contract clock compliance coordination communication conditions confirmation completion quick reference">
+
+  <span class="section-number">
+    18
+  </span>
+
+  <h2>
+    The 10 C's of Heavy Haul Dispatch
+  </h2>
+
+  <p class="section-summary">
+    A quick mental check before and during every heavy haul move.
+  </p>
+
+
+  <div class="info-grid">
+
+    <div class="info-card">
+      <strong>1 · Carrier</strong>
+      <span>
+        Is the correct carrier, truck and trailer assigned?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>2 · Cargo</strong>
+      <span>
+        Do you know the commodity, dimensions and weight?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>3 · Contract</strong>
+      <span>
+        Does the Rate Confirmation match the agreement?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>4 · Clock</strong>
+      <span>
+        Does the driver have sufficient legal HOS?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>5 · Compliance</strong>
+      <span>
+        Are permits and regulations addressed?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>6 · Coordination</strong>
+      <span>
+        Are escorts and appointments confirmed?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>7 · Communication</strong>
+      <span>
+        Have the driver, broker and facilities been informed?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>8 · Conditions</strong>
+      <span>
+        Have weather, construction and route conditions been considered?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>9 · Confirmation</strong>
+      <span>
+        Is the driver prepared before moving?
+      </span>
+    </div>
+
+    <div class="info-card">
+      <strong>10 · Completion</strong>
+      <span>
+        Was delivery confirmed and the required paperwork submitted?
+      </span>
+    </div>
+
+  </div>
+
+</section>
+
+
+
+<!-- ==========================================================
+     NO RESULTS
+     ========================================================== -->
+
+<div
+  class="no-results"
+  id="noResults">
+
+  No Field Manual sections matched that search.
+
+</div>
+
+
+</div>
+
+</div>
+
+</main>
+
+
+
+<!-- ==========================================================
+     SUPABASE + GLOBAL NAV
+     ========================================================== -->
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+<script src="nav.js"></script>
+
+
+<script>
+
+/* ============================================================
+   GLOBAL NAVIGATION
+   ============================================================ */
+
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+let db =
+  null;
+
+
+async function startPage() {
+
+
+  if (
+    typeof window.supabase ===
+    'undefined'
+  ) {
+
+    return;
+
+  }
+
+
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+
+  const session =
+    await db.auth.getSession();
+
+
+  if (
+    !session.data.session
+  ) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  await buildNav(
+    db,
+    'Field Manual'
+  );
+
+}
+
+
+startPage();
+
+
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+
+const searchInput =
+  document.getElementById(
+    'manualSearch'
+  );
+
+
+const sections =
+  Array.from(
+    document.querySelectorAll(
+      '.manual-section'
+    )
+  );
+
+
+const searchCount =
+  document.getElementById(
+    'searchCount'
+  );
+
+
+const noResults =
+  document.getElementById(
+    'noResults'
+  );
+
+
+
+function normalize(text) {
+
+  return String(
+    text || ''
+  )
+  .toLowerCase()
+  .replace(
+    /\s+/g,
+    ' '
+  )
+  .trim();
+
+}
+
+
+
+function clearHighlights() {
+
+  document
+    .querySelectorAll(
+      'mark.manual-hit'
+    )
+    .forEach(
+      mark => {
+
+        const parent =
+          mark.parentNode;
+
+
+        parent.replaceChild(
+          document.createTextNode(
+            mark.textContent
+          ),
+          mark
+        );
+
+
+        parent.normalize();
+
+      }
+    );
+
+}
+
+
+
+function highlightText(
+  root,
+  term
+) {
+
+  if (
+    !term ||
+    term.length < 2
+  ) {
+
+    return;
+
+  }
+
+
+  const walker =
+    document.createTreeWalker(
+
+      root,
+
+      NodeFilter.SHOW_TEXT,
+
+      {
+        acceptNode(node) {
+
+          if (
+            !node.nodeValue.trim()
+          ) {
+
+            return (
+              NodeFilter.FILTER_REJECT
+            );
+
+          }
+
+
+          if (
+            node.parentElement &&
+            (
+              node.parentElement.tagName ===
+              'SCRIPT' ||
+              node.parentElement.tagName ===
+              'STYLE' ||
+              node.parentElement.tagName ===
+              'MARK'
+            )
+          ) {
+
+            return (
+              NodeFilter.FILTER_REJECT
+            );
+
+          }
+
+
+          return (
+            NodeFilter.FILTER_ACCEPT
+          );
+
+        }
+      }
+
+    );
+
+
+  const nodes =
+    [];
+
+
+  while (
+    walker.nextNode()
+  ) {
+
+    nodes.push(
+      walker.currentNode
+    );
+
+  }
+
+
+  const escaped =
+    term.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
+
+
+  const regex =
+    new RegExp(
+      '(' +
+      escaped +
+      ')',
+      'gi'
+    );
+
+
+  nodes.forEach(
+    node => {
+
+
+      if (
+        !regex.test(
+          node.nodeValue
+        )
+      ) {
+
+        regex.lastIndex =
+          0;
+
+        return;
+
+      }
+
+
+      regex.lastIndex =
+        0;
+
+
+      const span =
+        document.createElement(
+          'span'
+        );
+
+
+      span.innerHTML =
+
+        node.nodeValue.replace(
+
+          regex,
+
+          '<mark class="manual-hit">$1</mark>'
+
+        );
+
+
+      node.parentNode.replaceChild(
+        span,
+        node
+      );
+
+    }
+  );
+
+}
+
+
+
+function runSearch() {
+
+
+  clearHighlights();
+
+
+  const raw =
+    searchInput.value.trim();
+
+
+  const query =
+    normalize(raw);
+
+
+
+  if (!query) {
+
+
+    sections.forEach(
+      section => {
+
+        section.classList.remove(
+          'hidden'
+        );
+
+      }
+    );
+
+
+    searchCount.textContent =
+      '';
+
+
+    noResults.style.display =
+      'none';
+
+
+    return;
+
+  }
+
+
+
+  const terms =
+    query.split(' ')
+      .filter(Boolean);
+
+
+
+  let matches =
+    0;
+
+
+
+  sections.forEach(
+    section => {
+
+
+      const searchable =
+
+        normalize(
+          section.innerText +
+          ' ' +
+          (
+            section.dataset.keywords ||
+            ''
+          )
+        );
+
+
+      const matched =
+        terms.every(
+          term =>
+            searchable.includes(
+              term
+            )
+        );
+
+
+      section.classList.toggle(
+        'hidden',
+        !matched
+      );
+
+
+      if (
+        matched
+      ) {
+
+        matches++;
+
+
+        if (
+          raw.length >= 2
+        ) {
+
+          highlightText(
+            section,
+            raw
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+
+
+  searchCount.textContent =
+
+    matches === 1
+
+      ? '1 section found'
+
+      : matches +
+        ' sections found';
+
+
+
+  noResults.style.display =
+
+    matches === 0
+
+      ? 'block'
+
+      : 'none';
+
+}
+
+
+
+searchInput.addEventListener(
+  'input',
+  runSearch
+);
+
+
+
+/* ============================================================
+   QUICK TOPICS
+   ============================================================ */
+
+document
+  .querySelectorAll(
+    '.quick-topics button'
+  )
+  .forEach(
+    button => {
+
+
+      button.addEventListener(
+        'click',
+        () => {
+
+
+          searchInput.value =
+            button.dataset.search;
+
+
+          runSearch();
+
+
+          searchInput.scrollIntoView(
+            {
+              behavior:
+                'smooth',
+
+              block:
+                'center'
+            }
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+
+/* ============================================================
+   CLEAR SEARCH WITH ESC
+   ============================================================ */
+
+searchInput.addEventListener(
+  'keydown',
+  event => {
+
+
+    if (
+      event.key ===
+      'Escape'
+    ) {
+
+      searchInput.value =
+        '';
+
+
+      runSearch();
+
+    }
+
+  }
+);
+
+
+</script>
+
+
+</body>
+
+</html>
