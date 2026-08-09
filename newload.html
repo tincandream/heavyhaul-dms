@@ -254,16 +254,15 @@
      Matches the All Loads summary tile structure and proportions.
      ========================================================== */
 
-  .tiles {
-    display:grid;
-    grid-template-columns:
-      repeat(
-        auto-fit,
-        minmax(140px, 1fr)
-      );
-    gap:10px;
-    margin-bottom:16px;
-  }
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  max-width: none;
+  gap: 10px;
+  margin: 0 0 16px 0;
+  box-sizing: border-box;
+}
 
   .tile {
     padding:12px 14px;
