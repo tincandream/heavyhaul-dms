@@ -646,6 +646,38 @@
       font-size: 12px;
     }
 
+    .operations-primary {
+      color: #3E4B51;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .operations-identifiers {
+      margin-top: 4px;
+      color: #68757B;
+      font-size: 10.5px;
+      line-height: 1.5;
+    }
+
+    .operations-identifiers strong {
+      color: #3E4B51;
+      font-weight: 600;
+    }
+
+    .operations-location {
+      margin-top: 3px;
+      color: #6B92A5;
+      font-size: 10.5px;
+    }
+
+    .operations-link {
+      display: inline-block;
+      margin-top: 5px;
+      color: #6B92A5;
+      font-size: 10.5px;
+      text-decoration: none;
+    }
+
 
 
     /* =========================================================
@@ -1580,233 +1612,532 @@
     async function loadRecentActivity() {
 
       const panel =
-        document.getElementById(
-          'recentActivity'
-        );
+        document.getElementById('recentActivity');
 
       try {
 
         let query =
           db
             .from('events')
-            .select(
-              'created_at,event_type,subject,body,load_id'
-            )
-            .order(
-              'created_at',
-              {
-                ascending: false
-              }
-            )
+            .select('created_at,event_type,subject,body,load_id')
+            .order('created_at', { ascending: false })
             .limit(12);
 
         if (TENANT_ID) {
-          query =
-            query.eq(
-              'tenant_id',
-              TENANT_ID
-            );
+          query = query.eq('tenant_id', TENANT_ID);
         }
 
-        const result =
-          await query;
+        const result = await query;
 
         if (
           result.error ||
           !result.data ||
           result.data.length === 0
         ) {
-
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'No recent operations activity yet.' +
-            '</div>';
-
+            '<div class="activity-empty">No recent operations activity yet.</div>';
           return;
         }
 
         const loadIds =
-          [
-            ...new Set(
-              result.data
-                .map(item => item.load_id)
-                .filter(Boolean)
-            )
-          ];
+          [...new Set(
+            result.data
+              .map(item => item.load_id)
+              .filter(Boolean)
+          )];
 
-        let loadMap =
-          {};
+        let loadMap = {};
+        let checkinMap = {};
 
         if (loadIds.length) {
 
+          /*
+           * Loads are intentionally fetched with select('*') here.
+           * That lets the Welcome page use the driver/truck foreign-key
+           * names already present in your live schema without assuming
+           * extra display columns on the loads table.
+           */
           const loadResult =
             await db
               .from('loads')
-              .select(
-                'id,load_number,status,origin_city,origin_state,destination_city,destination_state,dest_city,dest_state'
-              )
-              .in(
-                'id',
-                loadIds
-              );
+              .select('*')
+              .in('id', loadIds);
 
-          if (
-            !loadResult.error &&
-            loadResult.data
-          ) {
-
+          if (!loadResult.error && loadResult.data) {
             loadMap =
               Object.fromEntries(
-                loadResult.data.map(
-                  item => [item.id, item]
-                )
+                loadResult.data.map(item => [item.id, item])
               );
-
           }
 
+          /*
+           * Latest known check-in per load.
+           * Your confirmed check_ins schema includes:
+           * load_id, driver_id, occurred_at, location_text, state,
+           * eta, hos_remaining_min and note.
+           */
+          const checkinResult =
+            await db
+              .from('check_ins')
+              .select(
+                'load_id,driver_id,occurred_at,location_text,state,eta,hos_remaining_min,note'
+              )
+              .in('load_id', loadIds)
+              .order('occurred_at', { ascending: false });
+
+          if (!checkinResult.error && checkinResult.data) {
+            checkinResult.data.forEach(item => {
+              if (!checkinMap[item.load_id]) {
+                checkinMap[item.load_id] = item;
+              }
+            });
+          }
+        }
+
+        /*
+         * Collect driver IDs from both the load and the latest check-in.
+         * Different pages in the system have evolved over time, so we
+         * accept the common load driver-key variants while keeping the
+         * confirmed check_ins.driver_id as the strongest source.
+         */
+        const driverIds =
+          [...new Set(
+            loadIds
+              .map(loadId => {
+                const load = loadMap[loadId] || {};
+                const checkin = checkinMap[loadId] || {};
+
+                return (
+                  checkin.driver_id ||
+                  load.driver_id ||
+                  load.assigned_driver_id ||
+                  null
+                );
+              })
+              .filter(Boolean)
+          )];
+
+        let driverMap = {};
+
+        if (driverIds.length) {
+          const driverResult =
+            await db
+              .from('drivers')
+              .select('*')
+              .in('id', driverIds);
+
+          if (!driverResult.error && driverResult.data) {
+            driverMap =
+              Object.fromEntries(
+                driverResult.data.map(item => [item.id, item])
+              );
+          }
+        }
+
+        /*
+         * Collect truck IDs from the load. We try the truck and vehicle
+         * tables separately so a missing table never breaks the timeline.
+         */
+        const truckIds =
+          [...new Set(
+            loadIds
+              .map(loadId => {
+                const load = loadMap[loadId] || {};
+
+                return (
+                  load.truck_id ||
+                  load.vehicle_id ||
+                  load.assigned_truck_id ||
+                  null
+                );
+              })
+              .filter(Boolean)
+          )];
+
+        let truckMap = {};
+
+        if (truckIds.length) {
+
+          try {
+            const truckResult =
+              await db
+                .from('trucks')
+                .select('*')
+                .in('id', truckIds);
+
+            if (!truckResult.error && truckResult.data) {
+              truckMap =
+                Object.fromEntries(
+                  truckResult.data.map(item => [item.id, item])
+                );
+            }
+          }
+          catch (error) {
+            console.warn('Welcome operations trucks:', error);
+          }
+
+          if (!Object.keys(truckMap).length) {
+            try {
+              const vehicleResult =
+                await db
+                  .from('vehicles')
+                  .select('*')
+                  .in('id', truckIds);
+
+              if (!vehicleResult.error && vehicleResult.data) {
+                truckMap =
+                  Object.fromEntries(
+                    vehicleResult.data.map(item => [item.id, item])
+                  );
+              }
+            }
+            catch (error) {
+              console.warn('Welcome operations vehicles:', error);
+            }
+          }
+        }
+
+        function firstValue(object, keys) {
+          if (!object) return '';
+
+          for (const key of keys) {
+            if (
+              object[key] !== null &&
+              object[key] !== undefined &&
+              String(object[key]).trim() !== ''
+            ) {
+              return object[key];
+            }
+          }
+
+          return '';
+        }
+
+        function driverName(driver) {
+          if (!driver) return '';
+
+          const full =
+            firstValue(
+              driver,
+              ['full_name','driver_name','name','display_name']
+            );
+
+          if (full) return String(full);
+
+          return [
+            firstValue(driver, ['first_name','first']),
+            firstValue(driver, ['last_name','last'])
+          ]
+            .filter(Boolean)
+            .join(' ');
+        }
+
+        function truckLabel(truck, load) {
+
+          const direct =
+            firstValue(
+              truck,
+              [
+                'unit_number',
+                'truck_number',
+                'unit',
+                'number',
+                'vehicle_number',
+                'name'
+              ]
+            );
+
+          if (direct) return 'Truck ' + direct;
+
+          const loadDirect =
+            firstValue(
+              load,
+              [
+                'truck_number',
+                'unit_number',
+                'truck_unit',
+                'vehicle_number'
+              ]
+            );
+
+          return loadDirect
+            ? 'Truck ' + loadDirect
+            : '';
+        }
+
+        function formatEta(value) {
+          if (!value) return '';
+
+          const date = new Date(value);
+
+          if (Number.isNaN(date.getTime())) {
+            return String(value);
+          }
+
+          return date.toLocaleString(
+            'en-US',
+            {
+              month:'short',
+              day:'numeric',
+              hour:'numeric',
+              minute:'2-digit'
+            }
+          );
         }
 
         panel.innerHTML =
           result.data
-            .map(
-              function (item) {
+            .map(item => {
 
-                const date =
-                  new Date(
-                    item.created_at
-                  );
+              const date =
+                new Date(item.created_at);
 
-                const time =
-                  Number.isNaN(
-                    date.getTime()
-                  )
-                    ? ''
-                    : date.toLocaleString(
-                        'en-US',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        }
-                      );
+              const time =
+                Number.isNaN(date.getTime())
+                  ? ''
+                  : date.toLocaleString(
+                      'en-US',
+                      {
+                        month:'short',
+                        day:'numeric',
+                        hour:'numeric',
+                        minute:'2-digit'
+                      }
+                    );
 
-                const load =
-                  item.load_id
-                    ? loadMap[item.load_id]
-                    : null;
+              const load =
+                item.load_id
+                  ? loadMap[item.load_id]
+                  : null;
 
-                const loadNumber =
-                  load
-                    ? (
-                        load.load_number ||
-                        ('Load ' + String(load.id).slice(0,8))
+              const checkin =
+                item.load_id
+                  ? checkinMap[item.load_id]
+                  : null;
+
+              const driverId =
+                checkin?.driver_id ||
+                load?.driver_id ||
+                load?.assigned_driver_id ||
+                '';
+
+              const driver =
+                driverId
+                  ? driverMap[driverId]
+                  : null;
+
+              const truckId =
+                load?.truck_id ||
+                load?.vehicle_id ||
+                load?.assigned_truck_id ||
+                '';
+
+              const truck =
+                truckId
+                  ? truckMap[truckId]
+                  : null;
+
+              const loadNumber =
+                load
+                  ? (
+                      firstValue(
+                        load,
+                        [
+                          'load_number',
+                          'load_no',
+                          'reference_number',
+                          'broker_load_number'
+                        ]
+                      ) ||
+                      ('Load ' + String(load.id).slice(0,8))
+                    )
+                  : '';
+
+              const driverDisplay =
+                driverName(driver);
+
+              const truckDisplay =
+                truckLabel(truck, load);
+
+              const origin =
+                load
+                  ? [
+                      firstValue(load, ['origin_city','pickup_city']),
+                      firstValue(load, ['origin_state','pickup_state'])
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
+
+              const destination =
+                load
+                  ? [
+                      firstValue(
+                        load,
+                        [
+                          'destination_city',
+                          'dest_city',
+                          'delivery_city'
+                        ]
+                      ),
+                      firstValue(
+                        load,
+                        [
+                          'destination_state',
+                          'dest_state',
+                          'delivery_state'
+                        ]
                       )
-                    : '';
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
 
-                const origin =
-                  load
-                    ? [
-                        load.origin_city,
-                        load.origin_state
-                      ]
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
+              const lane =
+                origin && destination
+                  ? origin + ' → ' + destination
+                  : origin || destination || '';
 
-                const destination =
-                  load
-                    ? [
-                        load.destination_city ||
-                        load.dest_city,
-                        load.destination_state ||
-                        load.dest_state
-                      ]
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
-
-                const lane =
-                  origin && destination
-                    ? origin + ' → ' + destination
-                    : '';
-
-                const text =
-                  item.subject ||
-                  item.body ||
-                  item.event_type ||
-                  'Activity';
-
-                const details =
-                  [
-                    loadNumber
-                      ? '<strong>' + escapeHtml(loadNumber) + '</strong>'
-                      : '',
-                    load && load.status
-                      ? escapeHtml(
-                          String(load.status)
-                            .replaceAll('_',' ')
-                        )
-                      : '',
-                    lane
-                      ? escapeHtml(lane)
-                      : ''
-                  ]
-                    .filter(Boolean)
-                    .join(' · ');
-
-                const target =
-                  item.load_id
-                    ? (
-                        'workspace.html?id=' +
-                        encodeURIComponent(
-                          item.load_id
-                        )
+              const currentLocation =
+                checkin
+                  ? [
+                      checkin.location_text,
+                      (
+                        checkin.state &&
+                        !String(checkin.location_text || '')
+                          .toLowerCase()
+                          .includes(String(checkin.state).toLowerCase())
+                          ? checkin.state
+                          : ''
                       )
-                    : '';
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
 
-                return (
-                  '<div class="activity-row">' +
+              const status =
+                load && load.status
+                  ? String(load.status).replaceAll('_',' ')
+                  : '';
 
-                    '<div class="activity-time">' +
-                      escapeHtml(time) +
+              const eta =
+                checkin && checkin.eta
+                  ? formatEta(checkin.eta)
+                  : '';
+
+              const hos =
+                checkin &&
+                checkin.hos_remaining_min !== null &&
+                checkin.hos_remaining_min !== undefined
+                  ? (
+                      Math.floor(
+                        Number(checkin.hos_remaining_min) / 60
+                      ) +
+                      'h ' +
+                      (
+                        Number(checkin.hos_remaining_min) % 60
+                      ) +
+                      'm HOS'
+                    )
+                  : '';
+
+              const eventText =
+                item.subject ||
+                item.body ||
+                item.event_type ||
+                'Activity';
+
+              const primaryIdentifiers =
+                [
+                  truckDisplay,
+                  driverDisplay,
+                  loadNumber
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+
+              const operationalDetails =
+                [
+                  status,
+                  lane,
+                  eta ? 'ETA ' + eta : '',
+                  hos
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+
+              const target =
+                item.load_id
+                  ? (
+                      'workspace.html?id=' +
+                      encodeURIComponent(item.load_id)
+                    )
+                  : '';
+
+              return (
+                '<div class="activity-row">' +
+
+                  '<div class="activity-time">' +
+                    escapeHtml(time) +
+                  '</div>' +
+
+                  '<div class="activity-marker"></div>' +
+
+                  '<div class="activity-text">' +
+
+                    (
+                      primaryIdentifiers
+                        ? (
+                            '<div class="operations-primary">' +
+                            escapeHtml(primaryIdentifiers) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
+
+                    '<div>' +
+                      escapeHtml(eventText) +
                     '</div>' +
 
-                    '<div class="activity-marker"></div>' +
+                    (
+                      currentLocation
+                        ? (
+                            '<div class="operations-location">' +
+                            'Current: ' +
+                            escapeHtml(currentLocation) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
 
-                    '<div class="activity-text">' +
-                      '<div>' +
-                        escapeHtml(text) +
-                      '</div>' +
-                      (
-                        details
-                          ? (
-                              '<div style="margin-top:4px;color:#68757B;font-size:10.5px">' +
-                              details +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-                      (
-                        target
-                          ? (
-                              '<div style="margin-top:4px">' +
-                              '<a href="' +
-                              escapeHtml(target) +
-                              '" style="color:#6B92A5;text-decoration:none;font-size:10.5px">' +
-                              'Open Load →' +
-                              '</a>' +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-                    '</div>' +
+                    (
+                      operationalDetails
+                        ? (
+                            '<div class="operations-identifiers">' +
+                            escapeHtml(operationalDetails) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
 
-                  '</div>'
-                );
+                    (
+                      target
+                        ? (
+                            '<a class="operations-link" href="' +
+                            escapeHtml(target) +
+                            '">' +
+                            'Open Load →' +
+                            '</a>'
+                          )
+                        : ''
+                    ) +
 
-              }
-            )
+                  '</div>' +
+
+                '</div>'
+              );
+
+            })
             .join('');
 
       }
