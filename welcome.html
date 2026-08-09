@@ -646,38 +646,6 @@
       font-size: 12px;
     }
 
-    .operations-primary {
-      color: #3E4B51;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .operations-identifiers {
-      margin-top: 4px;
-      color: #68757B;
-      font-size: 10.5px;
-      line-height: 1.5;
-    }
-
-    .operations-identifiers strong {
-      color: #3E4B51;
-      font-weight: 600;
-    }
-
-    .operations-location {
-      margin-top: 3px;
-      color: #6B92A5;
-      font-size: 10.5px;
-    }
-
-    .operations-link {
-      display: inline-block;
-      margin-top: 5px;
-      color: #6B92A5;
-      font-size: 10.5px;
-      text-decoration: none;
-    }
-
 
 
     /* =========================================================
@@ -796,6 +764,103 @@
     .timeline-body {
       background: transparent;
     }
+
+
+    /* =========================================================
+       NEXT CALLS
+       ========================================================= */
+
+    .call-queue-section {
+      margin-bottom: 28px;
+    }
+
+    .call-queue-section .section-heading h2 {
+      color: #8A7358;
+    }
+
+    .call-queue-panel {
+      background: rgba(250,250,250,.95);
+      border: 1px solid rgba(250,250,250,.76);
+      box-shadow: 0 12px 30px rgba(28,22,31,.11);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .call-queue-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0,1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid #E8EBEC;
+    }
+
+    .call-queue-row:last-child {
+      border-bottom: 0;
+    }
+
+    .call-due {
+      color: #8A7358;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .call-company {
+      color: #3E4B51;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .call-contact {
+      margin-top: 2px;
+      color: #68757B;
+      font-size: 10.5px;
+    }
+
+    .call-phone {
+      margin-top: 4px;
+      color: #6B92A5;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .call-note {
+      margin-top: 5px;
+      color: #7B858A;
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .call-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 6px;
+      background: var(--welcome-blue-soft);
+      color: #5C7B89;
+      font-size: 9px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    .call-open {
+      color: #6B92A5;
+      font-size: 11px;
+      font-weight: 500;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 620px) {
+      .call-queue-row {
+        grid-template-columns: 1fr;
+      }
+
+      .call-open {
+        justify-self: start;
+      }
+    }
+
 
     /* =========================================================
        SOURCING TIMELINE
@@ -1138,7 +1203,7 @@
 
           <a
             class="continue-card"
-            href="loads.html"
+            href="opportunities.html"
           >
 
             <div class="continue-number">
@@ -1146,11 +1211,59 @@
             </div>
 
             <div class="continue-card-title">
-              Active Loads
+              Opportunities
             </div>
 
             <div class="continue-card-note">
-              Continue managing freight already in motion.
+              Review and work broker freight before dispatch.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="fleet.html"
+          >
+
+            <div class="continue-number">
+              02
+            </div>
+
+            <div class="continue-card-title">
+              Fleet Setup
+            </div>
+
+            <div class="continue-card-note">
+              Manage carriers, drivers, trucks, and trailers.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="newload.html"
+          >
+
+            <div class="continue-number">
+              03
+            </div>
+
+            <div class="continue-card-title">
+              New Load
+            </div>
+
+            <div class="continue-card-note">
+              Assemble accepted freight with fleet and route information.
             </div>
 
             <div class="continue-arrow">
@@ -1166,7 +1279,7 @@
           >
 
             <div class="continue-number">
-              02
+              04
             </div>
 
             <div class="continue-card-title">
@@ -1174,55 +1287,7 @@
             </div>
 
             <div class="continue-card-note">
-              Review fleet availability and assignments.
-            </div>
-
-            <div class="continue-arrow">
-              →
-            </div>
-
-          </a>
-
-
-          <a
-            class="continue-card"
-            href="calendar.html"
-          >
-
-            <div class="continue-number">
-              03
-            </div>
-
-            <div class="continue-card-title">
-              Calendar
-            </div>
-
-            <div class="continue-card-note">
-              See upcoming loads, deadlines, and appointments.
-            </div>
-
-            <div class="continue-arrow">
-              →
-            </div>
-
-          </a>
-
-
-          <a
-            class="continue-card"
-            href="call-queue.html"
-          >
-
-            <div class="continue-number">
-              04
-            </div>
-
-            <div class="continue-card-title">
-              Call Queue
-            </div>
-
-            <div class="continue-card-note">
-              Continue sourcing calls and follow-ups.
+              Manage completed assignments and active freight.
             </div>
 
             <div class="continue-arrow">
@@ -1237,6 +1302,29 @@
       </section>
 
 
+
+
+
+      <!-- =====================================================
+           NEXT CALLS
+           ===================================================== -->
+
+      <section class="call-queue-section">
+
+        <div class="section-heading">
+          <h2>Next Calls</h2>
+        </div>
+
+        <div
+          class="call-queue-panel"
+          id="nextCallsPanel"
+        >
+          <div class="activity-empty">
+            Loading call queue…
+          </div>
+        </div>
+
+      </section>
 
 
       <!-- =====================================================
@@ -1612,532 +1700,233 @@
     async function loadRecentActivity() {
 
       const panel =
-        document.getElementById('recentActivity');
+        document.getElementById(
+          'recentActivity'
+        );
 
       try {
 
         let query =
           db
             .from('events')
-            .select('created_at,event_type,subject,body,load_id')
-            .order('created_at', { ascending: false })
+            .select(
+              'created_at,event_type,subject,body,load_id'
+            )
+            .order(
+              'created_at',
+              {
+                ascending: false
+              }
+            )
             .limit(12);
 
         if (TENANT_ID) {
-          query = query.eq('tenant_id', TENANT_ID);
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
         }
 
-        const result = await query;
+        const result =
+          await query;
 
         if (
           result.error ||
           !result.data ||
           result.data.length === 0
         ) {
+
           panel.innerHTML =
-            '<div class="activity-empty">No recent operations activity yet.</div>';
+            '<div class="activity-empty">' +
+            'No recent operations activity yet.' +
+            '</div>';
+
           return;
         }
 
         const loadIds =
-          [...new Set(
-            result.data
-              .map(item => item.load_id)
-              .filter(Boolean)
-          )];
+          [
+            ...new Set(
+              result.data
+                .map(item => item.load_id)
+                .filter(Boolean)
+            )
+          ];
 
-        let loadMap = {};
-        let checkinMap = {};
+        let loadMap =
+          {};
 
         if (loadIds.length) {
 
-          /*
-           * Loads are intentionally fetched with select('*') here.
-           * That lets the Welcome page use the driver/truck foreign-key
-           * names already present in your live schema without assuming
-           * extra display columns on the loads table.
-           */
           const loadResult =
             await db
               .from('loads')
-              .select('*')
-              .in('id', loadIds);
+              .select(
+                'id,load_number,status,origin_city,origin_state,destination_city,destination_state,dest_city,dest_state'
+              )
+              .in(
+                'id',
+                loadIds
+              );
 
-          if (!loadResult.error && loadResult.data) {
+          if (
+            !loadResult.error &&
+            loadResult.data
+          ) {
+
             loadMap =
               Object.fromEntries(
-                loadResult.data.map(item => [item.id, item])
+                loadResult.data.map(
+                  item => [item.id, item]
+                )
               );
+
           }
 
-          /*
-           * Latest known check-in per load.
-           * Your confirmed check_ins schema includes:
-           * load_id, driver_id, occurred_at, location_text, state,
-           * eta, hos_remaining_min and note.
-           */
-          const checkinResult =
-            await db
-              .from('check_ins')
-              .select(
-                'load_id,driver_id,occurred_at,location_text,state,eta,hos_remaining_min,note'
-              )
-              .in('load_id', loadIds)
-              .order('occurred_at', { ascending: false });
-
-          if (!checkinResult.error && checkinResult.data) {
-            checkinResult.data.forEach(item => {
-              if (!checkinMap[item.load_id]) {
-                checkinMap[item.load_id] = item;
-              }
-            });
-          }
-        }
-
-        /*
-         * Collect driver IDs from both the load and the latest check-in.
-         * Different pages in the system have evolved over time, so we
-         * accept the common load driver-key variants while keeping the
-         * confirmed check_ins.driver_id as the strongest source.
-         */
-        const driverIds =
-          [...new Set(
-            loadIds
-              .map(loadId => {
-                const load = loadMap[loadId] || {};
-                const checkin = checkinMap[loadId] || {};
-
-                return (
-                  checkin.driver_id ||
-                  load.driver_id ||
-                  load.assigned_driver_id ||
-                  null
-                );
-              })
-              .filter(Boolean)
-          )];
-
-        let driverMap = {};
-
-        if (driverIds.length) {
-          const driverResult =
-            await db
-              .from('drivers')
-              .select('*')
-              .in('id', driverIds);
-
-          if (!driverResult.error && driverResult.data) {
-            driverMap =
-              Object.fromEntries(
-                driverResult.data.map(item => [item.id, item])
-              );
-          }
-        }
-
-        /*
-         * Collect truck IDs from the load. We try the truck and vehicle
-         * tables separately so a missing table never breaks the timeline.
-         */
-        const truckIds =
-          [...new Set(
-            loadIds
-              .map(loadId => {
-                const load = loadMap[loadId] || {};
-
-                return (
-                  load.truck_id ||
-                  load.vehicle_id ||
-                  load.assigned_truck_id ||
-                  null
-                );
-              })
-              .filter(Boolean)
-          )];
-
-        let truckMap = {};
-
-        if (truckIds.length) {
-
-          try {
-            const truckResult =
-              await db
-                .from('trucks')
-                .select('*')
-                .in('id', truckIds);
-
-            if (!truckResult.error && truckResult.data) {
-              truckMap =
-                Object.fromEntries(
-                  truckResult.data.map(item => [item.id, item])
-                );
-            }
-          }
-          catch (error) {
-            console.warn('Welcome operations trucks:', error);
-          }
-
-          if (!Object.keys(truckMap).length) {
-            try {
-              const vehicleResult =
-                await db
-                  .from('vehicles')
-                  .select('*')
-                  .in('id', truckIds);
-
-              if (!vehicleResult.error && vehicleResult.data) {
-                truckMap =
-                  Object.fromEntries(
-                    vehicleResult.data.map(item => [item.id, item])
-                  );
-              }
-            }
-            catch (error) {
-              console.warn('Welcome operations vehicles:', error);
-            }
-          }
-        }
-
-        function firstValue(object, keys) {
-          if (!object) return '';
-
-          for (const key of keys) {
-            if (
-              object[key] !== null &&
-              object[key] !== undefined &&
-              String(object[key]).trim() !== ''
-            ) {
-              return object[key];
-            }
-          }
-
-          return '';
-        }
-
-        function driverName(driver) {
-          if (!driver) return '';
-
-          const full =
-            firstValue(
-              driver,
-              ['full_name','driver_name','name','display_name']
-            );
-
-          if (full) return String(full);
-
-          return [
-            firstValue(driver, ['first_name','first']),
-            firstValue(driver, ['last_name','last'])
-          ]
-            .filter(Boolean)
-            .join(' ');
-        }
-
-        function truckLabel(truck, load) {
-
-          const direct =
-            firstValue(
-              truck,
-              [
-                'unit_number',
-                'truck_number',
-                'unit',
-                'number',
-                'vehicle_number',
-                'name'
-              ]
-            );
-
-          if (direct) return 'Truck ' + direct;
-
-          const loadDirect =
-            firstValue(
-              load,
-              [
-                'truck_number',
-                'unit_number',
-                'truck_unit',
-                'vehicle_number'
-              ]
-            );
-
-          return loadDirect
-            ? 'Truck ' + loadDirect
-            : '';
-        }
-
-        function formatEta(value) {
-          if (!value) return '';
-
-          const date = new Date(value);
-
-          if (Number.isNaN(date.getTime())) {
-            return String(value);
-          }
-
-          return date.toLocaleString(
-            'en-US',
-            {
-              month:'short',
-              day:'numeric',
-              hour:'numeric',
-              minute:'2-digit'
-            }
-          );
         }
 
         panel.innerHTML =
           result.data
-            .map(item => {
+            .map(
+              function (item) {
 
-              const date =
-                new Date(item.created_at);
+                const date =
+                  new Date(
+                    item.created_at
+                  );
 
-              const time =
-                Number.isNaN(date.getTime())
-                  ? ''
-                  : date.toLocaleString(
-                      'en-US',
-                      {
-                        month:'short',
-                        day:'numeric',
-                        hour:'numeric',
-                        minute:'2-digit'
-                      }
-                    );
+                const time =
+                  Number.isNaN(
+                    date.getTime()
+                  )
+                    ? ''
+                    : date.toLocaleString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        }
+                      );
 
-              const load =
-                item.load_id
-                  ? loadMap[item.load_id]
-                  : null;
+                const load =
+                  item.load_id
+                    ? loadMap[item.load_id]
+                    : null;
 
-              const checkin =
-                item.load_id
-                  ? checkinMap[item.load_id]
-                  : null;
-
-              const driverId =
-                checkin?.driver_id ||
-                load?.driver_id ||
-                load?.assigned_driver_id ||
-                '';
-
-              const driver =
-                driverId
-                  ? driverMap[driverId]
-                  : null;
-
-              const truckId =
-                load?.truck_id ||
-                load?.vehicle_id ||
-                load?.assigned_truck_id ||
-                '';
-
-              const truck =
-                truckId
-                  ? truckMap[truckId]
-                  : null;
-
-              const loadNumber =
-                load
-                  ? (
-                      firstValue(
-                        load,
-                        [
-                          'load_number',
-                          'load_no',
-                          'reference_number',
-                          'broker_load_number'
-                        ]
-                      ) ||
-                      ('Load ' + String(load.id).slice(0,8))
-                    )
-                  : '';
-
-              const driverDisplay =
-                driverName(driver);
-
-              const truckDisplay =
-                truckLabel(truck, load);
-
-              const origin =
-                load
-                  ? [
-                      firstValue(load, ['origin_city','pickup_city']),
-                      firstValue(load, ['origin_state','pickup_state'])
-                    ]
-                      .filter(Boolean)
-                      .join(', ')
-                  : '';
-
-              const destination =
-                load
-                  ? [
-                      firstValue(
-                        load,
-                        [
-                          'destination_city',
-                          'dest_city',
-                          'delivery_city'
-                        ]
-                      ),
-                      firstValue(
-                        load,
-                        [
-                          'destination_state',
-                          'dest_state',
-                          'delivery_state'
-                        ]
+                const loadNumber =
+                  load
+                    ? (
+                        load.load_number ||
+                        ('Load ' + String(load.id).slice(0,8))
                       )
-                    ]
-                      .filter(Boolean)
-                      .join(', ')
-                  : '';
+                    : '';
 
-              const lane =
-                origin && destination
-                  ? origin + ' → ' + destination
-                  : origin || destination || '';
+                const origin =
+                  load
+                    ? [
+                        load.origin_city,
+                        load.origin_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
 
-              const currentLocation =
-                checkin
-                  ? [
-                      checkin.location_text,
-                      (
-                        checkin.state &&
-                        !String(checkin.location_text || '')
-                          .toLowerCase()
-                          .includes(String(checkin.state).toLowerCase())
-                          ? checkin.state
-                          : ''
+                const destination =
+                  load
+                    ? [
+                        load.destination_city ||
+                        load.dest_city,
+                        load.destination_state ||
+                        load.dest_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+
+                const lane =
+                  origin && destination
+                    ? origin + ' → ' + destination
+                    : '';
+
+                const text =
+                  item.subject ||
+                  item.body ||
+                  item.event_type ||
+                  'Activity';
+
+                const details =
+                  [
+                    loadNumber
+                      ? '<strong>' + escapeHtml(loadNumber) + '</strong>'
+                      : '',
+                    load && load.status
+                      ? escapeHtml(
+                          String(load.status)
+                            .replaceAll('_',' ')
+                        )
+                      : '',
+                    lane
+                      ? escapeHtml(lane)
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+
+                const target =
+                  item.load_id
+                    ? (
+                        'workspace.html?id=' +
+                        encodeURIComponent(
+                          item.load_id
+                        )
                       )
-                    ]
-                      .filter(Boolean)
-                      .join(', ')
-                  : '';
+                    : '';
 
-              const status =
-                load && load.status
-                  ? String(load.status).replaceAll('_',' ')
-                  : '';
+                return (
+                  '<div class="activity-row">' +
 
-              const eta =
-                checkin && checkin.eta
-                  ? formatEta(checkin.eta)
-                  : '';
-
-              const hos =
-                checkin &&
-                checkin.hos_remaining_min !== null &&
-                checkin.hos_remaining_min !== undefined
-                  ? (
-                      Math.floor(
-                        Number(checkin.hos_remaining_min) / 60
-                      ) +
-                      'h ' +
-                      (
-                        Number(checkin.hos_remaining_min) % 60
-                      ) +
-                      'm HOS'
-                    )
-                  : '';
-
-              const eventText =
-                item.subject ||
-                item.body ||
-                item.event_type ||
-                'Activity';
-
-              const primaryIdentifiers =
-                [
-                  truckDisplay,
-                  driverDisplay,
-                  loadNumber
-                ]
-                  .filter(Boolean)
-                  .join(' · ');
-
-              const operationalDetails =
-                [
-                  status,
-                  lane,
-                  eta ? 'ETA ' + eta : '',
-                  hos
-                ]
-                  .filter(Boolean)
-                  .join(' · ');
-
-              const target =
-                item.load_id
-                  ? (
-                      'workspace.html?id=' +
-                      encodeURIComponent(item.load_id)
-                    )
-                  : '';
-
-              return (
-                '<div class="activity-row">' +
-
-                  '<div class="activity-time">' +
-                    escapeHtml(time) +
-                  '</div>' +
-
-                  '<div class="activity-marker"></div>' +
-
-                  '<div class="activity-text">' +
-
-                    (
-                      primaryIdentifiers
-                        ? (
-                            '<div class="operations-primary">' +
-                            escapeHtml(primaryIdentifiers) +
-                            '</div>'
-                          )
-                        : ''
-                    ) +
-
-                    '<div>' +
-                      escapeHtml(eventText) +
+                    '<div class="activity-time">' +
+                      escapeHtml(time) +
                     '</div>' +
 
-                    (
-                      currentLocation
-                        ? (
-                            '<div class="operations-location">' +
-                            'Current: ' +
-                            escapeHtml(currentLocation) +
-                            '</div>'
-                          )
-                        : ''
-                    ) +
+                    '<div class="activity-marker"></div>' +
 
-                    (
-                      operationalDetails
-                        ? (
-                            '<div class="operations-identifiers">' +
-                            escapeHtml(operationalDetails) +
-                            '</div>'
-                          )
-                        : ''
-                    ) +
+                    '<div class="activity-text">' +
+                      '<div>' +
+                        escapeHtml(text) +
+                      '</div>' +
+                      (
+                        details
+                          ? (
+                              '<div style="margin-top:4px;color:#68757B;font-size:10.5px">' +
+                              details +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                      (
+                        target
+                          ? (
+                              '<div style="margin-top:4px">' +
+                              '<a href="' +
+                              escapeHtml(target) +
+                              '" style="color:#6B92A5;text-decoration:none;font-size:10.5px">' +
+                              'Open Load →' +
+                              '</a>' +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                    '</div>' +
 
-                    (
-                      target
-                        ? (
-                            '<a class="operations-link" href="' +
-                            escapeHtml(target) +
-                            '">' +
-                            'Open Load →' +
-                            '</a>'
-                          )
-                        : ''
-                    ) +
+                  '</div>'
+                );
 
-                  '</div>' +
-
-                '</div>'
-              );
-
-            })
+              }
+            )
             .join('');
 
       }
@@ -2610,6 +2399,363 @@
     }
 
 
+
+    // =========================================================
+    // NEXT CALLS
+    // =========================================================
+
+    async function loadNextCalls() {
+
+      const panel =
+        document.getElementById(
+          'nextCallsPanel'
+        );
+
+      try {
+
+        const queueResult =
+          await db
+            .from('v_call_queue')
+            .select('*')
+            .limit(12);
+
+        if (
+          queueResult.error ||
+          !queueResult.data ||
+          queueResult.data.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No broker or carrier calls are currently due.' +
+            '</div>';
+
+          return;
+        }
+
+        const queue =
+          queueResult.data.slice();
+
+        queue.sort(
+          function (a, b) {
+
+            const ad =
+              a.next_touch_date
+                ? new Date(a.next_touch_date).getTime()
+                : 0;
+
+            const bd =
+              b.next_touch_date
+                ? new Date(b.next_touch_date).getTime()
+                : 0;
+
+            return ad - bd;
+
+          }
+        );
+
+        const companyIds =
+          [...new Set(
+            queue
+              .map(item => item.company_id)
+              .filter(Boolean)
+          )];
+
+        let companyTypeMap = {};
+        let noteMap = {};
+
+        if (companyIds.length) {
+
+          const companyResult =
+            await db
+              .from('companies')
+              .select('id,company_type')
+              .in('id', companyIds);
+
+          if (
+            !companyResult.error &&
+            companyResult.data
+          ) {
+
+            companyTypeMap =
+              Object.fromEntries(
+                companyResult.data.map(
+                  item => [
+                    item.id,
+                    item.company_type
+                  ]
+                )
+              );
+
+          }
+
+          const activityResult =
+            await db
+              .from('crm_activities')
+              .select(
+                'company_id,body,created_at,outcome'
+              )
+              .in('company_id', companyIds)
+              .order(
+                'created_at',
+                {
+                  ascending: false
+                }
+              );
+
+          if (
+            !activityResult.error &&
+            activityResult.data
+          ) {
+
+            activityResult.data.forEach(
+              function (item) {
+
+                if (
+                  !noteMap[item.company_id]
+                ) {
+
+                  noteMap[item.company_id] =
+                    item;
+
+                }
+
+              }
+            );
+
+          }
+
+        }
+
+        const today =
+          new Date();
+
+        today.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        panel.innerHTML =
+          queue
+            .slice(0, 5)
+            .map(
+              function (item) {
+
+                const due =
+                  item.next_touch_date
+                    ? new Date(
+                        item.next_touch_date +
+                        'T12:00:00'
+                      )
+                    : null;
+
+                let dueText =
+                  'Call now';
+
+                if (
+                  due &&
+                  !Number.isNaN(
+                    due.getTime()
+                  )
+                ) {
+
+                  const dueDay =
+                    new Date(due);
+
+                  dueDay.setHours(
+                    0,
+                    0,
+                    0,
+                    0
+                  );
+
+                  const diff =
+                    Math.round(
+                      (
+                        dueDay.getTime() -
+                        today.getTime()
+                      ) /
+                      86400000
+                    );
+
+                  if (diff < 0) {
+                    dueText =
+                      'Overdue · ' +
+                      due.toLocaleDateString(
+                        'en-US',
+                        {
+                          month:'short',
+                          day:'numeric'
+                        }
+                      );
+                  }
+                  else if (diff === 0) {
+                    dueText =
+                      'Due today';
+                  }
+                  else if (diff === 1) {
+                    dueText =
+                      'Tomorrow';
+                  }
+                  else {
+                    dueText =
+                      due.toLocaleDateString(
+                        'en-US',
+                        {
+                          month:'short',
+                          day:'numeric'
+                        }
+                      );
+                  }
+
+                }
+
+                const contact =
+                  [
+                    item.first_name,
+                    item.last_name
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                const phone =
+                  item.dial ||
+                  '';
+
+                const type =
+                  companyTypeMap[
+                    item.company_id
+                  ] ||
+                  '';
+
+                const latest =
+                  noteMap[
+                    item.company_id
+                  ];
+
+                const latestNote =
+                  latest
+                    ? (
+                        latest.body ||
+                        latest.outcome ||
+                        ''
+                      )
+                    : '';
+
+                const bestTime =
+                  item.best_time_to_call
+                    ? (
+                        'Best time: ' +
+                        item.best_time_to_call
+                      )
+                    : '';
+
+                return (
+                  '<div class="call-queue-row">' +
+
+                    '<div class="call-due">' +
+                      escapeHtml(dueText) +
+                    '</div>' +
+
+                    '<div>' +
+
+                      '<div class="call-company">' +
+                        escapeHtml(
+                          item.legal_name ||
+                          'Company'
+                        ) +
+                        (
+                          type
+                            ? (
+                                '<span class="call-badge">' +
+                                escapeHtml(type) +
+                                '</span>'
+                              )
+                            : ''
+                        ) +
+                      '</div>' +
+
+                      (
+                        contact
+                          ? (
+                              '<div class="call-contact">' +
+                              escapeHtml(contact) +
+                              (
+                                bestTime
+                                  ? (
+                                      ' · ' +
+                                      escapeHtml(bestTime)
+                                    )
+                                  : ''
+                              ) +
+                              '</div>'
+                            )
+                          : (
+                              bestTime
+                                ? (
+                                    '<div class="call-contact">' +
+                                    escapeHtml(bestTime) +
+                                    '</div>'
+                                  )
+                                : ''
+                            )
+                      ) +
+
+                      (
+                        phone
+                          ? (
+                              '<div class="call-phone">' +
+                              escapeHtml(phone) +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+
+                      (
+                        latestNote
+                          ? (
+                              '<div class="call-note">' +
+                              'Last note: ' +
+                              escapeHtml(latestNote) +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+
+                    '</div>' +
+
+                    '<a class="call-open" href="call-queue.html">' +
+                      'Open Queue →' +
+                    '</a>' +
+
+                  '</div>'
+                );
+
+              }
+            )
+            .join('');
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome next calls:',
+          error
+        );
+
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Call queue unavailable.' +
+          '</div>';
+
+      }
+
+    }
+
+
     // =========================================================
     // SOURCING TIMELINE
     // =========================================================
@@ -3068,6 +3214,7 @@
       await Promise.all([
         loadPriorities(),
         loadThisWeek(),
+        loadNextCalls(),
         loadSourcingTimeline(),
         loadRecentActivity()
       ]);
