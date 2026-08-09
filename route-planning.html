@@ -265,6 +265,28 @@ button.action.danger{
 .context-note{margin-top:10px;padding:10px 12px;border-left:3px solid var(--blue,#6B92A5);background:rgba(107,146,165,.08);font-size:12px;line-height:1.45}
 @media(max-width:720px){.context-grid{grid-template-columns:1fr}}
 
+/* Planning status + Golden Route match */
+.plan-status{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;background:var(--rp-blue-soft);color:var(--rp-blue-dark);font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+.plan-status.complete{background:var(--rp-lime-soft);color:#606B24}
+.golden-match{display:none}
+.golden-match.show{display:block}
+.golden-match-box{padding:13px;border:1px solid var(--rp-line);border-left:4px solid var(--rp-lime);background:#FCFDF7}
+.golden-match-title{font-family:"Oswald",sans-serif;font-size:14px;margin-bottom:5px}
+.golden-match-meta{font-size:11.5px;color:var(--rp-muted);line-height:1.5}
+
+/* Route points / planned stops */
+.route-point-builder{display:grid;grid-template-columns:1.1fr 1.8fr .8fr auto;gap:8px;align-items:end}
+.route-points-list{display:grid;gap:8px;margin-top:12px}
+.route-point{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 11px;border:1px solid var(--rp-line);background:#FBFCFC}
+.route-point-type{font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.35px;padding:4px 7px;background:var(--rp-blue-soft);color:var(--rp-blue-dark);white-space:nowrap}
+.route-point-main{font-size:12px;line-height:1.4}
+.route-point-main strong{display:block;font-weight:600}
+.route-point-flags{font-size:10.5px;color:var(--rp-muted)}
+.route-point-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.route-point-actions button{min-height:30px;padding:5px 8px;font-size:10px}
+.empty-points{padding:10px 0;color:var(--rp-muted);font-size:11.5px}
+@media(max-width:820px){.route-point-builder{grid-template-columns:1fr}.route-point{grid-template-columns:1fr}.route-point-actions{justify-content:flex-start}}
+
 /* Golden routes */
 .filters{
   display:grid;
@@ -468,7 +490,7 @@ button.action.danger{
 
             <div class="field">
               <label>Route Name</label>
-              <input id="routeName" placeholder="Little Rock → Nashville">
+              <input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN">
             </div>
 
             <div class="field">
@@ -514,8 +536,7 @@ button.action.danger{
               <label>Waypoints / Shaping Points</label>
               <textarea id="waypoints" placeholder="Memphis, TN&#10;Jackson, TN"></textarea>
               <div class="smallnote">
-                One waypoint per line. For the most reliable shared Google Maps link on mobile browsers,
-                keep the route to 3 or fewer waypoints.
+                Add only intermediate locations the truck must pass through to shape the planned route. These may include required highways or interchanges, approved crossings, construction detours, clearance-related routing, required checkpoints, escort meeting points, or later permit-route instructions. Enter one location per line and leave this blank when no shaping point is needed. For reliable Google Maps sharing, keep only the essential points (ideally 3 or fewer).
               </div>
             </div>
 
@@ -552,24 +573,31 @@ button.action.danger{
               <div class="context-value" id="ctxAxles">—</div>
             </div>
             <div class="context-block full">
-              <div class="context-label">Carrier Baseline</div>
+              <div class="context-label">Fleet Profile / Accessorial Baseline</div>
               <div class="context-value" id="ctxProfile">—</div>
             </div>
-            <div class="context-block full">
-              <div class="context-label">Confirmed Load Accessorials</div>
-              <div class="context-value" id="ctxAccessorials">—</div>
-            </div>
           </div>
-          <div class="context-note">Carrier Profile = reusable negotiating baseline. Confirmed Load Accessorials = the terms actually agreed with the broker for this load.</div>
+          <div class="context-note">Fleet profile terms are reference information carried with the assigned carrier/driver. Route Planning does not renegotiate accessorials.</div>
+        </div>
+
+        <div class="card golden-match" id="goldenMatchCard">
+          <h2>Golden Route Match</h2>
+          <p class="hint">The system checks saved Golden Routes using the current origin, destination, freight type and equipment. A match is a planning reference only; current State Rules, permits and route instructions still control.</p>
+          <div id="goldenMatchBody" class="golden-match-box"></div>
         </div>
 
         <div class="card">
-          <h2>Route Review</h2>
-          <p class="hint">Use this as the dispatch planning record. Heavy haul permit instructions remain controlling.</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <h2>Route Review</h2>
+              <p class="hint">Use this as the dispatch planning record. State Rules/Restrictions is the next separate workflow; heavy-haul permit instructions remain controlling.</p>
+            </div>
+            <span class="plan-status" id="planStatus">Planning in progress</span>
+          </div>
 
           <div class="checks">
             <label class="check"><input id="permitRouteConfirmed" type="checkbox"> Permit route confirmed</label>
-            <label class="check"><input id="stateRulesReviewed" type="checkbox"> State restrictions reviewed</label>
+            <label class="check"><input id="stateRulesReviewed" type="checkbox"> State rules / restrictions attached & reviewed</label>
             <label class="check"><input id="bridgeTunnelReviewed" type="checkbox"> Bridges / tunnels reviewed</label>
             <label class="check"><input id="constructionReviewed" type="checkbox"> Construction checked</label>
             <label class="check"><input id="travelWindowsReviewed" type="checkbox"> Travel windows / curfews checked</label>
@@ -589,6 +617,44 @@ button.action.danger{
               <label>Fuel / Service Notes</label>
               <textarea id="fuelServiceNotes" placeholder="Preferred fuel, washout, repair, service stops..."></textarea>
             </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Route Points & Planned Stops</h2>
+          <p class="hint">Record useful locations along the route without forcing the truck through them. Use “Add as Shaping Point” only when the truck must pass through that location. State Rules may later identify required weigh stations, checkpoints or inspection locations.</p>
+
+          <div class="route-point-builder">
+            <div class="field">
+              <label>Point Type</label>
+              <select id="routePointType">
+                <option value="weigh_station">Weigh Station / Scale</option>
+                <option value="inspection">Inspection / Checkpoint</option>
+                <option value="fuel">Fuel</option>
+                <option value="service">Truck Service</option>
+                <option value="parking">Parking</option>
+                <option value="staging">Staging</option>
+                <option value="rest_area">Rest Area</option>
+                <option value="escort_meeting">Escort Meeting</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Location / Name</label>
+              <input id="routePointLocation" placeholder="Facility, exit, city, address or landmark">
+            </div>
+            <div class="field">
+              <label>Required Stop?</label>
+              <select id="routePointRequired">
+                <option value="false">No — informational</option>
+                <option value="true">Yes — required</option>
+              </select>
+            </div>
+            <button class="action" type="button" id="addRoutePoint">Add Point</button>
+          </div>
+
+          <div class="route-points-list" id="routePointsList">
+            <div class="empty-points">No route points added yet.</div>
           </div>
         </div>
 
@@ -902,6 +968,7 @@ let tenant = null;
 let facilities = {};
 let goldenRoutes = [];
 let loadCache = {};
+let routePoints = [];
 
 function pretty(v){
   return String(v || '')
@@ -972,6 +1039,96 @@ function routeUrl(origin,destination,waypoints){
   }
 
   return 'https://www.google.com/maps/dir/?' + params.toString();
+}
+
+function normalizePlace(v){
+  return String(v || '')
+    .toLowerCase()
+    .replace(/\b(street|st\.?|road|rd\.?|avenue|ave\.?|boulevard|blvd\.?|highway|hwy\.?)\b/g,' ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+
+function equipmentWords(v){
+  return normalizePlace(v).split(' ').filter(x=>x.length>2);
+}
+
+function routePointLabel(type){
+  const labels={
+    weigh_station:'Weigh Station / Scale', inspection:'Inspection / Checkpoint', fuel:'Fuel',
+    service:'Truck Service', parking:'Parking', staging:'Staging', rest_area:'Rest Area',
+    escort_meeting:'Escort Meeting', other:'Other'
+  };
+  return labels[type] || pretty(type);
+}
+
+function renderRoutePoints(){
+  const host=$('routePointsList');
+  if(!routePoints.length){
+    host.innerHTML='<div class="empty-points">No route points added yet.</div>';
+    return;
+  }
+  host.innerHTML=routePoints.map((p,i)=>`
+    <div class="route-point" data-index="${i}">
+      <span class="route-point-type">${routePointLabel(p.type)}</span>
+      <div class="route-point-main">
+        <strong>${p.location}</strong>
+        <span class="route-point-flags">${p.required ? 'Required stop' : 'Informational point — does not shape route'}</span>
+      </div>
+      <div class="route-point-actions">
+        <button type="button" class="action secondary" data-point-action="maps">Map</button>
+        <button type="button" class="action secondary" data-point-action="shape">Add as Shaping Point</button>
+        <button type="button" class="action danger" data-point-action="remove">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function serializeRoutePoints(){
+  if(!routePoints.length) return '';
+  return 'ROUTE POINTS / PLANNED STOPS:\n' + routePoints.map(p=>
+    `- ${routePointLabel(p.type)} | ${p.required ? 'REQUIRED' : 'INFORMATIONAL'} | ${p.location}`
+  ).join('\n');
+}
+
+function updatePlanStatus(){
+  const checks=['permitRouteConfirmed','stateRulesReviewed','bridgeTunnelReviewed','constructionReviewed','travelWindowsReviewed','escortsReviewed'];
+  const complete=checks.every(id=>$(id).checked);
+  const status=$('planStatus');
+  status.textContent=complete ? 'Route review complete' : 'Planning in progress';
+  status.classList.toggle('complete',complete);
+}
+
+function goldenScore(g){
+  const o=normalizePlace($('origin').value), d=normalizePlace($('destination').value);
+  const go=normalizePlace(g.origin), gd=normalizePlace(g.destination);
+  if(!o || !d || !go || !gd) return 0;
+  let score=0;
+  if(o===go) score+=5; else if(o.includes(go)||go.includes(o)) score+=3;
+  if(d===gd) score+=5; else if(d.includes(gd)||gd.includes(d)) score+=3;
+  if(g.freight_type===$('freightType').value) score+=3;
+  const ew=equipmentWords($('equipmentType').value), gw=equipmentWords(g.equipment_type);
+  if(ew.length && gw.length && ew.some(x=>gw.includes(x))) score+=2;
+  return score;
+}
+
+function updateGoldenMatch(){
+  const card=$('goldenMatchCard'), body=$('goldenMatchBody');
+  if(!$('origin').value.trim() || !$('destination').value.trim() || !goldenRoutes.length){
+    card.classList.remove('show');
+    return;
+  }
+  const ranked=goldenRoutes.map(g=>({g,score:goldenScore(g)})).filter(x=>x.score>=8).sort((a,b)=>b.score-a.score);
+  card.classList.add('show');
+  if(!ranked.length){
+    body.innerHTML='<div class="golden-match-title">No close Golden Route match found</div><div class="golden-match-meta">Continue building this route. After successful use, it may become useful Golden Route knowledge.</div>';
+    return;
+  }
+  const g=ranked[0].g;
+  body.innerHTML=`<div class="golden-match-title">${g.route_name}</div>
+    <div class="golden-match-meta"><b>${g.origin}</b> → <b>${g.destination}</b><br>${pretty(g.freight_type)}${g.equipment_type?' · '+g.equipment_type:''}${g.successful_uses!=null?' · '+g.successful_uses+' successful uses':''}</div>
+    <div class="actions"><button class="action" type="button" id="useMatchedGolden">Use as Planning Template</button><button class="action secondary" type="button" id="reviewMatchedGolden">Review Golden Route</button></div>`;
+  $('useMatchedGolden').onclick=()=>useGolden(g);
+  $('reviewMatchedGolden').onclick=()=>{ document.querySelector('[data-panel="goldenPanel"]').click(); $('gSearch').value=g.route_name; renderGolden(); };
 }
 
 function currentRoute(){
@@ -1073,7 +1230,10 @@ async function start(){
 
   await loadGoldenRoutes();
 
+  renderRoutePoints();
+  updatePlanStatus();
   drawPreview();
+  updateGoldenMatch();
 }
 
 async function loadFacilities(){
@@ -1188,12 +1348,6 @@ async function renderLoadContext(load){
     $('ctxProfile').textContent = 'No carrier profile saved.';
   }
 
-  const acc = [
-    load.detention_rate_per_hour != null ? `Detention ${money(load.detention_rate_per_hour)}/hr${load.detention_free_hours != null ? ' after ' + load.detention_free_hours + ' hr' : ''}` : '',
-    load.tonu_rate != null ? `TONU ${money(load.tonu_rate)}` : '',
-    load.layover_rate != null ? `Layover ${money(load.layover_rate)}${load.layover_requires_approval ? ' (approval required)' : ''}` : ''
-  ].filter(Boolean);
-  $('ctxAccessorials').textContent = acc.length ? acc.join(' · ') : 'Not confirmed on this load yet.';
 }
 
 $('loadSelect').addEventListener('change',async ()=>{
@@ -1218,22 +1372,60 @@ $('loadSelect').addEventListener('change',async ()=>{
     $('deliveryAt').value = opt.dataset.delivery.slice(0,16);
   }
 
-  const number = opt.dataset.number || '';
   const commodity = decodeURIComponent(opt.dataset.commodity || '');
 
-  if(!$('routeName').value.trim()){
-    $('routeName').value = [number,commodity].filter(Boolean).join(' · ');
+  // Route Name stays dispatcher-entered. Known broker/fleet data populates automatically.
+  if(selectedLoad && (selectedLoad.width_in > 102 || selectedLoad.height_in > 162 || selectedLoad.weight_lb > 80000)){
+    $('freightType').value = 'heavy_haul';
   }
 
   await renderLoadContext(selectedLoad);
   drawPreview();
+  updateGoldenMatch();
 });
 
 [
-  'origin','destination','waypoints','freightType'
+  'origin','destination','waypoints','freightType','equipmentType'
 ].forEach(id=>{
-  $(id).addEventListener('input',drawPreview);
-  $(id).addEventListener('change',drawPreview);
+  $(id).addEventListener('input',()=>{ drawPreview(); updateGoldenMatch(); });
+  $(id).addEventListener('change',()=>{ drawPreview(); updateGoldenMatch(); });
+});
+
+['permitRouteConfirmed','stateRulesReviewed','bridgeTunnelReviewed','constructionReviewed','travelWindowsReviewed','escortsReviewed']
+  .forEach(id=>$(id).addEventListener('change',updatePlanStatus));
+
+$('addRoutePoint').addEventListener('click',()=>{
+  const location=$('routePointLocation').value.trim();
+  if(!location){
+    setMsg('planOk','planErr','Enter a location or name for the route point.',true);
+    return;
+  }
+  routePoints.push({
+    type:$('routePointType').value,
+    location,
+    required:$('routePointRequired').value==='true'
+  });
+  $('routePointLocation').value='';
+  $('routePointRequired').value='false';
+  renderRoutePoints();
+});
+
+$('routePointsList').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-point-action]');
+  if(!btn) return;
+  const row=btn.closest('.route-point');
+  const i=Number(row.dataset.index);
+  const p=routePoints[i];
+  if(!p) return;
+  if(btn.dataset.pointAction==='remove'){ routePoints.splice(i,1); renderRoutePoints(); return; }
+  if(btn.dataset.pointAction==='maps'){ window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.location),'_blank','noopener'); return; }
+  if(btn.dataset.pointAction==='shape'){
+    const points=arrFromLines($('waypoints').value);
+    if(!points.some(x=>normalizePlace(x)===normalizePlace(p.location))) points.push(p.location);
+    $('waypoints').value=points.join('\n');
+    drawPreview();
+    setMsg('planOk','planErr','Added to Waypoints / Shaping Points. Verify that this location truly must influence the route.',false);
+  }
 });
 
 /* ------------------------------------------------------------
@@ -1347,7 +1539,10 @@ $('savePlan').addEventListener('click',async()=>{
 
     parking_staging:$('parkingStaging').value.trim() || null,
     fuel_service_notes:$('fuelServiceNotes').value.trim() || null,
-    route_notes:$('routeNotes').value.trim() || null,
+    route_notes:[
+      $('routeNotes').value.trim(),
+      serializeRoutePoints()
+    ].filter(Boolean).join('\n\n') || null,
 
     escort_company:$('escortCompany').value.trim() || null,
     escort_contact:$('escortContact').value.trim() || null,
@@ -1397,6 +1592,7 @@ async function loadGoldenRoutes(){
 
   goldenRoutes = r.data || [];
   renderGolden();
+  updateGoldenMatch();
 }
 
 function renderGolden(){
@@ -1642,6 +1838,7 @@ function useGolden(g){
 
   document.querySelector('[data-panel="planPanel"]').click();
   drawPreview();
+  updateGoldenMatch();
 
   window.scrollTo({
     top:0,
