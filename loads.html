@@ -1007,6 +1007,16 @@ async function load() {
         'archived_at',
         null
       )
+.in(
+  'status',
+  [
+    'delivered',
+    'pod_pending',
+    'paperwork',
+    'invoiced',
+    'paid'
+  ]
+)
       .order(
         'created_at',
         {
