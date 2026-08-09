@@ -712,6 +712,31 @@
     }
 
 
+
+    .timeline-shell {
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .timeline-panel-title {
+      padding: 13px 18px 11px;
+      color: var(--welcome-ink);
+      background: rgba(255, 255, 255, 0.78);
+      border-bottom: 1px solid #E3E7E8;
+      font-family: "Oswald", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .timeline-body {
+      background: transparent;
+    }
+
     /* =========================================================
        SOURCING TIMELINE
        ========================================================= */
@@ -1121,13 +1146,20 @@
           <h2>Sourcing Timeline</h2>
         </div>
 
-        <div
-          class="sourcing-panel"
-          id="sourcingTimeline"
-        >
-          <div class="activity-empty">
-            Loading sourcing activity…
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+            Sourcing Timeline
           </div>
+
+          <div
+            class="sourcing-panel timeline-body"
+            id="sourcingTimeline"
+          >
+            <div class="activity-empty">
+              Loading sourcing activity…
+            </div>
+          </div>
+        </div>
         </div>
 
       </section>
@@ -1144,14 +1176,20 @@
         </div>
 
 
-        <div
-          class="activity-panel"
-          id="recentActivity"
-        >
-
-          <div class="activity-empty">
-            Loading recent activity…
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+            Operations Timeline
           </div>
+
+          <div
+            class="activity-panel timeline-body"
+            id="recentActivity"
+          >
+            <div class="activity-empty">
+              Loading recent activity…
+            </div>
+          </div>
+        </div>
 
         </div>
 
