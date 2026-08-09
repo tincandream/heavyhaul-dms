@@ -345,6 +345,58 @@ function render(){
     tr.addEventListener('click',()=>openDlg(tr.dataset.id)));
 }
 
+
+// ===== sourcing timeline =====
+function opportunityLane(row){
+  const origin=[row.origin_city,row.origin_state].filter(Boolean).join(', ');
+  const destination=[row.dest_city,row.dest_state].filter(Boolean).join(', ');
+  return {origin,destination,text:origin&&destination?origin+' → '+destination:(origin||destination||'')};
+}
+
+async function logSourcingEvent(eventType,title,detail,opportunity,rateAmount){
+  if(!TENANT_ID)return;
+  const lane=opportunityLane(opportunity||{});
+  const r=await db.from('sourcing_events').insert({
+    tenant_id:TENANT_ID,
+    opportunity_id:opportunity&&opportunity.id?opportunity.id:null,
+    event_type:eventType,
+    title:title,
+    detail:detail||null,
+    broker_name:opportunity?opportunity.broker_name||null:null,
+    lane_origin:lane.origin||null,
+    lane_destination:lane.destination||null,
+    rate_amount:rateAmount==null?null:Number(rateAmount)
+  });
+  if(r.error)console.warn('Sourcing timeline event was not recorded:',r.error.message);
+}
+
+function sourcingEventForChange(previous,current,isNew){
+  const lane=opportunityLane(current);
+  const broker=current.broker_name||'Opportunity';
+  const detail=broker+(lane.text?' · '+lane.text:'');
+  if(isNew)return {type:'opportunity_added',title:'Opportunity added',detail,rate:current.posted_rate};
+  if(previous&&previous.status!==current.status){
+    const map={
+      reviewing:['opportunity_reviewed','Opportunity moved to reviewing'],
+      quoted:['quote_sent','Opportunity quoted'],
+      negotiating:['rate_negotiated','Rate negotiation started'],
+      booked:['load_booked','Load booked'],
+      lost:['load_passed','Opportunity lost / passed'],
+      declined:['load_rejected','Opportunity declined'],
+      expired:['load_passed','Opportunity expired']
+    };
+    if(map[current.status])return {
+      type:map[current.status][0],title:map[current.status][1],detail,
+      rate:current.status==='booked'?current.booked_rate:current.quoted_rate
+    };
+  }
+  if(previous&&previous.quoted_rate!==current.quoted_rate&&current.quoted_rate!=null)
+    return {type:'quote_prepared',title:'Quote updated',detail,rate:current.quoted_rate};
+  if(previous&&previous.booked_rate!==current.booked_rate&&current.booked_rate!=null)
+    return {type:'rate_negotiated',title:'Booked rate updated',detail,rate:current.booked_rate};
+  return {type:'opportunity_reviewed',title:'Opportunity updated',detail,rate:current.quoted_rate||current.posted_rate};
+}
+
 // ===== dialog =====
 function openDlg(id){
   $('o_err').textContent='';
@@ -379,52 +431,50 @@ function openDlg(id){
 async function save(){
   $('o_err').textContent='';
   const btn=$('saveBtn'); btn.disabled=true;
-  const id = txt($('o_id').value);
-  const w=num($('o_wid').value), h=num($('o_hgt').value),
-        l=num($('o_len').value), wt=num($('o_wt').value);
-  const row = {
-    broker_name:      txt($('o_broker').value),
-    source_type:      $('o_source').value,
-    status:           $('o_status').value,
-    external_ref:     txt($('o_ref').value),
-    origin_city:      txt($('o_ocity').value),
-    origin_state:     upper($('o_ostate').value),
-    dest_city:        txt($('o_dcity').value),
-    dest_state:       upper($('o_dstate').value),
-    pickup_date:      txt($('o_pickup').value),
-    miles:            num($('o_miles').value),
-    commodity:        txt($('o_commodity').value),
-    equipment_needed: txt($('o_equip').value),
-    length_ft: l, width_ft: w, height_ft: h, weight_lbs: wt,
-    is_superload:  $('o_super').checked,
-    is_oversize:   (w!=null&&w>8.5)||(h!=null&&h>13.5)||(l!=null&&l>53),
-    is_overweight: (wt!=null&&wt>80000),
-    posted_rate:  num($('o_posted').value),
-    quoted_rate:  num($('o_quoted').value),
-    booked_rate:  num($('o_booked').value),
-    notes:        txt($('o_notes').value)
+  const id=txt($('o_id').value);
+  const previous=id?(rows.find(x=>x.id===id)||null):null;
+  const w=num($('o_wid').value),h=num($('o_hgt').value),l=num($('o_len').value),wt=num($('o_wt').value);
+  const row={
+    broker_name:txt($('o_broker').value),source_type:$('o_source').value,status:$('o_status').value,
+    external_ref:txt($('o_ref').value),origin_city:txt($('o_ocity').value),origin_state:upper($('o_ostate').value),
+    dest_city:txt($('o_dcity').value),dest_state:upper($('o_dstate').value),pickup_date:txt($('o_pickup').value),
+    miles:num($('o_miles').value),commodity:txt($('o_commodity').value),equipment_needed:txt($('o_equip').value),
+    length_ft:l,width_ft:w,height_ft:h,weight_lbs:wt,is_superload:$('o_super').checked,
+    is_oversize:(w!=null&&w>8.5)||(h!=null&&h>13.5)||(l!=null&&l>53),is_overweight:(wt!=null&&wt>80000),
+    posted_rate:num($('o_posted').value),quoted_rate:num($('o_quoted').value),
+    booked_rate:num($('o_booked').value),notes:txt($('o_notes').value)
   };
-  let error=null;
-  if (id){
-    const r = await db.from('load_opportunities').update(row).eq('id', id);
-    error = r.error;
-  } else {
-    row.tenant_id = TENANT_ID;
-    const r = await db.from('load_opportunities').insert(row);
-    error = r.error;
+  let result;
+  if(id){
+    result=await db.from('load_opportunities').update(row).eq('id',id).select('*').single();
+  }else{
+    row.tenant_id=TENANT_ID;
+    result=await db.from('load_opportunities').insert(row).select('*').single();
   }
   btn.disabled=false;
-  if (error){ $('o_err').textContent = error.message || 'Save failed'; return; }
-  $('dlg').close(); toast(id?'Updated':'Added'); load();
+  if(result.error){$('o_err').textContent=result.error.message||'Save failed';return;}
+  const saved=result.data||row;
+  const event=sourcingEventForChange(previous,saved,!id);
+  await logSourcingEvent(event.type,event.title,event.detail,saved,event.rate);
+  $('dlg').close();toast(id?'Updated':'Added');load();
 }
 
 async function del(){
-  const id = txt($('o_id').value);
-  if (!id) return;
-  if (!confirm('Delete this opportunity?')) return;
-  const r = await db.from('load_opportunities').delete().eq('id', id);
-  if (r.error){ $('o_err').textContent = r.error.message; return; }
-  $('dlg').close(); toast('Deleted'); load();
+  const id=txt($('o_id').value);
+  if(!id)return;
+  if(!confirm('Delete this opportunity?'))return;
+  const previous=rows.find(x=>x.id===id)||null;
+  const r=await db.from('load_opportunities').delete().eq('id',id);
+  if(r.error){$('o_err').textContent=r.error.message;return;}
+  if(previous){
+    const lane=opportunityLane(previous);
+    await logSourcingEvent(
+      'load_passed','Opportunity removed',
+      (previous.broker_name||'Opportunity')+(lane.text?' · '+lane.text:''),
+      previous,previous.quoted_rate||previous.posted_rate
+    );
+  }
+  $('dlg').close();toast('Deleted');load();
 }
 
 function wire(){
