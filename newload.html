@@ -265,6 +265,19 @@
 
   <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
+  <div
+    class="card"
+    id="sourcingImport"
+    style="display:none;border-left:4px solid #D86A8E;"
+  >
+    <h2>Imported from Sourcing</h2>
+    <p
+      class="hint"
+      id="sourcingImportSummary"
+      style="margin-bottom:0;"
+    ></p>
+  </div>
+
 
   <div class="card">
 
@@ -845,6 +858,10 @@ let carriers = [];
 
 let route = [];
 
+let SOURCE_OPPORTUNITY_ID = null;
+
+let SOURCE_OPPORTUNITY = null;
+
 
 const STATES = [
   'AL','AR','AZ','CA','CO','CT','DE','FL','GA','IA','ID','IL','IN',
@@ -1110,6 +1127,8 @@ async function start() {
 
   await loadPickers();
 
+  await loadOpportunityImport();
+
 }
 
 
@@ -1151,6 +1170,240 @@ function drawRoute() {
         ' will be created'
 
       : 'No states selected.';
+
+}
+
+
+async function loadOpportunityImport() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  SOURCE_OPPORTUNITY_ID =
+    params.get('opportunity');
+
+
+  if (!SOURCE_OPPORTUNITY_ID) {
+    return;
+  }
+
+
+  const result =
+    await db
+      .from('load_opportunities')
+      .select('*')
+      .eq(
+        'id',
+        SOURCE_OPPORTUNITY_ID
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .single();
+
+
+  if (result.error) {
+
+    say(
+      'Could not load sourcing opportunity: ' +
+      result.error.message,
+      'err'
+    );
+
+    return;
+  }
+
+
+  SOURCE_OPPORTUNITY =
+    result.data;
+
+
+  const o =
+    SOURCE_OPPORTUNITY;
+
+
+  // Broker load number
+  $('brokerload').value =
+    o.external_ref || '';
+
+
+  // Freight
+  $('commodity').value =
+    o.commodity || '';
+
+
+  /*
+   * Opportunity stores dimensions in feet.
+   * New Load stores dimensions in inches.
+   */
+  if (o.length_ft != null) {
+
+    $('len').value =
+      Math.round(
+        Number(o.length_ft) * 12
+      );
+
+  }
+
+
+  if (o.width_ft != null) {
+
+    $('wid').value =
+      Math.round(
+        Number(o.width_ft) * 12
+      );
+
+  }
+
+
+  if (o.height_ft != null) {
+
+    $('hgt').value =
+      Math.round(
+        Number(o.height_ft) * 12
+      );
+
+  }
+
+
+  if (o.weight_lbs != null) {
+
+    $('wgt').value =
+      o.weight_lbs;
+
+  }
+
+
+  // Mileage
+  if (o.miles != null) {
+
+    $('miles').value =
+      o.miles;
+
+  }
+
+
+  // Accepted / booked rate
+  const acceptedRate =
+    o.booked_rate != null
+      ? o.booked_rate
+      : (
+          o.quoted_rate != null
+            ? o.quoted_rate
+            : o.posted_rate
+        );
+
+
+  if (acceptedRate != null) {
+
+    $('rate').value =
+      acceptedRate;
+
+  }
+
+
+  /*
+   * Select the saved broker if a broker with the
+   * same name already exists in New Load.
+   */
+  if (o.broker_name) {
+
+    const brokerOptions =
+      Array.from(
+        $('broker').options
+      );
+
+
+    const match =
+      brokerOptions.find(
+        option =>
+          option.textContent
+            .trim()
+            .toLowerCase() ===
+          String(o.broker_name)
+            .trim()
+            .toLowerCase()
+      );
+
+
+    if (match) {
+
+      $('broker').value =
+        match.value;
+
+    }
+
+  }
+
+
+  /*
+   * The opportunity has city/state lane information,
+   * but New Load uses saved facility records for
+   * Origin and Destination. We show the imported lane
+   * here and let the dispatcher choose the correct
+   * saved facilities before the load is created.
+   */
+  const origin =
+    [
+      o.origin_city,
+      o.origin_state
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+
+  const destination =
+    [
+      o.dest_city,
+      o.dest_state
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+
+  const parts =
+    [
+      o.broker_name
+        ? 'Broker: ' + o.broker_name
+        : '',
+
+      o.external_ref
+        ? 'Load #' + o.external_ref
+        : '',
+
+      origin || destination
+        ? origin + ' → ' + destination
+        : '',
+
+      o.equipment_needed
+        ? 'Equipment: ' + o.equipment_needed
+        : '',
+
+      acceptedRate != null
+        ? '$' +
+          Number(
+            acceptedRate
+          ).toLocaleString()
+        : ''
+    ]
+      .filter(Boolean);
+
+
+  $('sourcingImportSummary')
+    .textContent =
+      parts.join(' · ');
+
+
+  $('sourcingImport')
+    .style.display =
+      'block';
+
+
+  checkPrefs();
 
 }
 
