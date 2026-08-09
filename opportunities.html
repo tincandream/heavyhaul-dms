@@ -453,10 +453,67 @@ async function save(){
   }
   btn.disabled=false;
   if(result.error){$('o_err').textContent=result.error.message||'Save failed';return;}
-  const saved=result.data||row;
-  const event=sourcingEventForChange(previous,saved,!id);
-  await logSourcingEvent(event.type,event.title,event.detail,saved,event.rate);
-  $('dlg').close();toast(id?'Updated':'Added');load();
+ const saved=result.data||row;
+
+const event=
+  sourcingEventForChange(
+    previous,
+    saved,
+    !id
+  );
+
+await logSourcingEvent(
+  event.type,
+  event.title,
+  event.detail,
+  saved,
+  event.rate
+);
+
+$('dlg').close();
+
+/*
+ * BOOKED OPPORTUNITY → NEW LOAD
+ *
+ * A booked broker load now moves into the
+ * Dispatch assembly stage.
+ *
+ * It is NOT sent to Fleet Board yet.
+ */
+const justBooked =
+  saved.status === 'booked' &&
+  (
+    !previous ||
+    previous.status !== 'booked'
+  );
+
+if (justBooked) {
+
+  toast(
+    'Load booked — opening New Load…'
+  );
+
+  setTimeout(
+    () => {
+
+      location.href =
+        'newload.html?opportunity=' +
+        encodeURIComponent(saved.id);
+
+    },
+    700
+  );
+
+  return;
+}
+
+toast(
+  id
+    ? 'Updated'
+    : 'Added'
+);
+
+load();
 }
 
 async function del(){
