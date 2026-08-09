@@ -453,6 +453,79 @@ dialog.assign-dialog::backdrop {
   }
 }
 
+
+/* ==========================================================
+   NEW LOAD WORKFLOW SECTION BANDS
+   Fresh palette separation: assigned vs load-specific vs ready.
+   ========================================================== */
+
+.workflow-band {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  margin:18px 0 12px;
+  padding:9px 12px;
+  border:1px solid var(--line);
+  border-radius:0;
+  font-family:"Inter","Helvetica Neue",Arial,sans-serif;
+  font-size:11px;
+  font-weight:300;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.workflow-band .band-note {
+  text-transform:none;
+  letter-spacing:.02em;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.workflow-band.assigned-band {
+  background:#edf5f8;
+  border-color:#c9dce5;
+  color:#6B92A5;
+}
+
+.workflow-band.added-band {
+  background:#f7f1e6;
+  border-color:#e9dcc3;
+  color:#7e664a;
+}
+
+.workflow-band.ready-band {
+  background:#eef7df;
+  border-color:#d9e8b9;
+  color:#7f9432;
+  padding:11px 14px;
+  margin-top:20px;
+}
+
+.card.dispatch-ready-card {
+  border:1px solid #d9e8b9;
+  background:#fbfdf6;
+  box-shadow:0 0 0 3px rgba(174,188,57,.08);
+}
+
+.card.dispatch-ready-card h2 {
+  color:#7f9432;
+  font-weight:400;
+}
+
+.card.dispatch-ready-card .hint {
+  color:#6B92A5;
+}
+
+.card.load-specific-card {
+  border-left:3px solid #d94b7b;
+}
+
+.card.assignment-card {
+  border-left:3px solid #6B92A5;
+}
+
 </style>
 
 </head>
@@ -667,11 +740,16 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
+  <div class="workflow-band assigned-band">
+    <span>Assigned to Load</span>
+    <span class="band-note">Fleet · Route · State Rules</span>
+  </div>
+
   <!-- =====================================================
        FLEET ASSIGNMENT
        ===================================================== -->
 
-  <div class="card">
+  <div class="card assignment-card">
 
     <div class="assignment-head">
       <div>
@@ -750,7 +828,7 @@ dialog.assign-dialog::backdrop {
        ROUTE & COMPLIANCE
        ===================================================== -->
 
-  <div class="card">
+  <div class="card assignment-card">
 
     <div class="assignment-head">
       <div>
@@ -841,7 +919,7 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
-  <div class="card">
+  <div class="card assignment-card">
 
     <div class="assignment-head">
       <div>
@@ -870,11 +948,16 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
+  <div class="workflow-band added-band">
+    <span>Load-Specific Details</span>
+    <span class="band-note">Permits · Escorts · Accessorials · Documents</span>
+  </div>
+
   <!-- =====================================================
        PERMITS & ESCORTS
        ===================================================== -->
 
-  <div class="card">
+  <div class="card load-specific-card">
 
     <h2>Permits & Escorts</h2>
 
@@ -953,7 +1036,7 @@ dialog.assign-dialog::backdrop {
        ACCESSORIAL TERMS
        ===================================================== -->
 
-  <div class="card">
+  <div class="card load-specific-card">
 
     <h2>Accessorial Terms</h2>
 
@@ -1030,7 +1113,7 @@ dialog.assign-dialog::backdrop {
        DOCUMENTS
        ===================================================== -->
 
-  <div class="card">
+  <div class="card load-specific-card">
 
     <h2>Documents</h2>
 
@@ -1074,11 +1157,16 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
+  <div class="workflow-band ready-band">
+    <span>Dispatch Readiness</span>
+    <span class="band-note">Final review before release to Fleet Board</span>
+  </div>
+
   <!-- =====================================================
        DISPATCH READINESS
        ===================================================== -->
 
-  <div class="card">
+  <div class="card dispatch-ready-card">
 
     <h2>Dispatch Readiness</h2>
 
