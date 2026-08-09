@@ -667,6 +667,7 @@ function buildSystemEvents(){
 
       const pickup =
         safeDate(
+          load.pickup_appt_start ||
           load.pickup_date ||
           load.pickup_at
         );
@@ -687,6 +688,7 @@ function buildSystemEvents(){
 
       const delivery =
         safeDate(
+          load.delivery_appt_start ||
           load.delivery_date ||
           load.delivery_at
         );
@@ -747,8 +749,11 @@ async function fetchLoads(){
 
 
   LOADS =
-    result.data ||
-    [];
+    (result.data || [])
+      .filter(
+        load =>
+          load.status !== 'quoted'
+      );
 
 
   const options =
