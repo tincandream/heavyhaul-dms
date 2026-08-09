@@ -248,6 +248,89 @@
     color:var(--ok);
   }
 
+
+  /* ==========================================================
+     LOAD ASSEMBLY STATUS
+     Keeps New Load aligned with the summary/status area used
+     on the other Dispatch pages while showing live progress.
+     ========================================================== */
+
+  .assembly-status {
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:0;
+    margin-bottom:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+
+  .assembly-step {
+    min-height:62px;
+    padding:10px 12px;
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:3px;
+  }
+
+  .assembly-step:last-child {
+    border-right:0;
+  }
+
+  .assembly-step .k {
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+  }
+
+  .assembly-step .v {
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+  }
+
+  .assembly-step.done {
+    background:var(--okbg);
+  }
+
+  .assembly-step.done .v {
+    color:var(--ok);
+  }
+
+  .assembly-step.active {
+    background:var(--warnbg);
+  }
+
+  .assembly-step.active .v {
+    color:var(--warn);
+  }
+
+  .assembly-step.ready {
+    background:#e7f0f9;
+  }
+
+  .assembly-step.ready .v {
+    color:var(--accent);
+  }
+
+  @media (max-width:900px) {
+    .assembly-status {
+      grid-template-columns:repeat(3,1fr);
+    }
+
+    .assembly-step:nth-child(3n) {
+      border-right:0;
+    }
+
+    .assembly-step:nth-child(-n+3) {
+      border-bottom:1px solid var(--line);
+    }
+  }
+
 </style>
 
 </head>
@@ -264,6 +347,34 @@
   </section>
 
   <nav class="dispatch-tabs" id="dispatchTabs"></nav>
+
+  <div class="assembly-status" id="assemblyStatus">
+    <div class="assembly-step" id="asBroker">
+      <div class="k">Broker Load</div>
+      <div class="v">Waiting</div>
+    </div>
+    <div class="assembly-step" id="asFleet">
+      <div class="k">Fleet</div>
+      <div class="v">Waiting</div>
+    </div>
+    <div class="assembly-step" id="asRoute">
+      <div class="k">Route</div>
+      <div class="v">Waiting</div>
+    </div>
+    <div class="assembly-step" id="asRequirements">
+      <div class="k">Requirements</div>
+      <div class="v">Waiting</div>
+    </div>
+    <div class="assembly-step" id="asDocs">
+      <div class="k">Documents</div>
+      <div class="v">None</div>
+    </div>
+    <div class="assembly-step" id="asReady">
+      <div class="k">Dispatch</div>
+      <div class="v">Not Ready</div>
+    </div>
+  </div>
+
 
 
   <div class="card">
@@ -886,6 +997,7 @@ let SOURCE_OPPORTUNITY = null;
 let EDIT_LOAD_ID = null;
 let EDIT_LOAD_NUMBER = null;
 let PENDING_DOCUMENTS = [];
+let EXISTING_DOCUMENT_COUNT = 0;
 
 
 const STATES = [
@@ -1160,6 +1272,8 @@ async function start() {
 
   updateSaveLabel();
 
+  refreshAssemblyStatus();
+
 }
 
 
@@ -1201,6 +1315,8 @@ function drawRoute() {
         ' will be created'
 
       : 'No states selected.';
+
+  refreshAssemblyStatus();
 
 }
 
@@ -2191,10 +2307,197 @@ $('carrier')
 
 
 
+
+function setAssemblyStep(id, state, text) {
+  const el = $(id);
+  if (!el) return;
+
+  el.className =
+    'assembly-step' +
+    (state ? ' ' + state : '');
+
+  const value =
+    el.querySelector('.v');
+
+  if (value) {
+    value.textContent = text;
+  }
+}
+
+
+function routeReady() {
+  return Boolean(
+    val('origin') &&
+    val('dest') &&
+    route.length
+  );
+}
+
+
+function brokerReady() {
+  return Boolean(
+    val('brokerload') &&
+    val('commodity') &&
+    val('rate')
+  );
+}
+
+
+function fleetReady() {
+  return Boolean(
+    val('carrier') &&
+    val('driver') &&
+    val('tractor') &&
+    val('trailer')
+  );
+}
+
+
+function requirementsReady() {
+  /*
+   * Permits / escorts can legitimately be "not required."
+   * This step therefore means the dispatcher has reviewed
+   * the responsibility selections, not that an escort or
+   * permit must exist on every load.
+   */
+  return Boolean(
+    $('permresp').value &&
+    $('escresp').value
+  );
+}
+
+
+function dispatchReady() {
+  return Boolean(
+    brokerReady() &&
+    fleetReady() &&
+    routeReady()
+  );
+}
+
+
+function refreshAssemblyStatus() {
+
+  const brokerOK =
+    brokerReady();
+
+  const fleetOK =
+    fleetReady();
+
+  const routeOK =
+    routeReady();
+
+  const requirementsOK =
+    requirementsReady();
+
+  const docCount =
+    EXISTING_DOCUMENT_COUNT +
+    PENDING_DOCUMENTS.length;
+
+  const ready =
+    dispatchReady();
+
+
+  setAssemblyStep(
+    'asBroker',
+    brokerOK ? 'done' : 'active',
+    brokerOK ? 'Loaded' : 'Needs Info'
+  );
+
+
+  setAssemblyStep(
+    'asFleet',
+    fleetOK ? 'done' : 'active',
+    fleetOK ? 'Assigned' : 'Needs Assignment'
+  );
+
+
+  setAssemblyStep(
+    'asRoute',
+    routeOK ? 'done' : 'active',
+    routeOK ? 'Assigned' : 'Needs Route'
+  );
+
+
+  setAssemblyStep(
+    'asRequirements',
+    requirementsOK ? 'done' : 'active',
+    requirementsOK ? 'Reviewed' : 'Needs Review'
+  );
+
+
+  setAssemblyStep(
+    'asDocs',
+    docCount > 0 ? 'done' : '',
+    docCount > 0
+      ? docCount + ' Attached'
+      : 'None'
+  );
+
+
+  setAssemblyStep(
+    'asReady',
+    ready ? 'ready' : 'active',
+    ready
+      ? (
+          $('status').value === 'booked'
+            ? 'Ready to Release'
+            : 'Ready — Draft'
+        )
+      : 'Not Ready'
+  );
+
+}
+
+
+async function loadExistingDocumentCount() {
+
+  if (!EDIT_LOAD_ID) {
+    EXISTING_DOCUMENT_COUNT = 0;
+    refreshAssemblyStatus();
+    return;
+  }
+
+
+  const result =
+    await db
+      .from('document_links')
+      .select(
+        'document_id',
+        {
+          count:'exact',
+          head:true
+        }
+      )
+      .eq(
+        'entity_type',
+        'load'
+      )
+      .eq(
+        'entity_id',
+        EDIT_LOAD_ID
+      );
+
+
+  EXISTING_DOCUMENT_COUNT =
+    result.error
+      ? 0
+      : (
+          result.count || 0
+        );
+
+
+  refreshAssemblyStatus();
+
+}
+
+
 function updateSaveLabel() {
   const ready = $('status').value === 'booked';
   $('save').textContent =
     ready ? 'Release to Fleet Board' : 'Save to Dispatch Queue';
+
+  refreshAssemblyStatus();
 }
 
 async function loadDispatchQueue() {
@@ -2303,12 +2606,15 @@ async function loadExistingDraft() {
 
   updateSaveLabel();
   checkPrefs();
+  await loadExistingDocumentCount();
+  refreshAssemblyStatus();
   say((x.load_number || 'Draft') + ' reopened from Dispatch Queue.', 'ok');
 }
 
 function drawPendingDocs() {
   if (!PENDING_DOCUMENTS.length) {
     $('pendingDocs').textContent = 'No documents added yet.';
+    refreshAssemblyStatus();
     return;
   }
   $('pendingDocs').innerHTML = PENDING_DOCUMENTS.map((d,i) =>
@@ -2325,6 +2631,8 @@ function drawPendingDocs() {
       drawPendingDocs();
     })
   );
+
+  refreshAssemblyStatus();
 }
 
 async function sha256hex(file) {
@@ -2369,8 +2677,12 @@ async function uploadPendingDocuments(loadId) {
     });
     if (link.error) throw link.error;
   }
+  EXISTING_DOCUMENT_COUNT +=
+    PENDING_DOCUMENTS.length;
+
   PENDING_DOCUMENTS = [];
   drawPendingDocs();
+  refreshAssemblyStatus();
 }
 
 $('stageDoc').addEventListener('click', () => {
@@ -2392,6 +2704,46 @@ $('stageDoc').addEventListener('click', () => {
 });
 
 $('status').addEventListener('change', updateSaveLabel);
+
+
+[
+  'broker',
+  'brokerload',
+  'commodity',
+  'rate',
+  'carrier',
+  'driver',
+  'tractor',
+  'trailer',
+  'origin',
+  'dest',
+  'permresp',
+  'escresp',
+  'status'
+]
+.forEach(
+  id => {
+
+    const el =
+      $(id);
+
+    if (!el) {
+      return;
+    }
+
+    el.addEventListener(
+      'input',
+      refreshAssemblyStatus
+    );
+
+    el.addEventListener(
+      'change',
+      refreshAssemblyStatus
+    );
+
+  }
+);
+
 
 $('save')
   .addEventListener(
