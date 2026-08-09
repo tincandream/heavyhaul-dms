@@ -637,17 +637,20 @@ $('dlg').close();
  *
  * It is NOT sent to Fleet Board yet.
  */
-const justBooked =
-  saved.status === 'booked' &&
-  (
-    !previous ||
-    previous.status !== 'booked'
-  );
-
-if (justBooked) {
+/*
+ * Any opportunity saved with status BOOKED opens New Load.
+ *
+ * This intentionally includes a load that was already booked.
+ * Re-saving Booked therefore gives the dispatcher a reliable way
+ * to get back to Load Assembly if the load is no longer visible
+ * in the New Load queue.
+ */
+if (saved.status === 'booked') {
 
   toast(
-    'Load booked — opening New Load…'
+    previous && previous.status === 'booked'
+      ? 'Booked load — reopening New Load…'
+      : 'Load booked — opening New Load…'
   );
 
   setTimeout(
