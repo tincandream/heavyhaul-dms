@@ -114,50 +114,38 @@
        ========================================================= */
 
     .welcome-hero {
-      max-width: 720px;
-
-      margin-bottom: 30px;
-
-      padding:
-        28px 30px 26px;
-
-      background:
-        linear-gradient(
-          135deg,
-          rgba(36, 26, 42, 0.94),
-          rgba(50, 46, 59, 0.84)
-        );
-
-      border:
-        1px solid
-        rgba(250, 250, 250, 0.20);
-
-      box-shadow:
-        0 20px 50px
-        rgba(0, 0, 0, 0.22);
-
-      backdrop-filter:
-        blur(6px);
-
-      -webkit-backdrop-filter:
-        blur(6px);
+      width: 100vw;
+      max-width: none;
+      margin: -10px 0 34px calc(50% - 50vw);
+      padding: 24px max(5vw, calc((100vw - 1180px) / 2));
+      background: linear-gradient(
+        90deg,
+        rgba(250,250,250,.94),
+        rgba(246,246,243,.86),
+        rgba(234,243,246,.80)
+      );
+      border-top: 1px solid rgba(255,255,255,.75);
+      border-bottom: 1px solid rgba(127,165,181,.30);
+      box-shadow: 0 8px 26px rgba(36,44,52,.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
 
     .welcome-kicker {
       margin-bottom: 8px;
 
-      color: var(--welcome-lime);
+      color: #7C919A;
 
       font-family:
-        "Oswald",
+        "Inter",
         sans-serif;
 
-      font-size: 11px;
+      font-size: 10px;
 
-      font-weight: 500;
+      font-weight: 400;
 
-      letter-spacing: 3px;
+      letter-spacing: 2.4px;
 
       text-transform: uppercase;
     }
@@ -165,22 +153,12 @@
 
     .welcome-greeting {
       margin: 0;
-
-      color: var(--welcome-white);
-
-      font-family:
-        "Cinzel",
-        Georgia,
-        serif;
-
-      font-size:
-        clamp(30px, 5vw, 48px);
-
-      font-weight: 700;
-
-      line-height: 1.08;
-
-      letter-spacing: 1px;
+      color: #3E4B51;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(34px, 4.5vw, 54px);
+      font-weight: 400;
+      line-height: 1.02;
+      letter-spacing: .2px;
     }
 
 
@@ -188,33 +166,34 @@
       margin:
         10px 0 0;
 
-      color: var(--welcome-blue);
+      color: #718087;
 
       font-family:
-        "Cormorant Garamond",
-        Georgia,
-        serif;
+        "Inter",
+        sans-serif;
 
-      font-size: 21px;
+      font-size: 13px;
 
-      font-style: italic;
+      font-weight: 300;
 
-      line-height: 1.3;
+      font-style: normal;
+
+      letter-spacing: .2px;
+
+      line-height: 1.5;
     }
 
 
     .welcome-line {
-      width: 90px;
-      height: 3px;
-
+      width: min(360px, 38vw);
+      height: 1px;
       margin-top: 18px;
-
-      background:
-        linear-gradient(
-          90deg,
-          var(--welcome-pink),
-          var(--welcome-lime)
-        );
+      background: linear-gradient(
+        90deg,
+        rgba(216,106,142,.70),
+        rgba(127,165,181,.55),
+        rgba(184,195,74,.55)
+      );
     }
 
 
@@ -792,8 +771,51 @@
     .sourcing-link {
       color: var(--welcome-blue);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
       text-decoration: none;
+    }
+
+    .sourcing-action-badge {
+      display: inline-block;
+      margin-bottom: 5px;
+      padding: 2px 7px;
+      border: 1px solid rgba(127,165,181,.35);
+      color: #607985;
+      background: #F7FAFB;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .sourcing-action-badge.overdue {
+      color: #9A4961;
+      background: var(--welcome-pink-soft);
+      border-color: rgba(216,106,142,.35);
+    }
+
+    .sourcing-action-badge.today {
+      color: #68731F;
+      background: var(--welcome-lime-soft);
+      border-color: rgba(184,195,74,.45);
+    }
+
+    .sourcing-identifiers {
+      margin-top: 4px;
+      color: #59676D;
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .sourcing-identifiers strong {
+      color: #3E4B51;
+      font-weight: 600;
+    }
+
+    .sourcing-followup {
+      margin-top: 5px;
+      color: #7A858A;
+      font-size: 10px;
     }
 
     /* =========================================================
@@ -1160,7 +1182,6 @@
             </div>
           </div>
         </div>
-        </div>
 
       </section>
 
@@ -1189,8 +1210,6 @@
               Loading recent activity…
             </div>
           </div>
-        </div>
-
         </div>
 
       </section>
@@ -2095,162 +2114,313 @@
     async function loadSourcingTimeline() {
 
       const panel =
-        document.getElementById(
-          'sourcingTimeline'
-        );
-
+        document.getElementById('sourcingTimeline');
 
       try {
 
         const result =
           await db
-            .from('events')
+            .from('sourcing_events')
             .select(
-              'created_at,event_type,subject,body'
+              'id,created_at,event_type,title,detail,broker_name,carrier_name,contact_name,lane_origin,lane_destination,rate_amount,follow_up_at,opportunity_id,load_id'
             )
-            .eq(
-              'tenant_id',
-              TENANT_ID
-            )
-            .order(
-              'created_at',
-              {
-                ascending: false
-              }
-            )
-            .limit(40);
+            .eq('tenant_id', TENANT_ID)
+            .order('created_at', { ascending: false })
+            .limit(60);
 
-
-        if (
-          result.error
-        ) {
-
+        if (result.error) {
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'Sourcing activity will appear here as sourcing events are recorded.' +
+            '<div class="activity-empty">Sourcing timeline unavailable: ' +
+            escapeHtml(result.error.message) +
             '</div>';
-
           return;
-
         }
-
 
         const sourcing =
-          (result.data || [])
-            .filter(
-              function (item) {
+          result.data || [];
 
-                const text =
-                  [
-                    item.event_type,
-                    item.subject,
-                    item.body
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
-                    .toLowerCase();
-
-                return (
-                  text.includes('sourc') ||
-                  text.includes('broker') ||
-                  text.includes('quote') ||
-                  text.includes('opportun') ||
-                  text.includes('call queue') ||
-                  text.includes('lane')
-                );
-
-              }
-            )
-            .slice(0, 8);
-
-
-        if (
-          sourcing.length === 0
-        ) {
-
+        if (!sourcing.length) {
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'No sourcing activity recorded yet.' +
-            '</div>';
-
+            '<div class="activity-empty">No sourcing activity recorded yet.</div>';
           return;
-
         }
 
+        const opportunityIds =
+          [...new Set(
+            sourcing
+              .map(item => item.opportunity_id)
+              .filter(Boolean)
+          )];
+
+        let opportunityMap = {};
+
+        if (opportunityIds.length) {
+          const opportunityResult =
+            await db
+              .from('load_opportunities')
+              .select(
+                'id,broker_name,external_ref,origin_city,origin_state,dest_city,dest_state,commodity,equipment_needed,status,posted_rate,quoted_rate,booked_rate,pickup_date'
+              )
+              .in('id', opportunityIds);
+
+          if (!opportunityResult.error && opportunityResult.data) {
+            opportunityMap =
+              Object.fromEntries(
+                opportunityResult.data.map(item => [item.id, item])
+              );
+          }
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0,0,0,0);
+
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+        function priority(item) {
+          if (!item.follow_up_at) return 3;
+          const due = new Date(item.follow_up_at);
+          if (Number.isNaN(due.getTime())) return 3;
+          if (due < todayStart) return 0;
+          if (due < tomorrowStart) return 1;
+          return 2;
+        }
+
+        const ordered =
+          sourcing
+            .slice()
+            .sort((a,b) => {
+              const pa = priority(a);
+              const pb = priority(b);
+              if (pa !== pb) return pa - pb;
+
+              if (pa <= 2) {
+                return new Date(a.follow_up_at) - new Date(b.follow_up_at);
+              }
+
+              return new Date(b.created_at) - new Date(a.created_at);
+            })
+            .slice(0,12);
 
         panel.innerHTML =
-          sourcing
-            .map(
-              function (item) {
+          ordered.map(item => {
 
-                const date =
-                  new Date(
-                    item.created_at
+            const opportunity =
+              item.opportunity_id
+                ? opportunityMap[item.opportunity_id]
+                : null;
+
+            const company =
+              item.broker_name ||
+              item.carrier_name ||
+              (opportunity ? opportunity.broker_name : '') ||
+              'Sourcing';
+
+            const contact =
+              item.contact_name || '';
+
+            const origin =
+              item.lane_origin ||
+              (
+                opportunity
+                  ? [opportunity.origin_city, opportunity.origin_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const destination =
+              item.lane_destination ||
+              (
+                opportunity
+                  ? [opportunity.dest_city, opportunity.dest_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const lane =
+              origin && destination
+                ? origin + ' → ' + destination
+                : origin || destination || '';
+
+            const freight =
+              opportunity
+                ? [opportunity.commodity, opportunity.equipment_needed]
+                    .filter(Boolean)
+                    .join(' · ')
+                : '';
+
+            const reference =
+              opportunity && opportunity.external_ref
+                ? 'Broker Load #' + opportunity.external_ref
+                : '';
+
+            const rate =
+              item.rate_amount != null
+                ? Number(item.rate_amount)
+                : (
+                    opportunity
+                      ? (
+                          opportunity.booked_rate != null
+                            ? Number(opportunity.booked_rate)
+                            : opportunity.quoted_rate != null
+                              ? Number(opportunity.quoted_rate)
+                              : opportunity.posted_rate != null
+                                ? Number(opportunity.posted_rate)
+                                : null
+                        )
+                      : null
                   );
 
-                const time =
-                  Number.isNaN(
-                    date.getTime()
-                  )
-                    ? ''
-                    : date.toLocaleString(
-                        'en-US',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        }
-                      );
+            const eventDate =
+              new Date(item.created_at);
 
-                const title =
-                  item.subject ||
-                  item.event_type ||
-                  'Sourcing activity';
+            const eventTime =
+              Number.isNaN(eventDate.getTime())
+                ? ''
+                : eventDate.toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  );
 
-                const detail =
-                  item.body &&
-                  item.body !== title
-                    ? item.body
-                    : '';
+            let actionLabel = 'Recent';
+            let actionClass = '';
 
-                return (
-                  '<div class="sourcing-row">' +
+            if (item.follow_up_at) {
+              const due = new Date(item.follow_up_at);
 
-                    '<div class="sourcing-time">' +
-                      escapeHtml(time) +
-                    '</div>' +
-
-                    '<div class="sourcing-marker"></div>' +
-
-                    '<div>' +
-                      '<div class="sourcing-title">' +
-                        escapeHtml(title) +
-                      '</div>' +
-                      (
-                        detail
-                          ? (
-                              '<div class="sourcing-detail">' +
-                              escapeHtml(detail) +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-                    '</div>' +
-
-                    '<a class="sourcing-link" href="sourcing.html">' +
-                      'Open →' +
-                    '</a>' +
-
-                  '</div>'
-                );
-
+              if (!Number.isNaN(due.getTime())) {
+                if (due < todayStart) {
+                  actionLabel = 'Overdue';
+                  actionClass = ' overdue';
+                }
+                else if (due < tomorrowStart) {
+                  actionLabel = 'Due Today';
+                  actionClass = ' today';
+                }
+                else {
+                  actionLabel = 'Upcoming';
+                }
               }
-            )
-            .join('');
+            }
+
+            const followupText =
+              item.follow_up_at
+                ? 'Follow-up: ' +
+                  new Date(item.follow_up_at).toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  )
+                : '';
+
+            const identifiers =
+              [
+                contact
+                  ? '<strong>' + escapeHtml(contact) + '</strong>'
+                  : '',
+                lane
+                  ? escapeHtml(lane)
+                  : '',
+                reference
+                  ? escapeHtml(reference)
+                  : '',
+                freight
+                  ? escapeHtml(freight)
+                  : '',
+                rate != null && !Number.isNaN(rate)
+                  ? '<strong>' +
+                    rate.toLocaleString(
+                      'en-US',
+                      {
+                        style:'currency',
+                        currency:'USD',
+                        maximumFractionDigits:0
+                      }
+                    ) +
+                    '</strong>'
+                  : ''
+              ]
+                .filter(Boolean)
+                .join(' · ');
+
+            const title =
+              item.title ||
+              item.event_type ||
+              'Sourcing activity';
+
+            const detail =
+              item.detail || '';
+
+            const target =
+              item.load_id
+                ? 'workspace.html?id=' + encodeURIComponent(item.load_id)
+                : 'opportunities.html';
+
+            return (
+              '<div class="sourcing-row">' +
+                '<div class="sourcing-time">' +
+                  escapeHtml(eventTime) +
+                '</div>' +
+                '<div class="sourcing-marker"></div>' +
+                '<div>' +
+                  '<div class="sourcing-action-badge' +
+                    actionClass +
+                  '">' +
+                    escapeHtml(actionLabel) +
+                  '</div>' +
+                  '<div class="sourcing-title">' +
+                    escapeHtml(title) +
+                    ' — ' +
+                    escapeHtml(company) +
+                  '</div>' +
+                  (
+                    identifiers
+                      ? '<div class="sourcing-identifiers">' +
+                        identifiers +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    detail
+                      ? '<div class="sourcing-detail">' +
+                        escapeHtml(detail) +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    followupText
+                      ? '<div class="sourcing-followup">' +
+                        escapeHtml(followupText) +
+                        '</div>'
+                      : ''
+                  ) +
+                '</div>' +
+                '<a class="sourcing-link" href="' +
+                  escapeHtml(target) +
+                  '">' +
+                  (
+                    item.load_id
+                      ? 'Open Load →'
+                      : 'Open Opportunity →'
+                  ) +
+                '</a>' +
+              '</div>'
+            );
+
+          }).join('');
 
       }
-
       catch (error) {
 
         console.warn(
@@ -2259,9 +2429,7 @@
         );
 
         panel.innerHTML =
-          '<div class="activity-empty">' +
-          'Sourcing activity unavailable.' +
-          '</div>';
+          '<div class="activity-empty">Sourcing activity unavailable.</div>';
 
       }
 
