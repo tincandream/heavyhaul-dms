@@ -523,7 +523,12 @@ async function load() {
 
 
   rows =
-    r.data || [];
+    (r.data || [])
+      .filter(
+        row =>
+          row.load_status !== 'quoted' &&
+          row.display_status !== 'quoted'
+      );
 
 
 
