@@ -483,6 +483,12 @@ dialog.assign-dialog::backdrop {
   color:var(--muted);
 }
 
+.workflow-band.imported-band {
+  background:#fbecf1;
+  border-color:#efc5d3;
+  color:#A14666;
+}
+
 .workflow-band.assigned-band {
   background:#edf5f8;
   border-color:#c9dce5;
@@ -490,15 +496,15 @@ dialog.assign-dialog::backdrop {
 }
 
 .workflow-band.added-band {
-  background:#f7f1e6;
-  border-color:#e9dcc3;
-  color:#7e664a;
+  background:#f1f6df;
+  border-color:#dce8b8;
+  color:#7f9432;
 }
 
 .workflow-band.ready-band {
-  background:#eef7df;
-  border-color:#d9e8b9;
-  color:#7f9432;
+  background:linear-gradient(90deg,#fbecf1 0%,#edf5f8 50%,#f1f6df 100%);
+  border-color:#c9dce5;
+  color:#59656c;
   padding:11px 14px;
   margin-top:20px;
 }
@@ -519,7 +525,7 @@ dialog.assign-dialog::backdrop {
 }
 
 .card.load-specific-card {
-  border-left:3px solid #d94b7b;
+  border-left:3px solid #aebc39;
 }
 
 .card.assignment-card {
@@ -582,7 +588,7 @@ dialog.assign-dialog::backdrop {
     id="sourcingImport"
     style="display:none;border-left:4px solid #D86A8E;"
   >
-    <h2>Imported from Sourcing</h2>
+    <h2>Imported Broker Load</h2>
     <p
       class="hint"
       id="sourcingImportSummary"
@@ -591,152 +597,18 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
-  <!-- =====================================================
-       BROKER LOAD
-       Imported values remain editable in New Load.
-       ===================================================== -->
-
-  <div class="card">
-
-    <h2>Broker Load</h2>
-
-    <p class="hint">
-      Accepted sourcing information is prefilled here and can be edited before dispatch.
-    </p>
-
-    <div class="grid">
-
-      <div>
-        <label>Broker</label>
-        <select id="broker"></select>
-      </div>
-
-      <div>
-        <label>Broker load number</label>
-        <input id="brokerload">
-      </div>
-
-      <div class="half req">
-        <label>Freight / commodity</label>
-        <input
-          id="commodity"
-          placeholder="Caterpillar 336 excavator"
-        >
-      </div>
-
-      <div>
-        <label>Pieces</label>
-        <input
-          id="pieces"
-          type="number"
-          value="1"
-        >
-      </div>
-
-      <div>
-        <label>Declared value</label>
-        <input
-          id="value"
-          type="number"
-        >
-      </div>
-
-    </div>
-
-    <p class="hint" style="margin-top:14px">
-      Dimensions in inches — what permit offices use.
-      Type feet and inches like <b>13'6</b> and it converts.
-    </p>
-
-    <div class="dims">
-
-      <div>
-        <div class="dimbox">
-          <label>Length</label>
-          <input id="len" placeholder="0">
-          <span class="u">inches</span>
-        </div>
-        <div class="conv" id="clen"></div>
-      </div>
-
-      <div>
-        <div class="dimbox">
-          <label>Width</label>
-          <input id="wid" placeholder="0">
-          <span class="u">inches</span>
-        </div>
-        <div class="conv" id="cwid"></div>
-      </div>
-
-      <div>
-        <div class="dimbox">
-          <label>Height</label>
-          <input id="hgt" placeholder="0">
-          <span class="u">inches</span>
-        </div>
-        <div class="conv" id="chgt"></div>
-      </div>
-
-      <div>
-        <div class="dimbox">
-          <label>Weight</label>
-          <input id="wgt" placeholder="0">
-          <span class="u">pounds</span>
-        </div>
-        <div class="conv" id="cwgt"></div>
-      </div>
-
-    </div>
-
-    <div class="legal" id="legal"></div>
-
-    <div class="grid" style="margin-top:14px">
-
-      <div>
-        <label>Pickup appointment</label>
-        <input
-          id="pu"
-          type="datetime-local"
-        >
-      </div>
-
-      <div>
-        <label>Delivery appointment</label>
-        <input
-          id="del"
-          type="datetime-local"
-        >
-      </div>
-
-      <div class="req">
-        <label>Linehaul / booked rate</label>
-        <input
-          id="rate"
-          type="number"
-          step="0.01"
-        >
-      </div>
-
-      <div>
-        <label>Fuel surcharge</label>
-        <input
-          id="fsc"
-          type="number"
-          step="0.01"
-          value="0"
-        >
-      </div>
-
-      <div>
-        <label>Rate per mile</label>
-        <input
-          id="rpm"
-          disabled
-        >
-      </div>
-
-    </div>
-
+  <!-- Broker-load values retained for save/import logic; not duplicated in the UI. -->
+  <div id="brokerLoadData" hidden>
+    <select id="broker"></select>
+    <input id="brokerload">
+    <input id="pu" type="datetime-local">
+    <input id="del" type="datetime-local">
+    <input id="commodity">
+    <input id="len" type="number">
+    <input id="wid" type="number">
+    <input id="hgt" type="number">
+    <input id="wgt" type="number">
+    <input id="rate" type="number">
   </div>
 
 
@@ -950,8 +822,73 @@ dialog.assign-dialog::backdrop {
 
   <div class="workflow-band added-band">
     <span>Load-Specific Details</span>
-    <span class="band-note">Permits · Escorts · Accessorials · Documents</span>
+    <span class="band-note">Schedule · Permits · Escorts · Accessorials · Documents</span>
   </div>
+
+  <!-- =====================================================
+       SCHEDULE / CALENDAR
+       ===================================================== -->
+
+  <div class="card load-specific-card">
+
+    <h2>Schedule</h2>
+
+    <p class="hint">
+      Pickup and delivery already appear on Calendar from the load. Add only the extra reminders this shipment needs.
+    </p>
+
+    <div class="grid">
+
+      <div>
+        <label>Reminder type</label>
+        <select id="scheduleType">
+          <option value="followup">Follow-up</option>
+          <option value="permit">Permit deadline</option>
+          <option value="escort">Escort meeting</option>
+          <option value="document">Document deadline</option>
+          <option value="broker_call">Broker call</option>
+          <option value="carrier_call">Carrier call</option>
+          <option value="driver_call">Driver call</option>
+          <option value="accessorial">Accessorial follow-up</option>
+          <option value="invoice">Invoice</option>
+          <option value="payment">Payment</option>
+          <option value="custom">Other reminder</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Date & time</label>
+        <input id="scheduleWhen" type="datetime-local">
+      </div>
+
+      <div class="full">
+        <label>Reminder title</label>
+        <input
+          id="scheduleTitle"
+          placeholder="Example: Confirm AR permit before departure"
+        >
+      </div>
+
+      <div class="full">
+        <label>Schedule notes</label>
+        <textarea
+          id="scheduleNotes"
+          placeholder="Optional details for the reminder"
+        ></textarea>
+      </div>
+
+    </div>
+
+    <div style="margin-top:10px">
+      <button type="button" id="stageSchedule">+ Add to Schedule</button>
+    </div>
+
+    <div id="pendingSchedule" class="route">
+      No additional calendar reminders added.
+    </div>
+
+  </div>
+
 
   <!-- =====================================================
        PERMITS & ESCORTS
@@ -1359,6 +1296,9 @@ let EDIT_LOAD_NUMBER = null;
 let PENDING_DOCUMENTS = [];
 let EXISTING_DOCUMENT_COUNT = 0;
 
+let PENDING_SCHEDULE = [];
+let EXISTING_SCHEDULE = [];
+
 let ASSIGNED_ROUTE_SOURCE_TYPE = null;
 let ASSIGNED_ROUTE_SOURCE_ID = null;
 let ASSIGNED_ROUTE_URL = null;
@@ -1643,6 +1583,8 @@ async function start() {
   await loadExistingDraft();
 
   await loadDispatchQueue();
+
+  drawSchedule();
 
   updateSaveLabel();
 
@@ -3655,9 +3597,360 @@ async function loadExistingDraft() {
   updateSaveLabel();
   checkPrefs();
   await loadExistingDocumentCount();
+  await loadExistingSchedule(EDIT_LOAD_ID);
   refreshAssemblyStatus();
   say((x.load_number || 'Draft') + ' reopened from Dispatch Queue.', 'ok');
 }
+
+
+function schedulePrettyType(type) {
+  return String(type || 'custom')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+
+function scheduleDisplayDate(value) {
+  if (!value) return '';
+
+  const d = new Date(value);
+
+  if (Number.isNaN(d.getTime())) {
+    return value;
+  }
+
+  return d.toLocaleString(
+    'en-US',
+    {
+      month:'short',
+      day:'numeric',
+      hour:'numeric',
+      minute:'2-digit'
+    }
+  );
+}
+
+
+function scheduleIsoLocal(value) {
+  if (!value) return null;
+
+  const d = new Date(value);
+
+  if (Number.isNaN(d.getTime())) {
+    return null;
+  }
+
+  return d.toISOString();
+}
+
+
+function drawSchedule() {
+
+  const existing =
+    EXISTING_SCHEDULE.map(
+      x => ({
+        existing:true,
+        id:x.id,
+        type:x.event_type,
+        title:x.title,
+        when:x.starts_at,
+        notes:x.notes
+      })
+    );
+
+  const staged =
+    PENDING_SCHEDULE.map(
+      (x,index) => ({
+        existing:false,
+        index,
+        ...x
+      })
+    );
+
+  const items =
+    [
+      ...existing,
+      ...staged
+    ]
+    .sort(
+      (a,b) =>
+        new Date(a.when) -
+        new Date(b.when)
+    );
+
+
+  if (!items.length) {
+
+    $('pendingSchedule').textContent =
+      'No additional calendar reminders added.';
+
+    return;
+
+  }
+
+
+  $('pendingSchedule').innerHTML =
+    items.map(
+      item => {
+
+        const label =
+          schedulePrettyType(
+            item.type
+          );
+
+        const remove =
+          item.existing
+            ? ''
+            : (
+                ' <button type="button" ' +
+                'data-remove-schedule="' +
+                item.index +
+                '" style="padding:3px 8px;margin-left:8px">' +
+                'Remove</button>'
+              );
+
+        return (
+          '<div style="padding:7px 0;border-bottom:1px solid var(--line)">' +
+            '<span style="font-weight:400">' +
+              escapeHtml(item.title || label) +
+            '</span>' +
+            ' · ' +
+            escapeHtml(label) +
+            ' · ' +
+            escapeHtml(
+              scheduleDisplayDate(
+                item.when
+              )
+            ) +
+            remove +
+          '</div>'
+        );
+
+      }
+    )
+    .join('');
+
+
+  document
+    .querySelectorAll(
+      '[data-remove-schedule]'
+    )
+    .forEach(
+      button =>
+        button.addEventListener(
+          'click',
+          () => {
+
+            PENDING_SCHEDULE.splice(
+              Number(
+                button.dataset.removeSchedule
+              ),
+              1
+            );
+
+            drawSchedule();
+
+          }
+        )
+    );
+
+}
+
+
+async function loadExistingSchedule(loadId) {
+
+  if (!loadId) {
+    EXISTING_SCHEDULE = [];
+    drawSchedule();
+    return;
+  }
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .select(
+        'id,event_type,title,starts_at,notes,completed'
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .eq(
+        'load_id',
+        loadId
+      )
+      .order(
+        'starts_at',
+        {
+          ascending:true
+        }
+      );
+
+
+  if (result.error) {
+
+    console.warn(
+      'Load schedule:',
+      result.error.message
+    );
+
+    EXISTING_SCHEDULE = [];
+    drawSchedule();
+    return;
+
+  }
+
+
+  EXISTING_SCHEDULE =
+    result.data || [];
+
+
+  drawSchedule();
+
+}
+
+
+async function savePendingSchedule(loadId) {
+
+  if (!PENDING_SCHEDULE.length) {
+    return;
+  }
+
+
+  const records =
+    PENDING_SCHEDULE.map(
+      item => ({
+
+        tenant_id:
+          tenant,
+
+        load_id:
+          loadId,
+
+        title:
+          item.title,
+
+        event_type:
+          item.type,
+
+        starts_at:
+          scheduleIsoLocal(
+            item.when
+          ),
+
+        notes:
+          item.notes || null,
+
+        completed:
+          false
+
+      })
+    );
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .insert(records)
+      .select(
+        'id,event_type,title,starts_at,notes,completed'
+      );
+
+
+  if (result.error) {
+    throw result.error;
+  }
+
+
+  EXISTING_SCHEDULE =
+    [
+      ...EXISTING_SCHEDULE,
+      ...(result.data || [])
+    ];
+
+
+  PENDING_SCHEDULE = [];
+
+  drawSchedule();
+
+}
+
+
+$('stageSchedule')
+  .addEventListener(
+    'click',
+    () => {
+
+      const title =
+        val('scheduleTitle');
+
+      const when =
+        val('scheduleWhen');
+
+
+      if (!title) {
+
+        say(
+          'Enter a schedule reminder title.',
+          'err'
+        );
+
+        return;
+
+      }
+
+
+      if (!when) {
+
+        say(
+          'Choose a date and time for the reminder.',
+          'err'
+        );
+
+        return;
+
+      }
+
+
+      PENDING_SCHEDULE.push({
+
+        type:
+          $('scheduleType').value,
+
+        title,
+
+        when,
+
+        notes:
+          val('scheduleNotes')
+
+      });
+
+
+      $('scheduleTitle').value =
+        '';
+
+      $('scheduleWhen').value =
+        '';
+
+      $('scheduleNotes').value =
+        '';
+
+      $('scheduleType').value =
+        'followup';
+
+
+      drawSchedule();
+
+      say(
+        'Reminder staged. It will be added to Calendar when the load is saved.',
+        'ok'
+      );
+
+    }
+  );
+
 
 function drawPendingDocs() {
   if (!PENDING_DOCUMENTS.length) {
@@ -4276,6 +4569,20 @@ $('save')
         say(
           'Load saved, but a document failed to upload: ' +
           docError.message,
+          'err'
+        );
+        return;
+      }
+
+
+      try {
+        await savePendingSchedule(loadId);
+      }
+      catch (scheduleError) {
+        $('save').disabled = false;
+        say(
+          'Load saved, but a Calendar reminder failed to save: ' +
+          scheduleError.message,
           'err'
         );
         return;
