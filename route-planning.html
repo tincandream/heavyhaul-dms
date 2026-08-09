@@ -253,6 +253,18 @@ button.action.danger{
 .errmsg{background:var(--rp-pink-soft);color:#8E3E58}
 .okmsg.show,.errmsg.show{display:block}
 
+/* Selected load dispatch context */
+.load-context{display:none}
+.load-context.show{display:block}
+.context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.context-block{padding:11px 0;border-bottom:1px solid var(--line)}
+.context-block.full{grid-column:1/-1}
+.context-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:4px}
+.context-value{font-size:14px;line-height:1.45}
+.context-value strong{font-weight:700}
+.context-note{margin-top:10px;padding:10px 12px;border-left:3px solid var(--blue,#6B92A5);background:rgba(107,146,165,.08);font-size:12px;line-height:1.45}
+@media(max-width:720px){.context-grid{grid-template-columns:1fr}}
+
 /* Golden routes */
 .filters{
   display:grid;
@@ -517,6 +529,38 @@ button.action.danger{
               <input id="deliveryAt" type="datetime-local">
             </div>
           </div>
+        </div>
+
+        <div class="card load-context" id="loadContextCard">
+          <h2>Dispatch Load Context</h2>
+          <p class="hint">Carried from the booked load and assigned fleet. Verify these values before approving a heavy-haul route.</p>
+          <div class="context-grid">
+            <div class="context-block">
+              <div class="context-label">Carrier / Driver</div>
+              <div class="context-value" id="ctxCarrier">—</div>
+            </div>
+            <div class="context-block">
+              <div class="context-label">Truck / Trailer</div>
+              <div class="context-value" id="ctxEquipment">—</div>
+            </div>
+            <div class="context-block">
+              <div class="context-label">Loaded Configuration</div>
+              <div class="context-value" id="ctxDimensions">—</div>
+            </div>
+            <div class="context-block">
+              <div class="context-label">Axles / Overhang</div>
+              <div class="context-value" id="ctxAxles">—</div>
+            </div>
+            <div class="context-block full">
+              <div class="context-label">Carrier Baseline</div>
+              <div class="context-value" id="ctxProfile">—</div>
+            </div>
+            <div class="context-block full">
+              <div class="context-label">Confirmed Load Accessorials</div>
+              <div class="context-value" id="ctxAccessorials">—</div>
+            </div>
+          </div>
+          <div class="context-note">Carrier Profile = reusable negotiating baseline. Confirmed Load Accessorials = the terms actually agreed with the broker for this load.</div>
         </div>
 
         <div class="card">
@@ -857,11 +901,27 @@ let db = null;
 let tenant = null;
 let facilities = {};
 let goldenRoutes = [];
+let loadCache = {};
 
 function pretty(v){
   return String(v || '')
     .replace(/_/g,' ')
     .replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function fmtInches(v){
+  if(v == null || v === '') return '—';
+  const n = Number(v);
+  if(!Number.isFinite(n)) return '—';
+  const ft = Math.floor(n / 12);
+  const inch = Math.round(n % 12);
+  return ft + "'" + (inch ? ' ' + inch + '"' : '');
+}
+
+function money(v){
+  if(v == null || v === '') return '—';
+  const n = Number(v);
+  return Number.isFinite(n) ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:2}) : '—';
 }
 
 function arrFromComma(v){
@@ -1004,6 +1064,13 @@ async function start(){
 
   await loadFacilities();
   await loadLoads();
+
+  const requestedLoad = new URLSearchParams(location.search).get('load');
+  if(requestedLoad && loadCache[requestedLoad]){
+    $('loadSelect').value = requestedLoad;
+    $('loadSelect').dispatchEvent(new Event('change'));
+  }
+
   await loadGoldenRoutes();
 
   drawPreview();
@@ -1031,7 +1098,7 @@ async function loadLoads(){
   const r = await db
     .from('loads')
     .select(
-      'id,load_number,commodity,origin_facility_id,dest_facility_id,total_miles,pickup_appt_start,delivery_appt_start,trailer_id'
+      'id,load_number,broker_load_number,commodity,origin_facility_id,dest_facility_id,total_miles,pickup_appt_start,delivery_appt_start,carrier_id,driver_id,tractor_id,trailer_id,length_in,width_in,height_in,weight_lb,overhang_front_in,overhang_rear_in,axle_count,axle_spacings,detention_free_hours,detention_rate_per_hour,layover_rate,layover_requires_approval,tonu_rate,accessorial_notes,linehaul_rate,fuel_surcharge'
     )
     .eq('tenant_id',tenant)
     .order('created_at',{ascending:false})
@@ -1041,6 +1108,9 @@ async function loadLoads(){
     console.warn('Loads:',r.error.message);
     return;
   }
+
+  loadCache = {};
+  (r.data || []).forEach(x=>{ loadCache[x.id] = x; });
 
   $('loadSelect').innerHTML =
     '<option value="">— Manual route —</option>' +
@@ -1064,10 +1134,77 @@ async function loadLoads(){
     }).join('');
 }
 
-$('loadSelect').addEventListener('change',()=>{
+async function renderLoadContext(load){
+  const card = $('loadContextCard');
+  if(!load){
+    card.classList.remove('show');
+    return;
+  }
+
+  card.classList.add('show');
+
+  const ids = [load.tractor_id,load.trailer_id].filter(Boolean);
+  const [carrierR,driverR,equipR,profileR] = await Promise.all([
+    load.carrier_id ? db.from('carriers').select('id,legal_name,dba_name').eq('id',load.carrier_id).maybeSingle() : Promise.resolve({data:null}),
+    load.driver_id ? db.from('drivers').select('id,first_name,last_name').eq('id',load.driver_id).maybeSingle() : Promise.resolve({data:null}),
+    ids.length ? db.from('equipment').select('id,unit_number,equipment_type,axle_count,deck_length_in,deck_height_in,empty_weight_lb,max_payload_lb').in('id',ids) : Promise.resolve({data:[]}),
+    load.carrier_id ? db.from('carrier_profiles').select('*').eq('tenant_id',tenant).eq('carrier_id',load.carrier_id).maybeSingle() : Promise.resolve({data:null})
+  ]);
+
+  const carrier = carrierR.data;
+  const driver = driverR.data;
+  const eq = {};
+  (equipR.data || []).forEach(x=>{ eq[x.id] = x; });
+  const tractor = eq[load.tractor_id];
+  const trailer = eq[load.trailer_id];
+  const profile = profileR.data;
+
+  const carrierName = carrier ? (carrier.dba_name || carrier.legal_name) : 'Unassigned carrier';
+  const driverName = driver ? [driver.first_name,driver.last_name].filter(Boolean).join(' ') : 'Unassigned driver';
+  $('ctxCarrier').innerHTML = `<strong>${carrierName}</strong> · ${driverName}`;
+
+  const tractorText = tractor ? `${tractor.unit_number || 'Truck'} (${pretty(tractor.equipment_type)})` : 'Truck not assigned';
+  const trailerText = trailer ? `${trailer.unit_number || 'Trailer'} (${pretty(trailer.equipment_type)})` : 'Trailer not assigned';
+  $('ctxEquipment').innerHTML = `<strong>${tractorText}</strong> · ${trailerText}`;
+  if(trailer && trailer.equipment_type){ $('equipmentType').value = pretty(trailer.equipment_type); }
+
+  const dims = [fmtInches(load.length_in)+' L',fmtInches(load.width_in)+' W',fmtInches(load.height_in)+' H'].join(' × ');
+  $('ctxDimensions').innerHTML = `<strong>${dims}</strong> · ${load.weight_lb != null ? Number(load.weight_lb).toLocaleString() + ' lb gross' : 'gross weight missing'}`;
+
+  const overhang = `Front ${fmtInches(load.overhang_front_in || 0)} · Rear ${fmtInches(load.overhang_rear_in || 0)}`;
+  $('ctxAxles').textContent = `${load.axle_count != null ? load.axle_count + ' axles' : 'Axle count missing'}${load.axle_spacings ? ' · ' + load.axle_spacings : ''} · ${overhang}`;
+
+  if(profile){
+    const bits = [
+      profile.target_rate_per_mile != null ? `Target ${money(profile.target_rate_per_mile)}/mi` : '',
+      profile.minimum_rate_per_mile != null ? `Minimum ${money(profile.minimum_rate_per_mile)}/mi` : '',
+      profile.minimum_day_rate != null ? `${money(profile.minimum_day_rate)} minimum day` : '',
+      profile.detention_rate_per_hour != null ? `Detention ${money(profile.detention_rate_per_hour)}/hr${profile.detention_after_hours != null ? ' after ' + profile.detention_after_hours + ' hr' : ''}` : '',
+      profile.tonu_minimum != null ? `TONU ${money(profile.tonu_minimum)}` : '',
+      profile.layover_rate_per_day != null ? `Layover ${money(profile.layover_rate_per_day)}/day` : ''
+    ].filter(Boolean);
+    $('ctxProfile').textContent = bits.length ? bits.join(' · ') : 'No carrier baseline terms saved.';
+  }else{
+    $('ctxProfile').textContent = 'No carrier profile saved.';
+  }
+
+  const acc = [
+    load.detention_rate_per_hour != null ? `Detention ${money(load.detention_rate_per_hour)}/hr${load.detention_free_hours != null ? ' after ' + load.detention_free_hours + ' hr' : ''}` : '',
+    load.tonu_rate != null ? `TONU ${money(load.tonu_rate)}` : '',
+    load.layover_rate != null ? `Layover ${money(load.layover_rate)}${load.layover_requires_approval ? ' (approval required)' : ''}` : ''
+  ].filter(Boolean);
+  $('ctxAccessorials').textContent = acc.length ? acc.join(' · ') : 'Not confirmed on this load yet.';
+}
+
+$('loadSelect').addEventListener('change',async ()=>{
   const opt = $('loadSelect').selectedOptions[0];
 
-  if(!opt || !opt.value) return;
+  if(!opt || !opt.value){
+    await renderLoadContext(null);
+    return;
+  }
+
+  const selectedLoad = loadCache[opt.value] || null;
 
   $('origin').value = decodeURIComponent(opt.dataset.origin || '');
   $('destination').value = decodeURIComponent(opt.dataset.destination || '');
@@ -1088,6 +1225,7 @@ $('loadSelect').addEventListener('change',()=>{
     $('routeName').value = [number,commodity].filter(Boolean).join(' · ');
   }
 
+  await renderLoadContext(selectedLoad);
   drawPreview();
 });
 
