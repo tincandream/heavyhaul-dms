@@ -627,6 +627,150 @@
     }
 
 
+
+    /* =========================================================
+       THIS WEEK
+       ========================================================= */
+
+    .week-section {
+      margin-bottom: 28px;
+    }
+
+    .week-panel {
+      padding: 14px;
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .week-day {
+      min-height: 116px;
+      padding: 10px;
+      background: #FFFFFF;
+      border: 1px solid #E5E9EA;
+      cursor: pointer;
+    }
+
+    .week-day:hover {
+      border-color: var(--welcome-blue);
+    }
+
+    .week-day.today {
+      background: var(--welcome-lime-soft);
+      border: 2px solid var(--welcome-lime);
+    }
+
+    .week-name {
+      color: #858D91;
+      font-family: "Oswald", sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .week-date {
+      margin: 3px 0 8px;
+      font-family: "Cinzel", serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .week-event {
+      display: block;
+      margin-top: 5px;
+      padding: 4px 5px;
+      overflow: hidden;
+      color: var(--welcome-ink);
+      background: var(--welcome-blue-soft);
+      font-size: 9.5px;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .week-event.delivery {
+      background: var(--welcome-lime-soft);
+    }
+
+    .week-event.permit,
+    .week-event.accessorial {
+      background: var(--welcome-pink-soft);
+    }
+
+    .week-more {
+      margin-top: 6px;
+      color: #7C8388;
+      font-size: 9.5px;
+    }
+
+
+    /* =========================================================
+       SOURCING TIMELINE
+       ========================================================= */
+
+    .sourcing-section {
+      margin-bottom: 28px;
+    }
+
+    .sourcing-panel {
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .sourcing-row {
+      display: grid;
+      grid-template-columns: 105px 14px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 18px;
+      border-bottom: 1px solid #E8EBEC;
+    }
+
+    .sourcing-row:last-child {
+      border-bottom: 0;
+    }
+
+    .sourcing-time {
+      color: #90969A;
+      font-size: 10.5px;
+    }
+
+    .sourcing-marker {
+      width: 8px;
+      height: 8px;
+      background: var(--welcome-pink);
+      border-radius: 50%;
+    }
+
+    .sourcing-title {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .sourcing-detail {
+      margin-top: 2px;
+      color: #7C8388;
+      font-size: 10.5px;
+    }
+
+    .sourcing-link {
+      color: var(--welcome-blue);
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
     /* =========================================================
        RESPONSIVE
        ========================================================= */
@@ -637,6 +781,11 @@
       .continue-grid {
         grid-template-columns:
           repeat(2, minmax(0, 1fr));
+      }
+
+      .week-grid {
+        grid-template-columns:
+          repeat(4, minmax(0, 1fr));
       }
 
     }
@@ -672,6 +821,23 @@
       .activity-row {
         grid-template-columns:
           76px 12px 1fr;
+      }
+
+      .week-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .week-day {
+        min-height: auto;
+      }
+
+      .sourcing-row {
+        grid-template-columns:
+          76px 12px 1fr;
+      }
+
+      .sourcing-link {
+        display: none;
       }
 
     }
@@ -806,6 +972,28 @@
 
 
 
+
+      <!-- =====================================================
+           THIS WEEK
+           ===================================================== -->
+
+      <section class="week-section">
+
+        <div class="section-heading">
+          <h2>This Week</h2>
+        </div>
+
+        <div class="week-panel">
+          <div class="week-grid" id="weekGrid">
+            <div class="activity-empty">
+              Loading this week…
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
       <!-- =====================================================
            CONTINUE WORKING
            ===================================================== -->
@@ -920,6 +1108,29 @@
 
       </section>
 
+
+
+
+      <!-- =====================================================
+           SOURCING TIMELINE
+           ===================================================== -->
+
+      <section class="sourcing-section">
+
+        <div class="section-heading">
+          <h2>Sourcing Timeline</h2>
+        </div>
+
+        <div
+          class="sourcing-panel"
+          id="sourcingTimeline"
+        >
+          <div class="activity-empty">
+            Loading sourcing activity…
+          </div>
+        </div>
+
+      </section>
 
 
       <!-- =====================================================
@@ -1388,6 +1599,637 @@
     }
 
 
+
+    // =========================================================
+    // THIS WEEK
+    // =========================================================
+
+    function dayKey(value) {
+
+      const date =
+        new Date(value);
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) return '';
+
+      return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+      ].join('-');
+
+    }
+
+
+    function startOfWeek(date) {
+
+      const result =
+        new Date(date);
+
+      result.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      result.setDate(
+        result.getDate() -
+        result.getDay()
+      );
+
+      return result;
+
+    }
+
+
+    async function loadThisWeek() {
+
+      const grid =
+        document.getElementById(
+          'weekGrid'
+        );
+
+      const today =
+        new Date();
+
+      const start =
+        startOfWeek(
+          today
+        );
+
+      const end =
+        new Date(start);
+
+      end.setDate(
+        end.getDate() + 7
+      );
+
+
+      const events =
+        [];
+
+
+      // Live pickup and delivery dates.
+      try {
+
+        const result =
+          await db
+            .from('loads')
+            .select('*')
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (load) {
+
+              const label =
+                load.load_number ||
+                'Load';
+
+              const pickup =
+                load.pickup_date ||
+                load.pickup_at;
+
+              const delivery =
+                load.delivery_date ||
+                load.delivery_at;
+
+
+              if (pickup) {
+
+                events.push({
+                  when: new Date(pickup),
+                  title: label + ' · Pickup',
+                  type: 'pickup',
+                  load_id: load.id
+                });
+
+              }
+
+
+              if (delivery) {
+
+                events.push({
+                  when: new Date(delivery),
+                  title: label + ' · Delivery',
+                  type: 'delivery',
+                  load_id: load.id
+                });
+
+              }
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week loads:',
+          error
+        );
+
+      }
+
+
+      // Permit expirations.
+      try {
+
+        const result =
+          await db
+            .from('permits')
+            .select(
+              'load_id,state,permit_number,valid_to'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .gte(
+              'valid_to',
+              start.toISOString()
+            )
+            .lt(
+              'valid_to',
+              end.toISOString()
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (permit) {
+
+              if (!permit.valid_to) return;
+
+              events.push({
+                when:
+                  new Date(
+                    permit.valid_to
+                  ),
+                title:
+                  (permit.state || '') +
+                  ' Permit',
+                type:
+                  'permit',
+                load_id:
+                  permit.load_id
+              });
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week permits:',
+          error
+        );
+
+      }
+
+
+      // Manual calendar events.
+      try {
+
+        const result =
+          await db
+            .from('calendar_events')
+            .select(
+              'id,load_id,title,event_type,starts_at,completed'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .gte(
+              'starts_at',
+              start.toISOString()
+            )
+            .lt(
+              'starts_at',
+              end.toISOString()
+            )
+            .order(
+              'starts_at',
+              {
+                ascending: true
+              }
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (item) {
+
+              events.push({
+                when:
+                  new Date(
+                    item.starts_at
+                  ),
+                title:
+                  item.title ||
+                  'Reminder',
+                type:
+                  item.event_type ||
+                  'custom',
+                load_id:
+                  item.load_id
+              });
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week reminders:',
+          error
+        );
+
+      }
+
+
+      const days =
+        [];
+
+
+      for (
+        let i = 0;
+        i < 7;
+        i++
+      ) {
+
+        const day =
+          new Date(start);
+
+        day.setDate(
+          start.getDate() + i
+        );
+
+
+        const key =
+          dayKey(day);
+
+
+        const dayEvents =
+          events
+            .filter(
+              function (event) {
+
+                return (
+                  event.when &&
+                  !Number.isNaN(
+                    event.when.getTime()
+                  ) &&
+                  dayKey(event.when) === key
+                );
+
+              }
+            )
+            .sort(
+              function (a, b) {
+
+                return (
+                  a.when -
+                  b.when
+                );
+
+              }
+            );
+
+
+        const eventHtml =
+          dayEvents
+            .slice(0, 3)
+            .map(
+              function (event) {
+
+                const target =
+                  event.load_id
+                    ? (
+                        'workspace.html?id=' +
+                        encodeURIComponent(
+                          event.load_id
+                        )
+                      )
+                    : 'calendar.html';
+
+                return (
+                  '<span class="week-event ' +
+                  escapeHtml(event.type) +
+                  '" data-href="' +
+                  escapeHtml(target) +
+                  '">' +
+                  escapeHtml(event.title) +
+                  '</span>'
+                );
+
+              }
+            )
+            .join('');
+
+
+        const more =
+          dayEvents.length > 3
+            ? (
+                '<div class="week-more">+' +
+                (dayEvents.length - 3) +
+                ' more</div>'
+              )
+            : '';
+
+
+        days.push(
+          '<div class="week-day ' +
+          (
+            key === dayKey(today)
+              ? 'today'
+              : ''
+          ) +
+          '" data-date="' +
+          key +
+          '">' +
+
+            '<div class="week-name">' +
+              day.toLocaleDateString(
+                'en-US',
+                {
+                  weekday: 'short'
+                }
+              ) +
+            '</div>' +
+
+            '<div class="week-date">' +
+              day.getDate() +
+            '</div>' +
+
+            eventHtml +
+            more +
+
+          '</div>'
+        );
+
+      }
+
+
+      grid.innerHTML =
+        days.join('');
+
+
+      grid
+        .querySelectorAll(
+          '.week-event[data-href]'
+        )
+        .forEach(
+          function (item) {
+
+            item.addEventListener(
+              'click',
+              function (event) {
+
+                event.stopPropagation();
+
+                location.href =
+                  item.dataset.href;
+
+              }
+            );
+
+          }
+        );
+
+
+      grid
+        .querySelectorAll(
+          '.week-day'
+        )
+        .forEach(
+          function (day) {
+
+            day.addEventListener(
+              'click',
+              function () {
+
+                location.href =
+                  'calendar.html';
+
+              }
+            );
+
+          }
+        );
+
+    }
+
+
+    // =========================================================
+    // SOURCING TIMELINE
+    // =========================================================
+
+    async function loadSourcingTimeline() {
+
+      const panel =
+        document.getElementById(
+          'sourcingTimeline'
+        );
+
+
+      try {
+
+        const result =
+          await db
+            .from('events')
+            .select(
+              'created_at,event_type,subject,body'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .order(
+              'created_at',
+              {
+                ascending: false
+              }
+            )
+            .limit(40);
+
+
+        if (
+          result.error
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'Sourcing activity will appear here as sourcing events are recorded.' +
+            '</div>';
+
+          return;
+
+        }
+
+
+        const sourcing =
+          (result.data || [])
+            .filter(
+              function (item) {
+
+                const text =
+                  [
+                    item.event_type,
+                    item.subject,
+                    item.body
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+
+                return (
+                  text.includes('sourc') ||
+                  text.includes('broker') ||
+                  text.includes('quote') ||
+                  text.includes('opportun') ||
+                  text.includes('call queue') ||
+                  text.includes('lane')
+                );
+
+              }
+            )
+            .slice(0, 8);
+
+
+        if (
+          sourcing.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No sourcing activity recorded yet.' +
+            '</div>';
+
+          return;
+
+        }
+
+
+        panel.innerHTML =
+          sourcing
+            .map(
+              function (item) {
+
+                const date =
+                  new Date(
+                    item.created_at
+                  );
+
+                const time =
+                  Number.isNaN(
+                    date.getTime()
+                  )
+                    ? ''
+                    : date.toLocaleString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        }
+                      );
+
+                const title =
+                  item.subject ||
+                  item.event_type ||
+                  'Sourcing activity';
+
+                const detail =
+                  item.body &&
+                  item.body !== title
+                    ? item.body
+                    : '';
+
+                return (
+                  '<div class="sourcing-row">' +
+
+                    '<div class="sourcing-time">' +
+                      escapeHtml(time) +
+                    '</div>' +
+
+                    '<div class="sourcing-marker"></div>' +
+
+                    '<div>' +
+                      '<div class="sourcing-title">' +
+                        escapeHtml(title) +
+                      '</div>' +
+                      (
+                        detail
+                          ? (
+                              '<div class="sourcing-detail">' +
+                              escapeHtml(detail) +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                    '</div>' +
+
+                    '<a class="sourcing-link" href="sourcing.html">' +
+                      'Open →' +
+                    '</a>' +
+
+                  '</div>'
+                );
+
+              }
+            )
+            .join('');
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Sourcing timeline:',
+          error
+        );
+
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Sourcing activity unavailable.' +
+          '</div>';
+
+      }
+
+    }
+
+
     // =========================================================
     // SAFE HTML
     // =========================================================
@@ -1506,6 +2348,8 @@
 
       await Promise.all([
         loadPriorities(),
+        loadThisWeek(),
+        loadSourcingTimeline(),
         loadRecentActivity()
       ]);
 
