@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar — Heavy Haul Command</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="theme.css">
+
+<style>
+:root{
+  --cal-bg:#f6f8f9;
+  --cal-card:#ffffff;
+  --cal-line:#dfe5e8;
+  --cal-ink:#263238;
+  --cal-muted:#718087;
+  --cal-blue:#6b92a5;
+  --cal-blue-soft:#edf4f7;
+  --cal-pink:#d77b9f;
+  --cal-pink-soft:#fbf0f5;
+  --cal-green:#aebc39;
+  --cal-green-soft:#f3f6df;
+  --cal-cream:#f7f3ea;
+  --cal-shadow:0 2px 10px rgba(35,50,60,.06);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--cal-bg);
+  color:var(--cal-ink);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.calendar-wrap{
+  max-width:1300px;
+  margin:0 auto;
+  padding:22px 20px 60px;
+}
+
+.page-head{
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:18px;
+}
+
+.page-head h1{
+  margin:0;
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:36px;
+  font-weight:500;
+}
+
+.page-head p{
+  margin:5px 0 0;
+  color:var(--cal-muted);
+}
+
+.head-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+button{
+  font:inherit;
+}
+
+.btn{
+  border:1px solid var(--cal-line);
+  background:#fff;
+  color:var(--cal-ink);
+  padding:9px 13px;
+  cursor:pointer;
+}
+
+.btn:hover{
+  background:#f9fafb;
+}
+
+.btn.primary{
+  border-color:var(--cal-blue);
+  background:var(--cal-blue);
+  color:#fff;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 330px;
+  gap:16px;
+}
+
+.card{
+  background:var(--cal-card);
+  border:1px solid var(--cal-line);
+  box-shadow:var(--cal-shadow);
+}
+
+.calendar-card{
+  overflow:hidden;
+}
+
+.cal-toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--cal-line);
+}
+
+.cal-toolbar h2{
+  margin:0;
+  font-size:18px;
+  font-weight:600;
+}
+
+.spacer{flex:1}
+
+.weekdays,
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+}
+
+.weekdays{
+  border-bottom:1px solid var(--cal-line);
+  background:#fafbfb;
+}
+
+.weekdays div{
+  padding:9px;
+  text-align:center;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.05em;
+  color:var(--cal-muted);
+  text-transform:uppercase;
+}
+
+.day{
+  min-height:126px;
+  padding:8px;
+  border-right:1px solid var(--cal-line);
+  border-bottom:1px solid var(--cal-line);
+  background:#fff;
+  position:relative;
+}
+
+.day:nth-child(7n){
+  border-right:none;
+}
+
+.day.outside{
+  background:#fafbfb;
+  color:#aab3b8;
+}
+
+.day.today{
+  background:#fcfdf7;
+}
+
+.day-number{
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.day.today .day-number{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:26px;
+  height:26px;
+  padding:0 7px;
+  background:var(--cal-green-soft);
+  color:#6d7624;
+  border-radius:999px;
+}
+
+.event{
+  display:block;
+  width:100%;
+  text-align:left;
+  border:none;
+  padding:5px 7px;
+  margin:0 0 5px;
+  cursor:pointer;
+  font-size:11px;
+  line-height:1.25;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.event.pickup{background:var(--cal-blue-soft);color:#466b7d}
+.event.delivery{background:var(--cal-green-soft);color:#66711f}
+.event.permit{background:var(--cal-pink-soft);color:#914d69}
+.event.escort{background:#f5f1fb;color:#755d8b}
+.event.followup{background:var(--cal-cream);color:#735f45}
+.event.invoice{background:#eef0f3;color:#566169}
+.event.accessorial{background:#fff4e8;color:#8a5b23}
+.event.custom{background:#f1f5f7;color:#50636c}
+
+.side{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.side-card{
+  padding:15px;
+}
+
+.side-card h3{
+  margin:0 0 12px;
+  font-size:14px;
+}
+
+.legend{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  font-size:12px;
+  color:var(--cal-muted);
+}
+
+.legend span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  display:inline-block;
+}
+
+.dot.pickup{background:var(--cal-blue)}
+.dot.delivery{background:var(--cal-green)}
+.dot.permit{background:var(--cal-pink)}
+.dot.escort{background:#8b73a4}
+.dot.followup{background:#9a7d54}
+.dot.invoice{background:#7d8890}
+.dot.accessorial{background:#c68b41}
+.dot.custom{background:#8298a2}
+
+.upcoming{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+
+.upcoming-item{
+  border:1px solid var(--cal-line);
+  padding:10px;
+  cursor:pointer;
+}
+
+.upcoming-item:hover{
+  background:#fafbfb;
+}
+
+.upcoming-date{
+  font-size:11px;
+  color:var(--cal-muted);
+}
+
+.upcoming-title{
+  font-weight:600;
+  margin-top:2px;
+}
+
+.upcoming-meta{
+  margin-top:3px;
+  font-size:11px;
+  color:var(--cal-muted);
+}
+
+.empty{
+  color:var(--cal-muted);
+  font-size:12px;
+  padding:8px 0;
+}
+
+dialog{
+  border:none;
+  padding:0;
+  width:min(620px,94vw);
+  box-shadow:0 18px 50px rgba(20,30,40,.25);
+}
+
+dialog::backdrop{
+  background:rgba(20,30,40,.42);
+}
+
+.dlg-head,
+.dlg-foot{
+  padding:14px 16px;
+  border-bottom:1px solid var(--cal-line);
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.dlg-foot{
+  border-bottom:none;
+  border-top:1px solid var(--cal-line);
+  justify-content:flex-end;
+}
+
+.dlg-body{
+  padding:16px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.field.full{
+  grid-column:1/-1;
+}
+
+label{
+  font-size:12px;
+  color:var(--cal-muted);
+  font-weight:600;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid var(--cal-line);
+  background:#fff;
+  color:var(--cal-ink);
+  font:inherit;
+}
+
+textarea{
+  min-height:88px;
+  resize:vertical;
+}
+
+.err{
+  color:#a53434;
+  font-size:12px;
+  font-weight:600;
+  margin-top:8px;
+}
+
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%) translateY(80px);
+  opacity:0;
+  transition:.2s;
+  background:#263238;
+  color:#fff;
+  padding:10px 16px;
+  z-index:1000;
+}
+
+#toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+@media (max-width:900px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width:700px){
+  .day{
+    min-height:90px;
+  }
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+<header></header>
+
+<main class="calendar-wrap">
+
+  <div class="page-head">
+    <div>
+      <h1>Dispatch Calendar</h1>
+      <p>
+        Pickups, deliveries, permits, escorts, accessorial follow-ups,
+        invoices and operational reminders.
+      </p>
+    </div>
+
+    <div class="head-actions">
+      <button class="btn" id="todayBtn">Today</button>
+      <button class="btn primary" id="newEventBtn">+ Add Reminder</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <section class="card calendar-card">
+
+      <div class="cal-toolbar">
+        <button class="btn" id="prevMonth">‹</button>
+        <button class="btn" id="nextMonth">›</button>
+        <h2 id="monthLabel">Month</h2>
+        <span class="spacer"></span>
+        <span id="syncStatus" style="font-size:12px;color:var(--cal-muted)">Loading…</span>
+      </div>
+
+      <div class="weekdays">
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+      </div>
+
+      <div class="calendar-grid" id="calendarGrid"></div>
+
+    </section>
+
+
+    <aside class="side">
+
+      <section class="card side-card">
+        <h3>Upcoming</h3>
+        <div class="upcoming" id="upcomingList">
+          <div class="empty">Loading calendar events…</div>
+        </div>
+      </section>
+
+      <section class="card side-card">
+        <h3>Calendar Types</h3>
+
+        <div class="legend">
+          <span><i class="dot pickup"></i> Pickup</span>
+          <span><i class="dot delivery"></i> Delivery</span>
+          <span><i class="dot permit"></i> Permit</span>
+          <span><i class="dot escort"></i> Escort</span>
+          <span><i class="dot accessorial"></i> Accessorial</span>
+          <span><i class="dot followup"></i> Follow-up</span>
+          <span><i class="dot invoice"></i> Invoice / Pay</span>
+          <span><i class="dot custom"></i> Reminder</span>
+        </div>
+      </section>
+
+    </aside>
+
+  </div>
+
+</main>
+
+
+<dialog id="eventDialog">
+  <div class="dlg-head">
+    <strong>Add Calendar Reminder</strong>
+  </div>
+
+  <div class="dlg-body">
+
+    <div class="form-grid">
+
+      <div class="field full">
+        <label for="evTitle">Title *</label>
+        <input id="evTitle" placeholder="Call broker about detention approval">
+      </div>
+
+      <div class="field">
+        <label for="evType">Type</label>
+        <select id="evType">
+          <option value="custom">Reminder</option>
+          <option value="followup">Follow-up</option>
+          <option value="accessorial">Accessorial</option>
+          <option value="invoice">Invoice / Payment</option>
+          <option value="pickup">Pickup</option>
+          <option value="delivery">Delivery</option>
+          <option value="permit">Permit</option>
+          <option value="escort">Escort</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="evWhen">Date & Time *</label>
+        <input id="evWhen" type="datetime-local">
+      </div>
+
+      <div class="field full">
+        <label for="evLoad">Related Load</label>
+        <select id="evLoad">
+          <option value="">— None —</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label for="evNotes">Notes</label>
+        <textarea id="evNotes"></textarea>
+      </div>
+
+    </div>
+
+    <div class="err" id="evErr"></div>
+
+  </div>
+
+  <div class="dlg-foot">
+    <button class="btn" onclick="eventDialog.close()">Cancel</button>
+    <button class="btn primary" id="saveEventBtn">Save Reminder</button>
+  </div>
+</dialog>
+
+
+<div id="toast"></div>
+
+
+<script src="nav.js"></script>
+
+<script>
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+const $ =
+  id => document.getElementById(id);
+
+let TENANT_ID =
+  null;
+
+let VIEW_DATE =
+  new Date();
+
+let EVENTS =
+  [];
+
+let LOADS =
+  [];
+
+let CUSTOM_TABLE_AVAILABLE =
+  true;
+
+
+function toast(message){
+  const el = $('toast');
+  el.textContent = message;
+  el.className = 'show';
+
+  setTimeout(
+    () => {
+      el.className = '';
+    },
+    2800
+  );
+}
+
+
+function safeDate(value){
+  if (!value) return null;
+
+  const d =
+    new Date(value);
+
+  return Number.isNaN(
+    d.getTime()
+  )
+    ? null
+    : d;
+}
+
+
+function isoLocal(value){
+  if (!value) return null;
+
+  const d =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      d.getTime()
+    )
+  ) return null;
+
+  return d.toISOString();
+}
+
+
+function eventDayKey(date){
+  const y =
+    date.getFullYear();
+
+  const m =
+    String(
+      date.getMonth() + 1
+    ).padStart(2,'0');
+
+  const d =
+    String(
+      date.getDate()
+    ).padStart(2,'0');
+
+  return `${y}-${m}-${d}`;
+}
+
+
+function openLoad(loadId){
+  if (!loadId) return;
+
+  location.href =
+    'workspace.html?id=' +
+    encodeURIComponent(loadId);
+}
+
+
+function buildSystemEvents(){
+
+  const items =
+    [];
+
+
+  LOADS.forEach(
+    load => {
+
+      const loadLabel =
+        load.load_number ||
+        'Load';
+
+      const pickup =
+        safeDate(
+          load.pickup_date ||
+          load.pickup_at
+        );
+
+      if (pickup){
+        items.push({
+          title:
+            `${loadLabel} · Pickup`,
+          when:
+            pickup,
+          type:
+            'pickup',
+          load_id:
+            load.id
+        });
+      }
+
+
+      const delivery =
+        safeDate(
+          load.delivery_date ||
+          load.delivery_at
+        );
+
+      if (delivery){
+        items.push({
+          title:
+            `${loadLabel} · Delivery`,
+          when:
+            delivery,
+          type:
+            'delivery',
+          load_id:
+            load.id
+        });
+      }
+
+    }
+  );
+
+
+  return items;
+
+}
+
+
+async function fetchLoads(){
+
+  const result =
+    await db
+      .from('loads')
+      .select('*')
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .order(
+        'created_at',
+        {
+          ascending:
+            false
+        }
+      )
+      .limit(500);
+
+
+  if (result.error){
+    console.warn(
+      'calendar loads',
+      result.error
+    );
+
+    LOADS =
+      [];
+
+    return;
+  }
+
+
+  LOADS =
+    result.data ||
+    [];
+
+
+  const options =
+    LOADS.map(
+      load => {
+
+        const label =
+          load.load_number ||
+          'Load';
+
+        return (
+          `<option value="${load.id}">` +
+          label +
+          `</option>`
+        );
+
+      }
+    )
+    .join('');
+
+
+  $('evLoad')
+    .innerHTML =
+    '<option value="">— None —</option>' +
+    options;
+
+}
+
+
+async function fetchPermits(){
+
+  const result =
+    await db
+      .from('permits')
+      .select(
+        'load_id,state,permit_number,valid_to,status'
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      );
+
+
+  if (result.error){
+    console.warn(
+      'calendar permits',
+      result.error
+    );
+
+    return [];
+  }
+
+
+  return (
+    result.data ||
+    []
+  )
+    .filter(
+      row =>
+        row.valid_to
+    )
+    .map(
+      row => ({
+        title:
+          `${row.state || ''} Permit` +
+          (
+            row.permit_number
+              ? ` · ${row.permit_number}`
+              : ''
+          ),
+        when:
+          safeDate(
+            row.valid_to
+          ),
+        type:
+          'permit',
+        load_id:
+          row.load_id
+      })
+    );
+
+}
+
+
+async function fetchEscorts(){
+
+  const result =
+    await db
+      .from('escort_assignments')
+      .select(
+        'load_id,role,meeting_time,scheduled_start,status'
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      );
+
+
+  if (result.error){
+    console.warn(
+      'calendar escorts',
+      result.error
+    );
+
+    return [];
+  }
+
+
+  return (
+    result.data ||
+    []
+  )
+    .map(
+      row => {
+
+        const when =
+          safeDate(
+            row.meeting_time ||
+            row.scheduled_start
+          );
+
+        if (!when) return null;
+
+        return {
+          title:
+            `${row.role ? row.role.replaceAll('_',' ') : 'Escort'} · Meet`,
+          when,
+          type:
+            'escort',
+          load_id:
+            row.load_id
+        };
+
+      }
+    )
+    .filter(Boolean);
+
+}
+
+
+async function fetchCustomEvents(){
+
+  if (
+    !CUSTOM_TABLE_AVAILABLE
+  ){
+    return [];
+  }
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .select('*')
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .order(
+        'starts_at',
+        {
+          ascending:
+            true
+        }
+      );
+
+
+  if (result.error){
+
+    CUSTOM_TABLE_AVAILABLE =
+      false;
+
+    console.warn(
+      'calendar_events table not available yet',
+      result.error.message
+    );
+
+    return [];
+  }
+
+
+  return (
+    result.data ||
+    []
+  )
+    .map(
+      row => ({
+        id:
+          row.id,
+        title:
+          row.title ||
+          'Reminder',
+        when:
+          safeDate(
+            row.starts_at
+          ),
+        type:
+          row.event_type ||
+          'custom',
+        load_id:
+          row.load_id ||
+          null,
+        notes:
+          row.notes ||
+          null,
+        custom:
+          true
+      })
+    )
+    .filter(
+      row =>
+        row.when
+    );
+
+}
+
+
+async function refreshCalendar(){
+
+  $('syncStatus')
+    .textContent =
+    'Refreshing…';
+
+
+  await fetchLoads();
+
+
+  const [
+    permits,
+    escorts,
+    custom
+  ] =
+    await Promise.all([
+      fetchPermits(),
+      fetchEscorts(),
+      fetchCustomEvents()
+    ]);
+
+
+  EVENTS =
+    [
+      ...buildSystemEvents(),
+      ...permits,
+      ...escorts,
+      ...custom
+    ];
+
+
+  renderCalendar();
+  renderUpcoming();
+
+
+  $('syncStatus')
+    .textContent =
+    CUSTOM_TABLE_AVAILABLE
+      ? 'Live'
+      : 'Live load data · reminders not enabled yet';
+
+}
+
+
+function renderCalendar(){
+
+  const year =
+    VIEW_DATE.getFullYear();
+
+  const month =
+    VIEW_DATE.getMonth();
+
+
+  $('monthLabel')
+    .textContent =
+    VIEW_DATE.toLocaleDateString(
+      'en-US',
+      {
+        month:
+          'long',
+        year:
+          'numeric'
+      }
+    );
+
+
+  const first =
+    new Date(
+      year,
+      month,
+      1
+    );
+
+
+  const start =
+    new Date(
+      year,
+      month,
+      1 -
+      first.getDay()
+    );
+
+
+  const today =
+    new Date();
+
+
+  const cells =
+    [];
+
+
+  for (
+    let i = 0;
+    i < 42;
+    i++
+  ){
+
+    const day =
+      new Date(start);
+
+    day.setDate(
+      start.getDate() + i
+    );
+
+
+    const key =
+      eventDayKey(
+        day
+      );
+
+
+    const dayEvents =
+      EVENTS
+        .filter(
+          event =>
+            event.when &&
+            eventDayKey(event.when) === key
+        )
+        .sort(
+          (a,b) =>
+            a.when -
+            b.when
+        );
+
+
+    const classes =
+      [
+        'day',
+        day.getMonth() !== month
+          ? 'outside'
+          : '',
+        eventDayKey(day) === eventDayKey(today)
+          ? 'today'
+          : ''
+      ]
+      .filter(Boolean)
+      .join(' ');
+
+
+    const buttons =
+      dayEvents
+        .slice(
+          0,
+          5
+        )
+        .map(
+          event => {
+
+            const loadAttr =
+              event.load_id
+                ? `data-load="${event.load_id}"`
+                : '';
+
+            return (
+              `<button class="event ${event.type}" ${loadAttr}>` +
+              `${event.title}` +
+              `</button>`
+            );
+
+          }
+        )
+        .join('');
+
+
+    const more =
+      dayEvents.length > 5
+        ? `<div style="font-size:10px;color:var(--cal-muted)">+${dayEvents.length-5} more</div>`
+        : '';
+
+
+    cells.push(
+      `<div class="${classes}" data-date="${key}">` +
+      `<div class="day-number">${day.getDate()}</div>` +
+      buttons +
+      more +
+      `</div>`
+    );
+
+  }
+
+
+  $('calendarGrid')
+    .innerHTML =
+    cells.join('');
+
+
+  document
+    .querySelectorAll(
+      '.event[data-load]'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          () =>
+            openLoad(
+              button.dataset.load
+            )
+        );
+
+      }
+    );
+
+}
+
+
+function renderUpcoming(){
+
+  const now =
+    new Date();
+
+
+  const upcoming =
+    EVENTS
+      .filter(
+        event =>
+          event.when &&
+          event.when >= now
+      )
+      .sort(
+        (a,b) =>
+          a.when -
+          b.when
+      )
+      .slice(
+        0,
+        12
+      );
+
+
+  if (
+    !upcoming.length
+  ){
+
+    $('upcomingList')
+      .innerHTML =
+      '<div class="empty">No upcoming calendar items.</div>';
+
+    return;
+
+  }
+
+
+  $('upcomingList')
+    .innerHTML =
+    upcoming
+      .map(
+        event => {
+
+          const loadAttr =
+            event.load_id
+              ? `data-load="${event.load_id}"`
+              : '';
+
+          return (
+            `<div class="upcoming-item" ${loadAttr}>` +
+              `<div class="upcoming-date">` +
+                event.when.toLocaleString(
+                  'en-US',
+                  {
+                    month:
+                      'short',
+                    day:
+                      'numeric',
+                    hour:
+                      'numeric',
+                    minute:
+                      '2-digit'
+                  }
+                ) +
+              `</div>` +
+              `<div class="upcoming-title">${event.title}</div>` +
+              `<div class="upcoming-meta">${event.type.replaceAll('_',' ')}</div>` +
+            `</div>`
+          );
+
+        }
+      )
+      .join('');
+
+
+  document
+    .querySelectorAll(
+      '.upcoming-item[data-load]'
+    )
+    .forEach(
+      item => {
+
+        item.addEventListener(
+          'click',
+          () =>
+            openLoad(
+              item.dataset.load
+            )
+        );
+
+      }
+    );
+
+}
+
+
+function openNewEvent(){
+
+  $('evErr')
+    .textContent =
+    '';
+
+  $('evTitle')
+    .value =
+    '';
+
+  $('evType')
+    .value =
+    'custom';
+
+  const now =
+    new Date();
+
+  now.setMinutes(
+    now.getMinutes() -
+    now.getTimezoneOffset()
+  );
+
+  $('evWhen')
+    .value =
+    now.toISOString()
+      .slice(0,16);
+
+  $('evLoad')
+    .value =
+    '';
+
+  $('evNotes')
+    .value =
+    '';
+
+  eventDialog.showModal();
+
+}
+
+
+async function saveCustomEvent(){
+
+  $('evErr')
+    .textContent =
+    '';
+
+
+  if (
+    !CUSTOM_TABLE_AVAILABLE
+  ){
+
+    $('evErr')
+      .textContent =
+      'Custom reminders need the calendar_events table. We will add that in the Calendar migration.';
+
+    return;
+
+  }
+
+
+  const title =
+    $('evTitle')
+      .value
+      .trim();
+
+
+  const startsAt =
+    isoLocal(
+      $('evWhen')
+        .value
+    );
+
+
+  if (
+    !title ||
+    !startsAt
+  ){
+
+    $('evErr')
+      .textContent =
+      'Enter a title and date/time.';
+
+    return;
+
+  }
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .insert({
+        tenant_id:
+          TENANT_ID,
+        load_id:
+          $('evLoad').value ||
+          null,
+        title,
+        event_type:
+          $('evType').value,
+        starts_at:
+          startsAt,
+        notes:
+          $('evNotes').value.trim() ||
+          null
+      });
+
+
+  if (
+    result.error
+  ){
+
+    $('evErr')
+      .textContent =
+      result.error.message;
+
+    return;
+
+  }
+
+
+  eventDialog.close();
+  toast(
+    'Calendar reminder saved'
+  );
+
+  await refreshCalendar();
+
+}
+
+
+async function boot(){
+
+  const session =
+    await db.auth.getSession();
+
+
+  if (
+    !session.data.session
+  ){
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  TENANT_ID =
+    await buildNav(
+      db,
+      'Calendar'
+    );
+
+
+  if (
+    !TENANT_ID
+  ){
+
+    const profile =
+      await db
+        .from('app_users')
+        .select('tenant_id')
+        .eq(
+          'auth_uid',
+          session.data.session.user.id
+        )
+        .maybeSingle();
+
+
+    if (
+      profile.data
+    ){
+      TENANT_ID =
+        profile.data.tenant_id;
+    }
+
+  }
+
+
+  if (
+    !TENANT_ID
+  ){
+
+    $('syncStatus')
+      .textContent =
+      'Tenant not found';
+
+    return;
+  }
+
+
+  await refreshCalendar();
+
+}
+
+
+$('prevMonth')
+  .addEventListener(
+    'click',
+    () => {
+
+      VIEW_DATE =
+        new Date(
+          VIEW_DATE.getFullYear(),
+          VIEW_DATE.getMonth() - 1,
+          1
+        );
+
+      renderCalendar();
+
+    }
+  );
+
+
+$('nextMonth')
+  .addEventListener(
+    'click',
+    () => {
+
+      VIEW_DATE =
+        new Date(
+          VIEW_DATE.getFullYear(),
+          VIEW_DATE.getMonth() + 1,
+          1
+        );
+
+      renderCalendar();
+
+    }
+  );
+
+
+$('todayBtn')
+  .addEventListener(
+    'click',
+    () => {
+
+      VIEW_DATE =
+        new Date();
+
+      renderCalendar();
+
+    }
+  );
+
+
+$('newEventBtn')
+  .addEventListener(
+    'click',
+    openNewEvent
+  );
+
+
+$('saveEventBtn')
+  .addEventListener(
+    'click',
+    saveCustomEvent
+  );
+
+
+boot();
+</script>
+
+</body>
+</html>
