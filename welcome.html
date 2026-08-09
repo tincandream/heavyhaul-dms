@@ -215,13 +215,13 @@
     .section-heading h2 {
       margin: 0;
 
-      color: var(--welcome-white);
+      color: #6B92A5;
 
       font-family:
-        "Oswald",
+        "Inter",
         sans-serif;
 
-      font-size: 13px;
+      font-size: 12px;
 
       font-weight: 500;
 
@@ -239,9 +239,34 @@
       height: 1px;
 
       background:
-        rgba(250, 250, 250, 0.32);
+        rgba(127, 165, 181, 0.28);
     }
 
+
+
+    .priority-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .week-section .section-heading h2 {
+      color: #8D9A2F;
+    }
+
+    .continue-section .section-heading h2 {
+      color: #8A7358;
+    }
+
+    .sourcing-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .operations-section .section-heading h2 {
+      color: #6B92A5;
+    }
+
+    .section-heading::after {
+      background: rgba(107, 146, 165, 0.30);
+    }
 
     /* =========================================================
        TODAY'S PRIORITIES
@@ -702,14 +727,22 @@
 
     .timeline-panel-title {
       padding: 13px 18px 11px;
-      color: var(--welcome-ink);
-      background: rgba(255, 255, 255, 0.78);
+      color: #6B92A5;
+      background: rgba(255, 255, 255, 0.86);
       border-bottom: 1px solid #E3E7E8;
       font-family: "Oswald", sans-serif;
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 1.4px;
       text-transform: uppercase;
+    }
+
+    .sourcing-section .timeline-panel-title {
+      color: #D86A8E;
+    }
+
+    .operations-section .timeline-panel-title {
+      color: #6B92A5;
     }
 
     .timeline-body {
@@ -1190,7 +1223,7 @@
            RECENT ACTIVITY
            ===================================================== -->
 
-      <section>
+      <section class="operations-section">
 
         <div class="section-heading">
           <h2>Operations Timeline</h2>
@@ -1535,14 +1568,13 @@
           'recentActivity'
         );
 
-
       try {
 
         let query =
           db
             .from('events')
             .select(
-              'created_at, event_type, subject, body'
+              'created_at,event_type,subject,body,load_id'
             )
             .order(
               'created_at',
@@ -1550,23 +1582,18 @@
                 ascending: false
               }
             )
-            .limit(6);
-
+            .limit(12);
 
         if (TENANT_ID) {
-
           query =
             query.eq(
               'tenant_id',
               TENANT_ID
             );
-
         }
-
 
         const result =
           await query;
-
 
         if (
           result.error ||
@@ -1576,13 +1603,52 @@
 
           panel.innerHTML =
             '<div class="activity-empty">' +
-            'No recent activity yet.' +
+            'No recent operations activity yet.' +
             '</div>';
 
           return;
-
         }
 
+        const loadIds =
+          [
+            ...new Set(
+              result.data
+                .map(item => item.load_id)
+                .filter(Boolean)
+            )
+          ];
+
+        let loadMap =
+          {};
+
+        if (loadIds.length) {
+
+          const loadResult =
+            await db
+              .from('loads')
+              .select(
+                'id,load_number,status,origin_city,origin_state,destination_city,destination_state,dest_city,dest_state'
+              )
+              .in(
+                'id',
+                loadIds
+              );
+
+          if (
+            !loadResult.error &&
+            loadResult.data
+          ) {
+
+            loadMap =
+              Object.fromEntries(
+                loadResult.data.map(
+                  item => [item.id, item]
+                )
+              );
+
+          }
+
+        }
 
         panel.innerHTML =
           result.data
@@ -1594,9 +1660,10 @@
                     item.created_at
                   );
 
-
                 const time =
-                  isNaN(date)
+                  Number.isNaN(
+                    date.getTime()
+                  )
                     ? ''
                     : date.toLocaleString(
                         'en-US',
@@ -1608,6 +1675,45 @@
                         }
                       );
 
+                const load =
+                  item.load_id
+                    ? loadMap[item.load_id]
+                    : null;
+
+                const loadNumber =
+                  load
+                    ? (
+                        load.load_number ||
+                        ('Load ' + String(load.id).slice(0,8))
+                      )
+                    : '';
+
+                const origin =
+                  load
+                    ? [
+                        load.origin_city,
+                        load.origin_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+
+                const destination =
+                  load
+                    ? [
+                        load.destination_city ||
+                        load.dest_city,
+                        load.destination_state ||
+                        load.dest_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+
+                const lane =
+                  origin && destination
+                    ? origin + ' → ' + destination
+                    : '';
 
                 const text =
                   item.subject ||
@@ -1615,6 +1721,33 @@
                   item.event_type ||
                   'Activity';
 
+                const details =
+                  [
+                    loadNumber
+                      ? '<strong>' + escapeHtml(loadNumber) + '</strong>'
+                      : '',
+                    load && load.status
+                      ? escapeHtml(
+                          String(load.status)
+                            .replaceAll('_',' ')
+                        )
+                      : '',
+                    lane
+                      ? escapeHtml(lane)
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+
+                const target =
+                  item.load_id
+                    ? (
+                        'workspace.html?id=' +
+                        encodeURIComponent(
+                          item.load_id
+                        )
+                      )
+                    : '';
 
                 return (
                   '<div class="activity-row">' +
@@ -1626,7 +1759,31 @@
                     '<div class="activity-marker"></div>' +
 
                     '<div class="activity-text">' +
-                      escapeHtml(text) +
+                      '<div>' +
+                        escapeHtml(text) +
+                      '</div>' +
+                      (
+                        details
+                          ? (
+                              '<div style="margin-top:4px;color:#68757B;font-size:10.5px">' +
+                              details +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                      (
+                        target
+                          ? (
+                              '<div style="margin-top:4px">' +
+                              '<a href="' +
+                              escapeHtml(target) +
+                              '" style="color:#6B92A5;text-decoration:none;font-size:10.5px">' +
+                              'Open Load →' +
+                              '</a>' +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
                     '</div>' +
 
                   '</div>'
@@ -1641,14 +1798,13 @@
       catch (error) {
 
         console.warn(
-          'Recent activity:',
+          'Operations timeline:',
           error
         );
 
-
         panel.innerHTML =
           '<div class="activity-empty">' +
-          'Recent activity unavailable.' +
+          'Operations activity unavailable.' +
           '</div>';
 
       }
@@ -2254,7 +2410,11 @@
             const reference =
               opportunity && opportunity.external_ref
                 ? 'Broker Load #' + opportunity.external_ref
-                : '';
+                : (
+                    item.opportunity_id
+                      ? 'Opportunity ' + String(item.opportunity_id).slice(0,8)
+                      : ''
+                  );
 
             const rate =
               item.rate_amount != null
@@ -2337,6 +2497,12 @@
                   : '',
                 freight
                   ? escapeHtml(freight)
+                  : '',
+                opportunity && opportunity.status
+                  ? 'Status: ' + escapeHtml(
+                      String(opportunity.status)
+                        .replaceAll('_',' ')
+                    )
                   : '',
                 rate != null && !Number.isNaN(rate)
                   ? '<strong>' +
