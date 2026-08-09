@@ -39,12 +39,11 @@
     font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
   }
 
-main {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto 60px;
-  padding: 18px;
-}
+  main {
+    padding:18px;
+    max-width:980px;
+    margin:0 auto 60px;
+  }
 
   .card {
     background:var(--card);
@@ -255,20 +254,16 @@ main {
      Matches the All Loads summary tile structure and proportions.
      ========================================================== */
 
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  width: 100%;
-  max-width: 1200;
-  gap: 10px;
-  margin: 0 0 16px 0;
-  box-sizing: border-box;
-}
-  .tile {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
+  .tiles {
+    display:grid;
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(140px, 1fr)
+      );
+    gap:10px;
+    margin-bottom:16px;
+  }
 
   .tile {
     padding:12px 14px;
@@ -278,9 +273,12 @@ main {
   }
 
   .tile .n {
-    font-size:21px;
+    font-size:18px;
     font-weight:600;
     line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
   .tile .l {
@@ -324,33 +322,33 @@ main {
   <div class="tiles" id="assemblyStatus">
 
     <div class="tile" id="asBroker">
-      <div class="n">0</div>
+      <div class="n">Needed</div>
       <div class="l">Broker Load</div>
     </div>
 
     <div class="tile" id="asFleet">
-      <div class="n">0</div>
+      <div class="n">Not Assigned</div>
       <div class="l">Fleet</div>
     </div>
 
     <div class="tile" id="asRoute">
-      <div class="n">0</div>
+      <div class="n">Not Assigned</div>
       <div class="l">Route</div>
     </div>
 
     <div class="tile" id="asRequirements">
-      <div class="n">0</div>
+      <div class="n">Not Reviewed</div>
       <div class="l">Requirements</div>
     </div>
 
     <div class="tile" id="asDocs">
-      <div class="n">0</div>
+      <div class="n">None</div>
       <div class="l">Documents</div>
     </div>
 
     <div class="tile" id="asReady">
-      <div class="n">0</div>
-      <div class="l">Dispatch Ready</div>
+      <div class="n">Not Ready</div>
+      <div class="l">Dispatch</div>
     </div>
 
   </div>
@@ -2280,7 +2278,7 @@ $('carrier')
 
 
 
-function setAssemblyTile(id, value, stateClass) {
+function setAssemblyTile(id, text, stateClass) {
   const el = $(id);
   if (!el) return;
 
@@ -2293,7 +2291,7 @@ function setAssemblyTile(id, value, stateClass) {
 
   if (n) {
     n.textContent =
-      String(value);
+      text;
   }
 }
 
@@ -2367,42 +2365,54 @@ function refreshAssemblyStatus() {
 
   setAssemblyTile(
     'asBroker',
-    brokerOK ? 1 : 0,
+    brokerOK ? 'Booked' : 'Needed',
     brokerOK ? 'done' : ''
   );
 
 
   setAssemblyTile(
     'asFleet',
-    fleetOK ? 1 : 0,
+    fleetOK ? 'Assigned' : 'Not Assigned',
     fleetOK ? 'done' : ''
   );
 
 
   setAssemblyTile(
     'asRoute',
-    routeOK ? 1 : 0,
+    routeOK ? 'Assigned' : 'Not Assigned',
     routeOK ? 'done' : ''
   );
 
 
   setAssemblyTile(
     'asRequirements',
-    requirementsOK ? 1 : 0,
+    requirementsOK ? 'Reviewed' : 'Not Reviewed',
     requirementsOK ? 'done' : ''
   );
 
 
   setAssemblyTile(
     'asDocs',
-    docCount,
+    docCount > 0
+      ? (
+          docCount === 1
+            ? '1 Attached'
+            : docCount + ' Attached'
+        )
+      : 'None',
     docCount > 0 ? 'done' : ''
   );
 
 
   setAssemblyTile(
     'asReady',
-    ready ? 1 : 0,
+    ready
+      ? (
+          $('status').value === 'booked'
+            ? 'Ready'
+            : 'Ready — Draft'
+        )
+      : 'Not Ready',
     ready
       ? (
           $('status').value === 'booked'
