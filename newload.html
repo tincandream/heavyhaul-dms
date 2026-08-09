@@ -265,6 +265,13 @@
 
   <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
+
+  <div class="card">
+    <h2>Dispatch Queue</h2>
+    <p class="hint">Draft / quoted loads stay here until you change them to Ready for Dispatch.</p>
+    <div id="dispatchQueue" class="route">Loading saved drafts…</div>
+  </div>
+
   <div
     class="card"
     id="sourcingImport"
@@ -442,10 +449,10 @@
 
   <div class="card">
 
-    <h2>Fleet Assignment</h2>
+    <h2>Import Fleet Assignment</h2>
 
     <p class="hint">
-      Select stored resources from Fleet Setup. Driver, truck, and trailer choices follow the selected carrier.
+      Import a saved carrier assignment from Fleet Setup, then adjust the driver, truck, or trailer if needed.
     </p>
 
     <div class="grid">
@@ -499,10 +506,10 @@
 
   <div class="card">
 
-    <h2>Route & Compliance</h2>
+    <h2>Import Route & Compliance</h2>
 
     <p class="hint">
-      Confirm facilities and route states now. Saved route and State Rules selection will plug into this section next.
+      Import the planned route and applicable State Rules / compliance information, then review before dispatch.
     </p>
 
     <div class="grid">
@@ -740,17 +747,38 @@
       Load documents will live here and remain available from Fleet Board and the permanent load record.
     </p>
 
-    <div
-      style="
-        border:1px dashed var(--line2);
-        padding:14px;
-        border-radius:8px;
-        color:var(--muted);
-        font-size:12px;
-      "
-    >
-      Document upload, DocuSign, permits, rate confirmation, BOL/POD, and email actions will connect here after we verify the existing document tables and storage.
+    <div class="grid">
+      <div>
+        <label>Document type</label>
+        <select id="docType">
+          <option value="rate_con">Rate Confirmation</option>
+          <option value="permit">Permit</option>
+          <option value="bol">BOL</option>
+          <option value="pod">POD</option>
+          <option value="escort">Escort Document</option>
+          <option value="invoice">Invoice</option>
+          <option value="receipt">Receipt</option>
+          <option value="photo">Photo</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Document title</label>
+        <input id="docTitle" placeholder="Optional title">
+      </div>
+      <div class="full">
+        <label>Choose file</label>
+        <input id="docFile" type="file">
+      </div>
+      <div class="full">
+        <label>Document notes</label>
+        <textarea id="docNotes"></textarea>
+      </div>
     </div>
+    <div style="margin-top:10px">
+      <button type="button" id="stageDoc">+ Add Document</button>
+    </div>
+    <div id="pendingDocs" class="route">No documents added yet.</div>
 
   </div>
 
@@ -780,10 +808,10 @@
       </div>
 
       <div>
-        <label>Starting status</label>
+        <label>Dispatch status</label>
         <select id="status">
-          <option value="quoted">Quoted</option>
-          <option value="booked">Booked</option>
+          <option value="quoted">Draft / Quoted — keep in New Load</option>
+          <option value="booked">Ready for Dispatch — release to Fleet Board</option>
         </select>
       </div>
 
@@ -854,6 +882,10 @@ let route = [];
 let SOURCE_OPPORTUNITY_ID = null;
 
 let SOURCE_OPPORTUNITY = null;
+
+let EDIT_LOAD_ID = null;
+let EDIT_LOAD_NUMBER = null;
+let PENDING_DOCUMENTS = [];
 
 
 const STATES = [
@@ -1121,6 +1153,12 @@ async function start() {
   await loadPickers();
 
   await loadOpportunityImport();
+
+  await loadExistingDraft();
+
+  await loadDispatchQueue();
+
+  updateSaveLabel();
 
 }
 
@@ -2152,6 +2190,209 @@ $('carrier')
   );
 
 
+
+function updateSaveLabel() {
+  const ready = $('status').value === 'booked';
+  $('save').textContent =
+    ready ? 'Release to Fleet Board' : 'Save to Dispatch Queue';
+}
+
+async function loadDispatchQueue() {
+  const r = await db
+    .from('loads')
+    .select('id,load_number,broker_load_number,commodity,status,pickup_appt_start')
+    .eq('tenant_id', tenant)
+    .eq('status', 'quoted')
+    .order('created_at', { ascending:false });
+
+  if (r.error) {
+    $('dispatchQueue').textContent = 'Could not load dispatch queue: ' + r.error.message;
+    return;
+  }
+
+  const list = r.data || [];
+  if (!list.length) {
+    $('dispatchQueue').textContent = 'No draft / quoted loads waiting.';
+    return;
+  }
+
+  $('dispatchQueue').innerHTML = list.map(x => {
+    const bits = [
+      x.load_number,
+      x.broker_load_number ? 'Broker #' + x.broker_load_number : '',
+      x.commodity || ''
+    ].filter(Boolean).join(' · ');
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)">' +
+      '<a href="newload.html?load=' + encodeURIComponent(x.id) + '">' +
+      bits.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) +
+      '</a></div>';
+  }).join('');
+}
+
+async function loadExistingDraft() {
+  const params = new URLSearchParams(window.location.search);
+  EDIT_LOAD_ID = params.get('load');
+  if (!EDIT_LOAD_ID) return;
+
+  const r = await db.from('loads').select('*')
+    .eq('tenant_id', tenant).eq('id', EDIT_LOAD_ID).single();
+
+  if (r.error) {
+    say('Could not reopen draft: ' + r.error.message, 'err');
+    return;
+  }
+
+  const x = r.data;
+  EDIT_LOAD_NUMBER = x.load_number;
+
+  const set = (id, value) => {
+    if ($(id) && value != null) $(id).value = value;
+  };
+
+  set('brokerload', x.broker_load_number);
+  set('carrier', x.carrier_id);
+  await onCarrier();
+  set('driver', x.driver_id);
+  set('tractor', x.tractor_id);
+  set('trailer', x.trailer_id);
+  set('broker', x.broker_id);
+  set('origin', x.origin_facility_id);
+  set('dest', x.dest_facility_id);
+  set('commodity', x.commodity);
+  set('value', x.commodity_value);
+  set('pieces', x.piece_count);
+  set('len', x.length_in);
+  set('wid', x.width_in);
+  set('hgt', x.height_in);
+  set('wgt', x.weight_lb);
+  set('ohf', x.overhang_front_in);
+  set('ohr', x.overhang_rear_in);
+  set('axles', x.axle_count);
+  set('spacings', x.axle_spacings);
+  set('rate', x.linehaul_rate);
+  set('fsc', x.fuel_surcharge);
+  set('miles', x.total_miles);
+  set('pu', x.pickup_appt_start ? String(x.pickup_appt_start).slice(0,16) : '');
+  set('del', x.delivery_appt_start ? String(x.delivery_appt_start).slice(0,16) : '');
+  set('status', x.status || 'quoted');
+  set('priority', x.priority || 'normal');
+  set('permresp', x.permit_responsibility);
+  set('permco', x.permit_contact_company);
+  set('permname', x.permit_contact_name);
+  set('permphone', x.permit_contact_phone);
+  set('permemail', x.permit_contact_email);
+  set('escresp', x.escort_responsibility);
+  set('escco', x.escort_contact_company);
+  set('escname', x.escort_contact_name);
+  set('escphone', x.escort_contact_phone);
+  set('detfree', x.detention_free_hours);
+  set('detrate', x.detention_rate_per_hour);
+  set('layrate', x.layover_rate);
+  set('tonu', x.tonu_rate);
+  set('accnotes', x.accessorial_notes);
+  set('custref', x.customer_reference);
+  set('po', x.purchase_order);
+  set('notes', x.notes);
+
+  const legs = await db.from('load_legs').select('state,seq')
+    .eq('load_id', EDIT_LOAD_ID).order('seq');
+  if (!legs.error) {
+    route = (legs.data || []).map(l => l.state);
+    drawStates();
+  }
+
+  updateSaveLabel();
+  checkPrefs();
+  say((x.load_number || 'Draft') + ' reopened from Dispatch Queue.', 'ok');
+}
+
+function drawPendingDocs() {
+  if (!PENDING_DOCUMENTS.length) {
+    $('pendingDocs').textContent = 'No documents added yet.';
+    return;
+  }
+  $('pendingDocs').innerHTML = PENDING_DOCUMENTS.map((d,i) =>
+    '<div style="padding:7px 0;border-bottom:1px solid var(--line)">' +
+    '<b>' + d.file.name.replace(/[&<>"]/g, '') + '</b> · ' +
+    d.type.replace(/_/g,' ') +
+    ' <button type="button" data-remove-doc="' + i + '" style="padding:3px 8px;margin-left:8px">Remove</button>' +
+    '</div>'
+  ).join('');
+
+  document.querySelectorAll('[data-remove-doc]').forEach(b =>
+    b.addEventListener('click', () => {
+      PENDING_DOCUMENTS.splice(Number(b.dataset.removeDoc),1);
+      drawPendingDocs();
+    })
+  );
+}
+
+async function sha256hex(file) {
+  const buf = await file.arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function uploadPendingDocuments(loadId) {
+  for (const d of PENDING_DOCUMENTS) {
+    const hash = await sha256hex(d.file);
+    const ext = (d.file.name.split('.').pop() || 'bin').toLowerCase();
+    const key = `${tenant}/${loadId}/${hash.slice(0,16)}-${Date.now()}.${ext}`;
+
+    const up = await db.storage.from('documents').upload(key, d.file, {
+      contentType: d.file.type || 'application/octet-stream',
+      upsert:false
+    });
+    if (up.error) throw up.error;
+
+    const ins = await db.from('documents').insert({
+      tenant_id: tenant,
+      sha256: hash,
+      storage_key: key,
+      filename: d.file.name,
+      mime_type: d.file.type || null,
+      byte_size: d.file.size,
+      doc_type: d.type,
+      title: d.title || null,
+      notes: d.notes || null,
+      uploaded_at: new Date().toISOString(),
+      is_current: true
+    }).select('id').single();
+    if (ins.error) throw ins.error;
+
+    const link = await db.from('document_links').insert({
+      tenant_id: tenant,
+      document_id: ins.data.id,
+      entity_type: 'load',
+      entity_id: loadId
+    });
+    if (link.error) throw link.error;
+  }
+  PENDING_DOCUMENTS = [];
+  drawPendingDocs();
+}
+
+$('stageDoc').addEventListener('click', () => {
+  const input = $('docFile');
+  if (!input.files || !input.files.length) {
+    say('Choose a document first.', 'err');
+    return;
+  }
+  PENDING_DOCUMENTS.push({
+    file: input.files[0],
+    type: $('docType').value,
+    title: val('docTitle'),
+    notes: val('docNotes')
+  });
+  input.value = '';
+  $('docTitle').value = '';
+  $('docNotes').value = '';
+  drawPendingDocs();
+});
+
+$('status').addEventListener('change', updateSaveLabel);
+
 $('save')
   .addEventListener(
     'click',
@@ -2159,18 +2400,8 @@ $('save')
     async () => {
 
 
-      if (
-        !val('carrier')
-      ) {
-
-        say(
-          'Carrier is required.',
-          'err'
-        );
-
-        return;
-
-      }
+      const readyForDispatch =
+        $('status').value === 'booked';
 
 
       if (
@@ -2202,12 +2433,30 @@ $('save')
 
 
       if (
-        !val('origin') ||
-        !val('dest')
+        readyForDispatch &&
+        !val('carrier')
       ) {
 
         say(
-          'Origin and destination required.',
+          'Carrier is required before release to Fleet Board.',
+          'err'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        readyForDispatch &&
+        (
+          !val('origin') ||
+          !val('dest')
+        )
+      ) {
+
+        say(
+          'Origin and destination are required before release to Fleet Board.',
           'err'
         );
 
@@ -2226,28 +2475,36 @@ $('save')
       );
 
 
-      const cnt =
-        await db
-          .from('loads')
-          .select(
-            '*',
-            {
-              count:'exact',
-              head:true
-            }
+      let loadNumber =
+        EDIT_LOAD_NUMBER;
+
+
+      if (!loadNumber) {
+
+        const cnt =
+          await db
+            .from('loads')
+            .select(
+              '*',
+              {
+                count:'exact',
+                head:true
+              }
+            );
+
+
+        const seq =
+          2001 +
+          (
+            cnt.count || 0
           );
 
 
-      const seq =
-        2001 +
-        (
-          cnt.count || 0
-        );
+        loadNumber =
+          'LD-' +
+          seq;
 
-
-      const loadNumber =
-        'LD-' +
-        seq;
+      }
 
 
       const rec = {
@@ -2429,11 +2686,19 @@ $('save')
 
 
       const r =
-        await db
-          .from('loads')
-          .insert(rec)
-          .select('id')
-          .single();
+        EDIT_LOAD_ID
+          ? await db
+              .from('loads')
+              .update(rec)
+              .eq('id', EDIT_LOAD_ID)
+              .eq('tenant_id', tenant)
+              .select('id')
+              .single()
+          : await db
+              .from('loads')
+              .insert(rec)
+              .select('id')
+              .single();
 
 
       if (
@@ -2455,6 +2720,14 @@ $('save')
 
       const loadId =
         r.data.id;
+
+
+      if (EDIT_LOAD_ID) {
+        await db
+          .from('load_legs')
+          .delete()
+          .eq('load_id', loadId);
+      }
 
 
       if (
@@ -2556,9 +2829,28 @@ $('save')
         });
 
 
+      try {
+        await uploadPendingDocuments(loadId);
+      }
+      catch (docError) {
+        $('save').disabled = false;
+        say(
+          'Load saved, but a document failed to upload: ' +
+          docError.message,
+          'err'
+        );
+        return;
+      }
+
+
+      EDIT_LOAD_ID = loadId;
+      EDIT_LOAD_NUMBER = loadNumber;
+
+
       say(
-        loadNumber +
-        ' created. Returning to the board…',
+        readyForDispatch
+          ? loadNumber + ' released to Fleet Board.'
+          : loadNumber + ' saved to Dispatch Queue.',
         'ok'
       );
 
@@ -2567,7 +2859,10 @@ $('save')
         () => {
 
           location.href =
-            'board.html';
+            readyForDispatch
+              ? 'board.html'
+              : 'newload.html?load=' +
+                encodeURIComponent(loadId);
 
         },
         1200
