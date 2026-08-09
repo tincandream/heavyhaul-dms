@@ -24,6 +24,13 @@
        HEAVY HAUL COMMAND
        WELCOME / COMMAND CENTER
        ========================================================= */
+    @font-face {
+  font-family: "Sugarcoat";
+  src: url("fonts/Sugarcoat.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
     :root {
       --welcome-ink: #3C3A4B;
@@ -151,15 +158,24 @@
     }
 
 
-    .welcome-greeting {
-      margin: 0;
-      color: #3E4B51;
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-size: clamp(34px, 4.5vw, 54px);
-      font-weight: 400;
-      line-height: 1.02;
-      letter-spacing: .2px;
-    }
+   .welcome-greeting {
+  margin: 0;
+
+  color: #3E4B51;
+
+  font-family:
+    "Sugarcoat",
+    cursive;
+
+  font-size:
+    clamp(34px, 4.5vw, 54px);
+
+  font-weight: 400;
+
+  line-height: 1.02;
+
+  letter-spacing: 0.2px;
+}
 
 
     .welcome-subtitle {
