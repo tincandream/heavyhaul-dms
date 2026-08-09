@@ -71,7 +71,7 @@
     <button class="tab" data-p="driver">Drivers</button>
     <button class="tab" data-p="truck">Trucks</button>
     <button class="tab" data-p="trailer">Trailers</button>
-    <button class="tab" data-p="facility">Facilities</button>
+    <button class="tab" data-p="profile">Profile</button>
   </div>
 
   <div class="panel on" id="p-carrier">
@@ -198,43 +198,116 @@
     </div>
   </div>
 
-  <div class="panel" id="p-facility">
+  <div class="panel" id="p-profile">
+
     <div class="card">
-      <h2>Add facility</h2>
-      <p class="hint">Shippers and receivers live in one list — the same yard is
-         often both. These populate the origin and destination pickers on New Load.</p>
+
+      <h2>Fleet profile</h2>
+
+      <p class="hint">
+        Store the carrier's operating terms, preferences, and requirements.
+        This profile can be reviewed automatically when the fleet is assigned to a load.
+      </p>
+
       <div class="grid">
-        <div class="req"><label>Name</label><input id="f_name"></div>
-        <div><label>Role</label>
-          <select id="f_role">
-            <option value="both">Both shipper and receiver</option>
-            <option value="shipper">Shipper</option>
-            <option value="receiver">Receiver</option>
-            <option value="yard">Yard</option>
-            <option value="port">Port</option>
-            <option value="rail">Rail</option>
-          </select></div>
-        <div class="full"><label>Address</label><input id="f_addr"></div>
-        <div><label>City</label><input id="f_city"></div>
-        <div><label>State</label><input id="f_state" maxlength="2" placeholder="AR"></div>
-        <div><label>ZIP</label><input id="f_zip"></div>
-        <div><label>Appointment required</label>
-          <select id="f_appt"><option value="false">No</option>
-          <option value="true">Yes</option></select></div>
-        <div><label>Overhead clearance (in)</label><input id="f_clear" type="number"></div>
-        <div class="full"><label>Hours</label>
-          <input id="f_hours" placeholder="Mon-Fri 6a-4p, no weekend loading"></div>
-        <div class="full"><label>Yard access notes</label>
-          <textarea id="f_access" placeholder="Enter through Gate 3, check in at receiving"></textarea></div>
-        <div class="full"><label>Notes</label><textarea id="f_notes"></textarea></div>
+
+        <div class="req">
+          <label>Carrier</label>
+          <select id="p_carrier"></select>
+        </div>
+
+        <div>
+          <label>Target rate / mile ($)</label>
+          <input id="p_target_rpm" type="number" step="0.01">
+        </div>
+
+        <div>
+          <label>Minimum rate / mile ($)</label>
+          <input id="p_min_rpm" type="number" step="0.01">
+        </div>
+
+        <div>
+          <label>Minimum day rate ($)</label>
+          <input id="p_day_rate" type="number" step="0.01">
+        </div>
+
+        <div>
+          <label>Max deadhead (miles)</label>
+          <input id="p_deadhead" type="number">
+        </div>
+
+        <div>
+          <label>Detention ($ / hr)</label>
+          <input id="p_detention_rate" type="number" step="0.01">
+        </div>
+
+        <div>
+          <label>Detention after (hours)</label>
+          <input id="p_detention_after" type="number" step="0.5">
+        </div>
+
+        <div>
+          <label>TONU minimum ($)</label>
+          <input id="p_tonu" type="number" step="0.01">
+        </div>
+
+        <div>
+          <label>Layover rate ($ / day)</label>
+          <input id="p_layover" type="number" step="0.01">
+        </div>
+
+        <div class="full">
+          <label>Negotiables</label>
+          <textarea
+            id="p_negotiables"
+            placeholder="What can be negotiated, non-negotiables, payment/factoring needs, fuel advance needs…"
+          ></textarea>
+        </div>
+
+        <div class="full">
+          <label>Preferences</label>
+          <textarea
+            id="p_preferences"
+            placeholder="Preferred lanes/states, freight, max deadhead, pickup windows, home-time preferences…"
+          ></textarea>
+        </div>
+
+        <div class="full">
+          <label>Requirements</label>
+          <textarea
+            id="p_requirements"
+            placeholder="Equipment limits, driver needs, operating restrictions, required accessorial terms…"
+          ></textarea>
+        </div>
+
+        <div class="full">
+          <label>Notes</label>
+          <textarea id="p_notes"></textarea>
+        </div>
+
       </div>
-      <button id="f_save">Save facility</button>
-      <div class="msg" id="f_msg"></div>
+
+      <button id="p_save">
+        Save profile
+      </button>
+
+      <div class="msg" id="p_msg"></div>
+
     </div>
+
+
     <div class="card">
-      <h2>Facilities on file</h2>
-      <div id="f_list" class="empty">Loading…</div>
+
+      <h2>Profiles on file</h2>
+
+      <div
+        id="p_list"
+        class="empty">
+        Loading…
+      </div>
+
     </div>
+
   </div>
 
 </main>
@@ -302,7 +375,7 @@ async function refresh() {
 
   $('step1').style.display = carriers.length ? 'none' : 'block';
 
-  ['d_carrier','t_carrier','r_carrier'].forEach(id => {
+  ['d_carrier','t_carrier','r_carrier','p_carrier'].forEach(id => {
     const keep = $(id).value;
     $(id).innerHTML = carriers.map(x =>
       '<option value="' + x.id + '">' + esc(x.legal_name) + '</option>').join('')
@@ -352,15 +425,29 @@ async function refresh() {
          x.max_payload_lb ? x.max_payload_lb.toLocaleString() + ' lb' : '—']))
     : '<div class="empty">None yet.</div>';
 
-  const fc = await db.from('facilities').select('*')
-    .is('archived_at', null).order('name');
-  const facs = fc.data || [];
-  $('f_list').innerHTML = facs.length
-    ? rowsTable(['Name','Role','Location','Appointment'], facs.map(x =>
-        [x.name, pretty(x.role_hint),
-         [x.city, x.state].filter(Boolean).join(', ') || '—',
-         x.appointment_required ? 'Required' : 'No']))
+  const pr = await db
+    .from('carrier_profiles')
+    .select('*, carriers(legal_name)')
+    .eq('tenant_id', tenant)
+    .order('updated_at', { ascending:false });
+
+  const profiles = pr.data || [];
+
+  $('p_list').innerHTML = profiles.length
+    ? rowsTable(
+        ['Carrier','Target RPM','Min RPM','Max deadhead'],
+        profiles.map(x => [
+          x.carriers ? x.carriers.legal_name : '—',
+          x.target_rate_per_mile != null ? '$' + Number(x.target_rate_per_mile).toFixed(2) : '—',
+          x.minimum_rate_per_mile != null ? '$' + Number(x.minimum_rate_per_mile).toFixed(2) : '—',
+          x.max_deadhead_miles != null ? x.max_deadhead_miles + ' mi' : '—'
+        ])
+      )
     : '<div class="empty">None yet.</div>';
+
+  if ($('p_carrier').value) {
+    await loadProfileForCarrier();
+  }
 }
 
 $('c_save').addEventListener('click', async () => {
@@ -449,26 +536,189 @@ $('r_save').addEventListener('click', async () => {
   refresh();
 });
 
-$('f_save').addEventListener('click', async () => {
-  if (!val('f_name')) { say('f_msg','Name is required.','err'); return; }
-  $('f_save').disabled = true;
-  const r = await db.from('facilities').insert({
-    tenant_id: tenant, name: val('f_name'), role_hint: $('f_role').value,
-    address_line1: val('f_addr'), city: val('f_city'),
-    state: val('f_state') ? val('f_state').toUpperCase() : null,
-    postal_code: val('f_zip'),
-    appointment_required: $('f_appt').value === 'true',
-    overhead_clearance_in: num('f_clear'),
-    hours_notes: val('f_hours'), yard_access_notes: val('f_access'),
-    notes: val('f_notes')
-  });
-  $('f_save').disabled = false;
-  if (r.error) { say('f_msg', r.error.message, 'err'); return; }
-  say('f_msg', 'Facility saved.', 'ok');
-  ['f_name','f_addr','f_city','f_state','f_zip','f_clear','f_hours',
-   'f_access','f_notes'].forEach(i => $(i).value = '');
-  refresh();
-});
+
+async function loadProfileForCarrier() {
+
+  const carrierId =
+    val('p_carrier');
+
+  if (!carrierId) {
+    return;
+  }
+
+  const r =
+    await db
+      .from('carrier_profiles')
+      .select('*')
+      .eq('tenant_id', tenant)
+      .eq('carrier_id', carrierId)
+      .maybeSingle();
+
+  if (r.error) {
+    say(
+      'p_msg',
+      r.error.message,
+      'err'
+    );
+    return;
+  }
+
+  const x =
+    r.data || {};
+
+  $('p_target_rpm').value =
+    x.target_rate_per_mile ?? '';
+
+  $('p_min_rpm').value =
+    x.minimum_rate_per_mile ?? '';
+
+  $('p_day_rate').value =
+    x.minimum_day_rate ?? '';
+
+  $('p_deadhead').value =
+    x.max_deadhead_miles ?? '';
+
+  $('p_detention_rate').value =
+    x.detention_rate_per_hour ?? '';
+
+  $('p_detention_after').value =
+    x.detention_after_hours ?? '';
+
+  $('p_tonu').value =
+    x.tonu_minimum ?? '';
+
+  $('p_layover').value =
+    x.layover_rate_per_day ?? '';
+
+  $('p_negotiables').value =
+    x.negotiables || '';
+
+  $('p_preferences').value =
+    x.preferences || '';
+
+  $('p_requirements').value =
+    x.requirements || '';
+
+  $('p_notes').value =
+    x.notes || '';
+
+}
+
+
+$('p_carrier')
+  .addEventListener(
+    'change',
+    loadProfileForCarrier
+  );
+
+
+$('p_save')
+  .addEventListener(
+    'click',
+    async () => {
+
+      if (!val('p_carrier')) {
+        say(
+          'p_msg',
+          'Choose a carrier first.',
+          'err'
+        );
+        return;
+      }
+
+      $('p_save').disabled =
+        true;
+
+      const row = {
+
+        tenant_id:
+          tenant,
+
+        carrier_id:
+          val('p_carrier'),
+
+        target_rate_per_mile:
+          num('p_target_rpm'),
+
+        minimum_rate_per_mile:
+          num('p_min_rpm'),
+
+        minimum_day_rate:
+          num('p_day_rate'),
+
+        max_deadhead_miles:
+          num('p_deadhead'),
+
+        detention_rate_per_hour:
+          num('p_detention_rate'),
+
+        detention_after_hours:
+          num('p_detention_after'),
+
+        tonu_minimum:
+          num('p_tonu'),
+
+        layover_rate_per_day:
+          num('p_layover'),
+
+        negotiables:
+          val('p_negotiables'),
+
+        preferences:
+          val('p_preferences'),
+
+        requirements:
+          val('p_requirements'),
+
+        notes:
+          val('p_notes')
+
+      };
+
+
+      const r =
+        await db
+          .from('carrier_profiles')
+          .upsert(
+            row,
+            {
+              onConflict:
+                'carrier_id'
+            }
+          );
+
+
+      $('p_save').disabled =
+        false;
+
+
+      if (r.error) {
+
+        say(
+          'p_msg',
+          r.error.message,
+          'err'
+        );
+
+        return;
+
+      }
+
+
+      say(
+        'p_msg',
+        'Profile saved.',
+        'ok'
+      );
+
+
+      await refresh();
+
+      await loadProfileForCarrier();
+
+    }
+  );
+
 
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
