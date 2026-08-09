@@ -532,6 +532,32 @@ dialog.assign-dialog::backdrop {
   border-left:3px solid #6B92A5;
 }
 
+
+.fleet-profile-summary {
+  display:none;
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid #dce8b8;
+  border-left:3px solid #aebc39;
+  background:#f7faee;
+  font-size:12px;
+  color:var(--ink);
+}
+
+.fleet-profile-summary.show {
+  display:block;
+}
+
+.fleet-profile-summary .profile-title {
+  font-weight:500;
+  margin-bottom:4px;
+}
+
+.fleet-profile-summary .profile-line {
+  color:var(--muted);
+  line-height:1.55;
+}
+
 </style>
 
 </head>
@@ -624,7 +650,7 @@ dialog.assign-dialog::backdrop {
 
   <div class="workflow-band assigned-band">
     <span>Assigned to Load</span>
-    <span class="band-note">Fleet · Route · State Rules</span>
+    <span class="band-note">Fleet + Profile · Route · State Rules</span>
   </div>
 
   <!-- =====================================================
@@ -656,6 +682,11 @@ dialog.assign-dialog::backdrop {
     >
       Fleet needed.
     </div>
+
+    <div
+      class="fleet-profile-summary"
+      id="fleetProfileSummary"
+    ></div>
 
     <details class="assignment-details">
       <summary>Edit assigned fleet</summary>
@@ -736,61 +767,63 @@ dialog.assign-dialog::backdrop {
       Route needed.
     </div>
 
-    <div class="grid">
-      <div>
-        <label>Assigned route name</label>
-        <input id="assignedRouteName" placeholder="No route assigned">
+    <details class="assignment-details">
+      <summary>Edit assigned route</summary>
+
+      <div class="grid" style="margin-top:12px">
+
+        <div>
+          <label>Assigned route name</label>
+          <input id="assignedRouteName" placeholder="No route assigned">
+        </div>
+
+        <div>
+          <label>Loaded miles</label>
+          <input id="miles" type="number">
+        </div>
+
+        <div>
+          <label>Overhang front (in)</label>
+          <input id="ohf" type="number" value="0">
+        </div>
+
+        <div>
+          <label>Overhang rear (in)</label>
+          <input id="ohr" type="number" value="0">
+        </div>
+
+        <div>
+          <label>Axle count</label>
+          <input id="axles" type="number">
+        </div>
+
+        <div>
+          <label>Axle spacings</label>
+          <input id="spacings" placeholder="3+3+3">
+        </div>
+
+        <div class="full">
+          <label>Route notes</label>
+          <textarea id="routeNotes"></textarea>
+        </div>
+
       </div>
 
-      <div>
-        <label>Loaded miles</label>
-        <input id="miles" type="number">
+      <p class="hint" style="margin-top:14px">
+        States remain editable for this load. Changing the route resets State Rules to Not Reviewed.
+      </p>
+
+      <div class="states" id="statepicker"></div>
+
+      <div class="route" id="routeout">
+        No states selected.
       </div>
+    </details>
 
-      <div class="req">
-        <label>Pickup facility</label>
-        <select id="origin"></select>
-      </div>
-
-      <div class="req">
-        <label>Delivery facility</label>
-        <select id="dest"></select>
-      </div>
-
-      <div>
-        <label>Overhang front (in)</label>
-        <input id="ohf" type="number" value="0">
-      </div>
-
-      <div>
-        <label>Overhang rear (in)</label>
-        <input id="ohr" type="number" value="0">
-      </div>
-
-      <div>
-        <label>Axle count</label>
-        <input id="axles" type="number">
-      </div>
-
-      <div>
-        <label>Axle spacings</label>
-        <input id="spacings" placeholder="3+3+3">
-      </div>
-
-      <div class="full">
-        <label>Route notes</label>
-        <textarea id="routeNotes"></textarea>
-      </div>
-    </div>
-
-    <p class="hint" style="margin-top:14px">
-      States remain editable for this load. Changing the route resets State Rules to Not Reviewed.
-    </p>
-
-    <div class="states" id="statepicker"></div>
-
-    <div class="route" id="routeout">
-      No states selected.
+    <!-- Legacy facility IDs retained only for older load records. -->
+    <div hidden>
+      <input id="origin">
+      <input id="dest">
     </div>
 
     <div
@@ -832,70 +865,103 @@ dialog.assign-dialog::backdrop {
 
   <div class="workflow-band added-band">
     <span>Load-Specific Details</span>
-    <span class="band-note">Schedule · Permits · Escorts · Accessorials · Documents</span>
+    <span class="band-note">Driver Handoff · Permits · Escorts · Accessorials · Documents</span>
   </div>
 
   <!-- =====================================================
-       SCHEDULE / CALENDAR
+       DRIVER HANDOFF
        ===================================================== -->
 
   <div class="card load-specific-card">
 
-    <h2>Schedule</h2>
+    <h2>Driver Handoff</h2>
 
     <p class="hint">
-      Pickup and delivery already appear on Calendar from the load. Add only the extra reminders this shipment needs.
+      Schedule the pre-departure call and prepare the briefing for the assigned driver.
+      Pickup and delivery appointments remain part of the imported Broker Load.
     </p>
 
     <div class="grid">
 
       <div>
-        <label>Reminder type</label>
-        <select id="scheduleType">
-          <option value="followup">Follow-up</option>
-          <option value="permit">Permit deadline</option>
-          <option value="escort">Escort meeting</option>
-          <option value="document">Document deadline</option>
-          <option value="broker_call">Broker call</option>
-          <option value="carrier_call">Carrier call</option>
-          <option value="driver_call">Driver call</option>
-          <option value="accessorial">Accessorial follow-up</option>
-          <option value="invoice">Invoice</option>
-          <option value="payment">Payment</option>
-          <option value="custom">Other reminder</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Date & time</label>
+        <label>Pre-departure call</label>
         <input id="scheduleWhen" type="datetime-local">
       </div>
 
-      <div class="full">
-        <label>Reminder title</label>
-        <input
-          id="scheduleTitle"
-          placeholder="Example: Confirm AR permit before departure"
-        >
+      <div>
+        <label>Call status</label>
+        <select id="handoffStatus">
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+        </select>
       </div>
 
       <div class="full">
-        <label>Schedule notes</label>
+        <label>Dispatcher call notes</label>
         <textarea
           id="scheduleNotes"
-          placeholder="Optional details for the reminder"
+          placeholder="What should be relayed to the driver, or notes from the completed call."
         ></textarea>
       </div>
 
     </div>
 
+    <input id="scheduleTitle" type="hidden" value="Pre-Departure Call">
+
+    <select id="scheduleType" hidden>
+      <option value="pre_departure" selected>Pre-Departure</option>
+    </select>
+
     <div style="margin-top:10px">
-      <button type="button" id="stageSchedule">+ Add to Schedule</button>
+      <button type="button" id="stageSchedule">Add to Calendar</button>
     </div>
 
     <div id="pendingSchedule" class="route">
-      No additional calendar reminders added.
+      No pre-departure call scheduled.
     </div>
+
+    <div class="assignment-summary" id="driverBriefingSummary" style="margin-top:16px">
+      Assign the fleet and route to build the driver briefing.
+    </div>
+
+    <details style="margin-top:14px">
+      <summary>Driver handoff contents</summary>
+
+      <p class="hint" style="margin-top:10px">
+        The briefing pulls from the load: assigned driver and equipment, pickup and delivery,
+        route, State Rules review, permits, escorts, accessorial terms, and special instructions.
+      </p>
+
+      <div class="full">
+        <label>Documents approved for driver</label>
+
+        <label style="display:block;margin-top:8px">
+          <input type="checkbox" id="driverDocPermits" checked>
+          Permit copies
+        </label>
+
+        <label style="display:block;margin-top:8px">
+          <input type="checkbox" id="driverDocRoute" checked>
+          Route / routing instructions
+        </label>
+
+        <label style="display:block;margin-top:8px">
+          <input type="checkbox" id="driverDocBol" checked>
+          BOL / shipment paperwork when available
+        </label>
+
+        <label style="display:block;margin-top:8px">
+          <input type="checkbox" id="driverDocOther">
+          Other approved driver documents
+        </label>
+
+        <p class="hint">
+          Rate confirmations, broker packets, tax records, internal notes, and Fleet Profile
+          financial terms are not included automatically.
+        </p>
+      </div>
+
+    </details>
 
   </div>
 
@@ -1848,6 +1914,14 @@ async function loadOpportunityImport() {
         ? 'Load #' + o.external_ref
         : '',
 
+      o.pickup_facility_name
+        ? 'Pickup: ' + o.pickup_facility_name
+        : '',
+
+      o.delivery_facility_name
+        ? 'Delivery: ' + o.delivery_facility_name
+        : '',
+
       origin || destination
         ? origin + ' → ' + destination
         : '',
@@ -1957,58 +2031,7 @@ async function loadPickers() {
         '</option>'
     )
     .join('');
-
-
-  const f =
-    await db
-      .from('facilities')
-      .select(
-        'id,name,city,state'
-      )
-      .is(
-        'archived_at',
-        null
-      )
-      .order(
-        'name'
-      );
-
-
-  const opts =
-
-    '<option value="">— select —</option>'
-    +
-    (
-      f.data || []
-    )
-    .map(
-      x =>
-        '<option value="' +
-        x.id +
-        '">' +
-        x.name +
-        ' (' +
-        (
-          x.city || ''
-        ) +
-        ', ' +
-        (
-          x.state || ''
-        ) +
-        ')' +
-        '</option>'
-    )
-    .join('');
-
-
-  $('origin').innerHTML =
-    opts;
-
-  $('dest').innerHTML =
-    opts;
-
-
-  await onCarrier();
+await onCarrier();
 
 }
 
@@ -2658,6 +2681,153 @@ function selectedText(id) {
 }
 
 
+
+async function loadCarrierProfileSummary(carrierId) {
+
+  const box =
+    $('fleetProfileSummary');
+
+  if (!box) {
+    return;
+  }
+
+  if (!carrierId) {
+    box.className = 'fleet-profile-summary';
+    box.innerHTML = '';
+    return;
+  }
+
+
+  const result =
+    await db
+      .from('carrier_profiles')
+      .select('*')
+      .eq('tenant_id', tenant)
+      .eq('carrier_id', carrierId)
+      .maybeSingle();
+
+
+  if (result.error || !result.data) {
+
+    box.className =
+      'fleet-profile-summary';
+
+    box.innerHTML =
+      '';
+
+    return;
+
+  }
+
+
+  const p =
+    result.data;
+
+
+  const rateBits = [
+
+    p.target_rate_per_mile != null
+      ? 'Target $' +
+        Number(p.target_rate_per_mile).toFixed(2) +
+        '/mi'
+      : '',
+
+    p.minimum_rate_per_mile != null
+      ? 'Minimum $' +
+        Number(p.minimum_rate_per_mile).toFixed(2) +
+        '/mi'
+      : '',
+
+    p.minimum_day_rate != null
+      ? '$' +
+        Number(p.minimum_day_rate).toLocaleString() +
+        ' minimum day'
+      : '',
+
+    p.max_deadhead_miles != null
+      ? 'Max deadhead ' +
+        p.max_deadhead_miles +
+        ' mi'
+      : ''
+
+  ]
+  .filter(Boolean);
+
+
+  const terms = [
+
+    p.detention_rate_per_hour != null
+      ? 'Detention $' +
+        Number(p.detention_rate_per_hour).toFixed(0) +
+        '/hr' +
+        (
+          p.detention_after_hours != null
+            ? ' after ' +
+              Number(p.detention_after_hours) +
+              ' hr'
+            : ''
+        )
+      : '',
+
+    p.tonu_minimum != null
+      ? 'TONU $' +
+        Number(p.tonu_minimum).toLocaleString()
+      : '',
+
+    p.layover_rate_per_day != null
+      ? 'Layover $' +
+        Number(p.layover_rate_per_day).toLocaleString() +
+        '/day'
+      : ''
+
+  ]
+  .filter(Boolean);
+
+
+  const lines = [
+
+    rateBits.length
+      ? rateBits.join(' · ')
+      : '',
+
+    terms.length
+      ? terms.join(' · ')
+      : '',
+
+    p.preferences
+      ? 'Preferences: ' +
+        escapeHtml(p.preferences)
+      : '',
+
+    p.requirements
+      ? 'Requirements: ' +
+        escapeHtml(p.requirements)
+      : '',
+
+    p.negotiables
+      ? 'Negotiables: ' +
+        escapeHtml(p.negotiables)
+      : ''
+
+  ]
+  .filter(Boolean);
+
+
+  box.className =
+    'fleet-profile-summary show';
+
+  box.innerHTML =
+    '<div class="profile-title">Profile</div>' +
+    lines.map(
+      line =>
+        '<div class="profile-line">' +
+        line +
+        '</div>'
+    ).join('');
+
+}
+
+
 function updateFleetAssignmentSummary() {
   const parts = [
     selectedText('carrier'),
@@ -2671,10 +2841,12 @@ function updateFleetAssignmentSummary() {
   if (fleetReady()) {
     box.textContent = parts.join(' · ');
     box.classList.add('assigned');
+    loadCarrierProfileSummary($('carrier').value);
   }
   else {
     box.textContent = 'Fleet needed.';
     box.classList.remove('assigned');
+    loadCarrierProfileSummary(null);
   }
 }
 
@@ -2940,35 +3112,6 @@ function previewAssignableRoute() {
 }
 
 
-function tryMatchFacility(text, selectId) {
-  if (!text) return;
-
-  const target =
-    String(text).trim().toLowerCase();
-
-  const options =
-    Array.from($(selectId).options);
-
-  const exact =
-    options.find(
-      o =>
-        o.textContent.trim().toLowerCase() === target
-    );
-
-  const contained =
-    options.find(
-      o =>
-        o.textContent.trim().toLowerCase().includes(target) ||
-        target.includes(o.textContent.trim().toLowerCase())
-    );
-
-  const match = exact || contained;
-
-  if (match) {
-    $(selectId).value = match.value;
-  }
-}
-
 
 function applyAssignedRoute(item) {
   const r = item.record;
@@ -3003,11 +3146,7 @@ function applyAssignedRoute(item) {
     Array.isArray(r.states)
       ? [...r.states]
       : [];
-
-  tryMatchFacility(r.origin, 'origin');
-  tryMatchFacility(r.destination, 'dest');
-
-  STATE_RULES_REVIEWED = false;
+STATE_RULES_REVIEWED = false;
   STATE_RULES_SNAPSHOT = [];
 
   drawRoute();
@@ -3324,9 +3463,11 @@ function setAssemblyTile(id, text, stateClass) {
 
 function routeReady() {
   return Boolean(
-    val('origin') &&
-    val('dest') &&
-    route.length
+    route.length &&
+    (
+      val('assignedRouteName') ||
+      ASSIGNED_ROUTE_SOURCE_ID
+    )
   );
 }
 
@@ -3444,6 +3585,7 @@ function refreshAssemblyStatus() {
   updateFleetAssignmentSummary();
   updateRouteAssignmentSummary();
   updateStateRulesSummary();
+  buildDriverBriefing();
 
 }
 
@@ -3654,6 +3796,36 @@ function scheduleIsoLocal(value) {
 }
 
 
+function buildDriverBriefing() {
+
+  const box = $('driverBriefingSummary');
+  if (!box) return;
+
+  const fleet = [
+    selectedText('driver'),
+    selectedText('tractor'),
+    selectedText('trailer')
+  ].filter(x => x && !x.startsWith('—')).join(' · ');
+
+  const items = [
+    fleet ? 'Fleet: ' + fleet : '',
+    route.length ? 'Route: ' + route.join(' → ') : '',
+    STATE_RULES_REVIEWED ? 'State Rules: reviewed' : 'State Rules: not reviewed',
+    val('permresp') ? 'Permits: ' + selectedText('permresp') : '',
+    val('escresp') ? 'Escorts: ' + selectedText('escresp') : '',
+    val('detrate') ? 'Detention: $' + val('detrate') + '/hr' : '',
+    val('layrate') ? 'Layover: $' + val('layrate') : '',
+    val('tonu') ? 'TONU: $' + val('tonu') : ''
+  ].filter(Boolean);
+
+  box.innerHTML =
+    '<span style="font-weight:500">Driver briefing</span><br>' +
+    (items.length
+      ? items.map(escapeHtml).join('<br>')
+      : 'Assign the fleet and route to build the driver briefing.');
+}
+
+
 function drawSchedule() {
 
   const existing =
@@ -3692,7 +3864,7 @@ function drawSchedule() {
   if (!items.length) {
 
     $('pendingSchedule').textContent =
-      'No additional calendar reminders added.';
+      'No pre-departure call scheduled.';
 
     return;
 
@@ -3902,7 +4074,7 @@ $('stageSchedule')
       if (!title) {
 
         say(
-          'Enter a schedule reminder title.',
+          'Pre-departure call title is missing.',
           'err'
         );
 
@@ -3914,7 +4086,7 @@ $('stageSchedule')
       if (!when) {
 
         say(
-          'Choose a date and time for the reminder.',
+          'Choose a date and time for the pre-departure call.',
           'err'
         );
 
@@ -3939,7 +4111,7 @@ $('stageSchedule')
 
 
       $('scheduleTitle').value =
-        '';
+        'Pre-Departure Call';
 
       $('scheduleWhen').value =
         '';
@@ -3948,13 +4120,13 @@ $('stageSchedule')
         '';
 
       $('scheduleType').value =
-        'followup';
+        'pre_departure';
 
 
       drawSchedule();
 
       say(
-        'Reminder staged. It will be added to Calendar when the load is saved.',
+        'Pre-departure call staged. It will be added to Calendar when the load is saved.',
         'ok'
       );
 
@@ -4066,8 +4238,6 @@ $('status').addEventListener('change', updateSaveLabel);
   'driver',
   'tractor',
   'trailer',
-  'origin',
-  'dest',
   'permresp',
   'escresp',
   'status'
@@ -4098,8 +4268,6 @@ $('status').addEventListener('change', updateSaveLabel);
 
 
 [
-  'origin',
-  'dest',
   'miles',
   'assignedRouteName',
   'routeNotes'
@@ -4173,27 +4341,7 @@ $('save')
         return;
 
       }
-
-
-      if (
-        readyForDispatch &&
-        (
-          !val('origin') ||
-          !val('dest')
-        )
-      ) {
-
-        say(
-          'Origin and destination are required before release to Fleet Board.',
-          'err'
-        );
-
-        return;
-
-      }
-
-
-      $('save').disabled =
+$('save').disabled =
         true;
 
 
