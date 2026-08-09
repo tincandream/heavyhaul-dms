@@ -673,42 +673,6 @@ let group =
    LOAD STATUS GROUPS
    ============================================================ */
 
-const ACTIVE = [
-
-  'dispatched',
-
-  'en_route_to_pickup',
-
-  'at_shipper',
-
-  'loading',
-
-  'loaded',
-
-  'in_transit',
-
-  'at_weigh_station',
-
-  'under_inspection',
-
-  'at_receiver',
-
-  'unloading'
-
-];
-
-
-const PIPELINE = [
-
-  'quoted',
-
-  'booked',
-
-  'permits_pending'
-
-];
-
-
 const CLOSED = [
 
   'delivered',
@@ -719,11 +683,7 @@ const CLOSED = [
 
   'invoiced',
 
-  'paid',
-
-  'cancelled',
-
-  'tonu'
+  'paid'
 
 ];
 
@@ -1007,16 +967,16 @@ async function load() {
         'archived_at',
         null
       )
-.in(
-  'status',
-  [
-    'delivered',
-    'pod_pending',
-    'paperwork',
-    'invoiced',
-    'paid'
-  ]
-)
+      .in(
+        'status',
+        [
+          'delivered',
+          'pod_pending',
+          'paperwork',
+          'invoiced',
+          'paid'
+        ]
+      )
       .order(
         'created_at',
         {
@@ -1502,42 +1462,38 @@ function tiles() {
 
   const counts = {
 
-
     all:
       rows.length,
 
-
-    active:
-
+    delivered:
       rows.filter(
         row =>
-          ACTIVE.includes(
+          row.status === 'delivered'
+      ).length,
+
+    paperwork:
+      rows.filter(
+        row =>
+          [
+            'pod_pending',
+            'paperwork'
+          ].includes(
             row.status
           )
       ).length,
 
-
-    pipeline:
-
+    billing:
       rows.filter(
         row =>
-          PIPELINE.includes(
-            row.status
-          )
-      ).length,
-
-
-    closed:
-
-      rows.filter(
-        row =>
-          CLOSED.includes(
+          [
+            'invoiced',
+            'paid'
+          ].includes(
             row.status
           )
       ).length
 
   };
-
 
 
   const defs = [
@@ -1548,22 +1504,21 @@ function tiles() {
     ],
 
     [
-      'active',
-      'Active'
+      'delivered',
+      'Delivered'
     ],
 
     [
-      'pipeline',
-      'Pipeline'
+      'paperwork',
+      'Paperwork'
     ],
 
     [
-      'closed',
-      'Completed'
+      'billing',
+      'Billing'
     ]
 
   ];
-
 
 
   $('tiles').innerHTML =
@@ -1571,14 +1526,11 @@ function tiles() {
     defs.map(
       item => {
 
-
         const key =
           item[0];
 
-
         const label =
           item[1];
-
 
         return (
 
@@ -1619,7 +1571,6 @@ function tiles() {
     ).join('');
 
 
-
   document
     .querySelectorAll(
       '.tile[data-g]'
@@ -1627,15 +1578,12 @@ function tiles() {
     .forEach(
       tile => {
 
-
         tile.addEventListener(
           'click',
           function () {
 
-
             group =
               tile.dataset.g;
-
 
             render();
 
@@ -1685,8 +1633,22 @@ function render() {
            ------------------------------------------------------ */
 
         if (
-          group === 'active' &&
-          !ACTIVE.includes(
+          group === 'delivered' &&
+          row.status !==
+            'delivered'
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          group === 'paperwork' &&
+          ![
+            'pod_pending',
+            'paperwork'
+          ].includes(
             row.status
           )
         ) {
@@ -1697,20 +1659,11 @@ function render() {
 
 
         if (
-          group === 'pipeline' &&
-          !PIPELINE.includes(
-            row.status
-          )
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          group === 'closed' &&
-          !CLOSED.includes(
+          group === 'billing' &&
+          ![
+            'invoiced',
+            'paid'
+          ].includes(
             row.status
           )
         ) {
