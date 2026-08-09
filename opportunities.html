@@ -84,6 +84,46 @@
   .fs { border:1px solid var(--line); border-radius:8px; padding:12px; margin-top:12px; }
   .fs legend { font-size:11px; text-transform:uppercase; letter-spacing:.5px;
     color:var(--muted); font-weight:700; padding:0 6px; }
+
+  .facility-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    grid-column:1/-1;
+    margin-top:2px;
+  }
+  .facility-head strong {
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .facility-toggle {
+    border:0;
+    background:transparent;
+    color:var(--accent);
+    padding:2px 0;
+    font-size:12px;
+    font-weight:500;
+  }
+  .facility-toggle:hover {
+    background:transparent;
+    text-decoration:underline;
+  }
+  .facility-details {
+    display:none;
+    grid-column:1/-1;
+    padding-top:2px;
+  }
+  .facility-details.open { display:block; }
+  .facility-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+    padding:10px 0 2px;
+    border-top:1px solid var(--line);
+  }
+
 </style>
 </head>
 <body>
@@ -157,14 +197,59 @@
 
     <fieldset class="fs"><legend>Lane</legend>
       <div class="fg">
+
+        <div class="facility-head">
+          <strong>Pickup</strong>
+          <button type="button" class="facility-toggle" id="pickupDetailsBtn">+ Facility details</button>
+        </div>
+
+        <div class="fld full">
+          <label for="o_pickup_facility">Pickup facility</label>
+          <input id="o_pickup_facility" placeholder="Facility / shipper name">
+        </div>
+
         <div class="fld"><label for="o_ocity">Origin city</label><input id="o_ocity"></div>
-        <div class="fld"><label for="o_ostate">Origin state</label>
-          <input id="o_ostate" maxlength="2" style="text-transform:uppercase"></div>
-        <div class="fld"><label for="o_dcity">Dest city</label><input id="o_dcity"></div>
-        <div class="fld"><label for="o_dstate">Dest state</label>
-          <input id="o_dstate" maxlength="2" style="text-transform:uppercase"></div>
+        <div class="fld"><label for="o_ostate">Origin state</label><input id="o_ostate" maxlength="2" style="text-transform:uppercase"></div>
         <div class="fld"><label for="o_pickup">Pickup date</label><input type="date" id="o_pickup"></div>
+
+        <div class="facility-details" id="pickupDetails">
+          <div class="facility-grid">
+            <div class="fld full"><label for="o_pickup_address">Street address</label><input id="o_pickup_address"></div>
+            <div class="fld"><label for="o_pickup_zip">ZIP</label><input id="o_pickup_zip"></div>
+            <div class="fld"><label for="o_pickup_contact">Contact</label><input id="o_pickup_contact"></div>
+            <div class="fld"><label for="o_pickup_phone">Phone</label><input id="o_pickup_phone"></div>
+            <div class="fld"><label for="o_pickup_hours">Hours / appointment</label><input id="o_pickup_hours"></div>
+            <div class="fld full"><label for="o_pickup_instructions">Instructions / notes</label><textarea id="o_pickup_instructions"></textarea></div>
+          </div>
+        </div>
+
+        <div class="facility-head" style="margin-top:10px">
+          <strong>Delivery</strong>
+          <button type="button" class="facility-toggle" id="deliveryDetailsBtn">+ Facility details</button>
+        </div>
+
+        <div class="fld full">
+          <label for="o_delivery_facility">Delivery facility</label>
+          <input id="o_delivery_facility" placeholder="Facility / receiver name">
+        </div>
+
+        <div class="fld"><label for="o_dcity">Dest city</label><input id="o_dcity"></div>
+        <div class="fld"><label for="o_dstate">Dest state</label><input id="o_dstate" maxlength="2" style="text-transform:uppercase"></div>
+        <div class="fld"><label for="o_delivery">Delivery date</label><input type="date" id="o_delivery"></div>
+
+        <div class="facility-details" id="deliveryDetails">
+          <div class="facility-grid">
+            <div class="fld full"><label for="o_delivery_address">Street address</label><input id="o_delivery_address"></div>
+            <div class="fld"><label for="o_delivery_zip">ZIP</label><input id="o_delivery_zip"></div>
+            <div class="fld"><label for="o_delivery_contact">Contact</label><input id="o_delivery_contact"></div>
+            <div class="fld"><label for="o_delivery_phone">Phone</label><input id="o_delivery_phone"></div>
+            <div class="fld"><label for="o_delivery_hours">Hours / appointment</label><input id="o_delivery_hours"></div>
+            <div class="fld full"><label for="o_delivery_instructions">Instructions / notes</label><textarea id="o_delivery_instructions"></textarea></div>
+          </div>
+        </div>
+
         <div class="fld"><label for="o_miles">Miles</label><input type="number" id="o_miles"></div>
+
       </div>
     </fieldset>
 
@@ -306,7 +391,8 @@ function render(){
     if ($('fsource').value && r.source_type !== $('fsource').value) return false;
     if ($('fover').checked && !(r.is_oversize || r.is_superload)) return false;
     if (q){
-      const hay=[r.broker_name,r.origin_city,r.origin_state,r.dest_city,r.dest_state,
+      const hay=[r.broker_name,r.pickup_facility_name,r.delivery_facility_name,
+        r.origin_city,r.origin_state,r.dest_city,r.dest_state,
         r.commodity,r.equipment_needed].filter(Boolean).join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
@@ -425,11 +511,43 @@ function openDlg(id){
   $('o_source').value    = o?(o.source_type||'phone'):'phone';
   $('o_status').value    = o?(o.status||'new'):'new';
   $('o_ref').value       = o?(o.external_ref||''):'';
-  $('o_ocity').value     = o?(o.origin_city||''):'';
-  $('o_ostate').value    = o?(o.origin_state||''):'';
-  $('o_dcity').value     = o?(o.dest_city||''):'';
-  $('o_dstate').value    = o?(o.dest_state||''):'';
-  $('o_pickup').value    = o?(o.pickup_date||''):'';
+
+  $('o_pickup_facility').value      = o?(o.pickup_facility_name||''):'';
+  $('o_ocity').value                = o?(o.origin_city||''):'';
+  $('o_ostate').value               = o?(o.origin_state||''):'';
+  $('o_pickup').value               = o?(o.pickup_date||''):'';
+  $('o_pickup_address').value       = o?(o.pickup_address||''):'';
+  $('o_pickup_zip').value           = o?(o.pickup_zip||''):'';
+  $('o_pickup_contact').value       = o?(o.pickup_contact_name||''):'';
+  $('o_pickup_phone').value         = o?(o.pickup_phone||''):'';
+  $('o_pickup_hours').value         = o?(o.pickup_hours||''):'';
+  $('o_pickup_instructions').value  = o?(o.pickup_instructions||''):'';
+
+  $('o_delivery_facility').value     = o?(o.delivery_facility_name||''):'';
+  $('o_dcity').value                 = o?(o.dest_city||''):'';
+  $('o_dstate').value                = o?(o.dest_state||''):'';
+  $('o_delivery').value              = o?(o.delivery_date||''):'';
+  $('o_delivery_address').value      = o?(o.delivery_address||''):'';
+  $('o_delivery_zip').value          = o?(o.delivery_zip||''):'';
+  $('o_delivery_contact').value      = o?(o.delivery_contact_name||''):'';
+  $('o_delivery_phone').value        = o?(o.delivery_phone||''):'';
+  $('o_delivery_hours').value        = o?(o.delivery_hours||''):'';
+  $('o_delivery_instructions').value = o?(o.delivery_instructions||''):'';
+
+  const pickupHasDetails = Boolean(o && (
+    o.pickup_address || o.pickup_zip || o.pickup_contact_name ||
+    o.pickup_phone || o.pickup_hours || o.pickup_instructions
+  ));
+  const deliveryHasDetails = Boolean(o && (
+    o.delivery_address || o.delivery_zip || o.delivery_contact_name ||
+    o.delivery_phone || o.delivery_hours || o.delivery_instructions
+  ));
+
+  $('pickupDetails').classList.toggle('open', pickupHasDetails);
+  $('deliveryDetails').classList.toggle('open', deliveryHasDetails);
+  $('pickupDetailsBtn').textContent = pickupHasDetails ? '− Hide details' : '+ Facility details';
+  $('deliveryDetailsBtn').textContent = deliveryHasDetails ? '− Hide details' : '+ Facility details';
+
   $('o_miles').value     = o&&o.miles!=null?o.miles:'';
   $('o_commodity').value = o?(o.commodity||''):'';
   $('o_equip').value     = o?(o.equipment_needed||''):'';
@@ -453,8 +571,30 @@ async function save(){
   const w=num($('o_wid').value),h=num($('o_hgt').value),l=num($('o_len').value),wt=num($('o_wt').value);
   const row={
     broker_name:txt($('o_broker').value),source_type:$('o_source').value,status:$('o_status').value,
-    external_ref:txt($('o_ref').value),origin_city:txt($('o_ocity').value),origin_state:upper($('o_ostate').value),
-    dest_city:txt($('o_dcity').value),dest_state:upper($('o_dstate').value),pickup_date:txt($('o_pickup').value),
+    external_ref:txt($('o_ref').value),
+
+    pickup_facility_name:txt($('o_pickup_facility').value),
+    origin_city:txt($('o_ocity').value),
+    origin_state:upper($('o_ostate').value),
+    pickup_date:txt($('o_pickup').value),
+    pickup_address:txt($('o_pickup_address').value),
+    pickup_zip:txt($('o_pickup_zip').value),
+    pickup_contact_name:txt($('o_pickup_contact').value),
+    pickup_phone:txt($('o_pickup_phone').value),
+    pickup_hours:txt($('o_pickup_hours').value),
+    pickup_instructions:txt($('o_pickup_instructions').value),
+
+    delivery_facility_name:txt($('o_delivery_facility').value),
+    dest_city:txt($('o_dcity').value),
+    dest_state:upper($('o_dstate').value),
+    delivery_date:txt($('o_delivery').value),
+    delivery_address:txt($('o_delivery_address').value),
+    delivery_zip:txt($('o_delivery_zip').value),
+    delivery_contact_name:txt($('o_delivery_contact').value),
+    delivery_phone:txt($('o_delivery_phone').value),
+    delivery_hours:txt($('o_delivery_hours').value),
+    delivery_instructions:txt($('o_delivery_instructions').value),
+
     miles:num($('o_miles').value),commodity:txt($('o_commodity').value),equipment_needed:txt($('o_equip').value),
     length_ft:l,width_ft:w,height_ft:h,weight_lbs:wt,is_superload:$('o_super').checked,
     is_oversize:(w!=null&&w>8.5)||(h!=null&&h>13.5)||(l!=null&&l>53),is_overweight:(wt!=null&&wt>80000),
@@ -556,6 +696,21 @@ function wire(){
   $('saveBtn').addEventListener('click', save);
   $('delBtn').addEventListener('click', del);
   $('cancelBtn').addEventListener('click', ()=>$('dlg').close());
+
+  $('pickupDetailsBtn').addEventListener('click', ()=>{
+    const box=$('pickupDetails');
+    const open=!box.classList.contains('open');
+    box.classList.toggle('open', open);
+    $('pickupDetailsBtn').textContent=open?'− Hide details':'+ Facility details';
+  });
+
+  $('deliveryDetailsBtn').addEventListener('click', ()=>{
+    const box=$('deliveryDetails');
+    const open=!box.classList.contains('open');
+    box.classList.toggle('open', open);
+    $('deliveryDetailsBtn').textContent=open?'− Hide details':'+ Facility details';
+  });
+
   ['q','fstatus','fsource','fover'].forEach(id=>{
     $(id).addEventListener('input', render);
     $(id).addEventListener('change', render);
