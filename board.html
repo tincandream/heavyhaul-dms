@@ -525,9 +525,25 @@ async function load() {
   rows =
     (r.data || [])
       .filter(
-        row =>
-          row.load_status !== 'quoted' &&
-          row.display_status !== 'quoted'
+        row => {
+
+          const status =
+            row.load_status ||
+            row.display_status ||
+            '';
+
+          return ![
+            'quoted',
+            'delivered',
+            'pod_pending',
+            'paperwork',
+            'invoiced',
+            'paid',
+            'cancelled',
+            'tonu'
+          ].includes(status);
+
+        }
       );
 
 
