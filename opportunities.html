@@ -377,15 +377,31 @@ function sourcingEventForChange(previous,current,isNew){
   const detail=broker+(lane.text?' · '+lane.text:'');
   if(isNew)return {type:'opportunity_added',title:'Opportunity added',detail,rate:current.posted_rate};
   if(previous&&previous.status!==current.status){
-    const map={
-      reviewing:['opportunity_reviewed','Opportunity moved to reviewing'],
-      quoted:['quote_sent','Opportunity quoted'],
-      negotiating:['rate_negotiated','Rate negotiation started'],
-      booked:['load_booked','Load booked'],
-      lost:['load_passed','Opportunity lost / passed'],
-      declined:['load_rejected','Opportunity declined'],
-      expired:['load_passed','Opportunity expired']
-    };
+const map = {
+  reviewing:
+    ['opportunity_reviewed', 'Opportunity moved to reviewing'],
+
+  contacted:
+    ['broker_contacted', 'Broker contacted'],
+
+  quoted:
+    ['quote_sent', 'Opportunity quoted'],
+
+  negotiating:
+    ['rate_negotiated', 'Rate negotiation started'],
+
+  booked:
+    ['load_booked', 'Load booked'],
+
+  passed:
+    ['load_passed', 'Opportunity passed'],
+
+  rejected:
+    ['load_rejected', 'Opportunity rejected'],
+
+  expired:
+    ['load_passed', 'Opportunity expired']
+};
     if(map[current.status])return {
       type:map[current.status][0],title:map[current.status][1],detail,
       rate:current.status==='booked'?current.booked_rate:current.quoted_rate
