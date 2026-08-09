@@ -204,6 +204,10 @@ button{
 .event.invoice{background:#eef0f3;color:#566169}
 .event.accessorial{background:#fff4e8;color:#8a5b23}
 .event.custom{background:#f1f5f7;color:#50636c}
+.event.completed{
+  opacity:.55;
+  text-decoration:line-through;
+}
 
 .side{
   display:flex;
@@ -528,6 +532,9 @@ textarea{
   </div>
 
   <div class="dlg-foot">
+    <button class="btn" id="deleteEventBtn" style="display:none">Delete</button>
+    <button class="btn" id="completeEventBtn" style="display:none">Mark Complete</button>
+    <span class="spacer"></span>
     <button class="btn" onclick="eventDialog.close()">Cancel</button>
     <button class="btn primary" id="saveEventBtn">Save Reminder</button>
   </div>
@@ -569,6 +576,9 @@ let LOADS =
 
 let CUSTOM_TABLE_AVAILABLE =
   true;
+
+let EDIT_EVENT_ID =
+  null;
 
 
 function toast(message){
@@ -943,6 +953,11 @@ async function fetchCustomEvents(){
         notes:
           row.notes ||
           null,
+        completed:
+          !!row.completed,
+        completed_at:
+          row.completed_at ||
+          null,
         custom:
           true
       })
@@ -1108,8 +1123,18 @@ function renderCalendar(){
                 ? `data-load="${event.load_id}"`
                 : '';
 
+            const eventAttr =
+              event.custom && event.id
+                ? `data-event="${event.id}"`
+                : '';
+
+            const completeClass =
+              event.completed
+                ? ' completed'
+                : '';
+
             return (
-              `<button class="event ${event.type}" ${loadAttr}>` +
+              `<button class="event ${event.type}${completeClass}" ${loadAttr} ${eventAttr}>` +
               `${event.title}` +
               `</button>`
             );
@@ -1143,17 +1168,33 @@ function renderCalendar(){
 
   document
     .querySelectorAll(
-      '.event[data-load]'
+      '.event'
     )
     .forEach(
       button => {
 
         button.addEventListener(
           'click',
-          () =>
-            openLoad(
+          () => {
+
+            if (
+              button.dataset.event
+            ){
+              openEditEvent(
+                button.dataset.event
+              );
+              return;
+            }
+
+            if (
               button.dataset.load
-            )
+            ){
+              openLoad(
+                button.dataset.load
+              );
+            }
+
+          }
         );
 
       }
@@ -1210,8 +1251,13 @@ function renderUpcoming(){
               ? `data-load="${event.load_id}"`
               : '';
 
+          const eventAttr =
+            event.custom && event.id
+              ? `data-event="${event.id}"`
+              : '';
+
           return (
-            `<div class="upcoming-item" ${loadAttr}>` +
+            `<div class="upcoming-item" ${loadAttr} ${eventAttr}>` +
               `<div class="upcoming-date">` +
                 event.when.toLocaleString(
                   'en-US',
@@ -1239,17 +1285,33 @@ function renderUpcoming(){
 
   document
     .querySelectorAll(
-      '.upcoming-item[data-load]'
+      '.upcoming-item'
     )
     .forEach(
       item => {
 
         item.addEventListener(
           'click',
-          () =>
-            openLoad(
+          () => {
+
+            if (
+              item.dataset.event
+            ){
+              openEditEvent(
+                item.dataset.event
+              );
+              return;
+            }
+
+            if (
               item.dataset.load
-            )
+            ){
+              openLoad(
+                item.dataset.load
+              );
+            }
+
+          }
         );
 
       }
@@ -1259,6 +1321,25 @@ function renderUpcoming(){
 
 
 function openNewEvent(){
+
+  EDIT_EVENT_ID =
+    null;
+
+  document.querySelector('#eventDialog .dlg-head strong')
+    .textContent =
+    'Add Calendar Reminder';
+
+  $('saveEventBtn')
+    .textContent =
+    'Save Reminder';
+
+  $('deleteEventBtn')
+    .style.display =
+    'none';
+
+  $('completeEventBtn')
+    .style.display =
+    'none';
 
   $('evErr')
     .textContent =
@@ -1294,6 +1375,218 @@ function openNewEvent(){
     '';
 
   eventDialog.showModal();
+
+}
+
+
+
+function toLocalDateTimeValue(date){
+
+  if (!date) return '';
+
+  const d =
+    new Date(date);
+
+  d.setMinutes(
+    d.getMinutes() -
+    d.getTimezoneOffset()
+  );
+
+  return d.toISOString()
+    .slice(0,16);
+
+}
+
+
+function openEditEvent(id){
+
+  const event =
+    EVENTS.find(
+      item =>
+        item.custom &&
+        item.id === id
+    );
+
+  if (!event) return;
+
+
+  EDIT_EVENT_ID =
+    id;
+
+
+  document.querySelector('#eventDialog .dlg-head strong')
+    .textContent =
+    'Edit Calendar Reminder';
+
+
+  $('evTitle')
+    .value =
+    event.title ||
+    '';
+
+  $('evType')
+    .value =
+    event.type ||
+    'custom';
+
+  $('evWhen')
+    .value =
+    toLocalDateTimeValue(
+      event.when
+    );
+
+  $('evLoad')
+    .value =
+    event.load_id ||
+    '';
+
+  $('evNotes')
+    .value =
+    event.notes ||
+    '';
+
+  $('evErr')
+    .textContent =
+    '';
+
+  $('saveEventBtn')
+    .textContent =
+    'Save Changes';
+
+  $('deleteEventBtn')
+    .style.display =
+    '';
+
+  $('completeEventBtn')
+    .style.display =
+    '';
+
+  $('completeEventBtn')
+    .textContent =
+    event.completed
+      ? 'Reopen'
+      : 'Mark Complete';
+
+
+  eventDialog.showModal();
+
+}
+
+
+async function deleteCustomEvent(){
+
+  if (!EDIT_EVENT_ID) return;
+
+
+  if (
+    !confirm(
+      'Delete this calendar reminder?'
+    )
+  ){
+    return;
+  }
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .delete()
+      .eq(
+        'id',
+        EDIT_EVENT_ID
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      );
+
+
+  if (result.error){
+
+    $('evErr')
+      .textContent =
+      result.error.message;
+
+    return;
+  }
+
+
+  eventDialog.close();
+
+  toast(
+    'Calendar reminder deleted'
+  );
+
+  EDIT_EVENT_ID =
+    null;
+
+  await refreshCalendar();
+
+}
+
+
+async function toggleCustomEventComplete(){
+
+  if (!EDIT_EVENT_ID) return;
+
+
+  const event =
+    EVENTS.find(
+      item =>
+        item.custom &&
+        item.id === EDIT_EVENT_ID
+    );
+
+  if (!event) return;
+
+
+  const nextCompleted =
+    !event.completed;
+
+
+  const result =
+    await db
+      .from('calendar_events')
+      .update({
+        completed:
+          nextCompleted,
+        completed_at:
+          nextCompleted
+            ? new Date().toISOString()
+            : null
+      })
+      .eq(
+        'id',
+        EDIT_EVENT_ID
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      );
+
+
+  if (result.error){
+
+    $('evErr')
+      .textContent =
+      result.error.message;
+
+    return;
+  }
+
+
+  eventDialog.close();
+
+  toast(
+    nextCompleted
+      ? 'Reminder completed'
+      : 'Reminder reopened'
+  );
+
+  EDIT_EVENT_ID =
+    null;
+
+  await refreshCalendar();
 
 }
 
@@ -1345,24 +1638,39 @@ async function saveCustomEvent(){
   }
 
 
+  const record = {
+    tenant_id:
+      TENANT_ID,
+    load_id:
+      $('evLoad').value ||
+      null,
+    title,
+    event_type:
+      $('evType').value,
+    starts_at:
+      startsAt,
+    notes:
+      $('evNotes').value.trim() ||
+      null
+  };
+
+
   const result =
-    await db
-      .from('calendar_events')
-      .insert({
-        tenant_id:
-          TENANT_ID,
-        load_id:
-          $('evLoad').value ||
-          null,
-        title,
-        event_type:
-          $('evType').value,
-        starts_at:
-          startsAt,
-        notes:
-          $('evNotes').value.trim() ||
-          null
-      });
+    EDIT_EVENT_ID
+      ? await db
+          .from('calendar_events')
+          .update(record)
+          .eq(
+            'id',
+            EDIT_EVENT_ID
+          )
+          .eq(
+            'tenant_id',
+            TENANT_ID
+          )
+      : await db
+          .from('calendar_events')
+          .insert(record);
 
 
   if (
@@ -1380,8 +1688,13 @@ async function saveCustomEvent(){
 
   eventDialog.close();
   toast(
-    'Calendar reminder saved'
+    EDIT_EVENT_ID
+      ? 'Calendar reminder updated'
+      : 'Calendar reminder saved'
   );
+
+  EDIT_EVENT_ID =
+    null;
 
   await refreshCalendar();
 
@@ -1516,6 +1829,20 @@ $('saveEventBtn')
   .addEventListener(
     'click',
     saveCustomEvent
+  );
+
+
+$('deleteEventBtn')
+  .addEventListener(
+    'click',
+    deleteCustomEvent
+  );
+
+
+$('completeEventBtn')
+  .addEventListener(
+    'click',
+    toggleCustomEventComplete
   );
 
 
