@@ -260,7 +260,7 @@
 
   <section class="page-header">
     <h1>DISPATCH</h1>
-    <p>Manage loads and daily dispatch activity.</p>
+    <p>Assemble an accepted broker load, assign fleet resources, and prepare it for dispatch.</p>
   </section>
 
   <nav class="dispatch-tabs" id="dispatchTabs"></nav>
@@ -279,20 +279,20 @@
   </div>
 
 
+  <!-- =====================================================
+       BROKER LOAD
+       Imported values remain editable in New Load.
+       ===================================================== -->
+
   <div class="card">
 
-    <h2>Parties</h2>
+    <h2>Broker Load</h2>
 
     <p class="hint">
-      Carrier first — their preferences will flag anything out of range.
+      Accepted sourcing information is prefilled here and can be edited before dispatch.
     </p>
 
     <div class="grid">
-
-      <div class="req">
-        <label>Carrier</label>
-        <select id="carrier"></select>
-      </div>
 
       <div>
         <label>Broker</label>
@@ -304,36 +304,8 @@
         <input id="brokerload">
       </div>
 
-      <div>
-        <label>Driver</label>
-        <select id="driver"></select>
-      </div>
-
-      <div>
-        <label>Truck</label>
-        <select id="tractor"></select>
-      </div>
-
-      <div>
-        <label>Trailer</label>
-        <select id="trailer"></select>
-      </div>
-
-    </div>
-
-    <div class="pref" id="prefbox"></div>
-
-  </div>
-
-
-  <div class="card">
-
-    <h2>Freight</h2>
-
-    <div class="grid">
-
       <div class="half req">
-        <label>Commodity</label>
+        <label>Freight / commodity</label>
         <input
           id="commodity"
           placeholder="Caterpillar 336 excavator"
@@ -409,61 +381,6 @@
     <div class="grid" style="margin-top:14px">
 
       <div>
-        <label>Overhang front (in)</label>
-        <input
-          id="ohf"
-          type="number"
-          value="0"
-        >
-      </div>
-
-      <div>
-        <label>Overhang rear (in)</label>
-        <input
-          id="ohr"
-          type="number"
-          value="0"
-        >
-      </div>
-
-      <div>
-        <label>Axle count</label>
-        <input
-          id="axles"
-          type="number"
-        >
-      </div>
-
-      <div class="full">
-        <label>Axle spacings</label>
-        <input
-          id="spacings"
-          placeholder="3+3+3"
-        >
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <h2>Route and appointments</h2>
-
-    <div class="grid">
-
-      <div class="req">
-        <label>Origin</label>
-        <select id="origin"></select>
-      </div>
-
-      <div class="req">
-        <label>Destination</label>
-        <select id="dest"></select>
-      </div>
-
-      <div>
         <label>Loaded miles</label>
         <input
           id="miles"
@@ -487,37 +404,8 @@
         >
       </div>
 
-    </div>
-
-    <p class="hint" style="margin-top:14px">
-      Click states in travel order. Each becomes a leg,
-      and each leg gets its own permit record.
-    </p>
-
-    <div
-      class="states"
-      id="statepicker">
-    </div>
-
-    <div
-      class="route"
-      id="routeout">
-
-      No states selected.
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <h2>Rate</h2>
-
-    <div class="grid">
-
       <div class="req">
-        <label>Linehaul rate</label>
+        <label>Linehaul / booked rate</label>
         <input
           id="rate"
           type="number"
@@ -543,130 +431,218 @@
         >
       </div>
 
-      <div>
-        <label>Priority</label>
-
-        <select id="priority">
-          <option value="normal">Normal</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
-          <option value="low">Low</option>
-        </select>
-
-      </div>
-
     </div>
 
   </div>
 
 
+  <!-- =====================================================
+       FLEET ASSIGNMENT
+       ===================================================== -->
+
   <div class="card">
 
-    <h2>Who is handling permits</h2>
+    <h2>Fleet Assignment</h2>
 
     <p class="hint">
-      The first question on every oversize load.
-      The answer tells you who to call.
+      Select stored resources from Fleet Setup. Driver, truck, and trailer choices follow the selected carrier.
+    </p>
+
+    <div class="grid">
+
+      <div class="req">
+        <label>Carrier</label>
+        <select id="carrier"></select>
+      </div>
+
+      <div>
+        <label>Driver</label>
+        <select id="driver"></select>
+      </div>
+
+      <div>
+        <label>Truck</label>
+        <select id="tractor"></select>
+      </div>
+
+      <div>
+        <label>Trailer</label>
+        <select id="trailer"></select>
+      </div>
+
+      <div>
+        <label>Carrier approved this load</label>
+        <select id="appr">
+          <option value="false">Not yet</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Approved by</label>
+        <input
+          id="apprby"
+          placeholder="Name"
+        >
+      </div>
+
+    </div>
+
+    <div class="pref" id="prefbox"></div>
+
+  </div>
+
+
+  <!-- =====================================================
+       ROUTE & COMPLIANCE
+       ===================================================== -->
+
+  <div class="card">
+
+    <h2>Route & Compliance</h2>
+
+    <p class="hint">
+      Confirm facilities and route states now. Saved route and State Rules selection will plug into this section next.
+    </p>
+
+    <div class="grid">
+
+      <div class="req">
+        <label>Pickup facility</label>
+        <select id="origin"></select>
+      </div>
+
+      <div class="req">
+        <label>Delivery facility</label>
+        <select id="dest"></select>
+      </div>
+
+      <div>
+        <label>Overhang front (in)</label>
+        <input
+          id="ohf"
+          type="number"
+          value="0"
+        >
+      </div>
+
+      <div>
+        <label>Overhang rear (in)</label>
+        <input
+          id="ohr"
+          type="number"
+          value="0"
+        >
+      </div>
+
+      <div>
+        <label>Axle count</label>
+        <input
+          id="axles"
+          type="number"
+        >
+      </div>
+
+      <div>
+        <label>Axle spacings</label>
+        <input
+          id="spacings"
+          placeholder="3+3+3"
+        >
+      </div>
+
+    </div>
+
+    <p class="hint" style="margin-top:14px">
+      Click states in travel order. Each becomes a load leg,
+      and each leg gets its own permit requirement.
+    </p>
+
+    <div
+      class="states"
+      id="statepicker">
+    </div>
+
+    <div
+      class="route"
+      id="routeout">
+      No states selected.
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       PERMITS & ESCORTS
+       ===================================================== -->
+
+  <div class="card">
+
+    <h2>Permits & Escorts</h2>
+
+    <p class="hint">
+      Confirm who is responsible and who the dispatcher should contact.
     </p>
 
     <div class="grid">
 
       <div>
-        <label>Responsibility</label>
-
+        <label>Permit responsibility</label>
         <select id="permresp">
-          <option value="dispatcher">
-            Me (dispatcher)
-          </option>
-          <option value="carrier">
-            Carrier
-          </option>
-          <option value="broker">
-            Broker
-          </option>
-          <option value="permit_service">
-            Permit service
-          </option>
-          <option value="shipper">
-            Shipper
-          </option>
+          <option value="dispatcher">Me (dispatcher)</option>
+          <option value="carrier">Carrier</option>
+          <option value="broker">Broker</option>
+          <option value="permit_service">Permit service</option>
+          <option value="shipper">Shipper</option>
         </select>
-
       </div>
 
       <div>
-        <label>Company</label>
+        <label>Permit company</label>
         <input id="permco">
       </div>
 
       <div>
-        <label>Contact name</label>
+        <label>Permit contact</label>
         <input id="permname">
       </div>
 
       <div>
-        <label>Phone</label>
+        <label>Permit phone</label>
         <input id="permphone">
       </div>
 
       <div>
-        <label>Email</label>
+        <label>Permit email</label>
         <input
           id="permemail"
           type="email"
         >
       </div>
 
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <h2>Who is handling escorts</h2>
-
-    <p class="hint">
-      Never assume. Confirm it for every load.
-    </p>
-
-    <div class="grid">
-
       <div>
-        <label>Responsibility</label>
-
+        <label>Escort responsibility</label>
         <select id="escresp">
-          <option value="dispatcher">
-            Me (dispatcher)
-          </option>
-          <option value="carrier">
-            Carrier
-          </option>
-          <option value="broker">
-            Broker
-          </option>
-          <option value="escort_company">
-            Escort company
-          </option>
-          <option value="shipper">
-            Shipper
-          </option>
+          <option value="dispatcher">Me (dispatcher)</option>
+          <option value="carrier">Carrier</option>
+          <option value="broker">Broker</option>
+          <option value="escort_company">Escort company</option>
+          <option value="shipper">Shipper</option>
         </select>
-
       </div>
 
       <div>
-        <label>Company</label>
+        <label>Escort company</label>
         <input id="escco">
       </div>
 
       <div>
-        <label>Contact name</label>
+        <label>Escort contact</label>
         <input id="escname">
       </div>
 
       <div>
-        <label>Phone</label>
+        <label>Escort phone</label>
         <input id="escphone">
       </div>
 
@@ -675,14 +651,16 @@
   </div>
 
 
+  <!-- =====================================================
+       ACCESSORIAL TERMS
+       ===================================================== -->
+
   <div class="card">
 
-    <h2>Accessorial terms</h2>
+    <h2>Accessorial Terms</h2>
 
     <p class="hint">
-      What you agreed to on the call.
-      Six days later when the driver has been sitting three hours,
-      this is what you check.
+      Keep the agreed detention, layover, TONU, and approval terms with the load.
     </p>
 
     <div class="grid">
@@ -716,12 +694,10 @@
 
       <div>
         <label>Layover needs approval</label>
-
         <select id="layappr">
           <option value="true">Yes</option>
           <option value="false">No</option>
         </select>
-
       </div>
 
       <div>
@@ -735,19 +711,11 @@
 
       <div>
         <label>Rate con matches agreement</label>
-
         <select id="ratecon">
-          <option value="">
-            Not reviewed yet
-          </option>
-          <option value="true">
-            Yes, matches
-          </option>
-          <option value="false">
-            No, discrepancy
-          </option>
+          <option value="">Not reviewed yet</option>
+          <option value="true">Yes, matches</option>
+          <option value="false">No, discrepancy</option>
         </select>
-
       </div>
 
       <div class="full">
@@ -760,38 +728,63 @@
   </div>
 
 
+  <!-- =====================================================
+       DOCUMENTS
+       ===================================================== -->
+
   <div class="card">
 
-    <h2>Carrier approval</h2>
+    <h2>Documents</h2>
+
+    <p class="hint">
+      Load documents will live here and remain available from Fleet Board and the permanent load record.
+    </p>
+
+    <div
+      style="
+        border:1px dashed var(--line2);
+        padding:14px;
+        border-radius:8px;
+        color:var(--muted);
+        font-size:12px;
+      "
+    >
+      Document upload, DocuSign, permits, rate confirmation, BOL/POD, and email actions will connect here after we verify the existing document tables and storage.
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       DISPATCH READINESS
+       ===================================================== -->
+
+  <div class="card">
+
+    <h2>Dispatch Readiness</h2>
+
+    <p class="hint">
+      Final load-level details before releasing the completed assignment to Fleet Board.
+    </p>
 
     <div class="grid">
 
       <div>
-        <label>Carrier approved this load</label>
-
-        <select id="appr">
-          <option value="false">Not yet</option>
-          <option value="true">Yes</option>
+        <label>Priority</label>
+        <select id="priority">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+          <option value="low">Low</option>
         </select>
-
-      </div>
-
-      <div>
-        <label>Approved by</label>
-        <input
-          id="apprby"
-          placeholder="Name"
-        >
       </div>
 
       <div>
         <label>Starting status</label>
-
         <select id="status">
           <option value="quoted">Quoted</option>
           <option value="booked">Booked</option>
         </select>
-
       </div>
 
       <div>
@@ -819,7 +812,7 @@
 <div class="bar">
 
   <button id="save">
-    Create load
+    Ready for Dispatch
   </button>
 
   <div
