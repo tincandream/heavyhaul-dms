@@ -285,6 +285,24 @@ function render(){
     b.addEventListener('click', ()=>openCall(b.dataset.co, b.dataset.ct)));
 }
 
+
+// ===== sourcing timeline =====
+async function logSourcingEvent(eventType,title,detail,company,followUpAt){
+  if(!TENANT_ID)return;
+  const isCarrier=company&&company.company_type==='carrier';
+  const result=await db.from('sourcing_events').insert({
+    tenant_id:TENANT_ID,
+    event_type:eventType,
+    title:title,
+    detail:detail||null,
+    broker_name:company&&!isCarrier?company.legal_name||null:null,
+    carrier_name:company&&isCarrier?company.legal_name||null:null,
+    contact_name:company?[company.first_name,company.last_name].filter(Boolean).join(' ')||null:null,
+    follow_up_at:followUpAt?new Date(followUpAt+'T12:00:00').toISOString():null
+  });
+  if(result.error)console.warn('Sourcing timeline event was not recorded:',result.error.message);
+}
+
 // ===== log call =====
 function openCall(companyId, contactId){
   $('c_err').textContent='';
@@ -302,21 +320,59 @@ function openCall(companyId, contactId){
 async function saveCall(){
   $('c_err').textContent='';
   const btn=$('c_save'); btn.disabled=true;
-  const r = await db.from('crm_activities').insert({
-    tenant_id:       TENANT_ID,
-    company_id:      txt($('c_company').value),
-    contact_id:      txt($('c_contact').value),
-    activity_type:   'call',
-    direction:       'outbound',
-    outcome:         $('c_outcome').value,
-    body:            txt($('c_note').value),
-    next_action_due: txt($('c_followup').value)
+  const companyId=txt($('c_company').value);
+  const outcome=$('c_outcome').value;
+  const note=txt($('c_note').value);
+  const followup=txt($('c_followup').value);
+  const company=rows.find(x=>x.company_id===companyId)||null;
+
+  const r=await db.from('crm_activities').insert({
+    tenant_id:TENANT_ID,
+    company_id:companyId,
+    contact_id:txt($('c_contact').value),
+    activity_type:'call',
+    direction:'outbound',
+    outcome:outcome,
+    body:note,
+    next_action_due:followup
   });
+
   btn.disabled=false;
-  if (r.error){ $('c_err').textContent = r.error.message; return; }
+  if(r.error){$('c_err').textContent=r.error.message;return;}
+
+  const companyName=company?company.legal_name:'Company';
+  const companyType=company&&company.company_type==='carrier'?'carrier':'broker';
+  const eventType=companyType==='carrier'?'carrier_contacted':'broker_contacted';
+
+  await logSourcingEvent(
+    eventType,
+    (companyType==='carrier'?'Carrier contacted':'Broker contacted')+' — '+companyName,
+    pretty(outcome)+(note?' · '+note:''),
+    company,
+    followup
+  );
+
+  await logSourcingEvent(
+    'call_completed',
+    'Call completed — '+companyName,
+    'Outcome: '+pretty(outcome),
+    company,
+    null
+  );
+
+  if(followup){
+    await logSourcingEvent(
+      'follow_up_scheduled',
+      'Follow-up scheduled — '+companyName,
+      'Next follow-up: '+fmtDate(followup),
+      company,
+      followup
+    );
+  }
+
   $('dlgCall').close();
   toast('Call logged');
-  loadQueue(); // company drops off the queue automatically via the trigger
+  loadQueue();
 }
 
 // ===== add company =====
@@ -362,6 +418,20 @@ async function saveCo(){
   }
 
   btn.disabled=false;
+
+  await logSourcingEvent(
+    $('co_type').value==='carrier' ? 'carrier_contacted' : 'broker_contacted',
+    'Sourcing company added — '+name,
+    'Added to Call Queue as '+pretty($('co_type').value),
+    {
+      legal_name:name,
+      company_type:$('co_type').value,
+      first_name:first,
+      last_name:txt($('co_last').value)
+    },
+    todayISO()
+  );
+
   $('dlgCo').close();
   toast('Company added');
   loadQueue();
