@@ -953,6 +953,9 @@ button.action.danger{
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script src="config.js"></script>
+
+<script src="nav.js"></script>
 
 <script>
 const SUPABASE_URL =
@@ -1006,7 +1009,7 @@ function arrFromLines(v){
 }
 
 function dateOnly(d){
-  if(!d) return null;
+  if(!d) return null; 
   return new Date(d).toISOString().slice(0,10);
 }
 
@@ -2109,6 +2112,6 @@ document.querySelectorAll('.route-tabs button').forEach(btn=>{
 
 start();
 </script>
-  <script src="nav.js"></script>
 </body>
 </html>
+  
