@@ -117,7 +117,7 @@ const SUPABASE_URL='https://zyhdatteglxozsgnjhrm.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 const $=id=>document.getElementById(id);
 let db=null,tenant=null,currentLoad=null,currentPlan=null;
-let loads=[],plans=[],facilities={},brokers={},carriers={},drivers={},equipment={},goldenRoutes=[];
+let loads=[],opportunities=[],plans=[],facilities={},brokers={},carriers={},drivers={},equipment={},goldenRoutes=[];
 const TERMINAL_LOAD_STATUSES=['passed','rejected','expired','cancelled','tonu','paid','invoiced'];
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function pretty(v){return String(v||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
@@ -136,108 +136,560 @@ function setNotice(id,text,error=false){const el=$(id);el.textContent=text||'';e
 function routeUrl(){const o=$('origin').value.trim(),d=$('destination').value.trim();if(!o||!d)return '';const p=new URLSearchParams({api:'1',origin:o,destination:d,travelmode:'driving'});const w=arrLines($('waypoints').value);if(w.length)p.set('waypoints',w.join('|'));return 'https://www.google.com/maps/dir/?'+p.toString();}
 function drawPreview(){const o=$('origin').value.trim(),d=$('destination').value.trim(),w=arrLines($('waypoints').value);$('routePreview').innerHTML=o&&d?`<strong>${esc(o)} → ${esc(d)}</strong>${esc(pretty($('freightType').value))}${w.length?'<br>Via: '+w.map(esc).join(' → '):''}`:'<strong>No route yet</strong>Open a load or enter an origin and destination.';}
 function planFor(loadId){return plans.find(p=>p.load_id===loadId)||null;}
-function queueStatus(load){const p=planFor(load.id);return p?(p.workflow_status||'in_progress'):'not_started';}
+function planForOpportunity(opportunityId){return plans.find(p=>p.opportunity_id===opportunityId)||null;}
+function planForItem(item){return item._kind==='opportunity'?planForOpportunity(item.id):planFor(item.id);}
+function itemKey(item){return item._kind==='opportunity'?'opp:'+item.id:'load:'+item.id;}
+function queueStatus(item){const p=planForItem(item);return p?(p.workflow_status||'in_progress'):'not_started';}
 function statusLabel(s){return s==='not_started'?'Not Started':s==='ready_for_state_review'?'Ready for State Review':s==='returned_for_revision'?'Returned for Revision':'In Progress';}
-function readinessMissing(load){const m=[];if(!load.origin_facility_id)m.push('origin');if(!load.dest_facility_id)m.push('destination');if(!load.carrier_id)m.push('carrier');if(!load.driver_id)m.push('driver');if(!load.tractor_id)m.push('truck');if(!load.trailer_id)m.push('trailer');if(load.width_in==null||load.height_in==null||load.weight_lb==null)m.push('loaded dimensions/weight');return m;}
+function readinessMissing(item){
+  const m=[];
+  if(item._kind==='opportunity'){
+    if(!item.origin_city||!item.origin_state)m.push('origin');
+    if(!item.dest_city||!item.dest_state)m.push('destination');
+    if(item.width_ft==null||item.height_ft==null||item.weight_lbs==null)m.push('loaded dimensions/weight');
+    return m;
+  }
+  if(!item.origin_facility_id)m.push('origin');
+  if(!item.dest_facility_id)m.push('destination');
+  if(!item.carrier_id)m.push('carrier');
+  if(!item.driver_id)m.push('driver');
+  if(!item.tractor_id)m.push('truck');
+  if(!item.trailer_id)m.push('trailer');
+  if(item.width_in==null||item.height_in==null||item.weight_lb==null)m.push('loaded dimensions/weight');
+  return m;
+}
 function renderQueue(){
   const q=$('queueSearch').value.trim().toLowerCase();
   const filter=$('queueStatus').value;
   const showRemoved=$('showRemoved').checked;
 
-  const list=loads
+  const loadItems=loads
     .filter(l=>!TERMINAL_LOAD_STATUSES.includes(String(l.status||'').toLowerCase()))
-    .filter(l=>showRemoved ? !!l.route_planning_hidden : !l.route_planning_hidden)
-    .filter(l=>!filter||queueStatus(l)===filter)
-    .filter(l=>{
+    .map(l=>({...l,_kind:'load'}));
+
+  const opportunityItems=opportunities
+    .filter(o=>!['passed','rejected','expired','lost','declined'].includes(String(o.status||'').toLowerCase()))
+    .filter(o=>!o.load_id)
+    .map(o=>({...o,_kind:'opportunity'}));
+
+  const list=[...opportunityItems,...loadItems]
+    .filter(item=>showRemoved ? !!item.route_planning_hidden : !item.route_planning_hidden)
+    .filter(item=>!filter||queueStatus(item)===filter)
+    .filter(item=>{
       if(!q)return true;
+
+      if(item._kind==='opportunity'){
+        return [
+          item.external_ref,item.broker_name,item.commodity,item.equipment_needed,
+          item.origin_city,item.origin_state,item.dest_city,item.dest_state,item.status
+        ].join(' ').toLowerCase().includes(q);
+      }
+
       return [
-        l.load_number,l.broker_load_number,l.commodity,
-        brokerName(l.broker_id),carrierName(l.carrier_id),driverName(l.driver_id),
-        facilityLabel(l.origin_facility_id),facilityLabel(l.dest_facility_id),l.status
+        item.load_number,item.broker_load_number,item.commodity,
+        brokerName(item.broker_id),carrierName(item.carrier_id),driverName(item.driver_id),
+        facilityLabel(item.origin_facility_id),facilityLabel(item.dest_facility_id),item.status
       ].join(' ').toLowerCase().includes(q);
     });
 
   if(!list.length){
-    $('queueList').innerHTML=`<div class="empty">${showRemoved?'No removed loads match this filter.':'No active loads match this queue filter.'}</div>`;
+    $('queueList').innerHTML=`<div class="empty">${showRemoved?'No removed items match this filter.':'No active Route Planning items match this queue filter.'}</div>`;
     return;
   }
 
-  $('queueList').innerHTML=list.map(l=>{
-    const s=queueStatus(l),p=planFor(l.id),missing=readinessMissing(l),removed=!!l.route_planning_hidden;
-    return `<article class="queue-item ${removed?'removed':''}" data-load="${l.id}">
+  $('queueList').innerHTML=list.map(item=>{
+    const s=queueStatus(item),p=planForItem(item),missing=readinessMissing(item),removed=!!item.route_planning_hidden;
+    const isOpp=item._kind==='opportunity';
+
+    const title=isOpp
+      ? (item.external_ref||item.broker_name||'Broker Opportunity')
+      : (item.load_number||'Load');
+
+    const broker=isOpp
+      ? (item.broker_name||'Broker opportunity')
+      : (brokerName(item.broker_id)||'Broker not assigned');
+
+    const origin=isOpp
+      ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+      : (facilityLabel(item.origin_facility_id)||'Origin missing');
+
+    const destination=isOpp
+      ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+      : (facilityLabel(item.dest_facility_id)||'Destination missing');
+
+    const fleet=isOpp
+      ? 'Fleet can be assigned after booking'
+      : `${carrierName(item.carrier_id)||'Carrier unassigned'} · ${driverName(item.driver_id)||'Driver unassigned'} · ${unitName(item.trailer_id)||'Trailer unassigned'}`;
+
+    return `<article class="queue-item ${removed?'removed':''}" data-key="${esc(itemKey(item))}">
       <div>
-        <div class="queue-title">${esc(l.load_number||'Load')} ${l.broker_load_number?'· '+esc(l.broker_load_number):''}</div>
-        <div class="queue-meta">${esc(brokerName(l.broker_id)||'Broker not assigned')} · ${esc(pretty(l.status))}<br>${esc(facilityLabel(l.origin_facility_id)||'Origin missing')} → ${esc(facilityLabel(l.dest_facility_id)||'Destination missing')}</div>
+        <div class="queue-title">${esc(title)}</div>
+        <div class="queue-meta">${esc(broker)} · ${esc(pretty(item.status))} · ${isOpp?'Broker opportunity':'Shared load'}<br>${esc(origin||'Origin missing')} → ${esc(destination||'Destination missing')}</div>
         ${missing.length?`<div class="missing">Needs attention: ${esc(missing.join(', '))}</div>`:''}
         ${removed?'<div class="queue-meta"><strong>Removed from Route Planning queue</strong></div>':''}
       </div>
       <div>
         <span class="status ${s==='ready_for_state_review'?'ready':s==='returned_for_revision'?'returned':''}">${statusLabel(s)}</span>
-        <div class="queue-meta">${esc(carrierName(l.carrier_id)||'Carrier unassigned')}<br>${esc(driverName(l.driver_id)||'Driver unassigned')} · ${esc(unitName(l.trailer_id)||'Trailer unassigned')}</div>
+        <div class="queue-meta">${esc(fleet)}</div>
       </div>
       <div class="queue-actions">
         ${removed
-          ? `<button class="action" type="button" data-restore="${l.id}">Restore to Queue</button>`
-          : `<button class="action" type="button" data-open="${l.id}">${p?'Continue Planning':'Plan Route'}</button><button class="action secondary" type="button" data-remove="${l.id}">Remove from Queue</button>`}
-        ${p?`<button class="action danger" type="button" data-delete-plan="${l.id}">Delete Route Plan</button>`:''}
+          ? `<button class="action" type="button" data-restore-key="${esc(itemKey(item))}">Restore to Queue</button>`
+          : `<button class="action" type="button" data-open-key="${esc(itemKey(item))}">${p?'Continue Planning':'Plan Route'}</button><button class="action secondary" type="button" data-remove-key="${esc(itemKey(item))}">Remove from Queue</button>`}
+        ${p?`<button class="action danger" type="button" data-delete-key="${esc(itemKey(item))}">Delete Route Plan</button>`:''}
       </div>
     </article>`;
   }).join('');
 }
 
-async function setQueueHidden(loadId,hidden){
-  const load=loads.find(x=>x.id===loadId);
-  if(!load)return;
-  const r=await db.from('loads')
+async function setQueueHidden(item,hidden){
+  const table=item._kind==='opportunity'?'load_opportunities':'loads';
+
+  const r=await db.from(table)
     .update({route_planning_hidden:hidden})
     .eq('tenant_id',tenant)
-    .eq('id',loadId);
-  if(r.error){alert('Could not update Route Planning queue: '+r.error.message);return;}
-  load.route_planning_hidden=hidden;
-  if(hidden && currentLoad?.id===loadId){
+    .eq('id',item.id);
+
+  if(r.error){
+    alert('Could not update Route Planning queue: '+r.error.message);
+    return;
+  }
+
+  if(item._kind==='opportunity'){
+    const live=opportunities.find(x=>x.id===item.id);
+    if(live)live.route_planning_hidden=hidden;
+  }else{
+    const live=loads.find(x=>x.id===item.id);
+    if(live)live.route_planning_hidden=hidden;
+  }
+
+  if(hidden&&currentLoad&&itemKey(currentLoad)===itemKey(item)){
     $('workspace').classList.remove('show');
     currentLoad=null;
     currentPlan=null;
   }
+
   renderQueue();
 }
 
-async function deleteRoutePlan(loadId){
-  const load=loads.find(x=>x.id===loadId);
-  const plan=planFor(loadId);
+async function deleteRoutePlan(item){
+  const plan=planForItem(item);
   if(!plan)return;
-  const label=load?.load_number||'this load';
-  if(!confirm(`Delete the saved Route Plan for ${label}?\n\nThe broker load will NOT be deleted.`))return;
+
+  const label=item._kind==='opportunity'
+    ? (item.external_ref||item.broker_name||'this broker opportunity')
+    : (item.load_number||'this load');
+
+  if(!confirm(`Delete the saved Route Plan for ${label}?\n\nThe broker opportunity/load itself will NOT be deleted.`))return;
+
   const r=await db.from('route_plans')
     .delete()
     .eq('tenant_id',tenant)
     .eq('id',plan.id);
-  if(r.error){alert('Could not delete Route Plan: '+r.error.message);return;}
+
+  if(r.error){
+    alert('Could not delete Route Plan: '+r.error.message);
+    return;
+  }
+
   plans=plans.filter(x=>x.id!==plan.id);
+
   if(currentPlan?.id===plan.id){
     currentPlan=null;
-    if(currentLoad?.id===loadId)fillPlan(currentLoad,null);
+    if(currentLoad&&itemKey(currentLoad)===itemKey(item))fillPlan(currentLoad,null);
   }
+
   renderQueue();
   updateHandoff();
 }
 
 function refreshFleetOptions(selected={}){const carrierId=$('fleetCarrier').value||selected.carrier_id||'';const ds=Object.values(drivers).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);const es=Object.values(equipment).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);$('fleetDriver').innerHTML='<option value="">— Unassigned —</option>'+ds.map(x=>`<option value="${x.id}">${esc(driverName(x.id)||'Driver')}</option>`).join('');const isTrailer=x=>['rgn','lowboy','flatbed','step_deck','step deck','reefer','dry_van','dry van','double_drop','double drop','trailer'].some(k=>String(x.equipment_type||'').toLowerCase().includes(k));$('fleetTractor').innerHTML='<option value="">— Unassigned —</option>'+es.filter(x=>!isTrailer(x)).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');$('fleetTrailer').innerHTML='<option value="">— Unassigned —</option>'+es.filter(isTrailer).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');if(selected.driver_id)$('fleetDriver').value=selected.driver_id;if(selected.tractor_id)$('fleetTractor').value=selected.tractor_id;if(selected.trailer_id)$('fleetTrailer').value=selected.trailer_id;}
-function sourceItems(load){const dims=`${fmtIn(load.length_in)} L × ${fmtIn(load.width_in)} W × ${fmtIn(load.height_in)} H · ${load.weight_lb?Number(load.weight_lb).toLocaleString()+' lb':'weight missing'}`;return [{key:'route',label:'Origin / Destination',value:`${facilityLabel(load.origin_facility_id)||'—'} → ${facilityLabel(load.dest_facility_id)||'—'}`},{key:'appointment',label:'Pickup / Delivery',value:`${load.pickup_appt_start?new Date(load.pickup_appt_start).toLocaleString():'Pickup TBD'} · ${load.delivery_appt_start?new Date(load.delivery_appt_start).toLocaleString():'Delivery TBD'}`},{key:'commodity',label:'Commodity',value:load.commodity||'—'},{key:'dimensions',label:'Loaded Configuration',value:dims},{key:'broker',label:'Broker / Rate',value:`${brokerName(load.broker_id)||'—'} · ${money(load.linehaul_rate)}${load.fuel_surcharge?` + ${money(load.fuel_surcharge)} FSC`:''}`},{key:'notes',label:'Broker / Load Notes',value:load.notes||'No notes saved.'}];}
+function sourceItems(item){
+  if(item._kind==='opportunity'){
+    const origin=[item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ');
+    const destination=[item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ');
+    const dims=`${item.length_ft??'—'} ft L × ${item.width_ft??'—'} ft W × ${item.height_ft??'—'} ft H · ${item.weight_lbs?Number(item.weight_lbs).toLocaleString()+' lb':'weight missing'}`;
+
+    return [
+      {key:'route',label:'Origin / Destination',value:`${origin||'—'} → ${destination||'—'}`},
+      {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_date||'Pickup TBD'} · ${item.delivery_date||'Delivery TBD'}`},
+      {key:'commodity',label:'Commodity',value:item.commodity||'—'},
+      {key:'dimensions',label:'Loaded Configuration',value:dims},
+      {key:'broker',label:'Broker / Rate',value:`${item.broker_name||'—'} · Posted ${money(item.posted_rate)} · Quoted ${money(item.quoted_rate)}`},
+      {key:'notes',label:'Broker / Load Notes',value:item.notes||'No notes saved.'}
+    ];
+  }
+
+  const dims=`${fmtIn(item.length_in)} L × ${fmtIn(item.width_in)} W × ${fmtIn(item.height_in)} H · ${item.weight_lb?Number(item.weight_lb).toLocaleString()+' lb':'weight missing'}`;
+  return [
+    {key:'route',label:'Origin / Destination',value:`${facilityLabel(item.origin_facility_id)||'—'} → ${facilityLabel(item.dest_facility_id)||'—'}`},
+    {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_appt_start?new Date(item.pickup_appt_start).toLocaleString():'Pickup TBD'} · ${item.delivery_appt_start?new Date(item.delivery_appt_start).toLocaleString():'Delivery TBD'}`},
+    {key:'commodity',label:'Commodity',value:item.commodity||'—'},
+    {key:'dimensions',label:'Loaded Configuration',value:dims},
+    {key:'broker',label:'Broker / Rate',value:`${brokerName(item.broker_id)||'—'} · ${money(item.linehaul_rate)}${item.fuel_surcharge?` + ${money(item.fuel_surcharge)} FSC`:''}`},
+    {key:'notes',label:'Broker / Load Notes',value:item.notes||'No notes saved.'}
+  ];
+}
 function renderSource(load){$('sourceGrid').innerHTML=sourceItems(load).map(x=>`<div class="source-item"><div class="source-label">${esc(x.label)}</div><div class="source-value">${esc(x.value)}</div><div class="source-actions"><button type="button" class="action secondary" data-add-source="${x.key}">Add to Route Plan</button></div></div>`).join('');}
-function addSourceToRoute(key){if(!currentLoad)return;const l=currentLoad;if(key==='route'){$('origin').value=facilityLabel(l.origin_facility_id);$('destination').value=facilityLabel(l.dest_facility_id);}else if(key==='appointment'){$('pickupAt').value=dtLocal(l.pickup_appt_start);$('deliveryAt').value=dtLocal(l.delivery_appt_start);}else if(key==='commodity'){appendRouteNote(`Commodity: ${l.commodity||'—'}`);}else if(key==='dimensions'){appendRouteNote(`Loaded configuration: ${fmtIn(l.length_in)} L × ${fmtIn(l.width_in)} W × ${fmtIn(l.height_in)} H · ${l.weight_lb?Number(l.weight_lb).toLocaleString()+' lb':'weight missing'}${l.axle_count?` · ${l.axle_count} axles`:''}${l.overhang_front_in||l.overhang_rear_in?` · overhang front ${fmtIn(l.overhang_front_in||0)}, rear ${fmtIn(l.overhang_rear_in||0)}`:''}`);}else if(key==='broker'){appendRouteNote(`Broker reference: ${brokerName(l.broker_id)||'—'} · Load ${l.broker_load_number||l.load_number||'—'}`);}else if(key==='notes'&&l.notes){appendRouteNote(`Load notes: ${l.notes}`);}drawPreview();}
-function appendRouteNote(text){const current=$('routeNotes').value.trim();if(!text||current.includes(text))return;$('routeNotes').value=current?current+'\n\n'+text:text;}
-function fillPlan(load,plan){$('routeName').value=plan?.route_name||'';$('freightType').value=plan?.freight_type||((load.width_in>102||load.height_in>162||load.weight_lb>80000)?'heavy_haul':'heavy_haul');$('equipmentType').value=plan?.equipment_type||unitName(load.trailer_id);$('loadedMiles').value=plan?.loaded_miles??load.total_miles??'';$('origin').value=plan?.origin||facilityLabel(load.origin_facility_id);$('destination').value=plan?.destination||facilityLabel(load.dest_facility_id);$('states').value=(plan?.states||[]).join(', ');$('waypoints').value=(plan?.waypoints||[]).join('\n');$('pickupAt').value=dtLocal(plan?.pickup_at||load.pickup_appt_start);$('deliveryAt').value=dtLocal(plan?.delivery_at||load.delivery_appt_start);$('routeNotes').value=plan?.route_notes||'';$('parkingStaging').value=plan?.parking_staging||'';$('fuelService').value=plan?.fuel_service_notes||'';drawPreview();updateHandoff();}
-function updateHandoff(){if(!currentLoad){$('handoffSummary').textContent='Save the route to see handoff status.';return;}const states=arrComma($('states').value),s=currentPlan?.workflow_status||'not_started';$('handoffSummary').innerHTML=`<strong>${esc(statusLabel(s))}</strong><br>${states.length?'States identified: '+states.map(esc).join(' → '):'States not identified yet.'}${s==='ready_for_state_review'?'<br>State Rules can now pull this route and its state list.':''}`;$('openStateRules').href=`states.html?load=${encodeURIComponent(currentLoad.id)}`;}
-async function openWorkspace(loadId){currentLoad=loads.find(x=>x.id===loadId)||null;if(!currentLoad)return;currentPlan=planFor(loadId);$('workspace').classList.add('show');$('workspaceTitle').textContent=`${currentLoad.load_number||'Load'} — Route Workspace`;$('workspaceMeta').textContent=`${brokerName(currentLoad.broker_id)||'Broker'} · ${facilityLabel(currentLoad.origin_facility_id)||'Origin'} → ${facilityLabel(currentLoad.dest_facility_id)||'Destination'} · Load status: ${pretty(currentLoad.status)}`;$('openLoadRecord').href=`newload.html?load=${encodeURIComponent(loadId)}`;$('fleetCarrier').value=currentLoad.carrier_id||'';refreshFleetOptions(currentLoad);renderSource(currentLoad);fillPlan(currentLoad,currentPlan);$('workspace').scrollIntoView({behavior:'smooth',block:'start'});}
-async function saveFleet(){if(!currentLoad)return;const patch={carrier_id:$('fleetCarrier').value||null,driver_id:$('fleetDriver').value||null,tractor_id:$('fleetTractor').value||null,trailer_id:$('fleetTrailer').value||null};const r=await db.from('loads').update(patch).eq('tenant_id',tenant).eq('id',currentLoad.id);if(r.error){setNotice('fleetNotice',r.error.message,true);return;}Object.assign(currentLoad,patch);setNotice('fleetNotice','Fleet assignment saved to the shared load record.');renderQueue();}
-function planRecord(status){return {tenant_id:tenant,load_id:currentLoad.id,route_name:$('routeName').value.trim()||null,freight_type:$('freightType').value,equipment_type:$('equipmentType').value.trim()||null,origin:$('origin').value.trim(),destination:$('destination').value.trim(),states:arrComma($('states').value),waypoints:arrLines($('waypoints').value),loaded_miles:$('loadedMiles').value?Number($('loadedMiles').value):null,pickup_at:iso($('pickupAt').value),delivery_at:iso($('deliveryAt').value),parking_staging:$('parkingStaging').value.trim()||null,fuel_service_notes:$('fuelService').value.trim()||null,route_notes:$('routeNotes').value.trim()||null,google_maps_url:routeUrl()||null,workflow_status:status};}
+function addSourceToRoute(key){
+  if(!currentLoad)return;
+  const l=currentLoad;
+  const isOpp=l._kind==='opportunity';
+
+  if(key==='route'){
+    if(isOpp){
+      $('origin').value=[l.pickup_facility_name,l.pickup_address,l.origin_city,l.origin_state,l.pickup_zip].filter(Boolean).join(', ');
+      $('destination').value=[l.delivery_facility_name,l.delivery_address,l.dest_city,l.dest_state,l.delivery_zip].filter(Boolean).join(', ');
+    }else{
+      $('origin').value=facilityLabel(l.origin_facility_id);
+      $('destination').value=facilityLabel(l.dest_facility_id);
+    }
+  }
+
+  if(key==='appointment'){
+    if(isOpp){
+      $('pickupAt').value=l.pickup_date||'';
+      $('deliveryAt').value=l.delivery_date||'';
+    }else{
+      $('pickupAt').value=dtLocal(l.pickup_appt_start);
+      $('deliveryAt').value=dtLocal(l.delivery_appt_start);
+    }
+  }
+
+  if(key==='commodity')appendRouteNote(`Commodity: ${l.commodity||'—'}`);
+
+  if(key==='dimensions'){
+    if(isOpp){
+      appendRouteNote(`Loaded configuration: ${l.length_ft??'—'} ft L × ${l.width_ft??'—'} ft W × ${l.height_ft??'—'} ft H · ${l.weight_lbs?Number(l.weight_lbs).toLocaleString()+' lb':'weight missing'}`);
+    }else{
+      appendRouteNote(`Loaded configuration: ${fmtIn(l.length_in)} L × ${fmtIn(l.width_in)} W × ${fmtIn(l.height_in)} H · ${l.weight_lb?Number(l.weight_lb).toLocaleString()+' lb':'weight missing'}`);
+    }
+  }
+
+  if(key==='broker'){
+    appendRouteNote(isOpp
+      ? `Broker reference: ${l.broker_name||'—'} · Posted ${money(l.posted_rate)} · Quoted ${money(l.quoted_rate)}`
+      : `Broker reference: ${brokerName(l.broker_id)||'—'} · ${money(l.linehaul_rate)}`
+    );
+  }
+
+  if(key==='notes'&&l.notes)appendRouteNote(`Broker/load notes: ${l.notes}`);
+
+  drawPreview();
+  updateHandoff();
+}
+function fillPlan(item,plan){
+  const isOpp=item._kind==='opportunity';
+
+  const origin=isOpp
+    ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+    : facilityLabel(item.origin_facility_id);
+
+  const destination=isOpp
+    ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+    : facilityLabel(item.dest_facility_id);
+
+  $('routeName').value=plan?.route_name||'';
+  $('freightType').value=plan?.freight_type||'heavy_haul';
+  $('equipmentType').value=plan?.equipment_type||(isOpp?(item.equipment_needed||''):unitName(item.trailer_id));
+  $('loadedMiles').value=plan?.loaded_miles??(isOpp?(item.miles??''):(item.total_miles??''));
+  $('origin').value=plan?.origin||origin;
+  $('destination').value=plan?.destination||destination;
+  $('states').value=(plan?.states||[]).join(', ');
+  $('waypoints').value=(plan?.waypoints||[]).join('\n');
+  $('pickupAt').value=dtLocal(plan?.pickup_at)||(isOpp?(item.pickup_date||''):dtLocal(item.pickup_appt_start));
+  $('deliveryAt').value=dtLocal(plan?.delivery_at)||(isOpp?(item.delivery_date||''):dtLocal(item.delivery_appt_start));
+  $('routeNotes').value=plan?.route_notes||'';
+  $('parkingStaging').value=plan?.parking_staging||'';
+  $('fuelService').value=plan?.fuel_service_notes||'';
+
+  drawPreview();
+  updateHandoff();
+}
+function updateHandoff(){if(!currentLoad){$('handoffSummary').textContent='Save the route to see handoff status.';return;}const states=arrComma($('states').value),s=currentPlan?.workflow_status||'not_started';$('handoffSummary').innerHTML=`<strong>${esc(statusLabel(s))}</strong><br>${states.length?'States identified: '+states.map(esc).join(' → '):'States not identified yet.'}${s==='ready_for_state_review'?'<br>State Rules can now pull this route and its state list.':''}`;$('openStateRules').href=currentLoad._kind==='opportunity'?`states.html?opportunity=${encodeURIComponent(currentLoad.id)}`:`states.html?load=${encodeURIComponent(currentLoad.id)}`;}
+async function openWorkspace(item){
+  currentLoad=item;
+  if(!currentLoad)return;
+
+  currentPlan=planForItem(item);
+
+  $('workspace').classList.add('show');
+
+  const isOpp=item._kind==='opportunity';
+  const title=isOpp?(item.external_ref||item.broker_name||'Broker Opportunity'):(item.load_number||'Load');
+  const origin=isOpp
+    ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+    : (facilityLabel(item.origin_facility_id)||'Origin');
+  const destination=isOpp
+    ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+    : (facilityLabel(item.dest_facility_id)||'Destination');
+
+  $('workspaceTitle').textContent=`${title} — Route Workspace`;
+  $('workspaceMeta').textContent=`${isOpp?(item.broker_name||'Broker opportunity'):(brokerName(item.broker_id)||'Broker')} · ${origin} → ${destination} · Status: ${pretty(item.status)}`;
+  $('openLoadRecord').href=isOpp?`opportunities.html?opportunity=${encodeURIComponent(item.id)}`:`newload.html?load=${encodeURIComponent(item.id)}`;
+
+  if(isOpp){
+    $('fleetCarrier').value='';
+    refreshFleetOptions({});
+  }else{
+    $('fleetCarrier').value=item.carrier_id||'';
+    refreshFleetOptions(item);
+  }
+
+  renderSource(item);
+  fillPlan(item,currentPlan);
+  $('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveFleet(){
+  if(!currentLoad)return;
+
+  if(currentLoad._kind==='opportunity'){
+    setNotice('fleetNotice','This is still a broker opportunity. Route planning can continue now; fleet assignment will save once it is booked into a load.',true);
+    return;
+  }
+
+  const patch={
+    carrier_id:$('fleetCarrier').value||null,
+    driver_id:$('fleetDriver').value||null,
+    tractor_id:$('fleetTractor').value||null,
+    trailer_id:$('fleetTrailer').value||null
+  };
+
+  const r=await db.from('loads').update(patch)
+    .eq('tenant_id',tenant)
+    .eq('id',currentLoad.id);
+
+  if(r.error){
+    setNotice('fleetNotice',r.error.message,true);
+    return;
+  }
+
+  Object.assign(currentLoad,patch);
+  setNotice('fleetNotice','Fleet assignment saved to the shared load record.');
+  renderQueue();
+}
+function planRecord(status){
+  const isOpp=currentLoad._kind==='opportunity';
+
+  return {
+    tenant_id:tenant,
+    load_id:isOpp?(currentLoad.load_id||null):currentLoad.id,
+    opportunity_id:isOpp?currentLoad.id:null,
+    route_name:$('routeName').value.trim()||null,
+    freight_type:$('freightType').value,
+    equipment_type:$('equipmentType').value.trim()||null,
+    origin:$('origin').value.trim(),
+    destination:$('destination').value.trim(),
+    states:arrComma($('states').value),
+    waypoints:arrLines($('waypoints').value),
+    loaded_miles:$('loadedMiles').value?Number($('loadedMiles').value):null,
+    pickup_at:iso($('pickupAt').value),
+    delivery_at:iso($('deliveryAt').value),
+    parking_staging:$('parkingStaging').value.trim()||null,
+    fuel_service_notes:$('fuelService').value.trim()||null,
+    route_notes:$('routeNotes').value.trim()||null,
+    google_maps_url:routeUrl()||null,
+    workflow_status:status
+  };
+}
 async function savePlan(status){if(!currentLoad){setNotice('planNotice','Open a load from the queue first.',true);return;}if(!$('origin').value.trim()||!$('destination').value.trim()){setNotice('planNotice','Origin and destination are required.',true);return;}if(status==='ready_for_state_review'&&!arrComma($('states').value).length){setNotice('planNotice','Identify the states traveled before handing the route to State Rules.',true);return;}const rec=planRecord(status);let r;if(currentPlan){r=await db.from('route_plans').update(rec).eq('tenant_id',tenant).eq('id',currentPlan.id).select('*').maybeSingle();}else{r=await db.from('route_plans').insert(rec).select('*').maybeSingle();}if(r.error){setNotice('planNotice',r.error.message,true);return;}currentPlan=r.data;if(!plans.some(p=>p.id===currentPlan.id))plans.push(currentPlan);else Object.assign(plans.find(p=>p.id===currentPlan.id),currentPlan);setNotice('planNotice',status==='ready_for_state_review'?'Route saved and queued for State Rules.':'Route progress saved.');renderQueue();updateHandoff();}
-async function loadData(){const [loadsR,plansR,facR,brokR,carR,drvR,eqR,goldR]=await Promise.all([db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),db.from('facilities').select('*').eq('tenant_id',tenant),db.from('brokers').select('*').eq('tenant_id',tenant),db.from('carriers').select('*').eq('tenant_id',tenant),db.from('drivers').select('*').eq('tenant_id',tenant),db.from('equipment').select('*').eq('tenant_id',tenant),db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})]);for(const x of [loadsR,plansR,facR,brokR,carR,drvR,eqR,goldR])if(x.error)console.warn(x.error.message);loads=loadsR.data||[];plans=plansR.data||[];(facR.data||[]).forEach(x=>facilities[x.id]=x);(brokR.data||[]).forEach(x=>brokers[x.id]=x);(carR.data||[]).forEach(x=>carriers[x.id]=x);(drvR.data||[]).forEach(x=>drivers[x.id]=x);(eqR.data||[]).forEach(x=>equipment[x.id]=x);goldenRoutes=goldR.data||[];$('fleetCarrier').innerHTML='<option value="">— Unassigned —</option>'+Object.values(carriers).map(x=>`<option value="${x.id}">${esc(carrierName(x.id))}</option>`).join('');refreshFleetOptions();renderQueue();renderGolden();}
+async function loadData(){
+  const [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR]=await Promise.all([
+    db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),
+    db.from('load_opportunities').select('*').eq('tenant_id',tenant).order('first_seen_at',{ascending:false}).limit(300),
+    db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),
+    db.from('facilities').select('*').eq('tenant_id',tenant),
+    db.from('brokers').select('*').eq('tenant_id',tenant),
+    db.from('carriers').select('*').eq('tenant_id',tenant),
+    db.from('drivers').select('*').eq('tenant_id',tenant),
+    db.from('equipment').select('*').eq('tenant_id',tenant),
+    db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})
+  ]);
+
+  for(const x of [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR]){
+    if(x.error)console.warn(x.error.message);
+  }
+
+  loads=loadsR.data||[];
+  opportunities=oppsR.data||[];
+  plans=plansR.data||[];
+
+  (facR.data||[]).forEach(x=>facilities[x.id]=x);
+  (brokR.data||[]).forEach(x=>brokers[x.id]=x);
+  (carR.data||[]).forEach(x=>carriers[x.id]=x);
+  (drvR.data||[]).forEach(x=>drivers[x.id]=x);
+  (eqR.data||[]).forEach(x=>equipment[x.id]=x);
+  goldenRoutes=goldR.data||[];
+
+  // If an opportunity was later booked, connect its pre-booking route plan
+  // to the resulting load automatically.
+  for(const opp of opportunities){
+    if(!opp.load_id)continue;
+    const p=planForOpportunity(opp.id);
+    if(p&&!p.load_id){
+      const r=await db.from('route_plans')
+        .update({load_id:opp.load_id})
+        .eq('tenant_id',tenant)
+        .eq('id',p.id)
+        .select('*')
+        .maybeSingle();
+
+      if(!r.error&&r.data)Object.assign(p,r.data);
+    }
+  }
+
+  $('fleetCarrier').innerHTML='<option value="">— Unassigned —</option>'+
+    Object.values(carriers).map(x=>`<option value="${x.id}">${esc(carrierName(x.id))}</option>`).join('');
+
+  refreshFleetOptions();
+  renderQueue();
+  renderGolden();
+}
 function renderGolden(){const q=$('goldenSearch').value.trim().toLowerCase();const list=goldenRoutes.filter(g=>!q||[g.route_name,g.origin,g.destination,g.corridor,g.highways,g.equipment_type,...(g.states||[])].join(' ').toLowerCase().includes(q));$('goldenList').innerHTML=list.length?list.map(g=>`<article class="golden"><h3>${esc(g.route_name)}</h3><div class="golden-meta">${esc(g.origin)} → ${esc(g.destination)}<br>${esc(pretty(g.freight_type))}${g.equipment_type?' · '+esc(g.equipment_type):''}${g.states?.length?' · '+g.states.map(esc).join(' → '):''}<br>${g.highways?'Corridor: '+esc(g.highways):''}</div><div class="actions"><button class="action" type="button" data-use-golden="${g.id}">Use in Open Workspace</button><button class="action secondary" type="button" data-map-golden="${g.id}">Open Maps</button></div></article>`).join(''):'<div class="empty">No Golden Routes match.</div>';}
 function useGolden(id){if(!currentLoad){alert('Open a load from the Route Planning Queue first.');return;}const g=goldenRoutes.find(x=>x.id===id);if(!g)return;$('routeName').value=g.route_name||$('routeName').value;$('freightType').value=g.freight_type||$('freightType').value;$('equipmentType').value=g.equipment_type||$('equipmentType').value;$('origin').value=g.origin||$('origin').value;$('destination').value=g.destination||$('destination').value;$('states').value=(g.states||[]).join(', ');$('waypoints').value=(g.waypoints||[]).join('\n');$('parkingStaging').value=g.parking_staging||'';$('fuelService').value=g.fuel_service_notes||'';appendRouteNote(g.general_notes?`Golden Route reference: ${g.general_notes}`:'');document.querySelector('[data-panel="planPanel"]').click();$('workspace').classList.add('show');drawPreview();updateHandoff();}
-async function start(){db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const s=await db.auth.getSession();if(!s.data.session){location.href='index.html';return;}if(typeof window.buildNav!=='function'){console.error('Route Planning: buildNav is unavailable.');return;}tenant=await window.buildNav(db,'Route Planning');if(!tenant)return;await loadData();const requested=new URLSearchParams(location.search).get('load');if(requested&&loads.some(x=>x.id===requested))openWorkspace(requested);}
-$('queueSearch').addEventListener('input',renderQueue);$('queueStatus').addEventListener('change',renderQueue);$('showRemoved').addEventListener('change',renderQueue);$('refreshQueue').addEventListener('click',loadData);$('queueList').addEventListener('click',async e=>{const open=e.target.closest('[data-open]'),remove=e.target.closest('[data-remove]'),restore=e.target.closest('[data-restore]'),del=e.target.closest('[data-delete-plan]');if(open)openWorkspace(open.dataset.open);else if(remove){const l=loads.find(x=>x.id===remove.dataset.remove);if(confirm(`Remove ${l?.load_number||'this load'} from the Route Planning queue?\n\nThe broker load and saved Route Plan will remain available.`))await setQueueHidden(remove.dataset.remove,true);}else if(restore)await setQueueHidden(restore.dataset.restore,false);else if(del)await deleteRoutePlan(del.dataset.deletePlan)});$('closeWorkspace').addEventListener('click',()=>{$('workspace').classList.remove('show');currentLoad=null;currentPlan=null;window.scrollTo({top:0,behavior:'smooth'})});$('fleetCarrier').addEventListener('change',()=>refreshFleetOptions());$('saveFleet').addEventListener('click',saveFleet);$('sourceGrid').addEventListener('click',e=>{const b=e.target.closest('[data-add-source]');if(b)addSourceToRoute(b.dataset.addSource)});['origin','destination','waypoints','freightType'].forEach(id=>{$(id).addEventListener('input',()=>{drawPreview();updateHandoff()});$(id).addEventListener('change',()=>{drawPreview();updateHandoff()})});$('saveProgress').addEventListener('click',()=>savePlan('in_progress'));$('readyStateRules').addEventListener('click',()=>savePlan('ready_for_state_review'));$('returnRevision').addEventListener('click',()=>savePlan('returned_for_revision'));$('openMaps').addEventListener('click',()=>{const u=routeUrl();if(u)window.open(u,'_blank','noopener')});$('copyLink').addEventListener('click',async()=>{const u=routeUrl();if(!u)return;try{await navigator.clipboard.writeText(u);setNotice('planNotice','Route link copied.')}catch(e){setNotice('planNotice','Could not copy route link.',true)}});$('goldenSearch').addEventListener('input',renderGolden);$('refreshGolden').addEventListener('click',loadData);$('goldenList').addEventListener('click',e=>{const use=e.target.closest('[data-use-golden]'),map=e.target.closest('[data-map-golden]');if(use)useGolden(use.dataset.useGolden);if(map){const g=goldenRoutes.find(x=>x.id===map.dataset.mapGolden);if(g)window.open(g.google_maps_url||'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(g.origin)+'&destination='+encodeURIComponent(g.destination),'_blank','noopener')}});document.querySelectorAll('.route-tabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.route-tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));btn.classList.add('on');$(btn.dataset.panel).classList.add('on')}));
+async function start(){
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  const s=await db.auth.getSession();
+  if(!s.data.session){
+    location.href='index.html';
+    return;
+  }
+
+  if(typeof window.buildNav!=='function'){
+    console.error('Route Planning: buildNav is unavailable.');
+    return;
+  }
+
+  tenant=await window.buildNav(db,'Route Planning');
+  if(!tenant)return;
+
+  await loadData();
+
+  const params=new URLSearchParams(location.search);
+  const requestedLoad=params.get('load');
+  const requestedOpportunity=params.get('opportunity');
+
+  if(requestedOpportunity){
+    const o=opportunities.find(x=>x.id===requestedOpportunity);
+    if(o){o._kind='opportunity';openWorkspace(o);}
+  }else if(requestedLoad){
+    const l=loads.find(x=>x.id===requestedLoad);
+    if(l){l._kind='load';openWorkspace(l);}
+  }
+}
+$('queueSearch').addEventListener('input',renderQueue);
+$('queueStatus').addEventListener('change',renderQueue);
+$('showRemoved').addEventListener('change',renderQueue);
+$('refreshQueue').addEventListener('click',loadData);
+
+$('queueList').addEventListener('click',async e=>{
+  const open=e.target.closest('[data-open-key]');
+  const remove=e.target.closest('[data-remove-key]');
+  const restore=e.target.closest('[data-restore-key]');
+  const del=e.target.closest('[data-delete-key]');
+
+  const getItem=key=>{
+    const [kind,id]=String(key||'').split(':');
+    if(kind==='opp'){
+      const o=opportunities.find(x=>x.id===id);
+      if(o)o._kind='opportunity';
+      return o;
+    }
+    const l=loads.find(x=>x.id===id);
+    if(l)l._kind='load';
+    return l;
+  };
+
+  if(open){
+    const item=getItem(open.dataset.openKey);
+    if(item)openWorkspace(item);
+    return;
+  }
+
+  if(remove){
+    const item=getItem(remove.dataset.removeKey);
+    if(!item)return;
+    const label=item._kind==='opportunity'?(item.external_ref||item.broker_name||'this opportunity'):(item.load_number||'this load');
+    if(confirm(`Remove ${label} from the Route Planning queue?\n\nThe broker record and saved Route Plan will remain available.`)){
+      await setQueueHidden(item,true);
+    }
+    return;
+  }
+
+  if(restore){
+    const item=getItem(restore.dataset.restoreKey);
+    if(item)await setQueueHidden(item,false);
+    return;
+  }
+
+  if(del){
+    const item=getItem(del.dataset.deleteKey);
+    if(item)await deleteRoutePlan(item);
+  }
+});
+
+$('closeWorkspace').addEventListener('click',()=>{
+  $('workspace').classList.remove('show');
+  currentLoad=null;
+  currentPlan=null;
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+$('fleetCarrier').addEventListener('change',()=>refreshFleetOptions());
+$('saveFleet').addEventListener('click',saveFleet);
+
+$('sourceGrid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-add-source]');
+  if(b)addSourceToRoute(b.dataset.addSource);
+});
+
+['origin','destination','waypoints','freightType'].forEach(id=>{
+  $(id).addEventListener('input',()=>{drawPreview();updateHandoff();});
+  $(id).addEventListener('change',()=>{drawPreview();updateHandoff();});
+});
+
+$('saveProgress').addEventListener('click',()=>savePlan('in_progress'));
+$('readyStateRules').addEventListener('click',()=>savePlan('ready_for_state_review'));
+$('returnRevision').addEventListener('click',()=>savePlan('returned_for_revision'));
+
+$('openMaps').addEventListener('click',()=>{
+  const u=routeUrl();
+  if(u)window.open(u,'_blank','noopener');
+});
+
+$('copyLink').addEventListener('click',async()=>{
+  const u=routeUrl();
+  if(!u)return;
+  try{
+    await navigator.clipboard.writeText(u);
+    setNotice('planNotice','Route link copied.');
+  }catch(e){
+    setNotice('planNotice','Could not copy route link.',true);
+  }
+});
+
+$('goldenSearch').addEventListener('input',renderGolden);
+$('refreshGolden').addEventListener('click',loadData);
+
+$('goldenList').addEventListener('click',e=>{
+  const use=e.target.closest('[data-use-golden]');
+  const map=e.target.closest('[data-map-golden]');
+
+  if(use)useGolden(use.dataset.useGolden);
+
+  if(map){
+    const g=goldenRoutes.find(x=>x.id===map.dataset.mapGolden);
+    if(g)window.open(g.google_maps_url||'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(g.origin)+'&destination='+encodeURIComponent(g.destination),'_blank','noopener');
+  }
+});
+
+document.querySelectorAll('.route-tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.route-tabs button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+  $(btn.dataset.panel).classList.add('on');
+}));
 start();
 </script>
 </body>
