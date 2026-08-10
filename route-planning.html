@@ -3,205 +3,158 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>State Rules / Restrictions — Heavy Haul Command</title>
+<title>Route Planning — Heavy Haul Command</title>
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="dashboard.css">
 <style>
 :root{
-  --sr-bg:#f7f7f5;--sr-card:#fff;--sr-ink:#3c3a4b;--sr-muted:#747b82;
-  --sr-line:#d9dee1;--sr-blue:#7fa5b5;--sr-blue-dark:#668c9d;
-  --sr-blue-soft:#eaf3f6;--sr-pink:#d86a8e;--sr-pink-soft:#f8e5ec;
-  --sr-lime:#b8c34a;--sr-lime-soft:#f1f4d8;--sr-warn:#8a5a10;--sr-warn-bg:#fdf3e3;
+  --rp-ink:var(--hh-ink,#3C3A4B);--rp-blue:var(--hh-blue,#7FA5B5);--rp-blue-dark:var(--hh-blue-dark,#668C9D);
+  --rp-blue-soft:var(--hh-blue-soft,#EAF3F6);--rp-pink:var(--hh-pink,#D86A8E);--rp-pink-soft:var(--hh-pink-soft,#F8E5EC);
+  --rp-lime:var(--hh-lime,#B8C34A);--rp-lime-soft:var(--hh-lime-soft,#F1F4D8);--rp-line:#D9DEE1;--rp-muted:#747B82;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--sr-bg);color:var(--sr-ink)}
-main{width:min(1400px,100%);margin:0 auto 70px;padding:28px 24px 70px}
-.page-intro{margin-bottom:22px}.page-intro h1{margin:0;font-family:"Cinzel",Georgia,serif;font-size:30px;font-weight:600;letter-spacing:1px}.page-intro p{margin:5px 0 0;color:var(--sr-blue);font-family:"Cormorant Garamond",Georgia,serif;font-size:19px;font-style:italic}
-.tabs{display:flex;gap:28px;border-bottom:1px solid var(--sr-line);margin-bottom:24px}.tabs button{padding:0 0 10px;min-height:42px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--sr-ink);font-family:"Oswald",sans-serif;font-size:13px;letter-spacing:.7px;cursor:pointer}.tabs button.on{color:var(--sr-blue-dark);border-bottom-color:var(--sr-blue)}
-.panel{display:none}.panel.on{display:block}
-.card{background:var(--sr-card);border:1px solid var(--sr-line);padding:20px;margin-bottom:16px}.card h2{margin:0 0 4px;font-family:"Oswald",sans-serif;font-size:17px;font-weight:500}.hint{margin:0 0 15px;color:var(--sr-muted);font-size:12px;line-height:1.5}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field.full{grid-column:1/-1}label{display:block;margin-bottom:4px;color:#626970;font-family:"Oswald",sans-serif;font-size:11.5px;letter-spacing:.25px}input,select,textarea{width:100%;padding:9px 10px;border:1px solid #bec8cd;background:#fff;color:var(--sr-ink);font:inherit;border-radius:0}textarea{min-height:82px;resize:vertical}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button.action{display:inline-flex;align-items:center;justify-content:center;min-height:37px;padding:8px 13px;border:1px solid var(--sr-blue);background:var(--sr-blue);color:#fff;font-family:"Oswald",sans-serif;font-size:12px;letter-spacing:.4px;cursor:pointer}button.action.secondary{background:#fff;color:var(--sr-blue-dark);border-color:var(--sr-line)}button.action.danger{background:#fff;color:#9a4059;border-color:#e3bbc6}
-.caution{padding:12px 14px;background:var(--sr-warn-bg);border-left:4px solid #d6a650;color:var(--sr-warn);font-size:12px;line-height:1.5;margin-bottom:16px}.okmsg,.errmsg{display:none;margin-top:12px;padding:10px 12px;font-size:12px}.okmsg.show{display:block;background:var(--sr-lime-soft);color:#5d6723}.errmsg.show{display:block;background:var(--sr-pink-soft);color:#8e3e58}
-.queue{display:grid;gap:10px}.queue-item{border:1px solid var(--sr-line);background:#fff;padding:14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.queue-main strong{font-family:"Oswald",sans-serif;font-weight:500}.meta{color:var(--sr-muted);font-size:11.5px;line-height:1.5;margin-top:3px}.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.badge{display:inline-flex;padding:3px 7px;font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.3px;background:var(--sr-blue-soft);color:var(--sr-blue-dark)}.badge.done{background:var(--sr-lime-soft);color:#606b24}.badge.warn{background:var(--sr-warn-bg);color:var(--sr-warn)}
-.workspace{display:none}.workspace.show{display:block}.state-card{border:1px solid var(--sr-line);border-left:5px solid var(--sr-blue);background:#fff;margin-bottom:14px;padding:16px}.state-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.state-code{font-family:"Cinzel",serif;font-size:22px}.rule-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.rule{padding:10px;background:#fbfcfc;border:1px solid var(--sr-line)}.rule-label{font-size:10px;color:var(--sr-muted);text-transform:uppercase;letter-spacing:.06em}.rule-value{margin-top:3px;font-size:12px;line-height:1.4}.notes{margin-top:12px;padding:11px;background:var(--sr-blue-soft);font-size:12px;line-height:1.5}.stale{border-left-color:#d6a650}.missing{border-left-color:var(--sr-pink)}
-.point-builder{display:grid;grid-template-columns:1fr 1.4fr 1.4fr .8fr auto;gap:8px;align-items:end;margin-top:14px}.points{display:grid;gap:8px;margin-top:12px}.point{border:1px solid var(--sr-line);background:#fbfcfc;padding:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}.point-type{font-family:"Oswald",sans-serif;font-size:10px;padding:4px 7px;background:var(--sr-blue-soft);color:var(--sr-blue-dark)}.point-main strong{display:block;font-size:12px}.point-main span{font-size:10.5px;color:var(--sr-muted)}
-.master-list{display:grid;gap:8px}.master-row{border-bottom:1px solid var(--sr-line);padding:10px 0;display:grid;grid-template-columns:60px 1fr auto;gap:12px;align-items:center}.master-row:last-child{border-bottom:0}.empty{padding:18px;color:var(--sr-muted);font-size:12px;text-align:center;border:1px dashed var(--sr-line)}
-@media(max-width:900px){.rule-grid{grid-template-columns:1fr 1fr}.point-builder{grid-template-columns:1fr 1fr}.queue-item{grid-template-columns:1fr}}
-@media(max-width:620px){main{padding:20px 14px 50px}.grid,.rule-grid,.point-builder{grid-template-columns:1fr}}
+*{box-sizing:border-box} body{margin:0;color:var(--rp-ink);background:#F7F7F5} main{width:min(1450px,100%);margin:0 auto 70px;padding:28px 24px 70px}
+.page-intro{margin-bottom:20px}.page-intro h1{margin:0;font-family:"Cinzel",Georgia,serif;font-size:30px;font-weight:600;letter-spacing:1px}.page-intro p{margin:5px 0 0;color:var(--rp-blue-dark);font-family:"Cormorant Garamond",Georgia,serif;font-size:19px;font-style:italic}
+.route-tabs{display:flex;gap:28px;border-bottom:1px solid var(--rp-line);margin-bottom:22px}.route-tabs button{padding:0 0 10px;min-height:42px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--rp-ink);font-family:"Oswald",sans-serif;font-size:13px;letter-spacing:.7px;cursor:pointer}.route-tabs button.on{color:var(--rp-blue-dark);border-bottom-color:var(--rp-blue)}
+.panel{display:none}.panel.on{display:block}.card{background:#fff;border:1px solid var(--rp-line);padding:18px;margin-bottom:15px}.card h2{margin:0 0 4px;font-family:"Oswald",sans-serif;font-size:17px;font-weight:500}.hint{margin:0 0 14px;color:var(--rp-muted);font-size:12px;line-height:1.5}
+.queue-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}.queue-toolbar input,.queue-toolbar select{max-width:260px}.queue-list{display:grid;gap:10px}.queue-item{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr) auto;gap:14px;align-items:center;padding:13px 14px;border:1px solid var(--rp-line);background:#FBFCFC}.queue-title{font-family:"Oswald",sans-serif;font-size:14px}.queue-meta{margin-top:4px;color:var(--rp-muted);font-size:11.5px;line-height:1.45}.status{display:inline-flex;padding:4px 7px;font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.35px;text-transform:uppercase;background:var(--rp-blue-soft);color:var(--rp-blue-dark)}.status.ready{background:var(--rp-lime-soft);color:#606B24}.status.returned{background:var(--rp-pink-soft);color:#8E3E58}.missing{margin-top:5px;color:#8E3E58;font-size:10.5px}.empty{padding:22px;border:1px dashed var(--rp-line);color:var(--rp-muted);text-align:center}
+.workspace{display:none}.workspace.show{display:block}.workspace-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}.workspace-head h2{margin:0;font-family:"Oswald",sans-serif;font-size:19px}.crumb{font-size:11px;color:var(--rp-muted);margin-top:3px}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:16px;align-items:start}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}.field label{display:block;margin-bottom:4px;color:#626970;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.25px}.field input,.field select,.field textarea,.queue-toolbar input,.queue-toolbar select{width:100%;padding:9px 10px;border:1px solid #BEC8CD;background:#fff;color:var(--rp-ink);font:inherit;border-radius:0}.field textarea{min-height:82px;resize:vertical}.small{font-size:10.5px;color:var(--rp-muted);line-height:1.45;margin-top:5px}
+.source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.source-item{padding:10px;border:1px solid var(--rp-line);background:#FBFCFC}.source-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--rp-muted)}.source-value{margin-top:3px;font-size:12px;line-height:1.45}.source-actions{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button.action,a.action{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 12px;border:1px solid var(--rp-blue);background:var(--rp-blue);color:#fff;font-family:"Oswald",sans-serif;font-size:11.5px;letter-spacing:.35px;text-decoration:none;cursor:pointer}button.secondary,a.secondary{background:#fff;color:var(--rp-blue-dark);border-color:var(--rp-line)}button.danger{background:#fff;color:#8E3E58;border-color:#E3BBC6}button:disabled{opacity:.55;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 12px;font-size:11.5px}.notice.show{display:block}.notice.ok{background:var(--rp-lime-soft);color:#5D6723}.notice.err{background:var(--rp-pink-soft);color:#8E3E58}.route-preview{padding:13px;background:var(--rp-blue-soft);border-left:4px solid var(--rp-blue);font-size:12px;line-height:1.55}.route-preview strong{display:block;font-family:"Oswald",sans-serif;margin-bottom:3px}.warning{margin-top:10px;padding:10px 12px;background:var(--rp-pink-soft);border-left:4px solid var(--rp-pink);color:#7D4A5B;font-size:11px;line-height:1.45}
+.fleet-line{font-size:12px;line-height:1.55}.fleet-line strong{font-family:"Oswald",sans-serif;font-weight:500}.divider{height:1px;background:var(--rp-line);margin:13px 0}.checkbox-row{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;line-height:1.4}.checkbox-row input{margin-top:2px}
+.golden-list{display:grid;gap:10px}.golden{padding:14px;border:1px solid var(--rp-line);border-left:4px solid var(--rp-lime);background:#fff}.golden h3{margin:0;font-family:"Oswald",sans-serif;font-size:15px}.golden-meta{margin-top:5px;color:var(--rp-muted);font-size:11px;line-height:1.5}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.queue-item{grid-template-columns:1fr}.source-grid,.grid{grid-template-columns:1fr}.full{grid-column:auto}}@media(max-width:600px){main{padding:20px 13px 50px}}
 </style>
 </head>
 <body>
 <header></header>
 <main>
-<section class="page-intro">
-  <h1>STATE RULES / RESTRICTIONS</h1>
-  <p>Attach verified state knowledge and driver-facing route intelligence to each load.</p>
-</section>
+<section class="page-intro"><h1>ROUTE PLANNING</h1><p>Keep the load flexible. Build the route, save progress, and hand the identified states into State Rules.</p></section>
+<nav class="route-tabs"><button type="button" class="on" data-panel="planPanel">Plan Route</button><button type="button" data-panel="goldenPanel">Golden Routes</button></nav>
 
-<nav class="tabs">
-  <button type="button" class="on" data-panel="loadPanel">Load Review</button>
-  <button type="button" data-panel="masterPanel">State Brief Library</button>
-</nav>
-
-<section class="panel on" id="loadPanel">
-  <div class="caution">State briefs are reference records you enter and verify manually. Attaching a brief to a load creates a snapshot for that move. Permit documents and permit-issued route instructions remain controlling.</div>
-
+<section class="panel on" id="planPanel">
   <div class="card">
-    <h2>State Review Queue</h2>
-    <p class="hint">Loads with a saved Route Plan appear here. The states come from the route plan. Open a load to review each state and attach the information the driver should carry.</p>
-    <div id="queue" class="queue"><div class="empty">Loading route-planned loads…</div></div>
+    <h2>Route Planning Queue</h2>
+    <p class="hint">Loads remain available here regardless of whether they are still quoted or already booked. Route work is saved separately without changing the load's booking status.</p>
+    <div class="queue-toolbar">
+      <input id="queueSearch" type="search" placeholder="Search load, broker, city, carrier...">
+      <select id="queueStatus"><option value="">All route statuses</option><option value="not_started">Not Started</option><option value="in_progress">In Progress</option><option value="ready_for_state_review">Ready for State Review</option><option value="returned_for_revision">Returned for Revision</option></select>
+      <button class="action secondary" id="refreshQueue" type="button">Refresh Queue</button>
+    </div>
+    <div id="queueList" class="queue-list"><div class="empty">Loading route queue…</div></div>
   </div>
 
-  <div class="workspace" id="workspace">
+  <section class="workspace" id="workspace">
     <div class="card">
-      <h2 id="workspaceTitle">Load State Review</h2>
-      <p class="hint" id="workspaceMeta"></p>
-      <div class="actions">
-        <button class="action secondary" id="backQueue" type="button">← Back to Queue</button>
-        <button class="action" id="completeReview" type="button">Mark State Review Complete</button>
+      <div class="workspace-head">
+        <div><h2 id="workspaceTitle">Route Workspace</h2><div class="crumb" id="workspaceMeta"></div></div>
+        <div class="actions" style="margin-top:0"><button class="action secondary" id="closeWorkspace" type="button">Back to Queue</button><a class="action secondary" id="openLoadRecord" href="newload.html">Open Load Record ↗</a></div>
       </div>
-      <div class="okmsg" id="loadOk"></div><div class="errmsg" id="loadErr"></div>
     </div>
-    <div id="stateWorkspace"></div>
-  </div>
+
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2>Fleet Assignment</h2>
+          <p class="hint">This is the load's shared Fleet assignment. Changes here update the same carrier, driver, truck and trailer used elsewhere.</p>
+          <div class="grid">
+            <div class="field"><label for="fleetCarrier">Carrier</label><select id="fleetCarrier"></select></div>
+            <div class="field"><label for="fleetDriver">Driver</label><select id="fleetDriver"></select></div>
+            <div class="field"><label for="fleetTractor">Truck / Tractor</label><select id="fleetTractor"></select></div>
+            <div class="field"><label for="fleetTrailer">Trailer</label><select id="fleetTrailer"></select></div>
+          </div>
+          <div class="actions"><button class="action" id="saveFleet" type="button">Save Fleet Assignment</button></div>
+          <div class="notice" id="fleetNotice"></div>
+        </div>
+
+        <div class="card">
+          <h2>Available from Broker / Load Record</h2>
+          <p class="hint">These remain source data. Add only the items that are useful to the route plan; the original load record is not overwritten.</p>
+          <div class="source-grid" id="sourceGrid"></div>
+        </div>
+
+        <div class="card">
+          <h2>Route Plan</h2>
+          <div class="grid">
+            <div class="field"><label for="routeName">Route Name</label><input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN"></div>
+            <div class="field"><label for="freightType">Freight Type</label><select id="freightType"><option value="heavy_haul">Heavy Haul / Oversize</option><option value="reefer">Reefer</option><option value="dry_van">Dry Van</option><option value="flatbed">Flatbed</option><option value="step_deck">Step Deck</option><option value="specialized">Specialized</option><option value="other">Other</option></select></div>
+            <div class="field"><label for="equipmentType">Equipment / Trailer</label><input id="equipmentType"></div>
+            <div class="field"><label for="loadedMiles">Loaded Miles</label><input id="loadedMiles" type="number" min="0"></div>
+            <div class="field"><label for="origin">Origin</label><input id="origin"></div>
+            <div class="field"><label for="destination">Destination</label><input id="destination"></div>
+            <div class="field full"><label for="states">States Traveled</label><input id="states" placeholder="AR, TN"><div class="small">Enter states in travel order. These are passed directly into the State Rules workflow when the route is marked ready.</div></div>
+            <div class="field full"><label for="waypoints">Waypoints / Shaping Points</label><textarea id="waypoints"></textarea><div class="small">Add only intermediate locations the truck must pass through to shape the planned route. Later, State Rules may add required bridges, crossings, weigh/check points, restricted roads, permit-directed points or other state-specific locations back into this route.</div></div>
+            <div class="field"><label for="pickupAt">Pickup</label><input id="pickupAt" type="datetime-local"></div>
+            <div class="field"><label for="deliveryAt">Delivery</label><input id="deliveryAt" type="datetime-local"></div>
+            <div class="field full"><label for="routeNotes">Route Notes</label><textarea id="routeNotes" placeholder="Dispatcher route notes..."></textarea></div>
+            <div class="field"><label for="parkingStaging">Parking / Staging</label><textarea id="parkingStaging"></textarea></div>
+            <div class="field"><label for="fuelService">Fuel / Service</label><textarea id="fuelService"></textarea></div>
+          </div>
+          <div class="actions"><button class="action" id="saveProgress" type="button">Save Progress</button><button class="action" id="readyStateRules" type="button">Save + Ready for State Rules</button><button class="action secondary" id="returnRevision" type="button">Mark Returned for Revision</button></div>
+          <div class="notice" id="planNotice"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card"><h2>Route Preview</h2><div class="route-preview" id="routePreview"><strong>No route yet</strong>Open a load or enter an origin and destination.</div><div class="warning">Heavy haul / oversize: Google Maps is navigation reference only. State rules, permit routing and current restrictions remain controlling.</div><div class="actions"><button class="action" id="openMaps" type="button">Open in Google Maps</button><button class="action secondary" id="copyLink" type="button">Copy Link</button></div></div>
+        <div class="card"><h2>Workflow Handoff</h2><p class="hint">Route Planning owns the proposed route. The next workspace enriches it with state-specific driver intelligence.</p><div id="handoffSummary" class="fleet-line">Save the route to see handoff status.</div><div class="actions"><a class="action secondary" id="openStateRules" href="states.html">Open State Rules ↗</a></div></div>
+      </aside>
+    </div>
+  </section>
 </section>
 
-<section class="panel" id="masterPanel">
-  <div class="card">
-    <h2>State Brief Library</h2>
-    <p class="hint">Enter each state's baseline permit office, thresholds and recurring travel restrictions once. Reverify it whenever the state changes its rules.</p>
-    <div class="grid">
-      <div class="field"><label for="state">State</label><select id="state"></select></div>
-      <div class="field"><label for="verified">Verified on</label><input id="verified" type="date"></div>
-      <div class="field"><label for="office">Permit office name</label><input id="office"></div>
-      <div class="field"><label for="phone">Office phone</label><input id="phone"></div>
-      <div class="field full"><label for="portal">Permit portal URL</label><input id="portal"></div>
-      <div class="field full"><label for="hours">Office hours</label><input id="hours"></div>
-      <div class="field"><label for="mw">Max legal width (in)</label><input id="mw" type="number"></div>
-      <div class="field"><label for="mh">Max legal height (in)</label><input id="mh" type="number"></div>
-      <div class="field"><label for="ml">Max legal length (in)</label><input id="ml" type="number"></div>
-      <div class="field"><label for="mwt">Max legal weight (lb)</label><input id="mwt" type="number"></div>
-      <div class="field"><label for="ew">Escort width threshold (in)</label><input id="ew" type="number"></div>
-      <div class="field"><label for="el">Escort length threshold (in)</label><input id="el" type="number"></div>
-      <div class="field"><label for="hp">High pole height threshold (in)</label><input id="hp" type="number"></div>
-      <div class="field"><label for="pw">Police escort width (in)</label><input id="pw" type="number"></div>
-      <div class="field"><label for="sw">Superload width (in)</label><input id="sw" type="number"></div>
-      <div class="field"><label for="swt">Superload weight (lb)</label><input id="swt" type="number"></div>
-      <div class="field full"><label for="travel">Travel time notes</label><textarea id="travel"></textarea></div>
-      <div class="field full"><label for="holiday">Holiday restrictions</label><textarea id="holiday"></textarea></div>
-      <div class="field full"><label for="notes">Other state notes</label><textarea id="notes"></textarea></div>
-    </div>
-    <div class="actions"><button class="action" id="saveState" type="button">Save State Brief</button><button class="action secondary" id="cancelState" type="button">Cancel Edit</button></div>
-    <div class="okmsg" id="stateOk"></div><div class="errmsg" id="stateErr"></div>
-  </div>
-  <div class="card"><h2>States on File</h2><div id="masterList" class="master-list"></div></div>
+<section class="panel" id="goldenPanel">
+  <div class="card"><h2>Golden Routes</h2><p class="hint">Use previously useful routes as planning references. They never replace current State Rules, permits or permit-approved routing.</p><div class="queue-toolbar"><input id="goldenSearch" type="search" placeholder="Search route, city, highway..."><button class="action secondary" id="refreshGolden" type="button">Refresh</button></div></div>
+  <div id="goldenList" class="golden-list"></div>
 </section>
 </main>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="nav.js"></script>
 <script>
 const SUPABASE_URL='https://zyhdatteglxozsgnjhrm.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 const $=id=>document.getElementById(id);
-let db=null,tenant=null,editingState=null,currentLoad=null,currentRoute=null,stateRules={},attachments={},points={};
-const STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
-function msg(ok,err,text,bad=false){$(ok).classList.remove('show');$(err).classList.remove('show');if(!text)return;const el=bad?$(err):$(ok);el.textContent=text;el.classList.add('show')}
-function money(v){return v==null?'—':'$'+Number(v).toLocaleString()}
-function ftin(v){if(v==null||v==='')return '—';const n=Number(v);return Math.floor(n/12)+"' "+Math.round(n%12)+'"'}
-function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function latestByLoad(rows){const m={};for(const r of rows){if(!m[r.load_id]||new Date(r.updated_at)>new Date(m[r.load_id].updated_at))m[r.load_id]=r}return m}
-function pointLabel(t){return ({bridge:'Bridge / Crossing',toll:'Toll',weigh_station:'Weigh Station / Scale',checkpoint:'Checkpoint',inspection:'Inspection Point',travel_window:'Travel Window / Curfew',construction:'Construction',restricted_route:'Restricted / Required Route',escort_meeting:'Escort Meeting',other:'Other'})[t]||t}
-
-async function start(){
-  if(typeof window.supabase==='undefined'){alert('Supabase library failed to load.');return}
-  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-  const s=await db.auth.getSession();if(!s.data.session){location.href='index.html';return}
-  tenant=await buildNav(db,'State Rules');if(!tenant)return;
-  $('state').innerHTML=STATES.map(s=>`<option value="${s}">${s}</option>`).join('');
-  $('verified').value=new Date().toISOString().slice(0,10);
-  await loadStateRules();await loadQueue();
-}
-
-async function loadStateRules(){
-  const r=await db.from('state_permit_rules').select('*').order('state');
-  if(r.error){msg('stateOk','stateErr',r.error.message,true);return}
-  stateRules={};(r.data||[]).forEach(x=>stateRules[x.state]=x);renderMasterList();
-}
-
-function renderMasterList(){
-  const rows=Object.values(stateRules);if(!rows.length){$('masterList').innerHTML='<div class="empty">No state briefs entered yet.</div>';return}
-  const yearAgo=new Date(Date.now()-365*864e5).toISOString().slice(0,10);
-  $('masterList').innerHTML=rows.map(x=>`<div class="master-row"><strong>${x.state}</strong><div><div>${esc(x.office_name||'Permit office not entered')}</div><div class="meta">Verified ${x.verified_on||'never'} · Legal W ${ftin(x.max_legal_width_in)} · H ${ftin(x.max_legal_height_in)} · ${x.max_legal_weight_lb?Number(x.max_legal_weight_lb).toLocaleString()+' lb':'weight not entered'}</div></div><button class="action secondary" type="button" data-edit-state="${x.state}">${(!x.verified_on||x.verified_on<yearAgo)?'Review / Update':'Edit'}</button></div>`).join('');
-}
-
-async function loadQueue(){
-  const [lr,rr,ar]=await Promise.all([
-    db.from('loads').select('id,load_number,commodity,carrier_id,driver_id,tractor_id,trailer_id').eq('tenant_id',tenant).order('created_at',{ascending:false}).limit(250),
-    db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),
-    db.from('load_state_briefs').select('id,load_id,state,status').eq('tenant_id',tenant)
-  ]);
-  if(lr.error||rr.error||ar.error){$('queue').innerHTML=`<div class="empty">${esc((lr.error||rr.error||ar.error).message)}</div>`;return}
-  const routeMap=latestByLoad(rr.data||[]),attByLoad={};(ar.data||[]).forEach(a=>(attByLoad[a.load_id]??=[]).push(a));
-  const items=(lr.data||[]).filter(l=>routeMap[l.id]);
-  if(!items.length){$('queue').innerHTML='<div class="empty">No loads have a saved Route Plan yet.</div>';return}
-  $('queue').innerHTML=items.map(l=>{const rp=routeMap[l.id],states=rp.states||[],attached=attByLoad[l.id]||[],done=states.length&&states.every(s=>attached.some(a=>a.state===s&&a.status==='complete'));const missing=states.filter(s=>!stateRules[s]);return `<div class="queue-item"><div class="queue-main"><strong>${esc(l.load_number||'Load')}</strong> · ${esc(l.commodity||'')}
-  <div class="meta">${esc(rp.origin)} → ${esc(rp.destination)} · ${(states||[]).join(', ')||'No states saved on route'}</div><div class="badges"><span class="badge ${done?'done':''}">${done?'State review complete':'State review pending'}</span>${missing.length?`<span class="badge warn">Missing brief: ${missing.join(', ')}</span>`:''}<span class="badge">${attached.length}/${states.length} states attached</span></div></div><button class="action" type="button" data-open-load="${l.id}">${done?'Review':'Open State Review'}</button></div>`}).join('');
-}
-
-async function openLoad(loadId){
-  const [lr,rr,ar,pr]=await Promise.all([
-    db.from('loads').select('*').eq('id',loadId).eq('tenant_id',tenant).single(),
-    db.from('route_plans').select('*').eq('load_id',loadId).eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(1).maybeSingle(),
-    db.from('load_state_briefs').select('*').eq('load_id',loadId).eq('tenant_id',tenant),
-    db.from('load_state_route_points').select('*').eq('load_id',loadId).eq('tenant_id',tenant).order('sort_order')
-  ]);
-  if(lr.error||rr.error){msg('loadOk','loadErr',(lr.error||rr.error).message,true);return}
-  currentLoad=lr.data;currentRoute=rr.data;attachments={};(ar.data||[]).forEach(a=>attachments[a.state]=a);points={};(pr.data||[]).forEach(p=>(points[p.state]??=[]).push(p));
-  $('workspaceTitle').textContent=`${currentLoad.load_number||'Load'} — State Rules / Restrictions`;
-  $('workspaceMeta').textContent=`${currentRoute.origin} → ${currentRoute.destination} · ${(currentRoute.states||[]).join(', ')}`;
-  $('queue').parentElement.style.display='none';$('workspace').classList.add('show');renderStateWorkspace();
-}
-
-function renderStateWorkspace(){
-  const states=currentRoute?.states||[];if(!states.length){$('stateWorkspace').innerHTML='<div class="empty">This Route Plan has no states saved. Return to Route Planning and save States Traveled.</div>';return}
-  $('stateWorkspace').innerHTML=states.map(st=>stateCard(st)).join('');
-}
-
-function stateCard(st){
-  const r=stateRules[st],a=attachments[st],ps=points[st]||[],yearAgo=new Date(Date.now()-365*864e5).toISOString().slice(0,10);const stale=r&&(!r.verified_on||r.verified_on<yearAgo);
-  if(!r)return `<div class="state-card missing"><div class="state-head"><div><div class="state-code">${st}</div><div class="meta">No verified state brief is on file.</div></div><button class="action" type="button" data-create-state="${st}">Create ${st} Brief</button></div></div>`;
-  return `<div class="state-card ${stale?'stale':''}" data-state-card="${st}"><div class="state-head"><div><div class="state-code">${st}</div><div class="meta">Verified ${r.verified_on||'never'}${stale?' · REVERIFY BEFORE RELYING ON THIS BRIEF':''}</div></div><div class="badges"><span class="badge ${a?'done':''}">${a?(a.status==='complete'?'Attached · Complete':'Attached'):'Not attached'}</span></div></div>
-  <div class="rule-grid"><div class="rule"><div class="rule-label">Permit Office</div><div class="rule-value">${esc(r.office_name||'—')}<br>${esc(r.office_phone||'')}</div></div><div class="rule"><div class="rule-label">Legal Maximums</div><div class="rule-value">W ${ftin(r.max_legal_width_in)} · H ${ftin(r.max_legal_height_in)} · L ${ftin(r.max_legal_length_in)}<br>${r.max_legal_weight_lb?Number(r.max_legal_weight_lb).toLocaleString()+' lb':'—'}</div></div><div class="rule"><div class="rule-label">Escort / High Pole</div><div class="rule-value">Escort width ${ftin(r.escort_width_in)} · High pole ${ftin(r.high_pole_height_in)}</div></div></div>
-  ${(r.travel_time_notes||r.holiday_restrictions||r.notes)?`<div class="notes">${r.travel_time_notes?`<strong>Travel:</strong> ${esc(r.travel_time_notes)}<br>`:''}${r.holiday_restrictions?`<strong>Holiday:</strong> ${esc(r.holiday_restrictions)}<br>`:''}${r.notes?`<strong>Other:</strong> ${esc(r.notes)}`:''}</div>`:''}
-  <div class="grid" style="margin-top:14px"><div class="field full"><label for="driverNotes_${st}">Driver-facing state notes</label><textarea id="driverNotes_${st}" placeholder="Only the state-specific information the driver should be able to reference en route.">${esc(a?.driver_notes||'')}</textarea></div><div class="field"><label for="permitNotes_${st}">Permit notes for this load</label><textarea id="permitNotes_${st}">${esc(a?.permit_notes||'')}</textarea></div><div class="field"><label for="escortNotes_${st}">Escort notes for this load</label><textarea id="escortNotes_${st}">${esc(a?.escort_notes||'')}</textarea></div></div>
-  <div class="actions"><button class="action" type="button" data-attach-state="${st}">${a?'Update Attachment':'Attach State Brief to Load'}</button>${a?`<button class="action secondary" type="button" data-complete-state="${st}">Mark ${st} Complete</button>`:''}<button class="action secondary" type="button" data-edit-state="${st}">Edit Master Brief</button></div>
-  ${a?pointBuilder(st,ps):'<div class="meta" style="margin-top:12px">Attach this state brief before adding load-specific route points.</div>'}</div>`;
-}
-
-function pointBuilder(st,ps){return `<div style="margin-top:18px"><h3 style="font-family:Oswald,sans-serif;font-size:14px;font-weight:500;margin:0">Driver Route Points — ${st}</h3><p class="hint">Add only state-specific items worth carrying with this load: bridges/crossings, tolls, weigh stations, checkpoints, inspections, curfews, construction, required route segments, escort meetings, or other notable instructions. Mark “Add to Route” only when the location must become a shaping point in the saved Route Plan.</p>
-<div class="point-builder"><div class="field"><label for="ptType_${st}">Type</label><select id="ptType_${st}"><option value="bridge">Bridge / Crossing</option><option value="toll">Toll</option><option value="weigh_station">Weigh Station / Scale</option><option value="checkpoint">Checkpoint</option><option value="inspection">Inspection Point</option><option value="travel_window">Travel Window / Curfew</option><option value="construction">Construction</option><option value="restricted_route">Restricted / Required Route</option><option value="escort_meeting">Escort Meeting</option><option value="other">Other</option></select></div><div class="field"><label for="ptTitle_${st}">Title</label><input id="ptTitle_${st}" placeholder="West Memphis scale"></div><div class="field"><label for="ptLoc_${st}">Location / waypoint</label><input id="ptLoc_${st}" placeholder="Address, city, highway or crossing"></div><div class="field"><label for="ptRequired_${st}">Importance</label><select id="ptRequired_${st}"><option value="false">Informational</option><option value="true">Required</option></select></div><button class="action" type="button" data-add-point="${st}">Add</button></div>
-<div class="points">${ps.length?ps.map(p=>`<div class="point"><span class="point-type">${pointLabel(p.point_type)}</span><div class="point-main"><strong>${esc(p.title)}</strong><span>${p.required?'Required · ':''}${esc(p.location||'No location')}${p.add_to_route?' · Added to Route':''}${p.driver_note?' · '+esc(p.driver_note):''}</span></div><div class="actions" style="margin:0">${p.location&&!p.add_to_route?`<button class="action secondary" type="button" data-route-point="${p.id}" data-state="${st}">Add to Route</button>`:''}<button class="action danger" type="button" data-delete-point="${p.id}" data-state="${st}">Remove</button></div></div>`).join(''):'<div class="empty">No state-specific route points attached yet.</div>'}</div></div>`}
-
-async function attachState(st){const r=stateRules[st];if(!r)return;const rec={tenant_id:tenant,load_id:currentLoad.id,route_plan_id:currentRoute.id,state:st,status:attachments[st]?.status||'attached',source_verified_on:r.verified_on||null,source_updated_at:r.updated_at||null,rule_snapshot:r,driver_notes:$('driverNotes_'+st).value.trim()||null,permit_notes:$('permitNotes_'+st).value.trim()||null,escort_notes:$('escortNotes_'+st).value.trim()||null,attached_at:attachments[st]?.attached_at||new Date().toISOString()};const q=attachments[st]?await db.from('load_state_briefs').update(rec).eq('id',attachments[st].id).eq('tenant_id',tenant).select().single():await db.from('load_state_briefs').insert(rec).select().single();if(q.error){msg('loadOk','loadErr',q.error.message,true);return}attachments[st]=q.data;points[st]=points[st]||[];renderStateWorkspace();msg('loadOk','loadErr',`${st} brief attached to ${currentLoad.load_number}.`)}
-async function completeState(st){const a=attachments[st];if(!a)return;const q=await db.from('load_state_briefs').update({status:'complete',reviewed_at:new Date().toISOString(),driver_notes:$('driverNotes_'+st).value.trim()||null,permit_notes:$('permitNotes_'+st).value.trim()||null,escort_notes:$('escortNotes_'+st).value.trim()||null}).eq('id',a.id).eq('tenant_id',tenant).select().single();if(q.error){msg('loadOk','loadErr',q.error.message,true);return}attachments[st]=q.data;renderStateWorkspace()}
-async function addPoint(st){const a=attachments[st];if(!a)return;const title=$('ptTitle_'+st).value.trim();if(!title){msg('loadOk','loadErr','Enter a title for the route point.',true);return}const rec={tenant_id:tenant,load_id:currentLoad.id,load_state_brief_id:a.id,state:st,point_type:$('ptType_'+st).value,title,location:$('ptLoc_'+st).value.trim()||null,required:$('ptRequired_'+st).value==='true',sort_order:(points[st]||[]).length};const q=await db.from('load_state_route_points').insert(rec).select().single();if(q.error){msg('loadOk','loadErr',q.error.message,true);return}(points[st]??=[]).push(q.data);renderStateWorkspace()}
-async function deletePoint(id,st){const q=await db.from('load_state_route_points').delete().eq('id',id).eq('tenant_id',tenant);if(q.error){msg('loadOk','loadErr',q.error.message,true);return}points[st]=(points[st]||[]).filter(p=>p.id!==id);renderStateWorkspace()}
-async function addPointToRoute(id,st){const p=(points[st]||[]).find(x=>x.id===id);if(!p||!p.location)return;const way=[...(currentRoute.waypoints||[])];if(!way.some(x=>String(x).toLowerCase()===p.location.toLowerCase()))way.push(p.location);const [rq,pq]=await Promise.all([db.from('route_plans').update({waypoints:way}).eq('id',currentRoute.id).eq('tenant_id',tenant).select().single(),db.from('load_state_route_points').update({add_to_route:true}).eq('id',id).eq('tenant_id',tenant).select().single()]);if(rq.error||pq.error){msg('loadOk','loadErr',(rq.error||pq.error).message,true);return}currentRoute=rq.data;Object.assign(p,pq.data);renderStateWorkspace();msg('loadOk','loadErr',`${p.title} added to the saved Route Plan as a shaping point.`)}
-async function completeLoadReview(){const states=currentRoute?.states||[];const incomplete=states.filter(s=>!attachments[s]||attachments[s].status!=='complete');if(incomplete.length){msg('loadOk','loadErr','Complete these states first: '+incomplete.join(', '),true);return}const q=await db.from('route_plans').update({state_rules_reviewed:true}).eq('id',currentRoute.id).eq('tenant_id',tenant);if(q.error){msg('loadOk','loadErr',q.error.message,true);return}msg('loadOk','loadErr','State Rules / Restrictions review complete. This load is ready for permit and escort work.');await loadQueue()}
-
-function editMaster(st){const x=stateRules[st];editingState=st;$('state').value=st;$('state').disabled=!!x;$('verified').value=x?.verified_on||new Date().toISOString().slice(0,10);$('office').value=x?.office_name||'';$('phone').value=x?.office_phone||'';$('portal').value=x?.portal_url||'';$('hours').value=x?.office_hours||'';$('mw').value=x?.max_legal_width_in??'';$('mh').value=x?.max_legal_height_in??'';$('ml').value=x?.max_legal_length_in??'';$('mwt').value=x?.max_legal_weight_lb??'';$('ew').value=x?.escort_width_in??'';$('el').value=x?.escort_length_in??'';$('hp').value=x?.high_pole_height_in??'';$('pw').value=x?.police_width_in??'';$('sw').value=x?.superload_width_in??'';$('swt').value=x?.superload_weight_lb??'';$('travel').value=x?.travel_time_notes||'';$('holiday').value=x?.holiday_restrictions||'';$('notes').value=x?.notes||'';document.querySelector('[data-panel="masterPanel"]').click();window.scrollTo({top:0,behavior:'smooth'})}
-function resetMaster(){editingState=null;$('state').disabled=false;['office','phone','portal','hours','mw','mh','ml','mwt','ew','el','hp','pw','sw','swt','travel','holiday','notes'].forEach(id=>$(id).value='');$('verified').value=new Date().toISOString().slice(0,10)}
-async function saveMaster(){const st=$('state').value;const n=id=>$(id).value===''?null:Number($(id).value);const rec={state:st,verified_on:$('verified').value||null,office_name:$('office').value.trim()||null,office_phone:$('phone').value.trim()||null,portal_url:$('portal').value.trim()||null,office_hours:$('hours').value.trim()||null,max_legal_width_in:n('mw'),max_legal_height_in:n('mh'),max_legal_length_in:n('ml'),max_legal_weight_lb:n('mwt'),escort_width_in:n('ew'),escort_length_in:n('el'),high_pole_height_in:n('hp'),police_width_in:n('pw'),superload_width_in:n('sw'),superload_weight_lb:n('swt'),travel_time_notes:$('travel').value.trim()||null,holiday_restrictions:$('holiday').value.trim()||null,notes:$('notes').value.trim()||null};const q=await db.from('state_permit_rules').upsert(rec,{onConflict:'state'});if(q.error){msg('stateOk','stateErr',q.error.message,true);return}msg('stateOk','stateErr',`${st} state brief saved.`);resetMaster();await loadStateRules();if(currentLoad)renderStateWorkspace()}
-
-$('queue').addEventListener('click',e=>{const b=e.target.closest('[data-open-load]');if(b)openLoad(b.dataset.openLoad)});
-$('backQueue').addEventListener('click',()=>{$('workspace').classList.remove('show');$('queue').parentElement.style.display='block';currentLoad=currentRoute=null;loadQueue()});
-$('completeReview').addEventListener('click',completeLoadReview);
-$('stateWorkspace').addEventListener('click',e=>{let b=e.target.closest('button');if(!b)return;if(b.dataset.attachState)attachState(b.dataset.attachState);else if(b.dataset.completeState)completeState(b.dataset.completeState);else if(b.dataset.addPoint)addPoint(b.dataset.addPoint);else if(b.dataset.deletePoint)deletePoint(b.dataset.deletePoint,b.dataset.state);else if(b.dataset.routePoint)addPointToRoute(b.dataset.routePoint,b.dataset.state);else if(b.dataset.editState)editMaster(b.dataset.editState);else if(b.dataset.createState)editMaster(b.dataset.createState)});
-$('masterList').addEventListener('click',e=>{const b=e.target.closest('[data-edit-state]');if(b)editMaster(b.dataset.editState)});
-$('saveState').addEventListener('click',saveMaster);$('cancelState').addEventListener('click',resetMaster);
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));b.classList.add('on');$(b.dataset.panel).classList.add('on')}));
+let db=null,tenant=null,currentLoad=null,currentPlan=null;
+let loads=[],plans=[],facilities={},brokers={},carriers={},drivers={},equipment={},goldenRoutes=[];
+const TERMINAL_LOAD_STATUSES=['cancelled','tonu','paid','invoiced'];
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function pretty(v){return String(v||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function money(v){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?'$'+n.toLocaleString(undefined,{maximumFractionDigits:2}):'—';}
+function fmtIn(v){if(v==null||v==='')return '—';const n=Number(v);if(!Number.isFinite(n))return '—';return Math.floor(n/12)+"' "+Math.round(n%12)+'"';}
+function dtLocal(v){if(!v)return '';const d=new Date(v);if(Number.isNaN(d.getTime()))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;}
+function iso(v){return v?new Date(v).toISOString():null;}
+function arrComma(v){return String(v||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);}
+function arrLines(v){return String(v||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);}
+function facilityLabel(id){const f=facilities[id];return f?[f.name,f.address_line1,f.city,f.state].filter(Boolean).join(', '):'';}
+function brokerName(id){const b=brokers[id];return b?(b.name||b.legal_name||b.company_name||'Broker'):'';}
+function carrierName(id){const c=carriers[id];return c?(c.dba_name||c.legal_name||'Carrier'):'';}
+function driverName(id){const d=drivers[id];return d?[d.first_name,d.last_name].filter(Boolean).join(' '):'';}
+function unitName(id){const e=equipment[id];return e?`${e.unit_number||'Unit'}${e.equipment_type?' · '+pretty(e.equipment_type):''}`:'';}
+function setNotice(id,text,error=false){const el=$(id);el.textContent=text||'';el.className='notice'+(text?' show ':'')+(error?'err':'ok');}
+function routeUrl(){const o=$('origin').value.trim(),d=$('destination').value.trim();if(!o||!d)return '';const p=new URLSearchParams({api:'1',origin:o,destination:d,travelmode:'driving'});const w=arrLines($('waypoints').value);if(w.length)p.set('waypoints',w.join('|'));return 'https://www.google.com/maps/dir/?'+p.toString();}
+function drawPreview(){const o=$('origin').value.trim(),d=$('destination').value.trim(),w=arrLines($('waypoints').value);$('routePreview').innerHTML=o&&d?`<strong>${esc(o)} → ${esc(d)}</strong>${esc(pretty($('freightType').value))}${w.length?'<br>Via: '+w.map(esc).join(' → '):''}`:'<strong>No route yet</strong>Open a load or enter an origin and destination.';}
+function planFor(loadId){return plans.find(p=>p.load_id===loadId)||null;}
+function queueStatus(load){const p=planFor(load.id);return p?(p.workflow_status||'in_progress'):'not_started';}
+function statusLabel(s){return s==='not_started'?'Not Started':s==='ready_for_state_review'?'Ready for State Review':s==='returned_for_revision'?'Returned for Revision':'In Progress';}
+function readinessMissing(load){const m=[];if(!load.origin_facility_id)m.push('origin');if(!load.dest_facility_id)m.push('destination');if(!load.carrier_id)m.push('carrier');if(!load.driver_id)m.push('driver');if(!load.tractor_id)m.push('truck');if(!load.trailer_id)m.push('trailer');if(load.width_in==null||load.height_in==null||load.weight_lb==null)m.push('loaded dimensions/weight');return m;}
+function renderQueue(){const q=$('queueSearch').value.trim().toLowerCase(),filter=$('queueStatus').value;const list=loads.filter(l=>!TERMINAL_LOAD_STATUSES.includes(l.status)).filter(l=>!filter||queueStatus(l)===filter).filter(l=>{if(!q)return true;return [l.load_number,l.broker_load_number,l.commodity,brokerName(l.broker_id),carrierName(l.carrier_id),driverName(l.driver_id),facilityLabel(l.origin_facility_id),facilityLabel(l.dest_facility_id)].join(' ').toLowerCase().includes(q)});if(!list.length){$('queueList').innerHTML='<div class="empty">No loads match this queue filter.</div>';return;}$('queueList').innerHTML=list.map(l=>{const s=queueStatus(l),p=planFor(l.id),missing=readinessMissing(l);return `<article class="queue-item" data-load="${l.id}"><div><div class="queue-title">${esc(l.load_number||'Load')} ${l.broker_load_number?'· '+esc(l.broker_load_number):''}</div><div class="queue-meta">${esc(brokerName(l.broker_id)||'Broker not assigned')} · ${esc(pretty(l.status))}<br>${esc(facilityLabel(l.origin_facility_id)||'Origin missing')} → ${esc(facilityLabel(l.dest_facility_id)||'Destination missing')}</div>${missing.length?`<div class="missing">Needs attention: ${esc(missing.join(', '))}</div>`:''}</div><div><span class="status ${s==='ready_for_state_review'?'ready':s==='returned_for_revision'?'returned':''}">${statusLabel(s)}</span><div class="queue-meta">${esc(carrierName(l.carrier_id)||'Carrier unassigned')}<br>${esc(driverName(l.driver_id)||'Driver unassigned')} · ${esc(unitName(l.trailer_id)||'Trailer unassigned')}</div></div><button class="action" type="button" data-open="${l.id}">${p?'Continue Planning':'Plan Route'}</button></article>`}).join('');}
+function refreshFleetOptions(selected={}){const carrierId=$('fleetCarrier').value||selected.carrier_id||'';const ds=Object.values(drivers).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);const es=Object.values(equipment).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);$('fleetDriver').innerHTML='<option value="">— Unassigned —</option>'+ds.map(x=>`<option value="${x.id}">${esc(driverName(x.id)||'Driver')}</option>`).join('');const isTrailer=x=>['rgn','lowboy','flatbed','step_deck','step deck','reefer','dry_van','dry van','double_drop','double drop','trailer'].some(k=>String(x.equipment_type||'').toLowerCase().includes(k));$('fleetTractor').innerHTML='<option value="">— Unassigned —</option>'+es.filter(x=>!isTrailer(x)).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');$('fleetTrailer').innerHTML='<option value="">— Unassigned —</option>'+es.filter(isTrailer).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');if(selected.driver_id)$('fleetDriver').value=selected.driver_id;if(selected.tractor_id)$('fleetTractor').value=selected.tractor_id;if(selected.trailer_id)$('fleetTrailer').value=selected.trailer_id;}
+function sourceItems(load){const dims=`${fmtIn(load.length_in)} L × ${fmtIn(load.width_in)} W × ${fmtIn(load.height_in)} H · ${load.weight_lb?Number(load.weight_lb).toLocaleString()+' lb':'weight missing'}`;return [{key:'route',label:'Origin / Destination',value:`${facilityLabel(load.origin_facility_id)||'—'} → ${facilityLabel(load.dest_facility_id)||'—'}`},{key:'appointment',label:'Pickup / Delivery',value:`${load.pickup_appt_start?new Date(load.pickup_appt_start).toLocaleString():'Pickup TBD'} · ${load.delivery_appt_start?new Date(load.delivery_appt_start).toLocaleString():'Delivery TBD'}`},{key:'commodity',label:'Commodity',value:load.commodity||'—'},{key:'dimensions',label:'Loaded Configuration',value:dims},{key:'broker',label:'Broker / Rate',value:`${brokerName(load.broker_id)||'—'} · ${money(load.linehaul_rate)}${load.fuel_surcharge?` + ${money(load.fuel_surcharge)} FSC`:''}`},{key:'notes',label:'Broker / Load Notes',value:load.notes||'No notes saved.'}];}
+function renderSource(load){$('sourceGrid').innerHTML=sourceItems(load).map(x=>`<div class="source-item"><div class="source-label">${esc(x.label)}</div><div class="source-value">${esc(x.value)}</div><div class="source-actions"><button type="button" class="action secondary" data-add-source="${x.key}">Add to Route Plan</button></div></div>`).join('');}
+function addSourceToRoute(key){if(!currentLoad)return;const l=currentLoad;if(key==='route'){$('origin').value=facilityLabel(l.origin_facility_id);$('destination').value=facilityLabel(l.dest_facility_id);}else if(key==='appointment'){$('pickupAt').value=dtLocal(l.pickup_appt_start);$('deliveryAt').value=dtLocal(l.delivery_appt_start);}else if(key==='commodity'){appendRouteNote(`Commodity: ${l.commodity||'—'}`);}else if(key==='dimensions'){appendRouteNote(`Loaded configuration: ${fmtIn(l.length_in)} L × ${fmtIn(l.width_in)} W × ${fmtIn(l.height_in)} H · ${l.weight_lb?Number(l.weight_lb).toLocaleString()+' lb':'weight missing'}${l.axle_count?` · ${l.axle_count} axles`:''}${l.overhang_front_in||l.overhang_rear_in?` · overhang front ${fmtIn(l.overhang_front_in||0)}, rear ${fmtIn(l.overhang_rear_in||0)}`:''}`);}else if(key==='broker'){appendRouteNote(`Broker reference: ${brokerName(l.broker_id)||'—'} · Load ${l.broker_load_number||l.load_number||'—'}`);}else if(key==='notes'&&l.notes){appendRouteNote(`Load notes: ${l.notes}`);}drawPreview();}
+function appendRouteNote(text){const current=$('routeNotes').value.trim();if(!text||current.includes(text))return;$('routeNotes').value=current?current+'\n\n'+text:text;}
+function fillPlan(load,plan){$('routeName').value=plan?.route_name||'';$('freightType').value=plan?.freight_type||((load.width_in>102||load.height_in>162||load.weight_lb>80000)?'heavy_haul':'heavy_haul');$('equipmentType').value=plan?.equipment_type||unitName(load.trailer_id);$('loadedMiles').value=plan?.loaded_miles??load.total_miles??'';$('origin').value=plan?.origin||facilityLabel(load.origin_facility_id);$('destination').value=plan?.destination||facilityLabel(load.dest_facility_id);$('states').value=(plan?.states||[]).join(', ');$('waypoints').value=(plan?.waypoints||[]).join('\n');$('pickupAt').value=dtLocal(plan?.pickup_at||load.pickup_appt_start);$('deliveryAt').value=dtLocal(plan?.delivery_at||load.delivery_appt_start);$('routeNotes').value=plan?.route_notes||'';$('parkingStaging').value=plan?.parking_staging||'';$('fuelService').value=plan?.fuel_service_notes||'';drawPreview();updateHandoff();}
+function updateHandoff(){if(!currentLoad){$('handoffSummary').textContent='Save the route to see handoff status.';return;}const states=arrComma($('states').value),s=currentPlan?.workflow_status||'not_started';$('handoffSummary').innerHTML=`<strong>${esc(statusLabel(s))}</strong><br>${states.length?'States identified: '+states.map(esc).join(' → '):'States not identified yet.'}${s==='ready_for_state_review'?'<br>State Rules can now pull this route and its state list.':''}`;$('openStateRules').href=`states.html?load=${encodeURIComponent(currentLoad.id)}`;}
+async function openWorkspace(loadId){currentLoad=loads.find(x=>x.id===loadId)||null;if(!currentLoad)return;currentPlan=planFor(loadId);$('workspace').classList.add('show');$('workspaceTitle').textContent=`${currentLoad.load_number||'Load'} — Route Workspace`;$('workspaceMeta').textContent=`${brokerName(currentLoad.broker_id)||'Broker'} · ${facilityLabel(currentLoad.origin_facility_id)||'Origin'} → ${facilityLabel(currentLoad.dest_facility_id)||'Destination'} · Load status: ${pretty(currentLoad.status)}`;$('openLoadRecord').href=`newload.html?load=${encodeURIComponent(loadId)}`;$('fleetCarrier').value=currentLoad.carrier_id||'';refreshFleetOptions(currentLoad);renderSource(currentLoad);fillPlan(currentLoad,currentPlan);$('workspace').scrollIntoView({behavior:'smooth',block:'start'});}
+async function saveFleet(){if(!currentLoad)return;const patch={carrier_id:$('fleetCarrier').value||null,driver_id:$('fleetDriver').value||null,tractor_id:$('fleetTractor').value||null,trailer_id:$('fleetTrailer').value||null};const r=await db.from('loads').update(patch).eq('tenant_id',tenant).eq('id',currentLoad.id);if(r.error){setNotice('fleetNotice',r.error.message,true);return;}Object.assign(currentLoad,patch);setNotice('fleetNotice','Fleet assignment saved to the shared load record.');renderQueue();}
+function planRecord(status){return {tenant_id:tenant,load_id:currentLoad.id,route_name:$('routeName').value.trim()||null,freight_type:$('freightType').value,equipment_type:$('equipmentType').value.trim()||null,origin:$('origin').value.trim(),destination:$('destination').value.trim(),states:arrComma($('states').value),waypoints:arrLines($('waypoints').value),loaded_miles:$('loadedMiles').value?Number($('loadedMiles').value):null,pickup_at:iso($('pickupAt').value),delivery_at:iso($('deliveryAt').value),parking_staging:$('parkingStaging').value.trim()||null,fuel_service_notes:$('fuelService').value.trim()||null,route_notes:$('routeNotes').value.trim()||null,google_maps_url:routeUrl()||null,workflow_status:status};}
+async function savePlan(status){if(!currentLoad){setNotice('planNotice','Open a load from the queue first.',true);return;}if(!$('origin').value.trim()||!$('destination').value.trim()){setNotice('planNotice','Origin and destination are required.',true);return;}if(status==='ready_for_state_review'&&!arrComma($('states').value).length){setNotice('planNotice','Identify the states traveled before handing the route to State Rules.',true);return;}const rec=planRecord(status);let r;if(currentPlan){r=await db.from('route_plans').update(rec).eq('tenant_id',tenant).eq('id',currentPlan.id).select('*').maybeSingle();}else{r=await db.from('route_plans').insert(rec).select('*').maybeSingle();}if(r.error){setNotice('planNotice',r.error.message,true);return;}currentPlan=r.data;if(!plans.some(p=>p.id===currentPlan.id))plans.push(currentPlan);else Object.assign(plans.find(p=>p.id===currentPlan.id),currentPlan);setNotice('planNotice',status==='ready_for_state_review'?'Route saved and queued for State Rules.':'Route progress saved.');renderQueue();updateHandoff();}
+async function loadData(){const [loadsR,plansR,facR,brokR,carR,drvR,eqR,goldR]=await Promise.all([db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),db.from('facilities').select('*').eq('tenant_id',tenant),db.from('brokers').select('*').eq('tenant_id',tenant),db.from('carriers').select('*').eq('tenant_id',tenant),db.from('drivers').select('*').eq('tenant_id',tenant),db.from('equipment').select('*').eq('tenant_id',tenant),db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})]);for(const x of [loadsR,plansR,facR,brokR,carR,drvR,eqR,goldR])if(x.error)console.warn(x.error.message);loads=loadsR.data||[];plans=plansR.data||[];(facR.data||[]).forEach(x=>facilities[x.id]=x);(brokR.data||[]).forEach(x=>brokers[x.id]=x);(carR.data||[]).forEach(x=>carriers[x.id]=x);(drvR.data||[]).forEach(x=>drivers[x.id]=x);(eqR.data||[]).forEach(x=>equipment[x.id]=x);goldenRoutes=goldR.data||[];$('fleetCarrier').innerHTML='<option value="">— Unassigned —</option>'+Object.values(carriers).map(x=>`<option value="${x.id}">${esc(carrierName(x.id))}</option>`).join('');refreshFleetOptions();renderQueue();renderGolden();}
+function renderGolden(){const q=$('goldenSearch').value.trim().toLowerCase();const list=goldenRoutes.filter(g=>!q||[g.route_name,g.origin,g.destination,g.corridor,g.highways,g.equipment_type,...(g.states||[])].join(' ').toLowerCase().includes(q));$('goldenList').innerHTML=list.length?list.map(g=>`<article class="golden"><h3>${esc(g.route_name)}</h3><div class="golden-meta">${esc(g.origin)} → ${esc(g.destination)}<br>${esc(pretty(g.freight_type))}${g.equipment_type?' · '+esc(g.equipment_type):''}${g.states?.length?' · '+g.states.map(esc).join(' → '):''}<br>${g.highways?'Corridor: '+esc(g.highways):''}</div><div class="actions"><button class="action" type="button" data-use-golden="${g.id}">Use in Open Workspace</button><button class="action secondary" type="button" data-map-golden="${g.id}">Open Maps</button></div></article>`).join(''):'<div class="empty">No Golden Routes match.</div>';}
+function useGolden(id){if(!currentLoad){alert('Open a load from the Route Planning Queue first.');return;}const g=goldenRoutes.find(x=>x.id===id);if(!g)return;$('routeName').value=g.route_name||$('routeName').value;$('freightType').value=g.freight_type||$('freightType').value;$('equipmentType').value=g.equipment_type||$('equipmentType').value;$('origin').value=g.origin||$('origin').value;$('destination').value=g.destination||$('destination').value;$('states').value=(g.states||[]).join(', ');$('waypoints').value=(g.waypoints||[]).join('\n');$('parkingStaging').value=g.parking_staging||'';$('fuelService').value=g.fuel_service_notes||'';appendRouteNote(g.general_notes?`Golden Route reference: ${g.general_notes}`:'');document.querySelector('[data-panel="planPanel"]').click();$('workspace').classList.add('show');drawPreview();updateHandoff();}
+async function start(){db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const s=await db.auth.getSession();if(!s.data.session){location.href='index.html';return;}if(typeof window.buildNav!=='function'){console.error('Route Planning: buildNav is unavailable.');return;}tenant=await window.buildNav(db,'Route Planning');if(!tenant)return;await loadData();const requested=new URLSearchParams(location.search).get('load');if(requested&&loads.some(x=>x.id===requested))openWorkspace(requested);}
+$('queueSearch').addEventListener('input',renderQueue);$('queueStatus').addEventListener('change',renderQueue);$('refreshQueue').addEventListener('click',loadData);$('queueList').addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b)openWorkspace(b.dataset.open)});$('closeWorkspace').addEventListener('click',()=>{$('workspace').classList.remove('show');currentLoad=null;currentPlan=null;window.scrollTo({top:0,behavior:'smooth'})});$('fleetCarrier').addEventListener('change',()=>refreshFleetOptions());$('saveFleet').addEventListener('click',saveFleet);$('sourceGrid').addEventListener('click',e=>{const b=e.target.closest('[data-add-source]');if(b)addSourceToRoute(b.dataset.addSource)});['origin','destination','waypoints','freightType'].forEach(id=>{$(id).addEventListener('input',()=>{drawPreview();updateHandoff()});$(id).addEventListener('change',()=>{drawPreview();updateHandoff()})});$('saveProgress').addEventListener('click',()=>savePlan('in_progress'));$('readyStateRules').addEventListener('click',()=>savePlan('ready_for_state_review'));$('returnRevision').addEventListener('click',()=>savePlan('returned_for_revision'));$('openMaps').addEventListener('click',()=>{const u=routeUrl();if(u)window.open(u,'_blank','noopener')});$('copyLink').addEventListener('click',async()=>{const u=routeUrl();if(!u)return;try{await navigator.clipboard.writeText(u);setNotice('planNotice','Route link copied.')}catch(e){setNotice('planNotice','Could not copy route link.',true)}});$('goldenSearch').addEventListener('input',renderGolden);$('refreshGolden').addEventListener('click',loadData);$('goldenList').addEventListener('click',e=>{const use=e.target.closest('[data-use-golden]'),map=e.target.closest('[data-map-golden]');if(use)useGolden(use.dataset.useGolden);if(map){const g=goldenRoutes.find(x=>x.id===map.dataset.mapGolden);if(g)window.open(g.google_maps_url||'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(g.origin)+'&destination='+encodeURIComponent(g.destination),'_blank','noopener')}});document.querySelectorAll('.route-tabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.route-tabs button').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));btn.classList.add('on');$(btn.dataset.panel).classList.add('on')}));
 start();
 </script>
 </body>
