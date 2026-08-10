@@ -46,19 +46,6 @@ main{
   z-index:1;
 }
 
-main{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-
-  width:min(1400px,100%);
-  margin:0 auto 70px;
-  padding:28px 24px 70px;
-
-  position:relative;
-  z-index:1;
-}
-
 .page-intro{margin-bottom:22px}
 .page-intro h1{
   margin:0;
@@ -287,6 +274,12 @@ button.action.danger{
 .empty-points{padding:10px 0;color:var(--rp-muted);font-size:11.5px}
 @media(max-width:820px){.route-point-builder{grid-template-columns:1fr}.route-point{grid-template-columns:1fr}.route-point-actions{justify-content:flex-start}}
 
+/* Fleet assignment */
+.fleet-assignment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fleet-assignment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.fleet-assignment-status{margin-top:10px;font-size:12px;color:var(--rp-muted)}
+@media(max-width:760px){.fleet-assignment-grid{grid-template-columns:1fr}}
+
 /* Golden routes */
 .filters{
   display:grid;
@@ -482,19 +475,19 @@ button.action.danger{
 
           <div class="grid">
             <div class="field full">
-              <label>Existing Load</label>
+              <label for="loadSelect">Existing Load</label>
               <select id="loadSelect">
                 <option value="">— Manual route —</option>
               </select>
             </div>
 
             <div class="field">
-              <label>Route Name</label>
+              <label for="routeName">Route Name</label>
               <input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN">
             </div>
 
             <div class="field">
-              <label>Freight Type</label>
+              <label for="freightType">Freight Type</label>
               <select id="freightType">
                 <option value="heavy_haul">Heavy Haul / Oversize</option>
                 <option value="reefer">Reefer</option>
@@ -507,33 +500,33 @@ button.action.danger{
             </div>
 
             <div class="field">
-              <label>Equipment / Trailer</label>
+              <label for="equipmentType">Equipment / Trailer</label>
               <input id="equipmentType" placeholder="RGN, 53' Reefer, Flatbed...">
             </div>
 
             <div class="field">
-              <label>Loaded Miles</label>
+              <label for="loadedMiles">Loaded Miles</label>
               <input id="loadedMiles" type="number" min="0">
             </div>
 
             <div class="field">
-              <label>Origin</label>
+              <label for="origin">Origin</label>
               <input id="origin" placeholder="Little Rock, AR">
             </div>
 
             <div class="field">
-              <label>Destination</label>
+              <label for="destination">Destination</label>
               <input id="destination" placeholder="Nashville, TN">
             </div>
 
             <div class="field full">
-              <label>States Traveled</label>
+              <label for="states">States Traveled</label>
               <input id="states" placeholder="AR, TN">
               <div class="smallnote">Comma-separated, in travel order.</div>
             </div>
 
             <div class="field full">
-              <label>Waypoints / Shaping Points</label>
+              <label for="waypoints">Waypoints / Shaping Points</label>
               <textarea id="waypoints" placeholder="Memphis, TN&#10;Jackson, TN"></textarea>
               <div class="smallnote">
                 Add only intermediate locations the truck must pass through to shape the planned route. These may include required highways or interchanges, approved crossings, construction detours, clearance-related routing, required checkpoints, escort meeting points, or later permit-route instructions. Enter one location per line and leave this blank when no shaping point is needed. For reliable Google Maps sharing, keep only the essential points (ideally 3 or fewer).
@@ -541,15 +534,42 @@ button.action.danger{
             </div>
 
             <div class="field">
-              <label>Pickup</label>
+              <label for="pickupAt">Pickup</label>
               <input id="pickupAt" type="datetime-local">
             </div>
 
             <div class="field">
-              <label>Delivery</label>
+              <label for="deliveryAt">Delivery</label>
               <input id="deliveryAt" type="datetime-local">
             </div>
           </div>
+        </div>
+
+        <div class="card" id="fleetAssignmentCard">
+          <h2>Fleet Assignment</h2>
+          <p class="hint">Use the load's existing fleet assignment when available, or assign/change the carrier, driver, truck and trailer here. Saving updates the same assignment used by the load throughout Heavy Haul Command.</p>
+          <div class="fleet-assignment-grid">
+            <div class="field">
+              <label for="fleetCarrier">Carrier</label>
+              <select id="fleetCarrier"><option value="">— Unassigned —</option></select>
+            </div>
+            <div class="field">
+              <label for="fleetDriver">Driver</label>
+              <select id="fleetDriver"><option value="">— Unassigned —</option></select>
+            </div>
+            <div class="field">
+              <label for="fleetTractor">Truck / Tractor</label>
+              <select id="fleetTractor"><option value="">— Unassigned —</option></select>
+            </div>
+            <div class="field">
+              <label for="fleetTrailer">Trailer</label>
+              <select id="fleetTrailer"><option value="">— Unassigned —</option></select>
+            </div>
+          </div>
+          <div class="fleet-assignment-actions">
+            <button class="action" id="saveFleetAssignment" type="button">Save Fleet Assignment</button>
+          </div>
+          <div class="fleet-assignment-status" id="fleetAssignmentStatus">Select an existing load to manage its fleet assignment.</div>
         </div>
 
         <div class="card load-context" id="loadContextCard">
@@ -606,15 +626,15 @@ button.action.danger{
 
           <div class="grid" style="margin-top:14px">
             <div class="field full">
-              <label>Route Notes</label>
+              <label for="routeNotes">Route Notes</label>
               <textarea id="routeNotes" placeholder="Restrictions, approaches, turns, construction, permit notes..."></textarea>
             </div>
             <div class="field">
-              <label>Parking / Staging</label>
+              <label for="parkingStaging">Parking / Staging</label>
               <textarea id="parkingStaging" placeholder="Safe staging, overnight parking, pull-offs..."></textarea>
             </div>
             <div class="field">
-              <label>Fuel / Service Notes</label>
+              <label for="fuelServiceNotes">Fuel / Service Notes</label>
               <textarea id="fuelServiceNotes" placeholder="Preferred fuel, washout, repair, service stops..."></textarea>
             </div>
           </div>
@@ -626,7 +646,7 @@ button.action.danger{
 
           <div class="route-point-builder">
             <div class="field">
-              <label>Point Type</label>
+              <label for="routePointType">Point Type</label>
               <select id="routePointType">
                 <option value="weigh_station">Weigh Station / Scale</option>
                 <option value="inspection">Inspection / Checkpoint</option>
@@ -640,11 +660,11 @@ button.action.danger{
               </select>
             </div>
             <div class="field">
-              <label>Location / Name</label>
+              <label for="routePointLocation">Location / Name</label>
               <input id="routePointLocation" placeholder="Facility, exit, city, address or landmark">
             </div>
             <div class="field">
-              <label>Required Stop?</label>
+              <label for="routePointRequired">Required Stop?</label>
               <select id="routePointRequired">
                 <option value="false">No — informational</option>
                 <option value="true">Yes — required</option>
@@ -663,23 +683,23 @@ button.action.danger{
 
           <div class="grid">
             <div class="field">
-              <label>Escort Company</label>
+              <label for="escortCompany">Escort Company</label>
               <input id="escortCompany">
             </div>
             <div class="field">
-              <label>Contact</label>
+              <label for="escortContact">Contact</label>
               <input id="escortContact">
             </div>
             <div class="field">
-              <label>Phone</label>
+              <label for="escortPhone">Phone</label>
               <input id="escortPhone">
             </div>
             <div class="field">
-              <label>Meeting Location</label>
+              <label for="escortMeetingLocation">Meeting Location</label>
               <input id="escortMeetingLocation">
             </div>
             <div class="field">
-              <label>Meeting Time</label>
+              <label for="escortMeetingTime">Meeting Time</label>
               <input id="escortMeetingTime" type="datetime-local">
             </div>
           </div>
@@ -774,12 +794,12 @@ button.action.danger{
 
     <div class="grid">
       <div class="field">
-        <label>Route Name</label>
+        <label for="gRouteName">Route Name</label>
         <input id="gRouteName" placeholder="Little Rock → Nashville I-40">
       </div>
 
       <div class="field">
-        <label>Freight Type</label>
+        <label for="gFreightType">Freight Type</label>
         <select id="gFreightType">
           <option value="heavy_haul">Heavy Haul / Oversize</option>
           <option value="reefer">Reefer</option>
@@ -792,82 +812,82 @@ button.action.danger{
       </div>
 
       <div class="field">
-        <label>Equipment / Trailer</label>
+        <label for="gEquipmentType">Equipment / Trailer</label>
         <input id="gEquipmentType">
       </div>
 
       <div class="field">
-        <label>Corridor / Nickname</label>
+        <label for="gCorridor">Corridor / Nickname</label>
         <input id="gCorridor" placeholder="I-40 corridor">
       </div>
 
       <div class="field">
-        <label>Origin</label>
+        <label for="gOrigin">Origin</label>
         <input id="gOrigin">
       </div>
 
       <div class="field">
-        <label>Destination</label>
+        <label for="gDestination">Destination</label>
         <input id="gDestination">
       </div>
 
       <div class="field">
-        <label>Origin State</label>
+        <label for="gOriginStateEdit">Origin State</label>
         <input id="gOriginStateEdit" maxlength="2" placeholder="AR">
       </div>
 
       <div class="field">
-        <label>Destination State</label>
+        <label for="gDestinationStateEdit">Destination State</label>
         <input id="gDestinationStateEdit" maxlength="2" placeholder="TN">
       </div>
 
       <div class="field full">
-        <label>States Traveled</label>
+        <label for="gStates">States Traveled</label>
         <input id="gStates" placeholder="AR, TN">
       </div>
 
       <div class="field full">
-        <label>Highways</label>
+        <label for="gHighways">Highways</label>
         <input id="gHighways" placeholder="I-40, I-240">
       </div>
 
       <div class="field full">
-        <label>Waypoints / Shaping Points</label>
+        <label for="gWaypoints">Waypoints / Shaping Points</label>
         <textarea id="gWaypoints" placeholder="Memphis, TN&#10;Jackson, TN"></textarea>
       </div>
 
       <div class="field">
-        <label>Last Used</label>
+        <label for="gLastUsed">Last Used</label>
         <input id="gLastUsed" type="date">
       </div>
 
       <div class="field">
-        <label>Last Verified</label>
+        <label for="gLastVerified">Last Verified</label>
         <input id="gLastVerified" type="date">
       </div>
 
       <div class="field">
-        <label>Successful Uses</label>
+        <label for="gSuccessfulUses">Successful Uses</label>
         <input id="gSuccessfulUses" type="number" min="0" value="0">
       </div>
 
       <div class="field full">
-        <label>Parking / Staging</label>
+        <label for="gParking">Parking / Staging</label>
         <textarea id="gParking"></textarea>
       </div>
 
       <div class="field full">
-        <label>Fuel / Service Notes</label>
+        <label for="gFuel">Fuel / Service Notes</label>
         <textarea id="gFuel"></textarea>
       </div>
 
       <div class="field full">
-        <label>Problem Areas / Avoid</label>
+        <label for="gProblems">Problem Areas / Avoid</label>
         <textarea id="gProblems"></textarea>
       </div>
 
       <div class="field full">
-        <label>General Route Notes</label>
+        <label for="gGeneralNotes">General Route Notes</label>
         <textarea id="gGeneralNotes"></textarea>
       </div>
     </div>
@@ -877,40 +897,40 @@ button.action.danger{
 
       <div class="grid">
         <div class="field">
-          <label>Previous Length (inches)</label>
+          <label for="gLength">Previous Length (inches)</label>
           <input id="gLength" type="number">
         </div>
         <div class="field">
-          <label>Previous Width (inches)</label>
+          <label for="gWidth">Previous Width (inches)</label>
           <input id="gWidth" type="number">
         </div>
         <div class="field">
-          <label>Previous Height (inches)</label>
+          <label for="gHeight">Previous Height (inches)</label>
           <input id="gHeight" type="number">
         </div>
         <div class="field">
-          <label>Previous Gross Weight (lb)</label>
+          <label for="gWeight">Previous Gross Weight (lb)</label>
           <input id="gWeight" type="number">
         </div>
 
         <div class="field full">
-          <label>Axle / Configuration Notes</label>
+          <label for="gAxleNotes">Axle / Configuration Notes</label>
           <textarea id="gAxleNotes"></textarea>
         </div>
         <div class="field full">
-          <label>Permit Notes</label>
+          <label for="gPermitNotes">Permit Notes</label>
           <textarea id="gPermitNotes"></textarea>
         </div>
         <div class="field full">
-          <label>Escort Notes</label>
+          <label for="gEscortNotes">Escort Notes</label>
           <textarea id="gEscortNotes"></textarea>
         </div>
         <div class="field full">
-          <label>Clearance / Bridge / Tunnel Notes</label>
+          <label for="gClearanceNotes">Clearance / Bridge / Tunnel Notes</label>
           <textarea id="gClearanceNotes"></textarea>
         </div>
         <div class="field full">
-          <label>Travel Restriction Notes</label>
+          <label for="gTravelNotes">Travel Restriction Notes</label>
           <textarea id="gTravelNotes"></textarea>
         </div>
       </div>
@@ -921,15 +941,15 @@ button.action.danger{
 
       <div class="grid">
         <div class="field full">
-          <label>Reefer Notes</label>
+          <label for="gReeferNotes">Reefer Notes</label>
           <textarea id="gReeferNotes" placeholder="Temperature-sensitive delays, preferred fuel strategy..."></textarea>
         </div>
         <div class="field full">
-          <label>Washout / Reefer Service</label>
+          <label for="gWashoutNotes">Washout / Reefer Service</label>
           <textarea id="gWashoutNotes"></textarea>
         </div>
         <div class="field full">
-          <label>Receiver Approach / Delivery Notes</label>
+          <label for="gReceiverNotes">Receiver Approach / Delivery Notes</label>
           <textarea id="gReceiverNotes"></textarea>
         </div>
       </div>
@@ -972,6 +992,7 @@ let facilities = {};
 let goldenRoutes = [];
 let loadCache = {};
 let routePoints = [];
+let fleetOptions = {carriers:[],drivers:[],equipment:[]};
 
 function pretty(v){
   return String(v || '')
@@ -1223,6 +1244,7 @@ async function start(){
   }
 
   await loadFacilities();
+  await loadFleetOptions();
   await loadLoads();
 
   const requestedLoad = new URLSearchParams(location.search).get('load');
@@ -1236,6 +1258,111 @@ async function start(){
   renderRoutePoints();
   updatePlanStatus();
   drawPreview();
+  updateGoldenMatch();
+}
+
+async function loadFleetOptions(){
+  const [carriersR,driversR,equipmentR] = await Promise.all([
+    db.from('carriers').select('id,legal_name,dba_name').eq('tenant_id',tenant).order('legal_name',{ascending:true}),
+    db.from('drivers').select('id,first_name,last_name,carrier_id').eq('tenant_id',tenant).order('last_name',{ascending:true}),
+    db.from('equipment').select('id,unit_number,equipment_type,carrier_id').eq('tenant_id',tenant).order('unit_number',{ascending:true})
+  ]);
+
+  if(carriersR.error) console.warn('Carriers:',carriersR.error.message);
+  if(driversR.error) console.warn('Drivers:',driversR.error.message);
+  if(equipmentR.error) console.warn('Equipment:',equipmentR.error.message);
+
+  fleetOptions.carriers = carriersR.data || [];
+  fleetOptions.drivers = driversR.data || [];
+  fleetOptions.equipment = equipmentR.data || [];
+
+  $('fleetCarrier').innerHTML = '<option value="">— Unassigned —</option>' +
+    fleetOptions.carriers.map(x=>`<option value="${x.id}">${x.dba_name || x.legal_name || 'Carrier'}</option>`).join('');
+
+  refreshFleetDependentOptions();
+}
+
+function refreshFleetDependentOptions(selected={}){
+  const carrierId = $('fleetCarrier').value || selected.carrier_id || '';
+  const drivers = carrierId
+    ? fleetOptions.drivers.filter(x=>!x.carrier_id || x.carrier_id===carrierId)
+    : fleetOptions.drivers;
+  const equipment = carrierId
+    ? fleetOptions.equipment.filter(x=>!x.carrier_id || x.carrier_id===carrierId)
+    : fleetOptions.equipment;
+
+  const trailerTypes = new Set(['rgn','lowboy','step_deck','double_drop','flatbed','reefer','dry_van']);
+  const driversCurrent = selected.driver_id || $('fleetDriver').value || '';
+  const tractorCurrent = selected.tractor_id || $('fleetTractor').value || '';
+  const trailerCurrent = selected.trailer_id || $('fleetTrailer').value || '';
+
+  $('fleetDriver').innerHTML = '<option value="">— Unassigned —</option>' +
+    drivers.map(x=>`<option value="${x.id}">${[x.first_name,x.last_name].filter(Boolean).join(' ') || 'Driver'}</option>`).join('');
+
+  const tractors = equipment.filter(x=>String(x.equipment_type||'').toLowerCase()==='tractor');
+  const trailers = equipment.filter(x=>trailerTypes.has(String(x.equipment_type||'').toLowerCase()));
+
+  $('fleetTractor').innerHTML = '<option value="">— Unassigned —</option>' +
+    tractors.map(x=>`<option value="${x.id}">${x.unit_number || 'Truck'}${x.equipment_type ? ' · '+pretty(x.equipment_type) : ''}</option>`).join('');
+  $('fleetTrailer').innerHTML = '<option value="">— Unassigned —</option>' +
+    trailers.map(x=>`<option value="${x.id}">${x.unit_number || 'Trailer'}${x.equipment_type ? ' · '+pretty(x.equipment_type) : ''}</option>`).join('');
+
+  if(driversCurrent) $('fleetDriver').value = driversCurrent;
+  if(tractorCurrent) $('fleetTractor').value = tractorCurrent;
+  if(trailerCurrent) $('fleetTrailer').value = trailerCurrent;
+}
+
+function populateFleetAssignment(load){
+  if(!load){
+    $('fleetCarrier').value='';
+    refreshFleetDependentOptions();
+    $('fleetAssignmentStatus').textContent='Select an existing load to manage its fleet assignment.';
+    return;
+  }
+
+  $('fleetCarrier').value = load.carrier_id || '';
+  refreshFleetDependentOptions(load);
+  $('fleetAssignmentStatus').textContent =
+    (load.carrier_id || load.driver_id || load.tractor_id || load.trailer_id)
+      ? 'Current assignment loaded from this load.'
+      : 'No fleet is assigned yet. Choose resources and save.';
+}
+
+async function saveFleetAssignment(){
+  const loadId = $('loadSelect').value;
+  if(!loadId){
+    $('fleetAssignmentStatus').textContent='Choose an existing load before saving a fleet assignment.';
+    return;
+  }
+
+  const patch = {
+    carrier_id: $('fleetCarrier').value || null,
+    driver_id: $('fleetDriver').value || null,
+    tractor_id: $('fleetTractor').value || null,
+    trailer_id: $('fleetTrailer').value || null
+  };
+
+  $('saveFleetAssignment').disabled = true;
+  $('fleetAssignmentStatus').textContent='Saving fleet assignment…';
+
+  const r = await db
+    .from('loads')
+    .update(patch)
+    .eq('tenant_id',tenant)
+    .eq('id',loadId)
+    .select('id,carrier_id,driver_id,tractor_id,trailer_id')
+    .maybeSingle();
+
+  $('saveFleetAssignment').disabled = false;
+
+  if(r.error){
+    $('fleetAssignmentStatus').textContent='Could not save fleet assignment: ' + r.error.message;
+    return;
+  }
+
+  Object.assign(loadCache[loadId], patch);
+  $('fleetAssignmentStatus').textContent='Fleet assignment saved to this load.';
+  await renderLoadContext(loadCache[loadId]);
   updateGoldenMatch();
 }
 
@@ -1357,6 +1484,7 @@ $('loadSelect').addEventListener('change',async ()=>{
   const opt = $('loadSelect').selectedOptions[0];
 
   if(!opt || !opt.value){
+    populateFleetAssignment(null);
     await renderLoadContext(null);
     return;
   }
@@ -1382,6 +1510,7 @@ $('loadSelect').addEventListener('change',async ()=>{
     $('freightType').value = 'heavy_haul';
   }
 
+  populateFleetAssignment(selectedLoad);
   await renderLoadContext(selectedLoad);
   drawPreview();
   updateGoldenMatch();
