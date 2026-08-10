@@ -1422,6 +1422,355 @@
       null;
 
 
+
+    // =========================================================
+    // NAVIGATION FALLBACK
+    // =========================================================
+
+    async function buildWelcomeFallbackNav(dbClient) {
+
+      const header =
+        document.querySelector('header');
+
+      if (!header) {
+        console.error(
+          'Welcome: no <header> element found.'
+        );
+        return null;
+      }
+
+
+      header.innerHTML = `
+        <div style="
+          display:flex;
+          align-items:center;
+          min-height:54px;
+          padding:0 26px;
+          background:#ffffff;
+          border-bottom:1px solid #eeeeee;
+          box-sizing:border-box;
+        ">
+          <a
+            href="welcome.html"
+            style="
+              color:#222222;
+              font-size:16px;
+              font-weight:700;
+              letter-spacing:1.4px;
+              text-decoration:none;
+            "
+          >
+            HEAVY HAUL COMMAND
+          </a>
+        </div>
+
+        <div style="
+          display:flex;
+          align-items:center;
+          width:100%;
+          min-height:48px;
+          padding:0 26px;
+          gap:0;
+          background:#ffffff;
+          border-bottom:1px solid #dddddd;
+          box-sizing:border-box;
+          overflow-x:auto;
+        ">
+          <nav
+            aria-label="Main navigation"
+            style="
+              display:flex;
+              align-items:center;
+              flex-shrink:0;
+            "
+          >
+            <a class="welcome-fallback-nav active" href="welcome.html">
+              Welcome
+            </a>
+
+            <a class="welcome-fallback-nav" href="board.html">
+              Dispatch
+            </a>
+
+            <a class="welcome-fallback-nav" href="sourcing.html">
+              Sourcing
+            </a>
+
+            <a class="welcome-fallback-nav" href="fleet-command.html">
+              Fleet Command
+            </a>
+          </nav>
+
+          <div
+            style="
+              margin-left:auto;
+              display:flex;
+              align-items:center;
+              gap:9px;
+              white-space:nowrap;
+              padding-left:18px;
+            "
+          >
+            <span
+              id="welcomeFallbackUser"
+              style="
+                color:#666666;
+                font-size:12px;
+              "
+            >
+              …
+            </span>
+
+            <span
+              style="
+                color:#bbbbbb;
+                font-size:12px;
+              "
+            >
+              |
+            </span>
+
+            <button
+              id="welcomeFallbackSignOut"
+              type="button"
+              style="
+                padding:0;
+                margin:0;
+                background:transparent;
+                border:0;
+                color:#555555;
+                font-size:12px;
+                cursor:pointer;
+                font-family:inherit;
+              "
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      `;
+
+
+      header.style.width =
+        '100%';
+
+      header.style.display =
+        'block';
+
+      header.style.visibility =
+        'visible';
+
+      header.style.opacity =
+        '1';
+
+      header.style.position =
+        'relative';
+
+      header.style.zIndex =
+        '1000';
+
+
+      const fallbackStyle =
+        document.createElement(
+          'style'
+        );
+
+      fallbackStyle.textContent = `
+        .welcome-fallback-nav {
+          display:flex;
+          align-items:center;
+          min-height:48px;
+          padding:0 17px;
+          color:#666666;
+          text-decoration:none;
+          font-size:13px;
+          font-weight:600;
+          white-space:nowrap;
+          border-bottom:3px solid transparent;
+        }
+
+        .welcome-fallback-nav:hover {
+          color:#222222;
+        }
+
+        .welcome-fallback-nav.active {
+          color:#111111;
+          border-bottom-color:#6B92A5;
+        }
+      `;
+
+      document.head.appendChild(
+        fallbackStyle
+      );
+
+
+      document
+        .getElementById(
+          'welcomeFallbackSignOut'
+        )
+        .addEventListener(
+          'click',
+          async () => {
+
+            await dbClient.auth.signOut();
+
+            location.href =
+              'index.html';
+
+          }
+        );
+
+
+      const userResult =
+        await dbClient.auth.getUser();
+
+
+      const authId =
+        userResult &&
+        userResult.data &&
+        userResult.data.user
+          ? userResult.data.user.id
+          : null;
+
+
+      if (!authId) {
+
+        document
+          .getElementById(
+            'welcomeFallbackUser'
+          )
+          .textContent =
+            'Not signed in';
+
+        return null;
+
+      }
+
+
+      let profile =
+        await dbClient
+          .from('app_users')
+          .select(
+            'full_name, role, tenant_id'
+          )
+          .eq(
+            'auth_uid',
+            authId
+          )
+          .maybeSingle();
+
+
+      if (
+        !profile.error &&
+        !profile.data
+      ) {
+
+        profile =
+          await dbClient
+            .from('app_users')
+            .select(
+              'full_name, role, tenant_id'
+            )
+            .limit(1)
+            .maybeSingle();
+
+      }
+
+
+      if (
+        profile.error ||
+        !profile.data
+      ) {
+
+        document
+          .getElementById(
+            'welcomeFallbackUser'
+          )
+          .textContent =
+            'Profile unavailable';
+
+        if (profile.error) {
+          console.error(
+            'Welcome fallback profile:',
+            profile.error.message
+          );
+        }
+
+        return null;
+
+      }
+
+
+      const fullName =
+        profile.data.full_name ||
+        'User';
+
+
+      const role =
+        profile.data.role ||
+        'User';
+
+
+      const prettyRole =
+        role.charAt(0).toUpperCase() +
+        role.slice(1);
+
+
+      document
+        .getElementById(
+          'welcomeFallbackUser'
+        )
+        .textContent =
+          `${fullName} (${prettyRole})`;
+
+
+      return profile.data.tenant_id;
+
+    }
+
+
+    async function initializeWelcomeNavigation() {
+
+      if (
+        typeof window.buildNav ===
+        'function'
+      ) {
+
+        try {
+
+          const tenant =
+            await window.buildNav(
+              db,
+              'Welcome'
+            );
+
+          if (tenant) {
+            return tenant;
+          }
+
+        }
+
+        catch (error) {
+
+          console.error(
+            'Shared navigation failed:',
+            error
+          );
+
+        }
+
+      }
+
+      console.warn(
+        'Welcome: shared buildNav unavailable; using fallback navigation.'
+      );
+
+      return await buildWelcomeFallbackNav(
+        db
+      );
+
+    }
+
     // =========================================================
     // GREETING
     // =========================================================
@@ -3136,12 +3485,20 @@
       }
 
 
-      // Shared navigation.
+      // Shared navigation with local fallback.
       TENANT_ID =
-        await buildNav(
-          db,
-          'Welcome'
+        await initializeWelcomeNavigation();
+
+
+      if (!TENANT_ID) {
+
+        console.error(
+          'Welcome: no tenant/profile available.'
         );
+
+        return;
+
+      }
 
 
       // Get profile for greeting.
