@@ -1912,24 +1912,23 @@
 
     async function loadPriorities() {
 
-      const activeLoads =
-        await safeCount(
-          'loads',
-          function (query) {
+     const activeLoads =
+  await safeCount(
+    'loads',
+    function (query) {
 
-            return query.in(
-              'status',
-              [
-                'booked',
-                'dispatched',
-                'at_pickup',
-                'loaded',
-                'in_transit',
-                'at_delivery'
-              ]
-            );
-
-          }
+      return query
+        .is('archived_at', null)
+        .in(
+          'status',
+          [
+            'booked',
+            'dispatched',
+            'at_pickup',
+            'loaded',
+            'in_transit',
+            'at_delivery'
+          ]
         );
 
 
