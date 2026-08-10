@@ -124,6 +124,21 @@ function pretty(v){return String(v||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.t
 function money(v){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?'$'+n.toLocaleString(undefined,{maximumFractionDigits:2}):'—';}
 function fmtIn(v){if(v==null||v==='')return '—';const n=Number(v);if(!Number.isFinite(n))return '—';return Math.floor(n/12)+"' "+Math.round(n%12)+'"';}
 function dtLocal(v){if(!v)return '';const d=new Date(v);if(Number.isNaN(d.getTime()))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;}
+function opportunityDateLocal(v){
+  if(!v)return '';
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s+'T00:00';
+  return dtLocal(s);
+}
+function opportunityNotes(item){
+  return [
+    item.notes ? `General notes: ${item.notes}` : '',
+    item.pickup_instructions ? `Pickup instructions: ${item.pickup_instructions}` : '',
+    item.delivery_instructions ? `Delivery instructions: ${item.delivery_instructions}` : '',
+    item.pickup_hours ? `Pickup hours / appointment: ${item.pickup_hours}` : '',
+    item.delivery_hours ? `Delivery hours / appointment: ${item.delivery_hours}` : ''
+  ].filter(Boolean).join('\n');
+}
 function iso(v){return v?new Date(v).toISOString():null;}
 function arrComma(v){return String(v||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);}
 function arrLines(v){return String(v||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);}
@@ -312,11 +327,11 @@ function sourceItems(item){
 
     return [
       {key:'route',label:'Origin / Destination',value:`${origin||'—'} → ${destination||'—'}`},
-      {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_date||'Pickup TBD'} · ${item.delivery_date||'Delivery TBD'}`},
+      {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_date||'Pickup TBD'}${item.pickup_hours?' · '+item.pickup_hours:''} → ${item.delivery_date||'Delivery TBD'}${item.delivery_hours?' · '+item.delivery_hours:''}`},
       {key:'commodity',label:'Commodity',value:item.commodity||'—'},
       {key:'dimensions',label:'Loaded Configuration',value:dims},
       {key:'broker',label:'Broker / Rate',value:`${item.broker_name||'—'} · Posted ${money(item.posted_rate)} · Quoted ${money(item.quoted_rate)}`},
-      {key:'notes',label:'Broker / Load Notes',value:item.notes||'No notes saved.'}
+      {key:'notes',label:'Broker / Load Notes',value:opportunityNotes(item)||'No broker/pickup/delivery notes saved.'}
     ];
   }
 
@@ -348,8 +363,16 @@ function addSourceToRoute(key){
 
   if(key==='appointment'){
     if(isOpp){
-      $('pickupAt').value=l.pickup_date||'';
-      $('deliveryAt').value=l.delivery_date||'';
+      $('pickupAt').value=opportunityDateLocal(l.pickup_date);
+      $('deliveryAt').value=opportunityDateLocal(l.delivery_date);
+
+      if(l.pickup_hours){
+        appendRouteNote(`Pickup hours / appointment: ${l.pickup_hours}`);
+      }
+
+      if(l.delivery_hours){
+        appendRouteNote(`Delivery hours / appointment: ${l.delivery_hours}`);
+      }
     }else{
       $('pickupAt').value=dtLocal(l.pickup_appt_start);
       $('deliveryAt').value=dtLocal(l.delivery_appt_start);
@@ -373,7 +396,14 @@ function addSourceToRoute(key){
     );
   }
 
-  if(key==='notes'&&l.notes)appendRouteNote(`Broker/load notes: ${l.notes}`);
+  if(key==='notes'){
+    if(isOpp){
+      const notes=opportunityNotes(l);
+      if(notes)appendRouteNote(notes);
+    }else if(l.notes){
+      appendRouteNote(`Broker/load notes: ${l.notes}`);
+    }
+  }
 
   drawPreview();
   updateHandoff();
@@ -397,8 +427,8 @@ function fillPlan(item,plan){
   $('destination').value=plan?.destination||destination;
   $('states').value=(plan?.states||[]).join(', ');
   $('waypoints').value=(plan?.waypoints||[]).join('\n');
-  $('pickupAt').value=dtLocal(plan?.pickup_at)||(isOpp?(item.pickup_date||''):dtLocal(item.pickup_appt_start));
-  $('deliveryAt').value=dtLocal(plan?.delivery_at)||(isOpp?(item.delivery_date||''):dtLocal(item.delivery_appt_start));
+  $('pickupAt').value=dtLocal(plan?.pickup_at)||(isOpp?opportunityDateLocal(item.pickup_date):dtLocal(item.pickup_appt_start));
+  $('deliveryAt').value=dtLocal(plan?.delivery_at)||(isOpp?opportunityDateLocal(item.delivery_date):dtLocal(item.delivery_appt_start));
   $('routeNotes').value=plan?.route_notes||'';
   $('parkingStaging').value=plan?.parking_staging||'';
   $('fuelService').value=plan?.fuel_service_notes||'';
