@@ -77,6 +77,37 @@
     cursor: pointer;
   }
 
+  .next-load-card {
+    min-width: 175px;
+  }
+
+  .next-load-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .next-load-link:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  .next-load-meta {
+    margin-top: 3px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: #747B82;
+  }
+
+  .next-load-none {
+    color: #8A9096;
+    font-size: 12px;
+  }
+
 </style>
 
 
@@ -227,7 +258,11 @@
           </th>
 
           <th data-k="load_number">
-            Load
+            Current Load
+          </th>
+
+          <th data-k="next_load_number">
+            Next Load
           </th>
 
           <th data-k="display_status">
@@ -268,7 +303,7 @@
         <tr>
 
           <td
-            colspan="10"
+            colspan="11"
             class="msg">
 
             Loading…
@@ -339,7 +374,7 @@ function fail(text) {
 
   $('body').innerHTML =
     '<tr>' +
-      '<td colspan="10" class="msg bad">' +
+      '<td colspan="11" class="msg bad">' +
         text +
       '</td>' +
     '</tr>';
@@ -1189,11 +1224,19 @@ function render() {
 
             r.load_number,
 
+            r.next_load_number,
+
             r.broker_name,
+
+            r.next_broker_name,
 
             r.current_location_text,
 
-            r.destination
+            r.destination,
+
+            r.next_origin,
+
+            r.next_destination
 
           ]
           .filter(Boolean)
@@ -1305,7 +1348,7 @@ function render() {
 
       '<tr>' +
 
-        '<td colspan="10" class="msg">' +
+        '<td colspan="11" class="msg">' +
 
           'No trucks match.' +
 
@@ -1482,6 +1525,54 @@ function render() {
 
           '</td>' +
 
+
+
+          /* Next Load */
+
+          '<td>' +
+
+            (
+              r.next_load_id
+
+                ? '<div class="next-load-card">' +
+
+                    '<button class="next-load-link" type="button" ' +
+                      'data-next-load="' +
+                      esc(r.next_load_id) +
+                    '">' +
+                      esc(r.next_load_number || 'Open next load') +
+                    '</button>' +
+
+                    '<div class="next-load-meta">' +
+
+                      esc(pretty(r.next_load_status || 'booked')) +
+
+                      (
+                        r.next_origin || r.next_destination
+                          ? '<br>' +
+                            esc(r.next_origin || 'Origin TBD') +
+                            ' → ' +
+                            esc(r.next_destination || 'Destination TBD')
+                          : ''
+                      ) +
+
+                      (
+                        r.next_permits_total != null
+                          ? '<br>Permits ' +
+                            esc(r.next_permits_issued || 0) +
+                            '/' +
+                            esc(r.next_permits_total || 0)
+                          : ''
+                      ) +
+
+                    '</div>' +
+
+                  '</div>'
+
+                : '<span class="next-load-none">—</span>'
+            ) +
+
+          '</td>' +
 
 
           /* Status */
@@ -1723,6 +1814,23 @@ $('body')
   .addEventListener(
     'click',
     e => {
+
+      const nextButton =
+        e.target.closest(
+          '[data-next-load]'
+        );
+
+      if (nextButton) {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        location.href =
+          'workspace.html?id=' +
+          nextButton.dataset.nextLoad;
+
+        return;
+      }
 
 
       const tr =
