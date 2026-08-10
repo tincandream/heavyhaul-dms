@@ -139,6 +139,19 @@ function opportunityNotes(item){
     item.delivery_hours ? `Delivery hours / appointment: ${item.delivery_hours}` : ''
   ].filter(Boolean).join('\n');
 }
+
+function appendRouteNote(text){
+  const note=String(text||'').trim();
+  if(!note)return;
+
+  const box=$('routeNotes');
+  const current=String(box.value||'').trim();
+
+  box.value=current
+    ? `${current}\n\n${note}`
+    : note;
+}
+
 function iso(v){return v?new Date(v).toISOString():null;}
 function arrComma(v){return String(v||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);}
 function arrLines(v){return String(v||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);}
