@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route Planning — Heavy Haul Command</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+<style>
+:root{
+  --rp-ink:var(--hh-ink,#3C3A4B);--rp-blue:var(--hh-blue,#7FA5B5);--rp-blue-dark:var(--hh-blue-dark,#668C9D);
+  --rp-blue-soft:var(--hh-blue-soft,#EAF3F6);--rp-pink:var(--hh-pink,#D86A8E);--rp-pink-soft:var(--hh-pink-soft,#F8E5EC);
+  --rp-lime:var(--hh-lime,#B8C34A);--rp-lime-soft:var(--hh-lime-soft,#F1F4D8);--rp-line:#D9DEE1;--rp-muted:#747B82;
+}
+*{box-sizing:border-box} body{margin:0;color:var(--rp-ink);background:#F7F7F5} main{width:min(1450px,100%);margin:0 auto 70px;padding:28px 24px 70px}
+.page-intro{margin-bottom:20px}.page-intro h1{margin:0;font-family:"Cinzel",Georgia,serif;font-size:30px;font-weight:600;letter-spacing:1px}.page-intro p{margin:5px 0 0;color:var(--rp-blue-dark);font-family:"Cormorant Garamond",Georgia,serif;font-size:19px;font-style:italic}
+.route-tabs{display:flex;gap:28px;border-bottom:1px solid var(--rp-line);margin-bottom:22px}.route-tabs button{padding:0 0 10px;min-height:42px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--rp-ink);font-family:"Oswald",sans-serif;font-size:13px;letter-spacing:.7px;cursor:pointer}.route-tabs button.on{color:var(--rp-blue-dark);border-bottom-color:var(--rp-blue)}
+.panel{display:none}.panel.on{display:block}.card{background:#fff;border:1px solid var(--rp-line);padding:18px;margin-bottom:15px}.card h2{margin:0 0 4px;font-family:"Oswald",sans-serif;font-size:17px;font-weight:500}.hint{margin:0 0 14px;color:var(--rp-muted);font-size:12px;line-height:1.5}
+.queue-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}.queue-toolbar input,.queue-toolbar select{max-width:260px}.queue-toggle{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--rp-muted);white-space:nowrap}.queue-toggle input{width:auto}.queue-list{display:grid;gap:10px}.queue-item{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr) auto;gap:14px;align-items:center;padding:13px 14px;border:1px solid var(--rp-line);background:#FBFCFC}.queue-item.removed{opacity:.72;background:#F3F3F1}.queue-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.queue-title{font-family:"Oswald",sans-serif;font-size:14px}.queue-meta{margin-top:4px;color:var(--rp-muted);font-size:11.5px;line-height:1.45}.status{display:inline-flex;padding:4px 7px;font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.35px;text-transform:uppercase;background:var(--rp-blue-soft);color:var(--rp-blue-dark)}.status.ready{background:var(--rp-lime-soft);color:#606B24}.status.returned{background:var(--rp-pink-soft);color:#8E3E58}.missing{margin-top:5px;color:#8E3E58;font-size:10.5px}.empty{padding:22px;border:1px dashed var(--rp-line);color:var(--rp-muted);text-align:center}
+.workspace{display:none}.workspace.show{display:block}.workspace-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}.workspace-head h2{margin:0;font-family:"Oswald",sans-serif;font-size:19px}.crumb{font-size:11px;color:var(--rp-muted);margin-top:3px}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);gap:16px;align-items:start}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}.field label{display:block;margin-bottom:4px;color:#626970;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.25px}.field input,.field select,.field textarea,.queue-toolbar input,.queue-toolbar select{width:100%;padding:9px 10px;border:1px solid #BEC8CD;background:#fff;color:var(--rp-ink);font:inherit;border-radius:0}.field textarea{min-height:82px;resize:vertical}.small{font-size:10.5px;color:var(--rp-muted);line-height:1.45;margin-top:5px}
+.source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.source-item{padding:10px;border:1px solid var(--rp-line);background:#FBFCFC}.source-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--rp-muted)}.source-value{margin-top:3px;font-size:12px;line-height:1.45}.source-actions{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button.action,a.action{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 12px;border:1px solid var(--rp-blue);background:var(--rp-blue);color:#fff;font-family:"Oswald",sans-serif;font-size:11.5px;letter-spacing:.35px;text-decoration:none;cursor:pointer}button.secondary,a.secondary{background:#fff;color:var(--rp-blue-dark);border-color:var(--rp-line)}button.danger{background:#fff;color:#8E3E58;border-color:#E3BBC6}button:disabled{opacity:.55;cursor:not-allowed}
+.notice{display:none;margin-top:10px;padding:10px 12px;font-size:11.5px}.notice.show{display:block}.notice.ok{background:var(--rp-lime-soft);color:#5D6723}.notice.err{background:var(--rp-pink-soft);color:#8E3E58}.route-preview{padding:13px;background:var(--rp-blue-soft);border-left:4px solid var(--rp-blue);font-size:12px;line-height:1.55}.route-preview strong{display:block;font-family:"Oswald",sans-serif;margin-bottom:3px}.warning{margin-top:10px;padding:10px 12px;background:var(--rp-pink-soft);border-left:4px solid var(--rp-pink);color:#7D4A5B;font-size:11px;line-height:1.45}
+.fleet-line{font-size:12px;line-height:1.55}.fleet-line strong{font-family:"Oswald",sans-serif;font-weight:500}.divider{height:1px;background:var(--rp-line);margin:13px 0}.checkbox-row{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;line-height:1.4}.checkbox-row input{margin-top:2px}
+.golden-list{display:grid;gap:10px}.golden{padding:14px;border:1px solid var(--rp-line);border-left:4px solid var(--rp-lime);background:#fff}.golden h3{margin:0;font-family:"Oswald",sans-serif;font-size:15px}.golden-meta{margin-top:5px;color:var(--rp-muted);font-size:11px;line-height:1.5}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.queue-item{grid-template-columns:1fr}.source-grid,.grid{grid-template-columns:1fr}.full{grid-column:auto}}@media(max-width:600px){main{padding:20px 13px 50px}}
+</style>
+</head>
+<body>
+<header></header>
+<main>
+<section class="page-intro"><h1>ROUTE PLANNING</h1><p>Keep the load flexible. Build the route, save progress, and hand the identified states into State Rules.</p></section>
+<nav class="route-tabs"><button type="button" class="on" data-panel="planPanel">Plan Route</button><button type="button" data-panel="goldenPanel">Golden Routes</button></nav>
+
+<section class="panel on" id="planPanel">
+  <div class="card">
+    <h2>Route Planning Queue</h2>
+    <p class="hint">New, Reviewing, Contacted, Quoted, Negotiating and Booked loads can remain available for route work. Removing a load from this queue does not delete the broker load or its saved route plan.</p>
+    <div class="queue-toolbar">
+      <input id="queueSearch" type="search" placeholder="Search load, broker, city, carrier...">
+      <select id="queueStatus"><option value="">All route statuses</option><option value="not_started">Not Started</option><option value="in_progress">In Progress</option><option value="ready_for_state_review">Ready for State Review</option><option value="returned_for_revision">Returned for Revision</option></select>
+      <label class="queue-toggle" for="showRemoved"><input id="showRemoved" type="checkbox"> Show removed</label>
+      <button class="action secondary" id="refreshQueue" type="button">Refresh Queue</button>
+    </div>
+    <div id="queueList" class="queue-list"><div class="empty">Loading route queue…</div></div>
+  </div>
+
+  <section class="workspace" id="workspace">
+    <div class="card">
+      <div class="workspace-head">
+        <div><h2 id="workspaceTitle">Route Workspace</h2><div class="crumb" id="workspaceMeta"></div></div>
+        <div class="actions" style="margin-top:0"><button class="action secondary" id="closeWorkspace" type="button">Back to Queue</button><a class="action secondary" id="openLoadRecord" href="newload.html">Open Load Record ↗</a></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="card">
+          <h2>Fleet Assignment</h2>
+          <p class="hint">This is the load's shared Fleet assignment. Changes here update the same carrier, driver, truck and trailer used elsewhere.</p>
+          <div class="grid">
+            <div class="field"><label for="fleetCarrier">Carrier</label><select id="fleetCarrier"></select></div>
+            <div class="field"><label for="fleetDriver">Driver</label><select id="fleetDriver"></select></div>
+            <div class="field"><label for="fleetTractor">Truck / Tractor</label><select id="fleetTractor"></select></div>
+            <div class="field"><label for="fleetTrailer">Trailer</label><select id="fleetTrailer"></select></div>
+          </div>
+          <div class="actions"><button class="action" id="saveFleet" type="button">Save Fleet Assignment</button></div>
+          <div class="notice" id="fleetNotice"></div>
+        </div>
+
+        <div class="card">
+          <h2>Available from Broker / Load Record</h2>
+          <p class="hint">These remain source data. Add only the items that are useful to the route plan; the original load record is not overwritten.</p>
+          <div class="source-grid" id="sourceGrid"></div>
+        </div>
+
+        <div class="card">
+          <h2>Route Plan</h2>
+          <div class="grid">
+            <div class="field"><label for="routeName">Route Name</label><input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN"></div>
+            <div class="field"><label for="freightType">Freight Type</label><select id="freightType"><option value="heavy_haul">Heavy Haul / Oversize</option><option value="reefer">Reefer</option><option value="dry_van">Dry Van</option><option value="flatbed">Flatbed</option><option value="step_deck">Step Deck</option><option value="specialized">Specialized</option><option value="other">Other</option></select></div>
+            <div class="field"><label for="equipmentType">Equipment / Trailer</label><input id="equipmentType"></div>
+            <div class="field"><label for="loadedMiles">Loaded Miles</label><input id="loadedMiles" type="number" min="0"></div>
+            <div class="field"><label for="origin">Origin</label><input id="origin"></div>
+            <div class="field"><label for="destination">Destination</label><input id="destination"></div>
+            <div class="field full"><label for="states">States Traveled</label><input id="states" placeholder="AR, TN"><div class="small">Enter states in travel order. These are passed directly into the State Rules workflow when the route is marked ready.</div></div>
+            <div class="field full"><label for="waypoints">Waypoints / Shaping Points</label><textarea id="waypoints"></textarea><div class="small">Add only intermediate locations the truck must pass through to shape the planned route. Later, State Rules may add required bridges, crossings, weigh/check points, restricted roads, permit-directed points or other state-specific locations back into this route.</div></div>
+            <div class="field"><label for="pickupAt">Pickup</label><input id="pickupAt" type="datetime-local"></div>
+            <div class="field"><label for="deliveryAt">Delivery</label><input id="deliveryAt" type="datetime-local"></div>
+            <div class="field full"><label for="routeNotes">Route Notes</label><textarea id="routeNotes" placeholder="Dispatcher route notes..."></textarea></div>
+            <div class="field"><label for="parkingStaging">Parking / Staging</label><textarea id="parkingStaging"></textarea></div>
+            <div class="field"><label for="fuelService">Fuel / Service</label><textarea id="fuelService"></textarea></div>
+          </div>
+          <div class="actions"><button class="action" id="saveProgress" type="button">Save Progress</button><button class="action" id="readyStateRules" type="button">Save + Ready for State Rules</button><button class="action secondary" id="returnRevision" type="button">Mark Returned for Revision</button></div>
+          <div class="notice" id="planNotice"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card"><h2>Route Preview</h2><div class="route-preview" id="routePreview"><strong>No route yet</strong>Open a load or enter an origin and destination.</div><div class="warning">Heavy haul / oversize: Google Maps is navigation reference only. State rules, permit routing and current restrictions remain controlling.</div><div class="actions"><button class="action" id="openMaps" type="button">Open in Google Maps</button><button class="action secondary" id="copyLink" type="button">Copy Link</button></div></div>
+        <div class="card"><h2>Workflow Handoff</h2><p class="hint">Route Planning owns the proposed route. The next workspace enriches it with state-specific driver intelligence.</p><div id="handoffSummary" class="fleet-line">Save the route to see handoff status.</div><div class="actions"><a class="action secondary" id="openStateRules" href="states.html">Open State Rules ↗</a></div></div>
+      </aside>
+    </div>
+  </section>
+</section>
+
+<section class="panel" id="goldenPanel">
+  <div class="card"><h2>Golden Routes</h2><p class="hint">Use previously useful routes as planning references. They never replace current State Rules, permits or permit-approved routing.</p><div class="queue-toolbar"><input id="goldenSearch" type="search" placeholder="Search route, city, highway..."><button class="action secondary" id="refreshGolden" type="button">Refresh</button></div></div>
+  <div id="goldenList" class="golden-list"></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+<script>
+const SUPABASE_URL='https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+const $=id=>document.getElementById(id);
+let db=null,tenant=null,currentLoad=null,currentPlan=null;
+let loads=[],opportunities=[],plans=[],facilities={},brokers={},carriers={},drivers={},equipment={},goldenRoutes=[];
+const TERMINAL_LOAD_STATUSES=['passed','rejected','expired','cancelled','tonu','paid','invoiced'];
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function pretty(v){return String(v||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function money(v){if(v==null||v==='')return '—';const n=Number(v);return Number.isFinite(n)?'$'+n.toLocaleString(undefined,{maximumFractionDigits:2}):'—';}
+function fmtIn(v){if(v==null||v==='')return '—';const n=Number(v);if(!Number.isFinite(n))return '—';return Math.floor(n/12)+"' "+Math.round(n%12)+'"';}
+function dtLocal(v){if(!v)return '';const d=new Date(v);if(Number.isNaN(d.getTime()))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;}
+function iso(v){return v?new Date(v).toISOString():null;}
+function arrComma(v){return String(v||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean);}
+function arrLines(v){return String(v||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);}
+function facilityLabel(id){const f=facilities[id];return f?[f.name,f.address_line1,f.city,f.state].filter(Boolean).join(', '):'';}
+function brokerName(id){const b=brokers[id];return b?(b.name||b.legal_name||b.company_name||'Broker'):'';}
+function carrierName(id){const c=carriers[id];return c?(c.dba_name||c.legal_name||'Carrier'):'';}
+function driverName(id){const d=drivers[id];return d?[d.first_name,d.last_name].filter(Boolean).join(' '):'';}
+function unitName(id){const e=equipment[id];return e?`${e.unit_number||'Unit'}${e.equipment_type?' · '+pretty(e.equipment_type):''}`:'';}
+function setNotice(id,text,error=false){const el=$(id);el.textContent=text||'';el.className='notice'+(text?' show ':'')+(error?'err':'ok');}
+function routeUrl(){const o=$('origin').value.trim(),d=$('destination').value.trim();if(!o||!d)return '';const p=new URLSearchParams({api:'1',origin:o,destination:d,travelmode:'driving'});const w=arrLines($('waypoints').value);if(w.length)p.set('waypoints',w.join('|'));return 'https://www.google.com/maps/dir/?'+p.toString();}
+function drawPreview(){const o=$('origin').value.trim(),d=$('destination').value.trim(),w=arrLines($('waypoints').value);$('routePreview').innerHTML=o&&d?`<strong>${esc(o)} → ${esc(d)}</strong>${esc(pretty($('freightType').value))}${w.length?'<br>Via: '+w.map(esc).join(' → '):''}`:'<strong>No route yet</strong>Open a load or enter an origin and destination.';}
+function planFor(loadId){return plans.find(p=>p.load_id===loadId)||null;}
+function planForOpportunity(opportunityId){return plans.find(p=>p.opportunity_id===opportunityId)||null;}
+function planForItem(item){return item._kind==='opportunity'?planForOpportunity(item.id):planFor(item.id);}
+function itemKey(item){return item._kind==='opportunity'?'opp:'+item.id:'load:'+item.id;}
+function queueStatus(item){const p=planForItem(item);return p?(p.workflow_status||'in_progress'):'not_started';}
+function statusLabel(s){return s==='not_started'?'Not Started':s==='ready_for_state_review'?'Ready for State Review':s==='returned_for_revision'?'Returned for Revision':'In Progress';}
+function readinessMissing(item){
+  const m=[];
+  if(item._kind==='opportunity'){
+    if(!item.origin_city||!item.origin_state)m.push('origin');
+    if(!item.dest_city||!item.dest_state)m.push('destination');
+    if(item.width_ft==null||item.height_ft==null||item.weight_lbs==null)m.push('loaded dimensions/weight');
+    return m;
+  }
+  if(!item.origin_facility_id)m.push('origin');
+  if(!item.dest_facility_id)m.push('destination');
+  if(!item.carrier_id)m.push('carrier');
+  if(!item.driver_id)m.push('driver');
+  if(!item.tractor_id)m.push('truck');
+  if(!item.trailer_id)m.push('trailer');
+  if(item.width_in==null||item.height_in==null||item.weight_lb==null)m.push('loaded dimensions/weight');
+  return m;
+}
+function renderQueue(){
+  const q=$('queueSearch').value.trim().toLowerCase();
+  const filter=$('queueStatus').value;
+  const showRemoved=$('showRemoved').checked;
+
+  const loadItems=loads
+    .filter(l=>!TERMINAL_LOAD_STATUSES.includes(String(l.status||'').toLowerCase()))
+    .map(l=>({...l,_kind:'load'}));
+
+  const opportunityItems=opportunities
+    .filter(o=>!['passed','rejected','expired','lost','declined'].includes(String(o.status||'').toLowerCase()))
+    .filter(o=>!o.load_id)
+    .map(o=>({...o,_kind:'opportunity'}));
+
+  const list=[...opportunityItems,...loadItems]
+    .filter(item=>showRemoved ? !!item.route_planning_hidden : !item.route_planning_hidden)
+    .filter(item=>!filter||queueStatus(item)===filter)
+    .filter(item=>{
+      if(!q)return true;
+
+      if(item._kind==='opportunity'){
+        return [
+          item.external_ref,item.broker_name,item.commodity,item.equipment_needed,
+          item.origin_city,item.origin_state,item.dest_city,item.dest_state,item.status
+        ].join(' ').toLowerCase().includes(q);
+      }
+
+      return [
+        item.load_number,item.broker_load_number,item.commodity,
+        brokerName(item.broker_id),carrierName(item.carrier_id),driverName(item.driver_id),
+        facilityLabel(item.origin_facility_id),facilityLabel(item.dest_facility_id),item.status
+      ].join(' ').toLowerCase().includes(q);
+    });
+
+  if(!list.length){
+    $('queueList').innerHTML=`<div class="empty">${showRemoved?'No removed items match this filter.':'No active Route Planning items match this queue filter.'}</div>`;
+    return;
+  }
+
+  $('queueList').innerHTML=list.map(item=>{
+    const s=queueStatus(item),p=planForItem(item),missing=readinessMissing(item),removed=!!item.route_planning_hidden;
+    const isOpp=item._kind==='opportunity';
+
+    const title=isOpp
+      ? (item.external_ref||item.broker_name||'Broker Opportunity')
+      : (item.load_number||'Load');
+
+    const broker=isOpp
+      ? (item.broker_name||'Broker opportunity')
+      : (brokerName(item.broker_id)||'Broker not assigned');
+
+    const origin=isOpp
+      ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+      : (facilityLabel(item.origin_facility_id)||'Origin missing');
+
+    const destination=isOpp
+      ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+      : (facilityLabel(item.dest_facility_id)||'Destination missing');
+
+    const fleet=isOpp
+      ? 'Fleet can be assigned after booking'
+      : `${carrierName(item.carrier_id)||'Carrier unassigned'} · ${driverName(item.driver_id)||'Driver unassigned'} · ${unitName(item.trailer_id)||'Trailer unassigned'}`;
+
+    return `<article class="queue-item ${removed?'removed':''}" data-key="${esc(itemKey(item))}">
+      <div>
+        <div class="queue-title">${esc(title)}</div>
+        <div class="queue-meta">${esc(broker)} · ${esc(pretty(item.status))} · ${isOpp?'Broker opportunity':'Shared load'}<br>${esc(origin||'Origin missing')} → ${esc(destination||'Destination missing')}</div>
+        ${missing.length?`<div class="missing">Needs attention: ${esc(missing.join(', '))}</div>`:''}
+        ${removed?'<div class="queue-meta"><strong>Removed from Route Planning queue</strong></div>':''}
+      </div>
+      <div>
+        <span class="status ${s==='ready_for_state_review'?'ready':s==='returned_for_revision'?'returned':''}">${statusLabel(s)}</span>
+        <div class="queue-meta">${esc(fleet)}</div>
+      </div>
+      <div class="queue-actions">
+        ${removed
+          ? `<button class="action" type="button" data-restore-key="${esc(itemKey(item))}">Restore to Queue</button>`
+          : `<button class="action" type="button" data-open-key="${esc(itemKey(item))}">${p?'Continue Planning':'Plan Route'}</button><button class="action secondary" type="button" data-remove-key="${esc(itemKey(item))}">Remove from Queue</button>`}
+        ${p?`<button class="action danger" type="button" data-delete-key="${esc(itemKey(item))}">Delete Route Plan</button>`:''}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+async function setQueueHidden(item,hidden){
+  const table=item._kind==='opportunity'?'load_opportunities':'loads';
+
+  const r=await db.from(table)
+    .update({route_planning_hidden:hidden})
+    .eq('tenant_id',tenant)
+    .eq('id',item.id);
+
+  if(r.error){
+    alert('Could not update Route Planning queue: '+r.error.message);
+    return;
+  }
+
+  if(item._kind==='opportunity'){
+    const live=opportunities.find(x=>x.id===item.id);
+    if(live)live.route_planning_hidden=hidden;
+  }else{
+    const live=loads.find(x=>x.id===item.id);
+    if(live)live.route_planning_hidden=hidden;
+  }
+
+  if(hidden&&currentLoad&&itemKey(currentLoad)===itemKey(item)){
+    $('workspace').classList.remove('show');
+    currentLoad=null;
+    currentPlan=null;
+  }
+
+  renderQueue();
+}
+
+async function deleteRoutePlan(item){
+  const plan=planForItem(item);
+  if(!plan)return;
+
+  const label=item._kind==='opportunity'
+    ? (item.external_ref||item.broker_name||'this broker opportunity')
+    : (item.load_number||'this load');
+
+  if(!confirm(`Delete the saved Route Plan for ${label}?\n\nThe broker opportunity/load itself will NOT be deleted.`))return;
+
+  const r=await db.from('route_plans')
+    .delete()
+    .eq('tenant_id',tenant)
+    .eq('id',plan.id);
+
+  if(r.error){
+    alert('Could not delete Route Plan: '+r.error.message);
+    return;
+  }
+
+  plans=plans.filter(x=>x.id!==plan.id);
+
+  if(currentPlan?.id===plan.id){
+    currentPlan=null;
+    if(currentLoad&&itemKey(currentLoad)===itemKey(item))fillPlan(currentLoad,null);
+  }
+
+  renderQueue();
+  updateHandoff();
+}
+
+function refreshFleetOptions(selected={}){const carrierId=$('fleetCarrier').value||selected.carrier_id||'';const ds=Object.values(drivers).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);const es=Object.values(equipment).filter(x=>!carrierId||!x.carrier_id||x.carrier_id===carrierId);$('fleetDriver').innerHTML='<option value="">— Unassigned —</option>'+ds.map(x=>`<option value="${x.id}">${esc(driverName(x.id)||'Driver')}</option>`).join('');const isTrailer=x=>['rgn','lowboy','flatbed','step_deck','step deck','reefer','dry_van','dry van','double_drop','double drop','trailer'].some(k=>String(x.equipment_type||'').toLowerCase().includes(k));$('fleetTractor').innerHTML='<option value="">— Unassigned —</option>'+es.filter(x=>!isTrailer(x)).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');$('fleetTrailer').innerHTML='<option value="">— Unassigned —</option>'+es.filter(isTrailer).map(x=>`<option value="${x.id}">${esc(unitName(x.id))}</option>`).join('');if(selected.driver_id)$('fleetDriver').value=selected.driver_id;if(selected.tractor_id)$('fleetTractor').value=selected.tractor_id;if(selected.trailer_id)$('fleetTrailer').value=selected.trailer_id;}
+function sourceItems(item){
+  if(item._kind==='opportunity'){
+    const origin=[item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ');
+    const destination=[item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ');
+    const dims=`${item.length_ft??'—'} ft L × ${item.width_ft??'—'} ft W × ${item.height_ft??'—'} ft H · ${item.weight_lbs?Number(item.weight_lbs).toLocaleString()+' lb':'weight missing'}`;
+
+    return [
+      {key:'route',label:'Origin / Destination',value:`${origin||'—'} → ${destination||'—'}`},
+      {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_date||'Pickup TBD'} · ${item.delivery_date||'Delivery TBD'}`},
+      {key:'commodity',label:'Commodity',value:item.commodity||'—'},
+      {key:'dimensions',label:'Loaded Configuration',value:dims},
+      {key:'broker',label:'Broker / Rate',value:`${item.broker_name||'—'} · Posted ${money(item.posted_rate)} · Quoted ${money(item.quoted_rate)}`},
+      {key:'notes',label:'Broker / Load Notes',value:item.notes||'No notes saved.'}
+    ];
+  }
+
+  const dims=`${fmtIn(item.length_in)} L × ${fmtIn(item.width_in)} W × ${fmtIn(item.height_in)} H · ${item.weight_lb?Number(item.weight_lb).toLocaleString()+' lb':'weight missing'}`;
+  return [
+    {key:'route',label:'Origin / Destination',value:`${facilityLabel(item.origin_facility_id)||'—'} → ${facilityLabel(item.dest_facility_id)||'—'}`},
+    {key:'appointment',label:'Pickup / Delivery',value:`${item.pickup_appt_start?new Date(item.pickup_appt_start).toLocaleString():'Pickup TBD'} · ${item.delivery_appt_start?new Date(item.delivery_appt_start).toLocaleString():'Delivery TBD'}`},
+    {key:'commodity',label:'Commodity',value:item.commodity||'—'},
+    {key:'dimensions',label:'Loaded Configuration',value:dims},
+    {key:'broker',label:'Broker / Rate',value:`${brokerName(item.broker_id)||'—'} · ${money(item.linehaul_rate)}${item.fuel_surcharge?` + ${money(item.fuel_surcharge)} FSC`:''}`},
+    {key:'notes',label:'Broker / Load Notes',value:item.notes||'No notes saved.'}
+  ];
+}
+function renderSource(load){$('sourceGrid').innerHTML=sourceItems(load).map(x=>`<div class="source-item"><div class="source-label">${esc(x.label)}</div><div class="source-value">${esc(x.value)}</div><div class="source-actions"><button type="button" class="action secondary" data-add-source="${x.key}">Add to Route Plan</button></div></div>`).join('');}
+function addSourceToRoute(key){
+  if(!currentLoad)return;
+  const l=currentLoad;
+  const isOpp=l._kind==='opportunity';
+
+  if(key==='route'){
+    if(isOpp){
+      $('origin').value=[l.pickup_facility_name,l.pickup_address,l.origin_city,l.origin_state,l.pickup_zip].filter(Boolean).join(', ');
+      $('destination').value=[l.delivery_facility_name,l.delivery_address,l.dest_city,l.dest_state,l.delivery_zip].filter(Boolean).join(', ');
+    }else{
+      $('origin').value=facilityLabel(l.origin_facility_id);
+      $('destination').value=facilityLabel(l.dest_facility_id);
+    }
+  }
+
+  if(key==='appointment'){
+    if(isOpp){
+      $('pickupAt').value=l.pickup_date||'';
+      $('deliveryAt').value=l.delivery_date||'';
+    }else{
+      $('pickupAt').value=dtLocal(l.pickup_appt_start);
+      $('deliveryAt').value=dtLocal(l.delivery_appt_start);
+    }
+  }
+
+  if(key==='commodity')appendRouteNote(`Commodity: ${l.commodity||'—'}`);
+
+  if(key==='dimensions'){
+    if(isOpp){
+      appendRouteNote(`Loaded configuration: ${l.length_ft??'—'} ft L × ${l.width_ft??'—'} ft W × ${l.height_ft??'—'} ft H · ${l.weight_lbs?Number(l.weight_lbs).toLocaleString()+' lb':'weight missing'}`);
+    }else{
+      appendRouteNote(`Loaded configuration: ${fmtIn(l.length_in)} L × ${fmtIn(l.width_in)} W × ${fmtIn(l.height_in)} H · ${l.weight_lb?Number(l.weight_lb).toLocaleString()+' lb':'weight missing'}`);
+    }
+  }
+
+  if(key==='broker'){
+    appendRouteNote(isOpp
+      ? `Broker reference: ${l.broker_name||'—'} · Posted ${money(l.posted_rate)} · Quoted ${money(l.quoted_rate)}`
+      : `Broker reference: ${brokerName(l.broker_id)||'—'} · ${money(l.linehaul_rate)}`
+    );
+  }
+
+  if(key==='notes'&&l.notes)appendRouteNote(`Broker/load notes: ${l.notes}`);
+
+  drawPreview();
+  updateHandoff();
+}
+function fillPlan(item,plan){
+  const isOpp=item._kind==='opportunity';
+
+  const origin=isOpp
+    ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+    : facilityLabel(item.origin_facility_id);
+
+  const destination=isOpp
+    ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+    : facilityLabel(item.dest_facility_id);
+
+  $('routeName').value=plan?.route_name||'';
+  $('freightType').value=plan?.freight_type||'heavy_haul';
+  $('equipmentType').value=plan?.equipment_type||(isOpp?(item.equipment_needed||''):unitName(item.trailer_id));
+  $('loadedMiles').value=plan?.loaded_miles??(isOpp?(item.miles??''):(item.total_miles??''));
+  $('origin').value=plan?.origin||origin;
+  $('destination').value=plan?.destination||destination;
+  $('states').value=(plan?.states||[]).join(', ');
+  $('waypoints').value=(plan?.waypoints||[]).join('\n');
+  $('pickupAt').value=dtLocal(plan?.pickup_at)||(isOpp?(item.pickup_date||''):dtLocal(item.pickup_appt_start));
+  $('deliveryAt').value=dtLocal(plan?.delivery_at)||(isOpp?(item.delivery_date||''):dtLocal(item.delivery_appt_start));
+  $('routeNotes').value=plan?.route_notes||'';
+  $('parkingStaging').value=plan?.parking_staging||'';
+  $('fuelService').value=plan?.fuel_service_notes||'';
+
+  drawPreview();
+  updateHandoff();
+}
+function updateHandoff(){if(!currentLoad){$('handoffSummary').textContent='Save the route to see handoff status.';return;}const states=arrComma($('states').value),s=currentPlan?.workflow_status||'not_started';$('handoffSummary').innerHTML=`<strong>${esc(statusLabel(s))}</strong><br>${states.length?'States identified: '+states.map(esc).join(' → '):'States not identified yet.'}${s==='ready_for_state_review'?'<br>State Rules can now pull this route and its state list.':''}`;$('openStateRules').href=currentLoad._kind==='opportunity'?`states.html?opportunity=${encodeURIComponent(currentLoad.id)}`:`states.html?load=${encodeURIComponent(currentLoad.id)}`;}
+async function openWorkspace(item){
+  currentLoad=item;
+  if(!currentLoad)return;
+
+  currentPlan=planForItem(item);
+
+  $('workspace').classList.add('show');
+
+  const isOpp=item._kind==='opportunity';
+  const title=isOpp?(item.external_ref||item.broker_name||'Broker Opportunity'):(item.load_number||'Load');
+  const origin=isOpp
+    ? [item.pickup_facility_name,item.pickup_address,item.origin_city,item.origin_state,item.pickup_zip].filter(Boolean).join(', ')
+    : (facilityLabel(item.origin_facility_id)||'Origin');
+  const destination=isOpp
+    ? [item.delivery_facility_name,item.delivery_address,item.dest_city,item.dest_state,item.delivery_zip].filter(Boolean).join(', ')
+    : (facilityLabel(item.dest_facility_id)||'Destination');
+
+  $('workspaceTitle').textContent=`${title} — Route Workspace`;
+  $('workspaceMeta').textContent=`${isOpp?(item.broker_name||'Broker opportunity'):(brokerName(item.broker_id)||'Broker')} · ${origin} → ${destination} · Status: ${pretty(item.status)}`;
+  $('openLoadRecord').href=isOpp?`opportunities.html?opportunity=${encodeURIComponent(item.id)}`:`newload.html?load=${encodeURIComponent(item.id)}`;
+
+  if(isOpp){
+    $('fleetCarrier').value='';
+    refreshFleetOptions({});
+  }else{
+    $('fleetCarrier').value=item.carrier_id||'';
+    refreshFleetOptions(item);
+  }
+
+  renderSource(item);
+  fillPlan(item,currentPlan);
+  $('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveFleet(){
+  if(!currentLoad)return;
+
+  if(currentLoad._kind==='opportunity'){
+    setNotice('fleetNotice','This is still a broker opportunity. Route planning can continue now; fleet assignment will save once it is booked into a load.',true);
+    return;
+  }
+
+  const patch={
+    carrier_id:$('fleetCarrier').value||null,
+    driver_id:$('fleetDriver').value||null,
+    tractor_id:$('fleetTractor').value||null,
+    trailer_id:$('fleetTrailer').value||null
+  };
+
+  const r=await db.from('loads').update(patch)
+    .eq('tenant_id',tenant)
+    .eq('id',currentLoad.id);
+
+  if(r.error){
+    setNotice('fleetNotice',r.error.message,true);
+    return;
+  }
+
+  Object.assign(currentLoad,patch);
+  setNotice('fleetNotice','Fleet assignment saved to the shared load record.');
+  renderQueue();
+}
+function planRecord(status){
+  const isOpp=currentLoad._kind==='opportunity';
+
+  return {
+    tenant_id:tenant,
+    load_id:isOpp?(currentLoad.load_id||null):currentLoad.id,
+    opportunity_id:isOpp?currentLoad.id:null,
+    route_name:$('routeName').value.trim()||null,
+    freight_type:$('freightType').value,
+    equipment_type:$('equipmentType').value.trim()||null,
+    origin:$('origin').value.trim(),
+    destination:$('destination').value.trim(),
+    states:arrComma($('states').value),
+    waypoints:arrLines($('waypoints').value),
+    loaded_miles:$('loadedMiles').value?Number($('loadedMiles').value):null,
+    pickup_at:iso($('pickupAt').value),
+    delivery_at:iso($('deliveryAt').value),
+    parking_staging:$('parkingStaging').value.trim()||null,
+    fuel_service_notes:$('fuelService').value.trim()||null,
+    route_notes:$('routeNotes').value.trim()||null,
+    google_maps_url:routeUrl()||null,
+    workflow_status:status
+  };
+}
+async function savePlan(status){if(!currentLoad){setNotice('planNotice','Open a load from the queue first.',true);return;}if(!$('origin').value.trim()||!$('destination').value.trim()){setNotice('planNotice','Origin and destination are required.',true);return;}if(status==='ready_for_state_review'&&!arrComma($('states').value).length){setNotice('planNotice','Identify the states traveled before handing the route to State Rules.',true);return;}const rec=planRecord(status);let r;if(currentPlan){r=await db.from('route_plans').update(rec).eq('tenant_id',tenant).eq('id',currentPlan.id).select('*').maybeSingle();}else{r=await db.from('route_plans').insert(rec).select('*').maybeSingle();}if(r.error){setNotice('planNotice',r.error.message,true);return;}currentPlan=r.data;if(!plans.some(p=>p.id===currentPlan.id))plans.push(currentPlan);else Object.assign(plans.find(p=>p.id===currentPlan.id),currentPlan);setNotice('planNotice',status==='ready_for_state_review'?'Route saved and queued for State Rules.':'Route progress saved.');renderQueue();updateHandoff();}
+async function loadData(){
+  const [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR]=await Promise.all([
+    db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),
+    db.from('load_opportunities').select('*').eq('tenant_id',tenant).order('first_seen_at',{ascending:false}).limit(300),
+    db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),
+    db.from('facilities').select('*').eq('tenant_id',tenant),
+    db.from('brokers').select('*').eq('tenant_id',tenant),
+    db.from('carriers').select('*').eq('tenant_id',tenant),
+    db.from('drivers').select('*').eq('tenant_id',tenant),
+    db.from('equipment').select('*').eq('tenant_id',tenant),
+    db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})
+  ]);
+
+  for(const x of [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR]){
+    if(x.error)console.warn(x.error.message);
+  }
+
+  loads=loadsR.data||[];
+  opportunities=oppsR.data||[];
+  plans=plansR.data||[];
+
+  (facR.data||[]).forEach(x=>facilities[x.id]=x);
+  (brokR.data||[]).forEach(x=>brokers[x.id]=x);
+  (carR.data||[]).forEach(x=>carriers[x.id]=x);
+  (drvR.data||[]).forEach(x=>drivers[x.id]=x);
+  (eqR.data||[]).forEach(x=>equipment[x.id]=x);
+  goldenRoutes=goldR.data||[];
+
+  // If an opportunity was later booked, connect its pre-booking route plan
+  // to the resulting load automatically.
+  for(const opp of opportunities){
+    if(!opp.load_id)continue;
+    const p=planForOpportunity(opp.id);
+    if(p&&!p.load_id){
+      const r=await db.from('route_plans')
+        .update({load_id:opp.load_id})
+        .eq('tenant_id',tenant)
+        .eq('id',p.id)
+        .select('*')
+        .maybeSingle();
+
+      if(!r.error&&r.data)Object.assign(p,r.data);
+    }
+  }
+
+  $('fleetCarrier').innerHTML='<option value="">— Unassigned —</option>'+
+    Object.values(carriers).map(x=>`<option value="${x.id}">${esc(carrierName(x.id))}</option>`).join('');
+
+  refreshFleetOptions();
+  renderQueue();
+  renderGolden();
+}
+function renderGolden(){const q=$('goldenSearch').value.trim().toLowerCase();const list=goldenRoutes.filter(g=>!q||[g.route_name,g.origin,g.destination,g.corridor,g.highways,g.equipment_type,...(g.states||[])].join(' ').toLowerCase().includes(q));$('goldenList').innerHTML=list.length?list.map(g=>`<article class="golden"><h3>${esc(g.route_name)}</h3><div class="golden-meta">${esc(g.origin)} → ${esc(g.destination)}<br>${esc(pretty(g.freight_type))}${g.equipment_type?' · '+esc(g.equipment_type):''}${g.states?.length?' · '+g.states.map(esc).join(' → '):''}<br>${g.highways?'Corridor: '+esc(g.highways):''}</div><div class="actions"><button class="action" type="button" data-use-golden="${g.id}">Use in Open Workspace</button><button class="action secondary" type="button" data-map-golden="${g.id}">Open Maps</button></div></article>`).join(''):'<div class="empty">No Golden Routes match.</div>';}
+function useGolden(id){if(!currentLoad){alert('Open a load from the Route Planning Queue first.');return;}const g=goldenRoutes.find(x=>x.id===id);if(!g)return;$('routeName').value=g.route_name||$('routeName').value;$('freightType').value=g.freight_type||$('freightType').value;$('equipmentType').value=g.equipment_type||$('equipmentType').value;$('origin').value=g.origin||$('origin').value;$('destination').value=g.destination||$('destination').value;$('states').value=(g.states||[]).join(', ');$('waypoints').value=(g.waypoints||[]).join('\n');$('parkingStaging').value=g.parking_staging||'';$('fuelService').value=g.fuel_service_notes||'';appendRouteNote(g.general_notes?`Golden Route reference: ${g.general_notes}`:'');document.querySelector('[data-panel="planPanel"]').click();$('workspace').classList.add('show');drawPreview();updateHandoff();}
+async function start(){
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+  const s=await db.auth.getSession();
+  if(!s.data.session){
+    location.href='index.html';
+    return;
+  }
+
+  if(typeof window.buildNav!=='function'){
+    console.error('Route Planning: buildNav is unavailable.');
+    return;
+  }
+
+  tenant=await window.buildNav(db,'Route Planning');
+  if(!tenant)return;
+
+  await loadData();
+
+  const params=new URLSearchParams(location.search);
+  const requestedLoad=params.get('load');
+  const requestedOpportunity=params.get('opportunity');
+
+  if(requestedOpportunity){
+    const o=opportunities.find(x=>x.id===requestedOpportunity);
+    if(o){o._kind='opportunity';openWorkspace(o);}
+  }else if(requestedLoad){
+    const l=loads.find(x=>x.id===requestedLoad);
+    if(l){l._kind='load';openWorkspace(l);}
+  }
+}
+$('queueSearch').addEventListener('input',renderQueue);
+$('queueStatus').addEventListener('change',renderQueue);
+$('showRemoved').addEventListener('change',renderQueue);
+$('refreshQueue').addEventListener('click',loadData);
+
+$('queueList').addEventListener('click',async e=>{
+  const open=e.target.closest('[data-open-key]');
+  const remove=e.target.closest('[data-remove-key]');
+  const restore=e.target.closest('[data-restore-key]');
+  const del=e.target.closest('[data-delete-key]');
+
+  const getItem=key=>{
+    const [kind,id]=String(key||'').split(':');
+    if(kind==='opp'){
+      const o=opportunities.find(x=>x.id===id);
+      if(o)o._kind='opportunity';
+      return o;
+    }
+    const l=loads.find(x=>x.id===id);
+    if(l)l._kind='load';
+    return l;
+  };
+
+  if(open){
+    const item=getItem(open.dataset.openKey);
+    if(item)openWorkspace(item);
+    return;
+  }
+
+  if(remove){
+    const item=getItem(remove.dataset.removeKey);
+    if(!item)return;
+    const label=item._kind==='opportunity'?(item.external_ref||item.broker_name||'this opportunity'):(item.load_number||'this load');
+    if(confirm(`Remove ${label} from the Route Planning queue?\n\nThe broker record and saved Route Plan will remain available.`)){
+      await setQueueHidden(item,true);
+    }
+    return;
+  }
+
+  if(restore){
+    const item=getItem(restore.dataset.restoreKey);
+    if(item)await setQueueHidden(item,false);
+    return;
+  }
+
+  if(del){
+    const item=getItem(del.dataset.deleteKey);
+    if(item)await deleteRoutePlan(item);
+  }
+});
+
+$('closeWorkspace').addEventListener('click',()=>{
+  $('workspace').classList.remove('show');
+  currentLoad=null;
+  currentPlan=null;
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+$('fleetCarrier').addEventListener('change',()=>refreshFleetOptions());
+$('saveFleet').addEventListener('click',saveFleet);
+
+$('sourceGrid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-add-source]');
+  if(b)addSourceToRoute(b.dataset.addSource);
+});
+
+['origin','destination','waypoints','freightType'].forEach(id=>{
+  $(id).addEventListener('input',()=>{drawPreview();updateHandoff();});
+  $(id).addEventListener('change',()=>{drawPreview();updateHandoff();});
+});
+
+$('saveProgress').addEventListener('click',()=>savePlan('in_progress'));
+$('readyStateRules').addEventListener('click',()=>savePlan('ready_for_state_review'));
+$('returnRevision').addEventListener('click',()=>savePlan('returned_for_revision'));
+
+$('openMaps').addEventListener('click',()=>{
+  const u=routeUrl();
+  if(u)window.open(u,'_blank','noopener');
+});
+
+$('copyLink').addEventListener('click',async()=>{
+  const u=routeUrl();
+  if(!u)return;
+  try{
+    await navigator.clipboard.writeText(u);
+    setNotice('planNotice','Route link copied.');
+  }catch(e){
+    setNotice('planNotice','Could not copy route link.',true);
+  }
+});
+
+$('goldenSearch').addEventListener('input',renderGolden);
+$('refreshGolden').addEventListener('click',loadData);
+
+$('goldenList').addEventListener('click',e=>{
+  const use=e.target.closest('[data-use-golden]');
+  const map=e.target.closest('[data-map-golden]');
+
+  if(use)useGolden(use.dataset.useGolden);
+
+  if(map){
+    const g=goldenRoutes.find(x=>x.id===map.dataset.mapGolden);
+    if(g)window.open(g.google_maps_url||'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(g.origin)+'&destination='+encodeURIComponent(g.destination),'_blank','noopener');
+  }
+});
+
+document.querySelectorAll('.route-tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.route-tabs button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+  $(btn.dataset.panel).classList.add('on');
+}));
+start();
+</script>
+</body>
+</html>
