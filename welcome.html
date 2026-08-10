@@ -2066,7 +2066,7 @@
                 ascending: false
               }
             )
-            .limit(12);
+            .limit(4);
 
         if (TENANT_ID) {
           query =
@@ -3123,7 +3123,7 @@
             )
             .eq('tenant_id', TENANT_ID)
             .order('created_at', { ascending: false })
-            .limit(60);
+            .limit(4);
 
         if (result.error) {
           panel.innerHTML =
