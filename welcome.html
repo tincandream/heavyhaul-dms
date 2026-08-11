@@ -1394,10 +1394,27 @@
        SHARED NAVIGATION
        ======================================================== -->
 
-  <script src="nav.js"></script>
+ <script src="nav.js?v=20260810-1"></script>
 
+<script>
+  const navDb =
+    window.supabase.createClient(
+      'https://zyhdatteglxozsgnjhrm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJ6eWhkYXR0ZWdseG96c2duamhybSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MjgxMzEwLCJleHAiOjIxMDA4NTczMTB9.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y'
+    );
 
-  <script>
+  if (
+    typeof window.buildNav ===
+    'function'
+  ) {
+    window.buildNav(
+      navDb,
+      'Welcome'
+    );
+  }
+</script>
+
+<script>
 
     // =========================================================
     // SUPABASE
