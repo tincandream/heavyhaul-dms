@@ -728,6 +728,112 @@ document.querySelectorAll('.tab').forEach(t => {
     $('p-' + t.dataset.p).classList.add('on');
   });
 });
+
+  /* ============================================================
+   TRAINING MODE — TEST DATA AUTO-FILL
+   Buttons appear only while protected Training Mode is active.
+   ============================================================ */
+
+const TT = {
+  carrier: {
+    c_legal: 'Delta Ridge Heavy Transport LLC',
+    c_dba:   'Delta Ridge Heavy Haul',
+    c_mc:    'MC-884213',
+    c_dot:   '3921745',
+    c_phone: '(901) 555-0142',
+    c_ah:    '(901) 555-0198',
+    c_email: 'dispatch@deltaridgeheavy.com',
+    c_addr:  '4820 Getwell Road',
+    c_city:  'Memphis',
+    c_state: 'TN',
+    c_zip:   '38118',
+    c_notes: 'Training test carrier. RGN and step deck. Southeast regional lanes.'
+  },
+  driver: {
+    d_first: 'Marcus',
+    d_last:  'Whitfield',
+    d_phone: '(901) 555-0367',
+    d_email: 'mwhitfield@deltaridgeheavy.com',
+    d_cdl:   'TN-4471903',
+    d_cdlst: 'TN',
+    d_end:   'T, N',
+    d_hire:  '2019-04-15',
+    d_notes: 'Training driver. 12 years heavy haul, oversize experienced.'
+  },
+  tractor: {
+    t_unit:  '407',
+    t_make:  'Peterbilt',
+    t_model: '389',
+    t_year:  '2021',
+    t_vin:   '1XPXD49X1MD745203',
+    t_plate: 'H84129',
+    t_plst:  'TN',
+    t_axles: '3',
+    t_empty: '19500',
+    t_notes: 'Training unit. Day cab, 550hp, wet kit.'
+  },
+  trailer: {
+    r_unit:  'RG-212',
+    r_type:  'RGN',
+    r_make:  'Fontaine',
+    r_year:  '2019',
+    r_plate: 'T29844',
+    r_axles: '3',
+    r_dlen:  '53',
+    r_dht:   '18',
+    r_empty: '17800',
+    r_pay:   '55000',
+    r_notes: 'Training unit. Detachable gooseneck, 3-axle.'
+  }
+};
+
+function ttFill(setName){
+  const data = TT[setName];
+  if (!data) return;
+  Object.keys(data).forEach(function(id){
+    const el = document.getElementById(id);
+    if (!el) return;                       // skip fields this form doesn't have
+    if (el.tagName === 'SELECT'){
+      // only set if the option exists
+      const wanted = String(data[id]).toLowerCase();
+      const match = Array.from(el.options).find(function(o){
+        return o.value.toLowerCase() === wanted ||
+               o.textContent.trim().toLowerCase() === wanted;
+      });
+      if (match) el.value = match.value;
+    } else {
+      el.value = data[id];
+    }
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+}
+
+async function ttInit(){
+  let active = false;
+  try {
+    const r = await db.rpc('get_training_mode_status');
+    if (!r.error && r.data) active = r.data.active === true;
+  } catch (e){ /* training mode unavailable — leave buttons hidden */ }
+  if (!active) return;
+
+  // put a Fill button next to each save button
+  [['c_save','carrier'], ['d_save','driver'],
+   ['t_save','tractor'], ['r_save','trailer']].forEach(function(pair){
+    const saveBtn = document.getElementById(pair[0]);
+    if (!saveBtn || document.getElementById('ttfill_' + pair[1])) return;
+    const b = document.createElement('button');
+    b.id = 'ttfill_' + pair[1];
+    b.type = 'button';
+    b.textContent = 'Fill test data';
+    b.style.cssText = 'margin-right:8px;background:#B8B05D;border:1px solid #B8B05D;' +
+                      'color:#3C3A4B;font-weight:600;cursor:pointer;';
+    b.addEventListener('click', function(){ ttFill(pair[1]); });
+    saveBtn.parentNode.insertBefore(b, saveBtn);
+  });
+}
+
+ttInit();
 </script>
 </body>
 </html>
