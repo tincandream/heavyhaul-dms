@@ -1656,7 +1656,230 @@ async function resetTrainingData() {
 }
 
 
+async function buildTestingFallbackNav(
+  dbClient
+) {
 
+  const header =
+    document.querySelector(
+      'header'
+    );
+
+
+  if (!header) {
+    return null;
+  }
+
+
+  header.innerHTML = `
+    <div style="
+      display:flex;
+      align-items:center;
+      min-height:54px;
+      padding:0 26px;
+      background:#ffffff;
+      border-bottom:1px solid #eeeeee;
+      box-sizing:border-box;
+    ">
+
+      <a
+        href="welcome.html"
+        style="
+          color:#222222;
+          font-size:16px;
+          font-weight:700;
+          letter-spacing:1.4px;
+          text-decoration:none;
+        "
+      >
+        HEAVY HAUL COMMAND
+      </a>
+
+    </div>
+
+
+    <div style="
+      display:flex;
+      align-items:center;
+      width:100%;
+      min-height:48px;
+      padding:0 26px;
+      background:#ffffff;
+      border-bottom:1px solid #dddddd;
+      box-sizing:border-box;
+      overflow-x:auto;
+    ">
+
+      <nav style="
+        display:flex;
+        align-items:center;
+      ">
+
+        <a
+          href="welcome.html"
+          style="
+            padding:15px 17px;
+            color:#666666;
+            text-decoration:none;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          Welcome
+        </a>
+
+        <a
+          href="board.html"
+          style="
+            padding:15px 17px;
+            color:#666666;
+            text-decoration:none;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          Dispatch
+        </a>
+
+        <a
+          href="sourcing.html"
+          style="
+            padding:15px 17px;
+            color:#111111;
+            text-decoration:none;
+            font-size:13px;
+            font-weight:600;
+            border-bottom:3px solid #6B92A5;
+          "
+        >
+          Sourcing
+        </a>
+
+        <a
+          href="fleet-command.html"
+          style="
+            padding:15px 17px;
+            color:#666666;
+            text-decoration:none;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          Fleet Command
+        </a>
+
+      </nav>
+
+      <div
+        id="testingNavUserArea"
+        style="
+          margin-left:auto;
+          display:flex;
+          align-items:center;
+          gap:9px;
+          padding-left:18px;
+          white-space:nowrap;
+          font-size:12px;
+          color:#666666;
+        "
+      >
+        <span id="testingNavUser">…</span>
+
+        <span>|</span>
+
+        <button
+          id="testingNavSignOut"
+          type="button"
+          style="
+            border:0;
+            background:transparent;
+            color:#555555;
+            font:inherit;
+            cursor:pointer;
+          "
+        >
+          Sign Out
+        </button>
+      </div>
+
+    </div>
+  `;
+
+
+  const userResult =
+    await dbClient.auth.getUser();
+
+
+  const user =
+    userResult.data
+      ? userResult.data.user
+      : null;
+
+
+  if (!user) {
+    return null;
+  }
+
+
+  const profile =
+    await dbClient
+      .from('app_users')
+      .select(
+        'full_name, role, tenant_id'
+      )
+      .eq(
+        'auth_uid',
+        user.id
+      )
+      .maybeSingle();
+
+
+  if (
+    !profile.error &&
+    profile.data
+  ) {
+
+    const role =
+      profile.data.role
+        ? profile.data.role
+            .charAt(0)
+            .toUpperCase() +
+          profile.data.role.slice(1)
+        : 'User';
+
+
+    document
+      .getElementById(
+        'testingNavUser'
+      )
+      .textContent =
+        `${profile.data.full_name || 'User'} (${role})`;
+
+  }
+
+
+  document
+    .getElementById(
+      'testingNavSignOut'
+    )
+    .addEventListener(
+      'click',
+      async function () {
+
+        await dbClient.auth.signOut();
+
+        location.href =
+          'index.html';
+
+      }
+    );
+
+
+  return profile.data
+    ? profile.data.tenant_id
+    : null;
+
+}
 // =========================================================
 // START
 // =========================================================
