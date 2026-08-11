@@ -2,7 +2,7 @@
 
 (function () {'use strict';
 
-const MAIN_NAV = [['welcome.html', 'Welcome', 'welcome'],['board.html', 'Dispatch', 'dispatch'],['sourcing.html', 'Sourcing', 'sourcing'],['fleet-command.html', 'Fleet Command', 'fleet']];
+const MAIN_NAV = [['welcome.html', 'Welcome', 'welcomemanu'],['board.html', 'Dispatch', 'dispatch'],['sourcing.html', 'Sourcing', 'sourcing'],['fleet-command.html', 'Fleet Command', 'fleet']];
 
 const HUB_PAGES = {welcome: ['welcome.html'],
 
@@ -54,6 +54,28 @@ return element;
 
 async function buildNav(dbClient,title) {
 
+// --------------------------------------------------------
+// TRAINING MODE BADGE
+// --------------------------------------------------------
+try {
+  const ts = await dbClient.rpc('get_training_mode_status');
+  if (!ts.error && ts.data && ts.data.active === true) {
+    const badge = document.createElement('span');
+    badge.textContent = 'TRAINING';
+    badge.title = ts.data.expires_at
+      ? 'Training Mode active until ' + new Date(ts.data.expires_at).toLocaleString()
+      : 'Training Mode active';
+    badge.style.cssText =
+      'background:#B8B05D;color:#3C3A4B;font-family:Oswald,sans-serif;' +
+      'font-size:11px;font-weight:600;letter-spacing:.8px;' +
+      'padding:3px 9px;border-radius:3px;margin-right:12px;' +
+      'text-transform:uppercase;white-space:nowrap;';
+    right.appendChild(badge);
+  }
+} catch (e) {
+  // training mode unavailable — no badge
+}
+  
 const header =
   document.querySelector(
     'header'
