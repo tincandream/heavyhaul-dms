@@ -1910,15 +1910,16 @@
     // PRIORITIES
     // =========================================================
 
-    async function loadPriorities() {
-
-     const activeLoads =
+   const activeLoads =
   await safeCount(
     'loads',
     function (query) {
 
       return query
-        .is('archived_at', null)
+        .is(
+          'archived_at',
+          null
+        )
         .in(
           'status',
           [
@@ -1931,15 +1932,18 @@
           ]
         );
 
+    }
+  );
 
-      document
-        .getElementById(
-          'activeLoads'
-        )
-        .textContent =
-          activeLoads === null
-            ? '—'
-            : activeLoads;
+
+document
+  .getElementById(
+    'activeLoads'
+  )
+  .textContent =
+    activeLoads === null
+      ? '—'
+      : activeLoads;
 
 
 
