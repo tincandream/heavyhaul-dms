@@ -24,7 +24,7 @@ sourcing: [
   'templates.html',
   'calculators.html',
   'manual.html',
-  'field-manual.html'
+  'field-manual.html',
   'testing.html'
 ],
 
