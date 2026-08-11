@@ -25,6 +25,7 @@ sourcing: [
   'calculators.html',
   'manual.html',
   'field-manual.html'
+  'testing.html'
 ],
 
 fleet: [
