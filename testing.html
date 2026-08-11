@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
+>
+
+<title>Testing — Heavy Haul Command</title>
+
+
+<style>
+
+  :root {
+
+    --bg:
+      #f5f4f0;
+
+    --card:
+      #ffffff;
+
+    --ink:
+      #22221f;
+
+    --muted:
+      #73726c;
+
+    --line:
+      #e2e0da;
+
+    --blue:
+      #6B92A5;
+
+    --blue-soft:
+      #EAF3F6;
+
+    --green:
+      #72832D;
+
+    --green-soft:
+      #F1F4D8;
+
+    --pink:
+      #A94B63;
+
+    --pink-soft:
+      #F8E5EC;
+
+    --orange:
+      #9A5A2A;
+
+    --orange-soft:
+      #FFF0D8;
+
+  }
+
+
+  * {
+    box-sizing:
+      border-box;
+  }
+
+
+  body {
+
+    margin:
+      0;
+
+    background:
+      var(--bg);
+
+    color:
+      var(--ink);
+
+    font:
+      14px/1.5
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+
+  }
+
+
+  main {
+
+    width:
+      min(1000px, 100%);
+
+    margin:
+      0 auto;
+
+    padding:
+      26px 18px 70px;
+
+  }
+
+
+  h1 {
+
+    margin:
+      0 0 4px;
+
+    font-size:
+      20px;
+
+    font-weight:
+      600;
+
+  }
+
+
+  .lead {
+
+    margin:
+      0 0 24px;
+
+    color:
+      var(--muted);
+
+    font-size:
+      13px;
+
+  }
+
+
+  .mode-banner {
+
+    display:
+      none;
+
+    margin-bottom:
+      18px;
+
+    padding:
+      13px 16px;
+
+    background:
+      var(--orange-soft);
+
+    color:
+      #70401F;
+
+    border:
+      1px solid #E2C39C;
+
+    font-size:
+      12px;
+
+    font-weight:
+      700;
+
+    letter-spacing:
+      .7px;
+
+  }
+
+
+  .mode-banner.active {
+    display:
+      block;
+  }
+
+
+  .grid {
+
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap:
+      16px;
+
+  }
+
+
+  .panel {
+
+    background:
+      var(--card);
+
+    border:
+      1px solid
+      var(--line);
+
+    padding:
+      20px;
+
+  }
+
+
+  .panel.full {
+
+    grid-column:
+      1 / -1;
+
+  }
+
+
+  .panel h2 {
+
+    margin:
+      0 0 4px;
+
+    font-size:
+      15px;
+
+    font-weight:
+      600;
+
+  }
+
+
+  .panel-sub {
+
+    margin:
+      0 0 18px;
+
+    color:
+      var(--muted);
+
+    font-size:
+      12px;
+
+  }
+
+
+  .status-row {
+
+    display:
+      flex;
+
+    justify-content:
+      space-between;
+
+    gap:
+      18px;
+
+    padding:
+      11px 0;
+
+    border-bottom:
+      1px solid
+      #eeeeea;
+
+  }
+
+
+  .status-row:last-child {
+
+    border-bottom:
+      0;
+
+  }
+
+
+  .status-label {
+
+    color:
+      var(--muted);
+
+    font-size:
+      12px;
+
+  }
+
+
+  .status-value {
+
+    font-weight:
+      600;
+
+    text-align:
+      right;
+
+  }
+
+
+  .status-pill {
+
+    display:
+      inline-block;
+
+    min-width:
+      50px;
+
+    padding:
+      3px 8px;
+
+    text-align:
+      center;
+
+    font-size:
+      10px;
+
+    font-weight:
+      700;
+
+    letter-spacing:
+      .7px;
+
+  }
+
+
+  .status-pill.off {
+
+    background:
+      #EEEEEA;
+
+    color:
+      #66645F;
+
+  }
+
+
+  .status-pill.on {
+
+    background:
+      var(--green-soft);
+
+    color:
+      var(--green);
+
+  }
+
+
+  label {
+
+    display:
+      block;
+
+    margin-bottom:
+      6px;
+
+    color:
+      #555B5F;
+
+    font-size:
+      11px;
+
+    font-weight:
+      600;
+
+  }
+
+
+  input[type="password"] {
+
+    width:
+      100%;
+
+    padding:
+      10px 11px;
+
+    border:
+      1px solid
+      #D4D7D7;
+
+    background:
+      #FAFAF8;
+
+    color:
+      var(--ink);
+
+    font:
+      inherit;
+
+    outline:
+      none;
+
+  }
+
+
+  input[type="password"]:focus {
+
+    border-color:
+      var(--blue);
+
+  }
+
+
+  .button-row {
+
+    display:
+      flex;
+
+    flex-wrap:
+      wrap;
+
+    gap:
+      9px;
+
+    margin-top:
+      12px;
+
+  }
+
+
+  button {
+
+    padding:
+      9px 13px;
+
+    border:
+      1px solid
+      transparent;
+
+    cursor:
+      pointer;
+
+    font:
+      inherit;
+
+    font-size:
+      12px;
+
+    font-weight:
+      600;
+
+  }
+
+
+  button.primary {
+
+    background:
+      var(--blue);
+
+    color:
+      white;
+
+  }
+
+
+  button.secondary {
+
+    background:
+      white;
+
+    color:
+      #5F676B;
+
+    border-color:
+      #D6D9D9;
+
+  }
+
+
+  button.danger {
+
+    background:
+      var(--pink);
+
+    color:
+      white;
+
+  }
+
+
+  button:disabled {
+
+    opacity:
+      .5;
+
+    cursor:
+      not-allowed;
+
+  }
+
+
+  .message {
+
+    min-height:
+      19px;
+
+    margin-top:
+      10px;
+
+    color:
+      var(--muted);
+
+    font-size:
+      11px;
+
+  }
+
+
+  .message.error {
+
+    color:
+      var(--pink);
+
+  }
+
+
+  .message.success {
+
+    color:
+      var(--green);
+
+  }
+
+
+  .counts {
+
+    display:
+      grid;
+
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+
+    gap:
+      10px;
+
+  }
+
+
+  .count-card {
+
+    padding:
+      15px;
+
+    background:
+      #FAFAF8;
+
+    border:
+      1px solid
+      #E7E6E1;
+
+  }
+
+
+  .count-number {
+
+    color:
+      #3F4A4F;
+
+    font-size:
+      25px;
+
+    font-weight:
+      700;
+
+  }
+
+
+  .count-label {
+
+    margin-top:
+      3px;
+
+    color:
+      var(--muted);
+
+    font-size:
+      10px;
+
+    text-transform:
+      uppercase;
+
+    letter-spacing:
+      .5px;
+
+  }
+
+
+  .warning {
+
+    margin-top:
+      15px;
+
+    padding:
+      12px;
+
+    background:
+      var(--pink-soft);
+
+    color:
+      #844054;
+
+    font-size:
+      11px;
+
+    line-height:
+      1.5;
+
+  }
+
+
+  .hidden {
+    display:
+      none !important;
+  }
+
+
+  @media (
+    max-width: 720px
+  ) {
+
+    .grid {
+
+      grid-template-columns:
+        1fr;
+
+    }
+
+
+    .counts {
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(0, 1fr)
+        );
+
+    }
+
+  }
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header></header>
+
+
+<main>
+
+
+  <h1>Testing</h1>
+
+  <p class="lead">
+    Protected training environment for running test loads without mixing them with live operations.
+  </p>
+
+
+  <div
+    class="mode-banner"
+    id="modeBanner"
+  >
+    TRAINING MODE — NEW RECORDS ARE TEST DATA
+  </div>
+
+
+  <div class="grid">
+
+
+    <!-- =====================================================
+         STATUS
+         ===================================================== -->
+
+    <section class="panel">
+
+      <h2>Training Mode</h2>
+
+      <p class="panel-sub">
+        Current status for your signed-in session.
+      </p>
+
+
+      <div class="status-row">
+
+        <span class="status-label">
+          Status
+        </span>
+
+        <span
+          class="status-pill off"
+          id="statusPill"
+        >
+          OFF
+        </span>
+
+      </div>
+
+
+      <div class="status-row">
+
+        <span class="status-label">
+          Session expires
+        </span>
+
+        <span
+          class="status-value"
+          id="expiresValue"
+        >
+          —
+        </span>
+
+      </div>
+
+
+      <div class="status-row">
+
+        <span class="status-label">
+          Protection
+        </span>
+
+        <span class="status-value">
+          Database controlled
+        </span>
+
+      </div>
+
+
+      <div class="button-row">
+
+        <button
+          class="secondary hidden"
+          id="exitButton"
+          type="button"
+        >
+          Exit Training Mode
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ENABLE MODE
+         ===================================================== -->
+
+    <section
+      class="panel"
+      id="enablePanel"
+    >
+
+      <h2>Enable Training Mode</h2>
+
+      <p class="panel-sub">
+        Enter your private Training Mode password.
+      </p>
+
+
+      <label for="enablePassword">
+        Training password
+      </label>
+
+
+      <input
+        id="enablePassword"
+        type="password"
+        autocomplete="current-password"
+      >
+
+
+      <div class="button-row">
+
+        <button
+          class="primary"
+          id="enableButton"
+          type="button"
+        >
+          Enable Training Mode
+        </button>
+
+      </div>
+
+
+      <div
+        class="message"
+        id="enableMessage"
+      ></div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         TRAINING RECORD COUNTS
+         ===================================================== -->
+
+    <section class="panel full">
+
+      <h2>Current Training Data</h2>
+
+      <p class="panel-sub">
+        Active records currently marked as training data.
+      </p>
+
+
+      <div class="counts">
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countCarriers"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Carriers
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countDrivers"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Drivers
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countEquipment"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Equipment
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countBrokers"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Brokers
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countFacilities"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Facilities
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countOpportunities"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Opportunities
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countLoads"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Loads
+          </div>
+        </div>
+
+
+        <div class="count-card">
+          <div
+            class="count-number"
+            id="countTotal"
+          >
+            —
+          </div>
+          <div class="count-label">
+            Total
+          </div>
+        </div>
+
+
+      </div>
+
+
+      <div class="button-row">
+
+        <button
+          class="secondary"
+          id="refreshButton"
+          type="button"
+        >
+          Refresh Counts
+        </button>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         RESET TEST
+         ===================================================== -->
+
+    <section
+      class="panel full hidden"
+      id="resetPanel"
+    >
+
+      <h2>Reset Training Data</h2>
+
+      <p class="panel-sub">
+        Clear the current test environment when the TT is complete.
+      </p>
+
+
+      <label for="resetPassword">
+        Training password
+      </label>
+
+
+      <input
+        id="resetPassword"
+        type="password"
+        autocomplete="current-password"
+      >
+
+
+      <div class="button-row">
+
+        <button
+          class="danger"
+          id="resetButton"
+          type="button"
+        >
+          Reset Training Data
+        </button>
+
+      </div>
+
+
+      <div class="warning">
+        Reset affects records marked as training data. Training Mode automatically turns off after a successful reset.
+      </div>
+
+
+      <div
+        class="message"
+        id="resetMessage"
+      ></div>
+
+    </section>
+
+
+  </div>
+
+</main>
+
+
+
+<!-- =========================================================
+     SUPABASE / NAV
+     ========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="nav.js"></script>
+
+
+<script>
+
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJ6eWhkYXR0ZWdseG96c2duamhybSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MjgxMzEwLCJleHAiOjIxMDA4NTczMTB9.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+
+let TENANT_ID =
+  null;
+
+
+let trainingActive =
+  false;
+
+
+
+// =========================================================
+// MESSAGE
+// =========================================================
+
+function showMessage(
+  id,
+  text,
+  type = ''
+) {
+
+  const element =
+    document.getElementById(id);
+
+
+  element.textContent =
+    text || '';
+
+
+  element.className =
+    'message' +
+    (
+      type
+        ? ' ' + type
+        : ''
+    );
+
+}
+
+
+
+// =========================================================
+// STATUS
+// =========================================================
+
+async function loadTrainingStatus() {
+
+  const result =
+    await db.rpc(
+      'get_training_mode_status'
+    );
+
+
+  if (result.error) {
+
+    console.error(
+      'Training status:',
+      result.error
+    );
+
+
+    showMessage(
+      'enableMessage',
+      result.error.message,
+      'error'
+    );
+
+
+    return;
+
+  }
+
+
+  const status =
+    result.data || {};
+
+
+  trainingActive =
+    Boolean(
+      status.active
+    );
+
+
+  const pill =
+    document.getElementById(
+      'statusPill'
+    );
+
+
+  pill.textContent =
+    trainingActive
+      ? 'ON'
+      : 'OFF';
+
+
+  pill.className =
+    trainingActive
+      ? 'status-pill on'
+      : 'status-pill off';
+
+
+  document
+    .getElementById(
+      'modeBanner'
+    )
+    .classList
+    .toggle(
+      'active',
+      trainingActive
+    );
+
+
+  document
+    .getElementById(
+      'enablePanel'
+    )
+    .classList
+    .toggle(
+      'hidden',
+      trainingActive
+    );
+
+
+  document
+    .getElementById(
+      'resetPanel'
+    )
+    .classList
+    .toggle(
+      'hidden',
+      !trainingActive
+    );
+
+
+  document
+    .getElementById(
+      'exitButton'
+    )
+    .classList
+    .toggle(
+      'hidden',
+      !trainingActive
+    );
+
+
+  let expiresText =
+    '—';
+
+
+  if (
+    status.expires_at
+  ) {
+
+    const expires =
+      new Date(
+        status.expires_at
+      );
+
+
+    if (
+      !Number.isNaN(
+        expires.getTime()
+      )
+    ) {
+
+      expiresText =
+        expires.toLocaleString(
+          [],
+          {
+            month:
+              'short',
+
+            day:
+              'numeric',
+
+            hour:
+              'numeric',
+
+            minute:
+              '2-digit'
+          }
+        );
+
+    }
+
+  }
+
+
+  document
+    .getElementById(
+      'expiresValue'
+    )
+    .textContent =
+      expiresText;
+
+}
+
+
+
+// =========================================================
+// ENABLE
+// =========================================================
+
+async function enableTrainingMode() {
+
+  const passwordInput =
+    document.getElementById(
+      'enablePassword'
+    );
+
+
+  const password =
+    passwordInput.value;
+
+
+  if (!password) {
+
+    showMessage(
+      'enableMessage',
+      'Enter the Training Mode password.',
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    'enableMessage',
+    'Enabling…'
+  );
+
+
+  const result =
+    await db.rpc(
+      'unlock_training_mode',
+      {
+        p_password:
+          password,
+
+        p_minutes:
+          240
+      }
+    );
+
+
+  passwordInput.value =
+    '';
+
+
+  if (result.error) {
+
+    showMessage(
+      'enableMessage',
+      result.error.message,
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    'enableMessage',
+    'Training Mode enabled.',
+    'success'
+  );
+
+
+  await loadTrainingStatus();
+
+}
+
+
+
+// =========================================================
+// EXIT
+// =========================================================
+
+async function exitTrainingMode() {
+
+  const confirmed =
+    window.confirm(
+      'Exit Training Mode?\n\n' +
+      'Existing test records will remain, but new records will no longer be marked as training.'
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  const result =
+    await db.rpc(
+      'disable_training_mode'
+    );
+
+
+  if (result.error) {
+
+    alert(
+      'Could not exit Training Mode:\n\n' +
+      result.error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadTrainingStatus();
+
+}
+
+
+
+// =========================================================
+// SAFE COUNT
+// =========================================================
+
+async function countRows(
+  table,
+  configure
+) {
+
+  let query =
+    db
+      .from(table)
+      .select(
+        '*',
+        {
+          count:
+            'exact',
+
+          head:
+            true
+        }
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .eq(
+        'is_training',
+        true
+      );
+
+
+  if (configure) {
+
+    query =
+      configure(
+        query
+      );
+
+  }
+
+
+  const result =
+    await query;
+
+
+  if (result.error) {
+
+    console.warn(
+      'Testing count:',
+      table,
+      result.error.message
+    );
+
+    return null;
+
+  }
+
+
+  return (
+    result.count || 0
+  );
+
+}
+
+
+
+// =========================================================
+// COUNTS
+// =========================================================
+
+async function loadCounts() {
+
+  const [
+
+    carriers,
+    drivers,
+    equipment,
+    brokers,
+    facilities,
+    opportunities,
+    loads
+
+  ] =
+
+  await Promise.all([
+
+
+    countRows(
+      'carriers',
+      query =>
+        query.is(
+          'archived_at',
+          null
+        )
+    ),
+
+
+    countRows(
+      'drivers',
+      query =>
+        query.is(
+          'archived_at',
+          null
+        )
+    ),
+
+
+    countRows(
+      'equipment',
+      query =>
+        query.eq(
+          'status',
+          'active'
+        )
+    ),
+
+
+    countRows(
+      'brokers',
+      query =>
+        query.is(
+          'archived_at',
+          null
+        )
+    ),
+
+
+    countRows(
+      'facilities',
+      query =>
+        query.is(
+          'archived_at',
+          null
+        )
+    ),
+
+
+    countRows(
+      'load_opportunities',
+      query =>
+        query.is(
+          'closed_at',
+          null
+        )
+    ),
+
+
+    countRows(
+      'loads',
+      query =>
+        query.is(
+          'archived_at',
+          null
+        )
+    )
+
+  ]);
+
+
+  const counts = {
+
+    countCarriers:
+      carriers,
+
+    countDrivers:
+      drivers,
+
+    countEquipment:
+      equipment,
+
+    countBrokers:
+      brokers,
+
+    countFacilities:
+      facilities,
+
+    countOpportunities:
+      opportunities,
+
+    countLoads:
+      loads
+
+  };
+
+
+  Object.entries(
+    counts
+  )
+  .forEach(
+    ([id, value]) => {
+
+      document
+        .getElementById(id)
+        .textContent =
+          value === null
+            ? '—'
+            : value;
+
+    }
+  );
+
+
+  const numeric =
+    [
+      carriers,
+      drivers,
+      equipment,
+      brokers,
+      facilities,
+      opportunities,
+      loads
+    ]
+    .filter(
+      value =>
+        typeof value ===
+        'number'
+    );
+
+
+  document
+    .getElementById(
+      'countTotal'
+    )
+    .textContent =
+      numeric.length
+        ? numeric.reduce(
+            (sum, value) =>
+              sum + value,
+            0
+          )
+        : '—';
+
+}
+
+
+
+// =========================================================
+// RESET
+// =========================================================
+
+async function resetTrainingData() {
+
+  const passwordInput =
+    document.getElementById(
+      'resetPassword'
+    );
+
+
+  const password =
+    passwordInput.value;
+
+
+  if (!password) {
+
+    showMessage(
+      'resetMessage',
+      'Enter the Training Mode password.',
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  const confirmed =
+    window.confirm(
+      'Reset all current Training Mode data?\n\n' +
+      'This action is for disposable TT records only.'
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  showMessage(
+    'resetMessage',
+    'Resetting training data…'
+  );
+
+
+  const result =
+    await db.rpc(
+      'reset_current_training_data',
+      {
+        p_password:
+          password
+      }
+    );
+
+
+  passwordInput.value =
+    '';
+
+
+  if (result.error) {
+
+    showMessage(
+      'resetMessage',
+      result.error.message,
+      'error'
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    'resetMessage',
+    'Training data reset complete.',
+    'success'
+  );
+
+
+  await loadTrainingStatus();
+
+  await loadCounts();
+
+}
+
+
+
+// =========================================================
+// START
+// =========================================================
+
+async function start() {
+
+  const sessionResult =
+    await db.auth.getSession();
+
+
+  if (
+    !sessionResult.data ||
+    !sessionResult.data.session
+  ) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  if (
+    typeof window.buildNav ===
+    'function'
+  ) {
+
+    TENANT_ID =
+      await window.buildNav(
+        db,
+        'Testing'
+      );
+
+  }
+
+
+  if (!TENANT_ID) {
+
+    const userResult =
+      await db.auth.getUser();
+
+
+    const authId =
+      userResult.data &&
+      userResult.data.user
+        ? userResult.data.user.id
+        : null;
+
+
+    if (authId) {
+
+      const profile =
+        await db
+          .from(
+            'app_users'
+          )
+          .select(
+            'tenant_id'
+          )
+          .eq(
+            'auth_uid',
+            authId
+          )
+          .maybeSingle();
+
+
+      if (
+        !profile.error &&
+        profile.data
+      ) {
+
+        TENANT_ID =
+          profile.data.tenant_id;
+
+      }
+
+    }
+
+  }
+
+
+  if (!TENANT_ID) {
+
+    alert(
+      'Could not determine the current tenant.'
+    );
+
+    return;
+
+  }
+
+
+  document
+    .getElementById(
+      'enableButton'
+    )
+    .addEventListener(
+      'click',
+      enableTrainingMode
+    );
+
+
+  document
+    .getElementById(
+      'exitButton'
+    )
+    .addEventListener(
+      'click',
+      exitTrainingMode
+    );
+
+
+  document
+    .getElementById(
+      'resetButton'
+    )
+    .addEventListener(
+      'click',
+      resetTrainingData
+    );
+
+
+  document
+    .getElementById(
+      'refreshButton'
+    )
+    .addEventListener(
+      'click',
+      loadCounts
+    );
+
+
+  await loadTrainingStatus();
+
+  await loadCounts();
+
+}
+
+
+start();
+
+</script>
+
+
+</body>
+
+</html>
