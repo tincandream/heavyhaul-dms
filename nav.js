@@ -7,7 +7,7 @@
 'use strict';
 
 const MAIN_NAV = [
-  ['welcome.html',  'Welcome',       'welcome'],
+ ['welcome.html', '★ Welcome', 'welcome'],
   ['fleet.html',    'Fleet Command', 'fleet'],
   ['sourcing.html', 'Sourcing',      'sourcing'],
   ['board.html',    'Dispatch',      'dispatch']
