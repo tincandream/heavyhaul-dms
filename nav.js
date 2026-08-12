@@ -133,9 +133,81 @@ const brand = setStyles(
 );
 
 brand.href = 'welcome.html';
-brand.textContent = 'HEAVY HAUL COMMAND';
 
-brandRow.appendChild(brand);
+brand.textContent =
+  'HEAVY HAUL COMMAND';
+
+// make the brand a flex row so the icon sits beside the text
+brand.style.display = 'flex';
+brand.style.alignItems = 'center';
+brand.style.gap = '11px';
+
+// --------------------------------------------------------
+// TRUCK MARK
+// --------------------------------------------------------
+
+const truck =
+  document.createElement('span');
+
+truck.setAttribute('aria-hidden', 'true');
+
+truck.style.cssText =
+  'display:flex;align-items:center;flex-shrink:0;';
+
+truck.innerHTML = `
+<svg width="46" height="26" viewBox="0 0 92 52"
+     fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- lowboy deck -->
+  <path d="M30 34 H62 L66 28 H74"
+        stroke="#3C3A4B" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- gooseneck rise to tractor -->
+  <path d="M30 34 L26 26 H22"
+        stroke="#3C3A4B" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- machine on the deck -->
+  <path d="M36 34 V22 H52 V34"
+        stroke="#B8B05D" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 22 V16 H48 V22"
+        stroke="#B8B05D" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- tractor cab -->
+  <path d="M22 26 V14 H12 L6 22 V34 H14"
+        stroke="#3C3A4B" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- cab window -->
+  <path d="M12 18 H18 V23 H9 Z"
+        fill="#C0656B" opacity="0.55"/>
+
+  <!-- wheels -->
+  <circle cx="18" cy="38" r="5"
+          stroke="#3C3A4B" stroke-width="3" fill="none"/>
+  <circle cx="58" cy="38" r="5"
+          stroke="#3C3A4B" stroke-width="3" fill="none"/>
+  <circle cx="70" cy="38" r="5"
+          stroke="#3C3A4B" stroke-width="3" fill="none"/>
+
+  <!-- ground line -->
+  <path d="M2 44 H90"
+        stroke="#B8B05D" stroke-width="2"
+        stroke-linecap="round" opacity="0.5"/>
+
+</svg>`;
+
+brand.prepend(truck);
+
+brandRow.appendChild(
+  brand
+);
+
+
+  
 header.appendChild(brandRow);
 
 // --------------------------------------------------------
