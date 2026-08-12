@@ -29,6 +29,12 @@
 </head>
 <body>
 <header></header>
+
+<nav
+  id="fleetCommandTabs"
+  aria-label="Fleet Command navigation">
+</nav>
+  
 <main>
 <section class="page-intro"><h1>ROUTE PLANNING</h1><p>Keep the load flexible. Build the route, save progress, and hand the identified states into State Rules.</p></section>
 <nav class="route-tabs"><button type="button" class="on" data-panel="planPanel">Plan Route</button><button type="button" data-panel="goldenPanel">Golden Routes</button></nav>
@@ -590,7 +596,20 @@ async function loadData(){
 }
 function renderGolden(){const q=$('goldenSearch').value.trim().toLowerCase();const list=goldenRoutes.filter(g=>!q||[g.route_name,g.origin,g.destination,g.corridor,g.highways,g.equipment_type,...(g.states||[])].join(' ').toLowerCase().includes(q));$('goldenList').innerHTML=list.length?list.map(g=>`<article class="golden"><h3>${esc(g.route_name)}</h3><div class="golden-meta">${esc(g.origin)} → ${esc(g.destination)}<br>${esc(pretty(g.freight_type))}${g.equipment_type?' · '+esc(g.equipment_type):''}${g.states?.length?' · '+g.states.map(esc).join(' → '):''}<br>${g.highways?'Corridor: '+esc(g.highways):''}</div><div class="actions"><button class="action" type="button" data-use-golden="${g.id}">Use in Open Workspace</button><button class="action secondary" type="button" data-map-golden="${g.id}">Open Maps</button></div></article>`).join(''):'<div class="empty">No Golden Routes match.</div>';}
 function useGolden(id){if(!currentLoad){alert('Open a load from the Route Planning Queue first.');return;}const g=goldenRoutes.find(x=>x.id===id);if(!g)return;$('routeName').value=g.route_name||$('routeName').value;$('freightType').value=g.freight_type||$('freightType').value;$('equipmentType').value=g.equipment_type||$('equipmentType').value;$('origin').value=g.origin||$('origin').value;$('destination').value=g.destination||$('destination').value;$('states').value=(g.states||[]).join(', ');$('waypoints').value=(g.waypoints||[]).join('\n');$('parkingStaging').value=g.parking_staging||'';$('fuelService').value=g.fuel_service_notes||'';appendRouteNote(g.general_notes?`Golden Route reference: ${g.general_notes}`:'');document.querySelector('[data-panel="planPanel"]').click();$('workspace').classList.add('show');drawPreview();updateHandoff();}
-async function start(){
+
+  
+function buildFleetCommandTabs(activePage) {
+
+  // the Fleet Command function I gave you
+
+}
+
+
+async function start() {
+
+  // Route Planning's existing startup code
+
+}
   db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
   const s=await db.auth.getSession();
@@ -604,9 +623,16 @@ async function start(){
     return;
   }
 
-  tenant=await window.buildNav(db,'Route Planning');
-  if(!tenant)return;
+  tenant = await window.buildNav(
+  db,
+  'Route Planning'
+);
 
+if (!tenant) return;
+
+buildFleetCommandTabs(
+  'route-planning.html'
+);
   await loadData();
 
   const params=new URLSearchParams(location.search);
