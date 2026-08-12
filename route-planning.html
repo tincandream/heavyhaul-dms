@@ -686,18 +686,19 @@ async function start() {
     console.error('Route Planning: buildNav is unavailable.');
     return;
   }
-
-  tenant = await window.buildNav(
-  db,
-  'Route Planning'
-);
+tenant =
+  await window.buildNav(
+    db,
+    'Route Planning'
+  );
 
 if (!tenant) return;
 
 buildFleetCommandTabs(
   'route-planning.html'
 );
-  await loadData();
+
+await loadData();
 
   const params=new URLSearchParams(location.search);
   const requestedLoad=params.get('load');
