@@ -29,16 +29,36 @@
 </head>
 <body>
 <header></header>
+
+<nav
+  id="fleetCommandTabs"
+  aria-label="Fleet Command navigation">
+</nav>
+
 <main>
+  <!-- Route Planning page content -->
+</main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
 
-  async function start() {
+<script>
 
-  db =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+/* all your existing functions */
+
+function buildFleetCommandTabs(activePage) {
+  /* Fleet Command nav function */
+}
+
+async function start() {
+
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
   const s =
     await db.auth.getSession();
@@ -86,9 +106,7 @@
 
     const o =
       opportunities.find(
-        x =>
-          x.id ===
-          requestedOpportunity
+        x => x.id === requestedOpportunity
       );
 
     if (o) {
@@ -100,9 +118,7 @@
 
     const l =
       loads.find(
-        x =>
-          x.id ===
-          requestedLoad
+        x => x.id === requestedLoad
       );
 
     if (l) {
@@ -113,7 +129,15 @@
   }
 
 }
-  
+
+/* existing event listeners */
+
+start();
+
+</script>
+
+
+
 <main>
 <section class="page-intro"><h1>ROUTE PLANNING</h1><p>Keep the load flexible. Build the route, save progress, and hand the identified states into State Rules.</p></section>
 <nav class="route-tabs"><button type="button" class="on" data-panel="planPanel">Plan Route</button><button type="button" data-panel="goldenPanel">Golden Routes</button></nav>
@@ -749,7 +773,83 @@ function buildFleetCommandTabs(activePage) {
 
 
 async function start() {
+async function start() {
 
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+  const s =
+    await db.auth.getSession();
+
+  if (!s.data.session) {
+    location.href = 'index.html';
+    return;
+  }
+
+  if (
+    typeof window.buildNav !== 'function'
+  ) {
+    console.error(
+      'Route Planning: buildNav is unavailable.'
+    );
+    return;
+  }
+
+  tenant =
+    await window.buildNav(
+      db,
+      'Route Planning'
+    );
+
+  if (!tenant) return;
+
+  buildFleetCommandTabs(
+    'route-planning.html'
+  );
+
+  await loadData();
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+  const requestedLoad =
+    params.get('load');
+
+  const requestedOpportunity =
+    params.get('opportunity');
+
+  if (requestedOpportunity) {
+
+    const o =
+      opportunities.find(
+        x => x.id === requestedOpportunity
+      );
+
+    if (o) {
+      o._kind = 'opportunity';
+      openWorkspace(o);
+    }
+
+  } else if (requestedLoad) {
+
+    const l =
+      loads.find(
+        x => x.id === requestedLoad
+      );
+
+    if (l) {
+      l._kind = 'load';
+      openWorkspace(l);
+    }
+
+  }
+
+}
   // Route Planning's existing startup code
 
 }
