@@ -140,7 +140,7 @@ brand.innerHTML = `
     alt="Heavy Haul Command"
     style="
       display:block;
-      height:50px;
+      height:70px;
       width:auto;
       max-width:480px;
       object-fit:contain;
