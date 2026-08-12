@@ -1,14 +1,19 @@
 // ============================================================
 // fleet-command-tabs.js
 // Shared Fleet Command workspace tabs
+// Airy Americana palette
 // ============================================================
 
 function buildFleetCommandTabs(activePage) {
 
   const target =
-    document.getElementById('fleetCommandTabs');
+    document.getElementById(
+      'fleetCommandTabs'
+    );
 
-  if (!target) return;
+  if (!target) {
+    return;
+  }
 
 
   const tabs = [
@@ -19,31 +24,132 @@ function buildFleetCommandTabs(activePage) {
   ];
 
 
-  target.innerHTML =
-    tabs.map(function (tab) {
+  // ----------------------------------------------------------
+  // FLEET COMMAND BAR
+  // ----------------------------------------------------------
 
-      const href =
-        tab[0];
+  target.style.cssText = `
+    display:flex;
+    align-items:center;
+    gap:26px;
 
-      const label =
-        tab[1];
+    width:100%;
+    min-height:46px;
 
-      const active =
-        href === activePage
-          ? ' class="active"'
-          : '';
+    margin:0 0 26px;
+    padding:0;
+
+    background:transparent;
+
+    border:0;
+    border-bottom:1px solid #D9DEE1;
+
+    border-radius:0;
+    box-shadow:none;
+
+    overflow-x:auto;
+  `;
 
 
-      return (
-        '<a href="' +
-        href +
-        '"' +
-        active +
-        '>' +
-        label +
-        '</a>'
+  target.innerHTML = '';
+
+
+  // ----------------------------------------------------------
+  // TABS
+  // ----------------------------------------------------------
+
+  tabs.forEach(function (tab) {
+
+    const href =
+      tab[0];
+
+    const label =
+      tab[1];
+
+    const isActive =
+      href === activePage;
+
+
+    const link =
+      document.createElement(
+        'a'
       );
 
-    }).join('');
+
+    link.href =
+      href;
+
+    link.textContent =
+      label;
+
+
+    link.style.cssText = `
+      display:flex;
+      align-items:center;
+
+      min-height:44px;
+      padding:0 0 10px;
+
+      background:transparent;
+
+      color:${
+        isActive
+          ? '#668C9D'
+          : '#6F777B'
+      };
+
+      border:0;
+      border-bottom:3px solid ${
+        isActive
+          ? '#7FA5B5'
+          : 'transparent'
+      };
+
+      border-radius:0;
+
+      box-shadow:none;
+
+      text-decoration:none;
+
+      font-family:"Oswald", Arial, sans-serif;
+      font-size:13px;
+      font-weight:500;
+      letter-spacing:.8px;
+
+      white-space:nowrap;
+    `;
+
+
+    link.addEventListener(
+      'mouseenter',
+      function () {
+
+        if (!isActive) {
+          link.style.color =
+            '#7FA5B5';
+        }
+
+      }
+    );
+
+
+    link.addEventListener(
+      'mouseleave',
+      function () {
+
+        if (!isActive) {
+          link.style.color =
+            '#6F777B';
+        }
+
+      }
+    );
+
+
+    target.appendChild(
+      link
+    );
+
+  });
 
 }
