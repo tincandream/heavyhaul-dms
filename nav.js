@@ -141,8 +141,8 @@ brand.innerHTML = `
     style="
       display:block;
       height:70px;
-      width:700px;
-      max-width:700px;
+      width:500px;
+      max-width:500px;
       object-fit:fill;
       object-position:left center;
     "
