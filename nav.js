@@ -8,9 +8,9 @@
 
 const MAIN_NAV = [
   ['welcome.html',  'Welcome',       'welcome'],
-  ['board.html',    'Dispatch',      'dispatch'],
+  ['fleet.html',    'Fleet Command', 'fleet'],
   ['sourcing.html', 'Sourcing',      'sourcing'],
-  ['fleet.html',    'Fleet Command', 'fleet']
+  ['board.html',    'Dispatch',      'dispatch']
 ];
 
 const HUB_PAGES = {
