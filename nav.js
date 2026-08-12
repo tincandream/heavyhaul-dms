@@ -140,14 +140,20 @@ brand.innerHTML = `
     alt="Heavy Haul Command"
     style="
       display:block;
-      height:70px;
-      width:500px;
-      max-width:500px;
-      object-fit:fill;
-      object-position:left center;
+      width:auto;
+      height:auto;
+      max-width:520px;
+      max-height:48px;
+      object-fit:contain;
     "
   >
 `;
+
+  brand.style.display = 'flex';
+brand.style.alignItems = 'center';
+brand.style.justifyContent = 'flex-end';
+brand.style.width = '100%';
+  
 // make the brand a flex row so the icon sits beside the text
 brand.style.display = 'flex';
 brand.style.alignItems = 'center';
