@@ -142,7 +142,7 @@ brand.innerHTML = `
       display:block;
       height:100px;
       width:auto;
-      max-width:480px;
+      max-width:1000px;
       object-fit:contain;
       object-position:left center;
     "
