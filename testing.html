@@ -2676,7 +2676,334 @@ async function buildTestingFallbackNav(
 // START
 // =========================================================
 
+
+  
 async function start() {
+
+  const populateBrokerLoadButton =
+  document.getElementById(
+    'populateBrokerLoad'
+  );
+
+if (populateBrokerLoadButton) {
+
+  populateBrokerLoadButton
+    .addEventListener(
+      'click',
+      populateBrokerLoad
+    );
+
+}
+
+
+  // -----------------------------------------
+  // Training Mode must be active
+  // -----------------------------------------
+
+  if (!trainingActive) {
+
+    message.textContent =
+      'Enable Training Mode first.';
+
+    return;
+
+  }
+
+
+  button.disabled = true;
+
+  message.textContent =
+    'Populating broker load...';
+
+
+  // -----------------------------------------
+  // Prevent duplicate training load
+  // -----------------------------------------
+
+  const existing =
+    await db
+      .from('load_opportunities')
+      .select('id, external_ref, status')
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .eq(
+        'external_ref',
+        'TT-ABC-260811-01'
+      )
+      .maybeSingle();
+
+
+  if (existing.error) {
+
+    console.error(existing.error);
+
+    message.textContent =
+      'Could not check for the training broker load: ' +
+      existing.error.message;
+
+    button.disabled = false;
+
+    return;
+
+  }
+
+
+  if (existing.data) {
+
+    message.textContent =
+      'Broker load is already populated.';
+
+    button.disabled = false;
+
+    if (
+      typeof loadCounts === 'function'
+    ) {
+      await loadCounts();
+    }
+
+    return;
+
+  }
+
+
+  // -----------------------------------------
+  // Training dates
+  // -----------------------------------------
+
+  const pickupDate =
+    new Date();
+
+  pickupDate.setDate(
+    pickupDate.getDate() + 1
+  );
+
+
+  const deliveryDate =
+    new Date();
+
+  deliveryDate.setDate(
+    deliveryDate.getDate() + 2
+  );
+
+
+  function dateOnly(date) {
+
+    const year =
+      date.getFullYear();
+
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, '0');
+
+    return (
+      year +
+      '-' +
+      month +
+      '-' +
+      day
+    );
+
+  }
+
+
+  // -----------------------------------------
+  // Broker opportunity
+  // -----------------------------------------
+
+  const trainingLoad = {
+
+    tenant_id:
+      TENANT_ID,
+
+    broker_name:
+      'ABC Logistics',
+
+    source_type:
+      'phone',
+
+    status:
+      'new',
+
+    external_ref:
+      'TT-ABC-260811-01',
+
+
+    // PICKUP
+
+    pickup_facility_name:
+      'Hugg & Hall Equipment Co.',
+
+    pickup_address:
+      '7201 Scott Hamilton Drive',
+
+    origin_city:
+      'Little Rock',
+
+    origin_state:
+      'AR',
+
+    pickup_zip:
+      '72209',
+
+    pickup_date:
+      dateOnly(pickupDate),
+
+    pickup_contact_name:
+      null,
+
+    pickup_phone:
+      null,
+
+    pickup_hours:
+      null,
+
+    pickup_instructions:
+      'TRAINING RECORD — confirm pickup information before dispatch.',
+
+
+    // DELIVERY
+
+    delivery_facility_name:
+      'Thompson Machinery',
+
+    delivery_address:
+      '1291 Corporate Ave',
+
+    dest_city:
+      'Memphis',
+
+    dest_state:
+      'TN',
+
+    delivery_zip:
+      '38132',
+
+    delivery_date:
+      dateOnly(deliveryDate),
+
+    delivery_contact_name:
+      null,
+
+    delivery_phone:
+      null,
+
+    delivery_hours:
+      null,
+
+    delivery_instructions:
+      'TRAINING RECORD — confirm delivery information before dispatch.',
+
+
+    // LOAD
+
+    miles:
+      137,
+
+    commodity:
+      'Excavator',
+
+    equipment_needed:
+      'RGN / Step deck',
+
+    length_ft:
+      45,
+
+    width_ft:
+      11.5,
+
+    height_ft:
+      13,
+
+    weight_lbs:
+      92000,
+
+
+    // HEAVY HAUL
+
+    is_superload:
+      false,
+
+    is_oversize:
+      true,
+
+    is_overweight:
+      true,
+
+
+    // RATE
+
+    posted_rate:
+      5500,
+
+    quoted_rate:
+      6000,
+
+    booked_rate:
+      null,
+
+
+    // TRAINING IDENTIFICATION
+
+    is_training:
+      true,
+
+    notes:
+      'TRAINING RECORD — Heavy Haul Command training broker load.'
+
+  };
+
+
+  // -----------------------------------------
+  // Insert into real Opportunities table
+  // -----------------------------------------
+
+  const result =
+    await db
+      .from('load_opportunities')
+      .insert(trainingLoad)
+      .select('*')
+      .single();
+
+
+  button.disabled = false;
+
+
+  if (result.error) {
+
+    console.error(result.error);
+
+    message.textContent =
+      'Could not populate broker load: ' +
+      result.error.message;
+
+    return;
+
+  }
+
+
+  // -----------------------------------------
+  // Success
+  // -----------------------------------------
+
+  message.textContent =
+    'Broker load populated. Open Opportunities to begin the TT.';
+
+
+  if (
+    typeof loadCounts === 'function'
+  ) {
+    await loadCounts();
+  }
+
+}
 
   const sessionResult =
     await db.auth.getSession();
