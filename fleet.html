@@ -514,14 +514,12 @@ async function start() {
     'fleet.html'
   );
 
+
   refresh();
 
 }
 
 async function refresh() {
-  const c = await db.from('carriers').select('*')
-  
-
   const c = await db.from('carriers').select('*')
     .is('archived_at', null).order('legal_name');
   const carriers = c.data || [];
