@@ -29,7 +29,7 @@
 </head>
 <body>
 <header></header>
-
+<main>
 <nav
   id="fleetCommandTabs"
   aria-label="Fleet Command navigation">
@@ -600,7 +600,71 @@ function useGolden(id){if(!currentLoad){alert('Open a load from the Route Planni
   
 function buildFleetCommandTabs(activePage) {
 
-  // the Fleet Command function I gave you
+  const target =
+    document.getElementById('fleetCommandTabs');
+
+  if (!target) return;
+
+  const tabs = [
+    ['fleet.html', 'Fleet Setup'],
+    ['route-planning.html', 'Route Planning'],
+    ['states.html', 'State Rules'],
+    ['calendar.html', 'Calendar']
+  ];
+
+  target.innerHTML = '';
+
+  target.style.cssText = `
+    display:flex;
+    align-items:center;
+    gap:26px;
+    width:100%;
+    min-height:46px;
+    margin:0 0 6px;
+    padding:0 18px;
+    background:transparent;
+    border:0;
+    border-bottom:1px solid #E2E5DD;
+    box-shadow:none;
+    border-radius:0;
+    overflow-x:auto;
+  `;
+
+  tabs.forEach(function(tab) {
+
+    const href = tab[0];
+    const label = tab[1];
+    const isActive = href === activePage;
+
+    const link =
+      document.createElement('a');
+
+    link.href = href;
+    link.textContent = label;
+
+    link.style.cssText = `
+      display:flex;
+      align-items:center;
+      min-height:44px;
+      padding:0 0 10px;
+      background:transparent;
+      color:${
+        isActive
+          ? '#7F9138'
+          : '#737A75'
+      };
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      text-decoration:none;
+      font-size:13px;
+      font-weight:600;
+      white-space:nowrap;
+    `;
+
+    target.appendChild(link);
+
+  });
 
 }
 
