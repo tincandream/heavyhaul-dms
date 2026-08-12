@@ -1,7 +1,10 @@
 // ============================================================
-// fleet-command-tabs.js
-// Shared Fleet Command workspace tabs
-// Airy Americana palette
+// FLEET COMMAND SHARED NAVIGATION
+// Used by:
+// fleet.html
+// route-planning.html
+// states.html
+// calendar.html
 // ============================================================
 
 function buildFleetCommandTabs(activePage) {
@@ -11,9 +14,7 @@ function buildFleetCommandTabs(activePage) {
       'fleetCommandTabs'
     );
 
-  if (!target) {
-    return;
-  }
+  if (!target) return;
 
 
   const tabs = [
@@ -24,41 +25,34 @@ function buildFleetCommandTabs(activePage) {
   ];
 
 
-  // ----------------------------------------------------------
-  // FLEET COMMAND BAR
-  // ----------------------------------------------------------
+  target.innerHTML = '';
 
+
+  // Exact Route Planning look
   target.style.cssText = `
     display:flex;
     align-items:center;
     gap:26px;
 
-    width:100%;
+    width:min(1450px,100%);
     min-height:46px;
 
-    margin:0 0 26px;
-    padding:0;
+    margin:0 auto 6px;
+    padding:0 24px;
 
     background:transparent;
 
     border:0;
-    border-bottom:1px solid #D9DEE1;
+    border-bottom:1px solid #E2E5DD;
 
-    border-radius:0;
     box-shadow:none;
+    border-radius:0;
 
     overflow-x:auto;
   `;
 
 
-  target.innerHTML = '';
-
-
-  // ----------------------------------------------------------
-  // TABS
-  // ----------------------------------------------------------
-
-  tabs.forEach(function (tab) {
+  tabs.forEach(function(tab) {
 
     const href =
       tab[0];
@@ -71,9 +65,7 @@ function buildFleetCommandTabs(activePage) {
 
 
     const link =
-      document.createElement(
-        'a'
-      );
+      document.createElement('a');
 
 
     link.href =
@@ -88,61 +80,29 @@ function buildFleetCommandTabs(activePage) {
       align-items:center;
 
       min-height:44px;
+
       padding:0 0 10px;
 
       background:transparent;
-color:${
-  isActive
-    ? '#7F9138'
-    : '#6F777B'
-};
 
-border-bottom:3px solid ${
-  isActive
-    ? '#AEBC39'
-    : 'transparent'
-};
+      color:${
+        isActive
+          ? '#7F9138'
+          : '#737A75'
+      };
 
+      border:0;
       border-radius:0;
 
       box-shadow:none;
 
       text-decoration:none;
 
-      font-family:"Oswald", Arial, sans-serif;
       font-size:13px;
-      font-weight:500;
-      letter-spacing:.8px;
+      font-weight:600;
 
       white-space:nowrap;
     `;
-
-
-    link.addEventListener(
-      'mouseenter',
-      function () {
-
-        if (!isActive) {
-          link.style.color =
-            '#link.style.color =
- '#7F9138';
-        }
-
-      }
-    );
-
-
-    link.addEventListener(
-      'mouseleave',
-      function () {
-
-        if (!isActive) {
-          link.style.color =
-            '#6F777B';
-        }
-
-      }
-    );
 
 
     target.appendChild(
@@ -152,3 +112,8 @@ border-bottom:3px solid ${
   });
 
 }
+
+
+// Make available to every page
+window.buildFleetCommandTabs =
+  buildFleetCommandTabs;
