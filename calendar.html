@@ -405,14 +405,23 @@ textarea{
 <body>
 <header></header>
 
+<!-- =========================================================
+     FLEET COMMAND WORKSPACE NAV
+     ========================================================= -->
+
+<nav
+  id="fleetCommandTabs"
+  aria-label="Fleet Command navigation">
+</nav>
+
 <main class="calendar-wrap">
 
   <div class="page-head">
-    <div>
-      <h1>Dispatch Calendar</h1>
+    <div class="page-intro">
+      <h1>CALENDAR</h1>
       <p>
-        Pickups, deliveries, permits, escorts, accessorial follow-ups,
-        invoices and operational reminders.
+        Driver schedules, permit expirations, maintenance,
+        deliveries, escorts, and operational reminders.
       </p>
     </div>
 
@@ -1853,6 +1862,10 @@ $('completeEventBtn')
 
 boot();
 </script>
+
+
+<script src="fleet-command-tabs.js"></script>
+<script>buildFleetCommandTabs('calendar.html');</script>
 
 </body>
 </html>
