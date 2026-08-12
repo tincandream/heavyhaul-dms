@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fleet Setup — Dispatch</title>
+  <link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
 <style>
   :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
           --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
@@ -62,6 +64,16 @@
 <header></header>
 
 <main>
+   <!-- ========================================================
+       FLEET COMMAND NAVIGATION
+       ======================================================== -->
+
+  <nav
+    class="dispatch-tabs"
+    id="fleetCommandTabs"
+    aria-label="Fleet Command navigation">
+  </nav>
+  
   <div class="warn" id="step1" style="display:none">
     Add your carrier first — drivers and equipment both belong to a carrier.
   </div>
@@ -372,6 +384,12 @@ async function start() {
   refresh();
 }
 
+  buildFleetCommandTabs(
+  'fleet.html'
+);
+
+  refresh();
+  
 async function refresh() {
   const c = await db.from('carriers').select('*')
     .is('archived_at', null).order('legal_name');
