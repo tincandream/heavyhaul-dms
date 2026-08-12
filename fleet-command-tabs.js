@@ -45,4 +45,5 @@ function buildFleetCommandTabs(activePage) {
       );
 
     }).join('');
+
 }
