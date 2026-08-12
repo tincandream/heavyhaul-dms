@@ -328,8 +328,6 @@
 
 <script src="nav.js"></script>
 
-<script src="fleet-command-tabs.js"></script>
-
 <script>
 // ===== FILL IN THESE TWO VALUES =====
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
@@ -374,23 +372,156 @@ if (typeof window.supabase === 'undefined') {
   start();
 }
 
-async function start() {
-  const s = await db.auth.getSession();
-  if (!s.data.session) { location.href = 'index.html'; return; }
+// ============================================================
+// FLEET COMMAND SUB-NAV
+// ============================================================
 
-  tenant = await buildNav(db, 'Fleet Setup');
-  if (!tenant) { alert('No profile linked to this login.'); return; }
+function buildFleetCommandTabs(activePage) {
 
-  refresh();
+  const target =
+    document.getElementById(
+      'fleetCommandTabs'
+    );
+
+  if (!target) {
+    return;
+  }
+
+
+  const tabs = [
+    ['fleet.html', 'Fleet Setup'],
+    ['route-planning.html', 'Route Planning'],
+    ['states.html', 'State Rules'],
+    ['calendar.html', 'Calendar']
+  ];
+
+
+  target.innerHTML = '';
+
+
+  target.style.cssText = `
+    display:flex;
+    align-items:center;
+    gap:26px;
+    width:100%;
+    min-height:46px;
+    margin:0 0 24px;
+    padding:0;
+    background:transparent;
+    border:0;
+    border-bottom:1px solid #E2E5DD;
+    box-shadow:none;
+    border-radius:0;
+    overflow-x:auto;
+  `;
+
+
+  tabs.forEach(function (tab) {
+
+    const href =
+      tab[0];
+
+    const label =
+      tab[1];
+
+    const isActive =
+      href === activePage;
+
+
+    const link =
+      document.createElement('a');
+
+
+    link.href =
+      href;
+
+    link.textContent =
+      label;
+
+
+    link.style.cssText = `
+      display:flex;
+      align-items:center;
+      min-height:44px;
+      padding:0 0 10px;
+      background:transparent;
+      color:${
+        isActive
+          ? '#7F9138'
+          : '#737A75'
+      };
+      border:0;
+      border-bottom:3px solid ${
+        isActive
+          ? '#AEBC39'
+          : 'transparent'
+      };
+      border-radius:0;
+      box-shadow:none;
+      text-decoration:none;
+      font-size:13px;
+      font-weight:600;
+      white-space:nowrap;
+    `;
+
+
+    target.appendChild(link);
+
+  });
+
 }
 
+
+// ============================================================
+// START
+// ============================================================
+
+async function start() {
+
+  const s =
+    await db.auth.getSession();
+
+
+  if (!s.data.session) {
+
+    location.href =
+      'index.html';
+
+    return;
+
+  }
+
+
+  tenant =
+    await buildNav(
+      db,
+      'Fleet Setup'
+    );
+
+
+  if (!tenant) {
+
+    alert(
+      'No profile linked to this login.'
+    );
+
+    return;
+
+  }
+
+
   buildFleetCommandTabs(
-  'fleet.html'
-);
+    'fleet.html'
+  );
 
   refresh();
-  
+
+}
+
 async function refresh() {
+  const c = await db.from('carriers').select('*')
+  
+
   const c = await db.from('carriers').select('*')
     .is('archived_at', null).order('legal_name');
   const carriers = c.data || [];
