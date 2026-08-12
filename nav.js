@@ -134,8 +134,13 @@ const brand = setStyles(
 
 brand.href = 'welcome.html';
 
-brand.textContent =
-  'HEAVY HAUL COMMAND';
+brand.innerHTML = `
+  <img
+    src="images/hhlogo.png"
+    alt="Heavy Haul Command"
+    class="hh-header-logo"
+  >
+`;
 
 // make the brand a flex row so the icon sits beside the text
 brand.style.display = 'flex';
