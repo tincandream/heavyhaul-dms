@@ -218,69 +218,7 @@ MAIN_NAV.forEach(([href, label, hub]) => {
 
   link.href = href;
   link.textContent = label;
-if (key === 'welcome') {
 
-  link.innerHTML = `
-    <span
-      style="
-        display:inline-flex;
-        align-items:center;
-        gap:7px;
-      "
-    >
-
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 20 20"
-        aria-hidden="true"
-        style="
-          display:block;
-          flex:none;
-        "
-      >
-
-        <!-- rosy highway diamond -->
-        <rect
-          x="3.2"
-          y="3.2"
-          width="13.6"
-          height="13.6"
-          rx="1"
-          fill="#D86A8E"
-          transform="rotate(45 10 10)"
-        />
-
-        <!-- warm cream inset -->
-        <rect
-          x="5.8"
-          y="5.8"
-          width="8.4"
-          height="8.4"
-          rx=".6"
-          fill="#F7F3EA"
-          transform="rotate(45 10 10)"
-        />
-
-        <!-- little green center -->
-        <rect
-          x="8"
-          y="8"
-          width="4"
-          height="4"
-          rx=".4"
-          fill="#AEBc39"
-          transform="rotate(45 10 10)"
-        />
-
-      </svg>
-
-      <span>Welcome</span>
-
-    </span>
-  `;
-
-}
   if (hub === activeHub) {
     link.style.borderBottomColor = '#6B92A5';
     link.setAttribute('aria-current', 'page');
