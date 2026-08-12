@@ -91,19 +91,17 @@ function buildFleetCommandTabs(activePage) {
       padding:0 0 10px;
 
       background:transparent;
+color:${
+  isActive
+    ? '#7F9138'
+    : '#6F777B'
+};
 
-      color:${
-        isActive
-          ? '#668C9D'
-          : '#6F777B'
-      };
-
-      border:0;
-      border-bottom:3px solid ${
-        isActive
-          ? '#7FA5B5'
-          : 'transparent'
-      };
+border-bottom:3px solid ${
+  isActive
+    ? '#AEBC39'
+    : 'transparent'
+};
 
       border-radius:0;
 
@@ -126,7 +124,8 @@ function buildFleetCommandTabs(activePage) {
 
         if (!isActive) {
           link.style.color =
-            '#7FA5B5';
+            '#link.style.color =
+ '#7F9138';
         }
 
       }
