@@ -134,20 +134,10 @@ const brand = setStyles(
 
 brand.href = 'welcome.html';
 
-brand.innerHTML = `
-  <img
-    src="images/hhlogo.png"
-    alt="Heavy Haul Command"
-    style="
-      display:block;
-      height:100px;
-      width:auto;
-      max-width:1000px;
-      object-fit:contain;
-      object-position:left center;
-    "
-  >
-`;
+height:100px;
+width:1000px;
+max-width:1000px;
+object-fit:fill;
 // make the brand a flex row so the icon sits beside the text
 brand.style.display = 'flex';
 brand.style.alignItems = 'center';
