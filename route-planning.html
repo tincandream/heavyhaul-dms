@@ -30,10 +30,89 @@
 <body>
 <header></header>
 <main>
-<nav
-  id="fleetCommandTabs"
-  aria-label="Fleet Command navigation">
-</nav>
+
+
+  async function start() {
+
+  db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+  const s =
+    await db.auth.getSession();
+
+  if (!s.data.session) {
+    location.href = 'index.html';
+    return;
+  }
+
+  if (
+    typeof window.buildNav !== 'function'
+  ) {
+    console.error(
+      'Route Planning: buildNav is unavailable.'
+    );
+    return;
+  }
+
+  tenant =
+    await window.buildNav(
+      db,
+      'Route Planning'
+    );
+
+  if (!tenant) return;
+
+  buildFleetCommandTabs(
+    'route-planning.html'
+  );
+
+  await loadData();
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+  const requestedLoad =
+    params.get('load');
+
+  const requestedOpportunity =
+    params.get('opportunity');
+
+  if (requestedOpportunity) {
+
+    const o =
+      opportunities.find(
+        x =>
+          x.id ===
+          requestedOpportunity
+      );
+
+    if (o) {
+      o._kind = 'opportunity';
+      openWorkspace(o);
+    }
+
+  } else if (requestedLoad) {
+
+    const l =
+      loads.find(
+        x =>
+          x.id ===
+          requestedLoad
+      );
+
+    if (l) {
+      l._kind = 'load';
+      openWorkspace(l);
+    }
+
+  }
+
+}
   
 <main>
 <section class="page-intro"><h1>ROUTE PLANNING</h1><p>Keep the load flexible. Build the route, save progress, and hand the identified states into State Rules.</p></section>
