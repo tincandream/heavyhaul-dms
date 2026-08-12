@@ -352,6 +352,220 @@ async function start(){
 const STATUS_PILL = { new:'p-new', reviewing:'p-rev', quoted:'p-quo',
   negotiating:'p-neg', booked:'p-book', lost:'p-lost', expired:'p-lost', declined:'p-lost' };
 
+async function populateTrainingOpportunity() {
+
+  if (!trainingActive) {
+
+    showMessage(
+      'opportunityMessage',
+      'Enable Training Mode first.',
+      'error'
+    );
+
+    return;
+  }
+
+
+  showMessage(
+    'opportunityMessage',
+    'Creating training opportunity…'
+  );
+
+
+  const existing =
+    await db
+      .from('load_opportunities')
+      .select('id, external_ref')
+      .eq('tenant_id', TENANT_ID)
+      .eq('external_ref', 'DHL-TRN-001')
+      .maybeSingle();
+
+
+  if (existing.error) {
+
+    showMessage(
+      'opportunityMessage',
+      existing.error.message,
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (existing.data) {
+
+    showMessage(
+      'opportunityMessage',
+      'Training opportunity DHL-TRN-001 already exists.',
+      'success'
+    );
+
+    await loadCounts();
+
+    return;
+  }
+
+
+  const row = {
+
+    tenant_id:
+      TENANT_ID,
+
+    broker_name:
+      'Delta Heavy Logistics',
+
+    source_type:
+      'phone',
+
+    status:
+      'new',
+
+    external_ref:
+      'DHL-TRN-001',
+
+
+    pickup_facility_name:
+      'Riverbend Equipment Yard',
+
+    origin_city:
+      'Little Rock',
+
+    origin_state:
+      'AR',
+
+    pickup_date:
+      null,
+
+    pickup_address:
+      null,
+
+    pickup_zip:
+      null,
+
+    pickup_contact_name:
+      null,
+
+    pickup_phone:
+      null,
+
+    pickup_hours:
+      null,
+
+    pickup_instructions:
+      'TRAINING RECORD — verify pickup details during training.',
+
+
+    delivery_facility_name:
+      'Memphis Equipment Terminal',
+
+    dest_city:
+      'Memphis',
+
+    dest_state:
+      'TN',
+
+    delivery_date:
+      null,
+
+    delivery_address:
+      null,
+
+    delivery_zip:
+      null,
+
+    delivery_contact_name:
+      null,
+
+    delivery_phone:
+      null,
+
+    delivery_hours:
+      null,
+
+    delivery_instructions:
+      'TRAINING RECORD — verify delivery details during training.',
+
+
+    miles:
+      137,
+
+    commodity:
+      'Excavator',
+
+    equipment_needed:
+      'RGN / Lowboy',
+
+    length_ft:
+      45,
+
+    width_ft:
+      11.5,
+
+    height_ft:
+      13,
+
+    weight_lbs:
+      92000,
+
+    is_superload:
+      false,
+
+    is_oversize:
+      true,
+
+    is_overweight:
+      true,
+
+
+    posted_rate:
+      5500,
+
+    quoted_rate:
+      6000,
+
+    booked_rate:
+      null,
+
+
+    notes:
+      'TRAINING RECORD — Heavy Haul Command test opportunity.'
+
+  };
+
+
+  const result =
+    await db
+      .from('load_opportunities')
+      .insert(row)
+      .select('*')
+      .single();
+
+
+  if (result.error) {
+
+    showMessage(
+      'opportunityMessage',
+      result.error.message,
+      'error'
+    );
+
+    return;
+  }
+
+
+  showMessage(
+    'opportunityMessage',
+    'Training opportunity created successfully.',
+    'success'
+  );
+
+
+  await loadCounts();
+
+}
+
+  
 async function load(){
   const r = await db.from('load_opportunities').select('*')
     .order('first_seen_at', { ascending:false });
