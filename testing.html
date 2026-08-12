@@ -918,56 +918,66 @@
 
     </section>
 
-<!-- =====================================================
-     TRAINING WALKTHROUGH
-     ===================================================== -->
 
-<section class="panel full">
+    <!-- =====================================================
+         BROKER LOAD
+         ===================================================== -->
 
-  <section class="panel full" id="brokerLoadPanel">
+    <section class="panel full" id="brokerLoadPanel">
 
-  <h2>Broker Load</h2>
+      <h2>Broker Load</h2>
 
-  <p class="panel-sub">
-    Populate the training broker load, then work it through
-    Opportunities exactly like a live load.
-  </p>
+      <p class="panel-sub">
+        Populate the training broker load, then work it through Opportunities
+        exactly like a live load.
+      </p>
 
-  <div class="status-row">
-    <div>
-      <strong>TT-ABC-260811-01</strong>
+      <div class="status-row">
+        <div>
+          <strong>TT-ABC-260811-01</strong>
+          <div style="margin-top:4px;color:#73726c;font-size:12px;line-height:1.5;">
+            ABC Logistics · Hugg &amp; Hall Equipment Co., Little Rock, AR
+            → Thompson Machinery, Memphis, TN · Excavator · RGN / Step deck
+          </div>
+        </div>
 
-      <div style="
-        margin-top:4px;
-        color:#73726c;
-        font-size:12px;
-        line-height:1.5;
-      ">
-        ABC Logistics · Little Rock, AR → Memphis, TN
-        · Excavator · RGN / Step deck
+        <a
+          href="opportunities.html"
+          style="
+            flex-shrink:0;
+            padding:8px 12px;
+            border:1px solid #D6D9D9;
+            color:#5F676B;
+            text-decoration:none;
+            font-size:12px;
+            font-weight:600;
+          "
+        >
+          Open Opportunities →
+        </a>
       </div>
-    </div>
-  </div>
 
-  <div class="button-row">
+      <div class="button-row">
+        <button
+          class="primary"
+          id="populateBrokerLoad"
+          type="button"
+        >
+          Populate Broker Load
+        </button>
+      </div>
 
-    <button
-      class="primary"
-      id="populateBrokerLoad"
-      type="button">
-      Populate Broker Load
-    </button>
+      <div class="message" id="brokerLoadMessage"></div>
 
-  </div>
+    </section>
 
-  <div
-    class="message"
-    id="brokerLoadMessage">
-  </div>
+    <!-- =====================================================
+         TRAINING WALKTHROUGH
+         ===================================================== -->
 
-</section>
+    <section class="panel full">
 
-  <h2>Training Walkthrough</h2>
+      <h2>Training Walkthrough</h2>
 
   <p class="panel-sub">
     Run one practice load through the system from fleet setup and sourcing
@@ -1210,76 +1220,6 @@
   </div>
 
 </section>
-
-
-    <!-- =====================================================
-         POPULATE TRAINING OPPORTUNITY
-         ===================================================== -->
-
-    <section class="panel full" id="opportunityPopulatePanel">
-
-      <h2>Populate Training Opportunity</h2>
-
-      <p class="panel-sub">
-        Create the standard TT broker opportunity in Opportunities so it can
-        move through Sourcing, New Load, Route Planning and State Rules.
-      </p>
-
-      <div class="status-row">
-
-        <div>
-          <strong>TT-ABC-260811-01</strong>
-
-          <div
-            style="
-              margin-top:4px;
-              color:#73726c;
-              font-size:12px;
-              line-height:1.5;
-            "
-          >
-            ABC Logistics · Hugg &amp; Hall Equipment Co., Little Rock, AR
-            → Thompson Machinery, Memphis, TN · Excavator · RGN / Step deck
-          </div>
-        </div>
-
-        <a
-          href="opportunities.html"
-          style="
-            flex-shrink:0;
-            padding:8px 12px;
-            border:1px solid #D6D9D9;
-            color:#5F676B;
-            text-decoration:none;
-            font-size:12px;
-            font-weight:600;
-          "
-        >
-          Open Opportunities →
-        </a>
-
-      </div>
-
-      <div class="button-row">
-
-        <button
-          class="primary"
-          id="populateOpportunityButton"
-          type="button"
-        >
-          Populate Training Opportunity
-        </button>
-
-      </div>
-
-      <div
-        class="message"
-        id="opportunityMessage"
-      ></div>
-
-    </section>
-
-
     <!-- =====================================================
          TRAINING RECORD COUNTS
          ===================================================== -->
@@ -2063,291 +2003,6 @@ async function loadCounts() {
 
 
 // =========================================================
-// POPULATE TRAINING OPPORTUNITY
-// =========================================================
-
-function trainingDateOffset(daysFromToday) {
-
-  const date =
-    new Date();
-
-  date.setDate(
-    date.getDate() + daysFromToday
-  );
-
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(2, '0');
-
-  const day =
-    String(
-      date.getDate()
-    ).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-
-}
-
-
-async function populateTrainingOpportunity() {
-
-  if (!trainingActive) {
-
-    showMessage(
-      'opportunityMessage',
-      'Enable Training Mode first.',
-      'error'
-    );
-
-    return;
-
-  }
-
-
-  const button =
-    document.getElementById(
-      'populateOpportunityButton'
-    );
-
-
-  button.disabled =
-    true;
-
-
-  showMessage(
-    'opportunityMessage',
-    'Creating training opportunity…'
-  );
-
-
-  const externalRef =
-    'TT-ABC-260811-01';
-
-
-  const existing =
-    await db
-      .from('load_opportunities')
-      .select(
-        'id, external_ref, status'
-      )
-      .eq(
-        'tenant_id',
-        TENANT_ID
-      )
-      .eq(
-        'external_ref',
-        externalRef
-      )
-      .maybeSingle();
-
-
-  if (existing.error) {
-
-    button.disabled =
-      false;
-
-    showMessage(
-      'opportunityMessage',
-      existing.error.message,
-      'error'
-    );
-
-    return;
-
-  }
-
-
-  if (existing.data) {
-
-    button.disabled =
-      false;
-
-    showMessage(
-      'opportunityMessage',
-      'TT-ABC-260811-01 already exists in Opportunities.',
-      'success'
-    );
-
-    await loadCounts();
-
-    return;
-
-  }
-
-
-  const row = {
-
-    tenant_id:
-      TENANT_ID,
-
-
-    broker_name:
-      'ABC Logistics',
-
-    source_type:
-      'phone',
-
-    status:
-      'new',
-
-    external_ref:
-      externalRef,
-
-
-    pickup_facility_name:
-      'Hugg & Hall Equipment Co.',
-
-    origin_city:
-      'Little Rock',
-
-    origin_state:
-      'AR',
-
-    pickup_date:
-      trainingDateOffset(1),
-
-    pickup_address:
-      '7201 Scott Hamilton Drive',
-
-    pickup_zip:
-      '72209',
-
-    pickup_contact_name:
-      null,
-
-    pickup_phone:
-      '(501) 562-1262',
-
-    pickup_hours:
-      'Mon-Fri 7:00 AM-5:00 PM',
-
-    pickup_instructions:
-      'TRAINING RECORD — confirm pickup appointment and loading instructions before dispatch.',
-
-
-    delivery_facility_name:
-      'Thompson Machinery',
-
-    dest_city:
-      'Memphis',
-
-    dest_state:
-      'TN',
-
-    delivery_date:
-      trainingDateOffset(2),
-
-    delivery_address:
-      '1291 Corporate Ave',
-
-    delivery_zip:
-      '38132',
-
-    delivery_contact_name:
-      null,
-
-    delivery_phone:
-      '(901) 332-3051',
-
-    delivery_hours:
-      'Mon-Fri 7:00 AM-5:00 PM',
-
-    delivery_instructions:
-      'TRAINING RECORD — confirm receiving appointment and unloading instructions before dispatch.',
-
-
-    miles:
-      137,
-
-
-    commodity:
-      'Excavator',
-
-    equipment_needed:
-      'RGN / Step deck',
-
-
-    length_ft:
-      45,
-
-    width_ft:
-      11.5,
-
-    height_ft:
-      13,
-
-    weight_lbs:
-      92000,
-
-
-    is_superload:
-      false,
-
-    is_oversize:
-      true,
-
-    is_overweight:
-      true,
-
-
-    posted_rate:
-      5500,
-
-    quoted_rate:
-      6000,
-
-    booked_rate:
-      null,
-
-
-    notes:
-      'TRAINING RECORD — Heavy Haul Command TT opportunity. Use this record to practice Sourcing → Opportunity → New Load → Route Planning → State Rules.'
-
-  };
-
-
-  const result =
-    await db
-      .from('load_opportunities')
-      .insert(row)
-      .select('*')
-      .single();
-
-
-  button.disabled =
-    false;
-
-
-  if (result.error) {
-
-    showMessage(
-      'opportunityMessage',
-      result.error.message,
-      'error'
-    );
-
-    return;
-
-  }
-
-
-  showMessage(
-    'opportunityMessage',
-    'Training opportunity created. Open Opportunities to continue the TT.',
-    'success'
-  );
-
-
-  await loadCounts();
-
-}
-
-
-// =========================================================
 // RESET
 // =========================================================
 
@@ -2428,17 +2083,6 @@ async function resetTrainingData() {
     'Training data reset complete.',
     'success'
   );
-
-
-
-  document
-    .getElementById(
-      'populateOpportunityButton'
-    )
-    .addEventListener(
-      'click',
-      populateTrainingOpportunity
-    );
 
 
   await loadTrainingStatus();
@@ -2673,52 +2317,74 @@ async function buildTestingFallbackNav(
 
 }
 // =========================================================
-// START
+// BROKER LOAD
 // =========================================================
 
+function brokerTrainingDate(daysFromToday) {
 
-  
-async function start() {
+  const date =
+    new Date();
 
-  const populateBrokerLoadButton =
-  document.getElementById(
-    'populateBrokerLoad'
+  date.setDate(
+    date.getDate() + daysFromToday
   );
 
-if (populateBrokerLoadButton) {
+  const year =
+    date.getFullYear();
 
-  populateBrokerLoadButton
-    .addEventListener(
-      'click',
-      populateBrokerLoad
-    );
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(2, '0');
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 
 }
 
 
-  // -----------------------------------------
-  // Training Mode must be active
-  // -----------------------------------------
+async function populateBrokerLoad() {
+
+  const message =
+    document.getElementById(
+      'brokerLoadMessage'
+    );
+
+  const button =
+    document.getElementById(
+      'populateBrokerLoad'
+    );
+
 
   if (!trainingActive) {
 
-    message.textContent =
-      'Enable Training Mode first.';
+    showMessage(
+      'brokerLoadMessage',
+      'Enable Training Mode first.',
+      'error'
+    );
 
     return;
 
   }
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
-  message.textContent =
-    'Populating broker load...';
+  showMessage(
+    'brokerLoadMessage',
+    'Populating broker load…'
+  );
 
 
-  // -----------------------------------------
-  // Prevent duplicate training load
-  // -----------------------------------------
+  const externalRef =
+    'TT-ABC-260811-01';
+
 
   const existing =
     await db
@@ -2730,20 +2396,21 @@ if (populateBrokerLoadButton) {
       )
       .eq(
         'external_ref',
-        'TT-ABC-260811-01'
+        externalRef
       )
       .maybeSingle();
 
 
   if (existing.error) {
 
-    console.error(existing.error);
+    button.disabled =
+      false;
 
-    message.textContent =
-      'Could not check for the training broker load: ' +
-      existing.error.message;
-
-    button.disabled = false;
+    showMessage(
+      'brokerLoadMessage',
+      existing.error.message,
+      'error'
+    );
 
     return;
 
@@ -2752,71 +2419,21 @@ if (populateBrokerLoadButton) {
 
   if (existing.data) {
 
-    message.textContent =
-      'Broker load is already populated.';
+    button.disabled =
+      false;
 
-    button.disabled = false;
+    showMessage(
+      'brokerLoadMessage',
+      'Broker load is already populated.',
+      'success'
+    );
 
-    if (
-      typeof loadCounts === 'function'
-    ) {
-      await loadCounts();
-    }
+    await loadCounts();
 
     return;
 
   }
 
-
-  // -----------------------------------------
-  // Training dates
-  // -----------------------------------------
-
-  const pickupDate =
-    new Date();
-
-  pickupDate.setDate(
-    pickupDate.getDate() + 1
-  );
-
-
-  const deliveryDate =
-    new Date();
-
-  deliveryDate.setDate(
-    deliveryDate.getDate() + 2
-  );
-
-
-  function dateOnly(date) {
-
-    const year =
-      date.getFullYear();
-
-    const month =
-      String(
-        date.getMonth() + 1
-      ).padStart(2, '0');
-
-    const day =
-      String(
-        date.getDate()
-      ).padStart(2, '0');
-
-    return (
-      year +
-      '-' +
-      month +
-      '-' +
-      day
-    );
-
-  }
-
-
-  // -----------------------------------------
-  // Broker opportunity
-  // -----------------------------------------
 
   const trainingLoad = {
 
@@ -2833,16 +2450,11 @@ if (populateBrokerLoadButton) {
       'new',
 
     external_ref:
-      'TT-ABC-260811-01',
+      externalRef,
 
-
-    // PICKUP
 
     pickup_facility_name:
       'Hugg & Hall Equipment Co.',
-
-    pickup_address:
-      '7201 Scott Hamilton Drive',
 
     origin_city:
       'Little Rock',
@@ -2850,11 +2462,14 @@ if (populateBrokerLoadButton) {
     origin_state:
       'AR',
 
+    pickup_date:
+      brokerTrainingDate(1),
+
+    pickup_address:
+      '7201 Scott Hamilton Drive',
+
     pickup_zip:
       '72209',
-
-    pickup_date:
-      dateOnly(pickupDate),
 
     pickup_contact_name:
       null,
@@ -2869,13 +2484,8 @@ if (populateBrokerLoadButton) {
       'TRAINING RECORD — confirm pickup information before dispatch.',
 
 
-    // DELIVERY
-
     delivery_facility_name:
       'Thompson Machinery',
-
-    delivery_address:
-      '1291 Corporate Ave',
 
     dest_city:
       'Memphis',
@@ -2883,11 +2493,14 @@ if (populateBrokerLoadButton) {
     dest_state:
       'TN',
 
+    delivery_date:
+      brokerTrainingDate(2),
+
+    delivery_address:
+      '1291 Corporate Ave',
+
     delivery_zip:
       '38132',
-
-    delivery_date:
-      dateOnly(deliveryDate),
 
     delivery_contact_name:
       null,
@@ -2901,8 +2514,6 @@ if (populateBrokerLoadButton) {
     delivery_instructions:
       'TRAINING RECORD — confirm delivery information before dispatch.',
 
-
-    // LOAD
 
     miles:
       137,
@@ -2925,9 +2536,6 @@ if (populateBrokerLoadButton) {
     weight_lbs:
       92000,
 
-
-    // HEAVY HAUL
-
     is_superload:
       false,
 
@@ -2937,8 +2545,6 @@ if (populateBrokerLoadButton) {
     is_overweight:
       true,
 
-
-    // RATE
 
     posted_rate:
       5500,
@@ -2950,8 +2556,6 @@ if (populateBrokerLoadButton) {
       null,
 
 
-    // TRAINING IDENTIFICATION
-
     is_training:
       true,
 
@@ -2961,10 +2565,6 @@ if (populateBrokerLoadButton) {
   };
 
 
-  // -----------------------------------------
-  // Insert into real Opportunities table
-  // -----------------------------------------
-
   const result =
     await db
       .from('load_opportunities')
@@ -2973,37 +2573,41 @@ if (populateBrokerLoadButton) {
       .single();
 
 
-  button.disabled = false;
+  button.disabled =
+    false;
 
 
   if (result.error) {
 
-    console.error(result.error);
-
-    message.textContent =
+    showMessage(
+      'brokerLoadMessage',
       'Could not populate broker load: ' +
-      result.error.message;
+        result.error.message,
+      'error'
+    );
 
     return;
 
   }
 
 
-  // -----------------------------------------
-  // Success
-  // -----------------------------------------
+  showMessage(
+    'brokerLoadMessage',
+    'Broker load populated. Open Opportunities to begin the TT.',
+    'success'
+  );
 
-  message.textContent =
-    'Broker load populated. Open Opportunities to begin the TT.';
 
-
-  if (
-    typeof loadCounts === 'function'
-  ) {
-    await loadCounts();
-  }
+  await loadCounts();
 
 }
+
+
+// =========================================================
+// START
+// =========================================================
+
+async function start() {
 
   const sessionResult =
     await db.auth.getSession();
@@ -3053,12 +2657,8 @@ if (populateBrokerLoadButton) {
 
       const profile =
         await db
-          .from(
-            'app_users'
-          )
-          .select(
-            'tenant_id'
-          )
+          .from('app_users')
+          .select('tenant_id')
           .eq(
             'auth_uid',
             authId
@@ -3120,6 +2720,23 @@ if (populateBrokerLoadButton) {
       'click',
       loadCounts
     );
+
+
+  const populateBrokerLoadButton =
+    document.getElementById(
+      'populateBrokerLoad'
+    );
+
+
+  if (populateBrokerLoadButton) {
+
+    populateBrokerLoadButton
+      .addEventListener(
+        'click',
+        populateBrokerLoad
+      );
+
+  }
 
 
   await loadTrainingStatus();
