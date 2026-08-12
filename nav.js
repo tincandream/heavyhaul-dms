@@ -7,10 +7,10 @@
 'use strict';
 
 const MAIN_NAV = [
-  ['welcome.html',       'Welcome',       'welcome'],
-  ['board.html',         'Dispatch',      'dispatch'],
-  ['sourcing.html',      'Sourcing',      'sourcing'],
-  ['fleet-command.html', 'Fleet Command', 'fleet']
+  ['welcome.html',  'Welcome',       'welcome'],
+  ['board.html',    'Dispatch',      'dispatch'],
+  ['sourcing.html', 'Sourcing',      'sourcing'],
+  ['fleet.html',    'Fleet Command', 'fleet']
 ];
 
 const HUB_PAGES = {
