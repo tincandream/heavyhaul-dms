@@ -452,7 +452,7 @@ function buildFleetCommandTabs(activePage) {
     padding:0;
     background:transparent;
     border:0;
-    border-bottom:1px solid #E2E5DD;
+    border-bottom:none;
     box-shadow:none;
     border-radius:0;
     overflow-x:auto;
@@ -481,32 +481,29 @@ function buildFleetCommandTabs(activePage) {
     link.textContent =
       label;
 
+link.style.cssText = `
+  display:flex;
+  align-items:center;
+  min-height:44px;
+  padding:0 0 10px;
+  background:transparent;
 
-    link.style.cssText = `
-      display:flex;
-      align-items:center;
-      min-height:44px;
-      padding:0 0 10px;
-      background:transparent;
-      color:${
-        isActive
-          ? '#7F9138'
-          : '#737A75'
-      };
+  color:${
+    isActive
+      ? '#7F9138'
+      : '#737A75'
+  };
 
-      .tab.on {
-      border:0;
-    border-bottom:0;
-    box-shadow:none;
-    }
-    
-      border-radius:0;
-      box-shadow:none;
-      text-decoration:none;
-      font-size:13px;
-      font-weight:600;
-      white-space:nowrap;
-    `;
+  border:0;
+  border-bottom:none;
+  border-radius:0;
+  box-shadow:none;
+
+  text-decoration:none;
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+`;
 
 
     target.appendChild(link);
