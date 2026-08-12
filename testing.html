@@ -2760,6 +2760,112 @@ async function start() {
 
 
 start();
+  /* ============================================================
+   TRAINING MODE — FILL TEST DATA (BROKER LOAD)
+   Button appears only while protected Training Mode is active.
+   ============================================================ */
+
+function ttDateOffset(days){
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+
+const TT_BROKER_LOAD = {
+  o_broker:               'ABC Logistics',
+  o_source:               'phone',
+  o_status:               'new',
+  o_ref:                  'TT-ABC-260811-01',
+
+  o_pickup_facility:      'Hugg & Hall Equipment Co.',
+  o_ocity:                'Little Rock',
+  o_ostate:               'AR',
+  o_pickup_address:       '7201 Scott Hamilton Drive',
+  o_pickup_zip:           '72209',
+  o_pickup_phone:         '(501) 562-1262',
+  o_pickup_hours:         'Mon-Fri 7:00 AM-5:00 PM',
+  o_pickup_instructions:  'TRAINING RECORD — confirm pickup appointment and loading instructions before dispatch.',
+
+  o_delivery_facility:    'Thompson Machinery',
+  o_dcity:                'Memphis',
+  o_dstate:               'TN',
+  o_delivery_address:     '1291 Corporate Ave',
+  o_delivery_zip:         '38132',
+  o_delivery_phone:       '(901) 332-3051',
+  o_delivery_hours:       'Mon-Fri 7:00 AM-5:00 PM',
+  o_delivery_instructions:'TRAINING RECORD — confirm receiving appointment and unloading instructions before dispatch.',
+
+  o_miles:                '137',
+  o_commodity:            'Excavator',
+  o_equip:                'RGN / Step deck',
+
+  o_len:                  '45',
+  o_wid:                  '11.5',
+  o_hgt:                  '13',
+  o_wt:                   '92000',
+
+  o_posted:               '5500',
+  o_quoted:               '6000',
+  o_booked:               '',
+
+  o_notes:                'TRAINING RECORD — Heavy Haul Command TT opportunity. Practice Sourcing → Opportunity → New Load → Route Planning → State Rules.'
+};
+
+function ttFillOpportunity(){
+  const data = Object.assign({}, TT_BROKER_LOAD, {
+    o_pickup:   ttDateOffset(1),
+    o_delivery: ttDateOffset(2)
+  });
+
+  Object.keys(data).forEach(function(id){
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    if (el.type === 'checkbox'){
+      el.checked = !!data[id];
+    } else if (el.tagName === 'SELECT'){
+      const wanted = String(data[id]).toLowerCase();
+      const match = Array.from(el.options).find(function(o){
+        return o.value.toLowerCase() === wanted ||
+               o.textContent.trim().toLowerCase() === wanted;
+      });
+      if (match) el.value = match.value;
+    } else {
+      el.value = data[id];
+    }
+
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+
+  // superload = No
+  const sup = document.getElementById('o_super');
+  if (sup) sup.checked = false;
+}
+
+async function ttInitOpportunity(){
+  let active = false;
+  try {
+    const r = await db.rpc('get_training_mode_status');
+    if (!r.error && r.data) active = r.data.active === true;
+  } catch (e){ /* training mode unavailable — no button */ }
+  if (!active) return;
+
+  const saveBtn = document.getElementById('saveBtn');
+  if (!saveBtn || document.getElementById('ttfill_opportunity')) return;
+
+  const b = document.createElement('button');
+  b.id = 'ttfill_opportunity';
+  b.type = 'button';
+  b.textContent = 'Fill test data';
+  b.style.cssText = 'margin-right:8px;background:#B8B05D;border:1px solid #B8B05D;' +
+                    'color:#3C3A4B;font-weight:600;cursor:pointer;';
+  b.addEventListener('click', ttFillOpportunity);
+  saveBtn.parentNode.insertBefore(b, saveBtn);
+}
+
+ttInitOpportunity();
 
 </script>
 
