@@ -3581,18 +3581,28 @@ if (key === 'appointment') {
   }
 
 
+drawPreview();
+updateHandoff();
+}
+
+if(
+  key ===
+  'commodity'
+){
+
+if (key === 'appointment') {
+
   drawPreview();
   updateHandoff();
 }
 
-    if(isOpp){
+if(
+  key ===
+  'commodity'
+){
 
-      $('pickupAt').value =
-        opportunityDateLocal(
-          l.pickup_date
-        );
-
-
+if (key === 'appointment') {
+  
       $('deliveryAt').value =
         opportunityDateLocal(
           l.delivery_date
