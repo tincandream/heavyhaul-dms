@@ -2993,6 +2993,203 @@ pkRow('Trailer', pkVal(pick(LOAD, F.trailer))) +
   w.document.close();
   setTimeout(() => w.print(), 400);
 }
+
+
+
+
+  /* ============================================================
+   TRAINING MODE — FILL TEST DATA (PERMITS & ESCORTS)
+   Buttons appear only while Training Mode is active.
+   ============================================================ */
+
+function ttDay(n){
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  const p = x => String(x).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+
+function ttDayTime(n, hh, mm){
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  d.setHours(hh, mm, 0, 0);
+  const p = x => String(x).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) +
+         'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+/* two permits cycle on each click: AR then TN */
+let ttPermitIdx = 0;
+
+const TT_PERMITS = [
+  {
+    pm_state:'AR',
+    pm_status:'issued',
+    pm_permit_number:'AR-2601188-OS',
+    pm_issuing_authority:'ARDOT',
+    pm_fee:'52',
+    pm_service_fee:'35',
+    pm_applied_at:ttDayTime(-1, 9, 15),
+    pm_issued_at:ttDayTime(-1, 14, 30),
+    pm_valid_from:ttDay(1),
+    pm_valid_to:ttDay(4),
+    pm_escort_front:true,
+    pm_escort_rear:false,
+    pm_escort_police:false,
+    pm_escort_high_pole:false,
+    pm_daylight_only:true,
+    pm_weekend_travel_allowed:true,
+    pm_holiday_travel_allowed:false,
+    pm_wind_limit_mph:'35',
+    pm_travel_time_restrictions:'Daylight only, sunrise to sunset, seven days a week. No movement in inclement weather.',
+    pm_curfew_notes:'Little Rock metro: no movement 7:00-9:00 AM or 4:00-6:00 PM on I-30 MM 138-143, I-40 MM 151-155, and all of I-630.',
+    pm_route_restrictions:'I-40 East from Little Rock to the Tennessee line. No deviation without an amended permit.',
+    pm_driver_has_permit:true,
+    pm_driver_briefed_at:ttDayTime(0, 16, 0),
+    pm_notes:'TRAINING RECORD - 11 ft width permit. Front escort required on two-lane segments only.'
+  },
+  {
+    pm_state:'TN',
+    pm_status:'issued',
+    pm_permit_number:'TN-884213-OSW',
+    pm_issuing_authority:'TDOT',
+    pm_fee:'40',
+    pm_service_fee:'35',
+    pm_applied_at:ttDayTime(-1, 9, 40),
+    pm_issued_at:ttDayTime(-1, 15, 10),
+    pm_valid_from:ttDay(1),
+    pm_valid_to:ttDay(4),
+    pm_escort_front:true,
+    pm_escort_rear:false,
+    pm_escort_police:false,
+    pm_escort_high_pole:false,
+    pm_daylight_only:false,
+    pm_weekend_travel_allowed:true,
+    pm_holiday_travel_allowed:false,
+    pm_wind_limit_mph:'35',
+    pm_travel_time_restrictions:'Load is under the 12 ft 6 in curfew threshold. Continuous travel permitted unless an escort is required.',
+    pm_curfew_notes:'Shelby County (Memphis): avoid 7:00-9:00 AM and 4:00-6:00 PM if escorted.',
+    pm_route_restrictions:'I-40 East to Memphis. Delivery via Getwell Road. Follow permitted route exactly.',
+    pm_driver_has_permit:true,
+    pm_driver_briefed_at:ttDayTime(0, 16, 0),
+    pm_notes:'TRAINING RECORD - TN legal height is 13 ft 6 in, lower than AR. This load clears both.'
+  }
+];
+
+/* two escorts cycle on each click */
+let ttEscortIdx = 0;
+
+const TT_ESCORTS = [
+  {
+    es_role:'front',
+    es_status:'confirmed',
+    es_vehicle_info:'White Ford F-150, 18 ft height pole, AR plates',
+    es_driver_name:'Curtis Vance',
+    es_driver_phone:'(501) 555-0119',
+    es_quoted_rate:'625',
+    es_confirmed_rate:'600',
+    es_scheduled_start:ttDayTime(1, 6, 30),
+    es_scheduled_end:ttDayTime(1, 17, 0),
+    es_meeting_time:ttDayTime(1, 6, 15),
+    es_meeting_location:"Pilot Travel Center, 7801 Interstate 30, Little Rock, AR",
+    es_contacts_exchanged:true,
+    es_confirmed_day_before:true,
+    es_notes:'TRAINING RECORD - Front escort for AR two-lane segments. Confirmed day before.'
+  },
+  {
+    es_role:'rear',
+    es_status:'booked',
+    es_vehicle_info:'Silver Chevy Silverado, amber bar, TN plates',
+    es_driver_name:'Dana Whitlow',
+    es_driver_phone:'(901) 555-0147',
+    es_quoted_rate:'550',
+    es_confirmed_rate:'525',
+    es_scheduled_start:ttDayTime(1, 11, 0),
+    es_scheduled_end:ttDayTime(1, 17, 0),
+    es_meeting_time:ttDayTime(1, 10, 45),
+    es_meeting_location:'Love\'s Travel Stop, 1265 Getwell Rd, Memphis, TN',
+    es_contacts_exchanged:true,
+    es_confirmed_day_before:false,
+    es_notes:'TRAINING RECORD - Rear escort joins at the TN line. Confirm day before delivery.'
+  }
+];
+
+function ttApply(data){
+  Object.keys(data).forEach(function(id){
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    if (el.type === 'checkbox'){
+      el.checked = !!data[id];
+    } else if (el.tagName === 'SELECT'){
+      const wanted = String(data[id]).toLowerCase();
+      const m = Array.from(el.options).find(function(o){
+        return o.value.toLowerCase() === wanted ||
+               o.textContent.trim().toLowerCase() === wanted;
+      });
+      if (m) el.value = m.value;
+    } else {
+      el.value = data[id];
+    }
+
+    el.dispatchEvent(new Event('input',  { bubbles:true }));
+    el.dispatchEvent(new Event('change', { bubbles:true }));
+  });
+}
+
+function ttFillPermit(){
+  ttApply(TT_PERMITS[ttPermitIdx % TT_PERMITS.length]);
+  ttPermitIdx++;
+  toast('Permit test data filled - review and Save');
+}
+
+function ttFillEscort(){
+  ttApply(TT_ESCORTS[ttEscortIdx % TT_ESCORTS.length]);
+  ttEscortIdx++;
+  toast('Escort test data filled - review and Save');
+}
+
+async function ttInitWorkspace(){
+
+  let active = false;
+
+  try {
+    const r = await db.rpc('get_training_mode_status');
+    if (!r.error && r.data) active = r.data.active === true;
+  } catch (e){
+    return;
+  }
+
+  if (!active) return;
+
+  [['pm_savebtn','ttFillPm', ttFillPermit],
+   ['es_savebtn','ttFillEs', ttFillEscort]].forEach(function(cfg){
+
+    const saveBtn = document.getElementById(cfg[0]);
+    if (!saveBtn) return;
+    if (document.getElementById(cfg[1])) return;
+
+    const b = document.createElement('button');
+    b.id = cfg[1];
+    b.type = 'button';
+    b.className = 'sm';
+    b.textContent = 'Fill test data';
+    b.style.cssText =
+      'background:#B8B05D;border:1px solid #B8B05D;' +
+      'color:#3C3A4B;font-weight:600;cursor:pointer;';
+
+    b.addEventListener('click', cfg[2]);
+    saveBtn.parentNode.insertBefore(b, saveBtn);
+  });
+}
+
+(function ttBootWorkspace(){
+  if (typeof db === 'undefined' || !db){
+    setTimeout(ttBootWorkspace, 300);
+    return;
+  }
+  ttInitWorkspace();
+})();
 </script>
 </body>
 </html>
