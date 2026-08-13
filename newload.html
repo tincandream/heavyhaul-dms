@@ -4559,13 +4559,19 @@ carrier_approved_by:
 
     : null,
 
+carrier_approved_at:
+  $('appr').value === 'true'
+    ? new Date().toISOString()
+    : null,
+
+carrier_approved_by:
+  $('appr').value === 'true'
+    ? val('apprby')
+    : null,
+
 route_planning_hidden:
-
-  $('appr').value ===
-  'true'
-
+  $('appr').value === 'true'
     ? false
-
     : true,
 
         customer_reference:
