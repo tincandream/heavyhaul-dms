@@ -1765,6 +1765,17 @@ async function loadOpportunityImport() {
     SOURCE_OPPORTUNITY;
 
 
+  // If this opportunity has already been converted to an operational load,
+  // reopen that SAME load instead of creating another LD-xxxx duplicate.
+  if (o.load_id) {
+    location.replace(
+      'newload.html?load=' +
+      encodeURIComponent(o.load_id)
+    );
+    return;
+  }
+
+
   // Broker load number
   $('brokerload').value =
     o.external_ref || '';
@@ -4597,41 +4608,36 @@ $('save').disabled =
       const loadId =
         r.data.id;
 
-      // ----------------------------------------------------------
-// LINK SOURCE OPPORTUNITY TO THE CREATED LOAD
-// Prevent duplicate LD-xxxx loads from the same opportunity.
-// ----------------------------------------------------------
 
-if (
-  SOURCE_OPPORTUNITY_ID &&
-  !EDIT_LOAD_ID
-) {
+      // When New Load was opened from a booked Opportunity, permanently
+      // link that source Opportunity to this operational load. This keeps
+      // TT-ABC-260811-01 tied to one load and prevents duplicate LD-xxxx rows
+      // if the booked Opportunity is opened again later.
+      if (SOURCE_OPPORTUNITY_ID && !EDIT_LOAD_ID) {
 
-  const opportunityLink =
-    await db
-      .from('load_opportunities')
-      .update({
-        load_id: loadId
-      })
-      .eq(
-        'tenant_id',
-        tenant
-      )
-      .eq(
-        'id',
-        SOURCE_OPPORTUNITY_ID
-      );
+        const opportunityLink =
+          await db
+            .from('load_opportunities')
+            .update({
+              load_id: loadId
+            })
+            .eq('tenant_id', tenant)
+            .eq('id', SOURCE_OPPORTUNITY_ID);
 
-  if (opportunityLink.error) {
+        if (opportunityLink.error) {
+          $('save').disabled = false;
+          say(
+            'Load saved, but the source Opportunity could not be linked: ' +
+            opportunityLink.error.message,
+            'err'
+          );
+          return;
+        }
 
-    console.warn(
-      'Could not link opportunity to load:',
-      opportunityLink.error.message
-    );
-
-  }
-
-}
+        if (SOURCE_OPPORTUNITY) {
+          SOURCE_OPPORTUNITY.load_id = loadId;
+        }
+      }
 
 
       if (EDIT_LOAD_ID) {
