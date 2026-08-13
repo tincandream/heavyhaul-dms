@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Route Planning — Heavy Haul Command</title>
-
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="dashboard.css">
 
@@ -5184,19 +5183,11 @@ async function start(){
   }
 
 
-  if(
-    typeof window.buildNav !==
-    'function'
-  ){
-
-    console.error(
-      'Route Planning: buildNav is unavailable.'
-    );
-
-    return;
-
-  }
-
+ if (typeof window.buildNav !== 'function') {
+  console.error(
+    'Route Planning: shared nav.js did not load.'
+  );
+} else {
 
   tenant =
     await window.buildNav(
@@ -5204,11 +5195,17 @@ async function start(){
       'Route Planning'
     );
 
+}
 
-  if(!tenant){
-    return;
-  }
+if (!tenant) {
 
+  console.error(
+    'Route Planning: tenant could not be resolved.'
+  );
+
+  return;
+
+}
 
   buildFleetCommandTabs(
     'route-planning.html'
