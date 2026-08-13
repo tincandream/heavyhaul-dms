@@ -864,7 +864,7 @@ dialog.assign-dialog::backdrop {
 
   <div class="workflow-band added-band">
     <span>Load-Specific Details</span>
-    <span class="band-note">Driver Handoff · Permits · Escorts · Accessorials · Documents</span>
+    <span class="band-note">Driver Handoff · Permits · Escorts · Documents</span>
   </div>
 
   <!-- =====================================================
@@ -928,7 +928,7 @@ dialog.assign-dialog::backdrop {
 
       <p class="hint" style="margin-top:10px">
         The briefing pulls from the load: assigned driver and equipment, pickup and delivery,
-        route, State Rules review, permits, escorts, accessorial terms, and special instructions.
+        route, State Rules review, permits, escorts, and special instructions.
       </p>
 
       <div class="full">
@@ -1046,26 +1046,7 @@ dialog.assign-dialog::backdrop {
 
  
 
-      <div>
-        <label>Rate con matches agreement</label>
-        <select id="ratecon">
-          <option value="">Not reviewed yet</option>
-          <option value="true">Yes, matches</option>
-          <option value="false">No, discrepancy</option>
-        </select>
-      </div>
-
-      <div class="full">
-        <label>Notes on terms</label>
-        <textarea id="accnotes"></textarea>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
+      <!-- =====================================================
        DOCUMENTS
        ===================================================== -->
 
@@ -2708,44 +2689,13 @@ async function loadCarrierProfileSummary(carrierId) {
   .filter(Boolean);
 
 
-  const terms = [
-
-    p.detention_rate_per_hour != null
-      ? 'Detention $' +
-        Number(p.detention_rate_per_hour).toFixed(0) +
-        '/hr' +
-        (
-          p.detention_after_hours != null
-            ? ' after ' +
-              Number(p.detention_after_hours) +
-              ' hr'
-            : ''
-        )
-      : '',
-
-    p.tonu_minimum != null
-      ? 'TONU $' +
-        Number(p.tonu_minimum).toLocaleString()
-      : '',
-
-    p.layover_rate_per_day != null
-      ? 'Layover $' +
-        Number(p.layover_rate_per_day).toLocaleString() +
-        '/day'
-      : ''
-
-  ]
-  .filter(Boolean);
+  
 
 
   const lines = [
 
     rateBits.length
       ? rateBits.join(' · ')
-      : '',
-
-    terms.length
-      ? terms.join(' · ')
       : '',
 
     p.preferences
@@ -3682,11 +3632,7 @@ async function loadExistingDraft() {
   set('escco', x.escort_contact_company);
   set('escname', x.escort_contact_name);
   set('escphone', x.escort_contact_phone);
-  set('detfree', x.detention_free_hours);
-  set('detrate', x.detention_rate_per_hour);
-  set('layrate', x.layover_rate);
-  set('tonu', x.tonu_rate);
-  set('accnotes', x.accessorial_notes);
+
   set('custref', x.customer_reference);
   set('po', x.purchase_order);
   set('notes', x.notes);
@@ -3767,9 +3713,7 @@ function buildDriverBriefing() {
     STATE_RULES_REVIEWED ? 'State Rules: reviewed' : 'State Rules: not reviewed',
     val('permresp') ? 'Permits: ' + selectedText('permresp') : '',
     val('escresp') ? 'Escorts: ' + selectedText('escresp') : '',
-    val('detrate') ? 'Detention: $' + val('detrate') + '/hr' : '',
-    val('layrate') ? 'Layover: $' + val('layrate') : '',
-    val('tonu') ? 'TONU: $' + val('tonu') : ''
+
   ].filter(Boolean);
 
   box.innerHTML =
@@ -4456,37 +4400,7 @@ $('save').disabled =
         escort_contact_phone:
           val('escphone'),
 
-        detention_free_hours:
-          num('detfree'),
-
-        detention_rate_per_hour:
-          num('detrate'),
-
-        layover_rate:
-          num('layrate'),
-
-        layover_requires_approval:
-          $('layappr').value ===
-          'true',
-
-        tonu_rate:
-          num('tonu'),
-
-        accessorial_notes:
-          val('accnotes'),
-
-        rate_con_matches_agreement:
-
-          $('ratecon').value === ''
-
-            ? null
-
-            : $('ratecon').value ===
-              'true',
-
-
-
-carrier_approved_at:
+        carrier_approved_at:
   $('appr').value === 'true'
     ? new Date().toISOString()
     : null,
