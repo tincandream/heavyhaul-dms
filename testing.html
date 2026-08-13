@@ -1488,22 +1488,171 @@ let trainingActive =
 // =========================================================
 // MESSAGE
 // =========================================================
-  function fillPermitEscortTestData() {
+async function fillPermitEscortTestData() {
 
-  $('permresp').value = 'permit_service';
-  $('permco').value = 'Ozark Heavy Haul Permits';
-  $('permname').value = 'Megan Carter';
-  $('permphone').value = '(501) 555-0148';
-  $('permemail').value = 'permits@ozarkheavyhaul.test';
+  if (!trainingActive) {
 
-  $('escresp').value = 'escort_company';
-  $('escco').value = 'Mid-South Pilot Cars';
-  $('escname').value = 'Daniel Brooks';
-  $('escphone').value = '(901) 555-0186';
+    showMessage(
+      'permitEscortMessage',
+      'Enable Training Mode first.',
+      'error'
+    );
 
-  refreshAssemblyStatus();
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      'fillPermitEscortTest'
+    );
+
+
+  button.disabled = true;
+
+
+  showMessage(
+    'permitEscortMessage',
+    'Finding TT load…'
+  );
+
+
+  const opportunityResult =
+    await db
+      .from('load_opportunities')
+      .select(
+        'id, external_ref, load_id'
+      )
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .eq(
+        'external_ref',
+        'TT-ABC-260811-01'
+      )
+      .maybeSingle();
+
+
+  if (opportunityResult.error) {
+
+    button.disabled = false;
+
+    showMessage(
+      'permitEscortMessage',
+      opportunityResult.error.message,
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (!opportunityResult.data) {
+
+    button.disabled = false;
+
+    showMessage(
+      'permitEscortMessage',
+      'TT-ABC-260811-01 was not found. Populate the Broker Load first.',
+      'error'
+    );
+
+    return;
+  }
+
+
+  const loadId =
+    opportunityResult.data.load_id;
+
+
+  if (!loadId) {
+
+    button.disabled = false;
+
+    showMessage(
+      'permitEscortMessage',
+      'The TT broker load has not been converted to New Load yet.',
+      'error'
+    );
+
+    return;
+  }
+
+
+  const testData = {
+
+    permit_responsibility:
+      'permit_service',
+
+    permit_contact_company:
+      'Ozark Heavy Haul Permits',
+
+    permit_contact_name:
+      'Megan Carter',
+
+    permit_contact_phone:
+      '(501) 555-0148',
+
+    permit_contact_email:
+      'permits@ozarkheavyhaul.test',
+
+    escort_responsibility:
+      'escort_company',
+
+    escort_contact_company:
+      'Mid-South Pilot Cars',
+
+    escort_contact_name:
+      'Daniel Brooks',
+
+    escort_contact_phone:
+      '(901) 555-0186'
+
+  };
+
+
+  const updateResult =
+    await db
+      .from('loads')
+      .update(testData)
+      .eq(
+        'tenant_id',
+        TENANT_ID
+      )
+      .eq(
+        'id',
+        loadId
+      )
+      .select(
+        'id, load_number, broker_load_number'
+      )
+      .single();
+
+
+  button.disabled = false;
+
+
+  if (updateResult.error) {
+
+    showMessage(
+      'permitEscortMessage',
+      updateResult.error.message,
+      'error'
+    );
+
+    return;
+  }
+
+
+  showMessage(
+    'permitEscortMessage',
+    'Permit & Escort test data added to the TT load.',
+    'success'
+  );
 
 }
+  
 
 function showMessage(
   id,
