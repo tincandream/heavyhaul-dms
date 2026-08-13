@@ -467,7 +467,27 @@ main{
   flex-wrap:wrap;
 }
 
+/* Add to Route Plan buttons */
+.source-actions .action.secondary {
+  transition:
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease;
+}
 
+/* Rosy hover */
+.source-actions .action.secondary:hover {
+  background: var(--rp-pink-soft);
+  border-color: var(--rp-pink);
+  color: #8E3E58;
+}
+
+/* After information has been added */
+.source-actions .action.secondary.added {
+  background: var(--rp-lime-soft);
+  border-color: var(--rp-lime);
+  color: #606B24;
+}
 /* ============================================================
    ACTIONS
    ============================================================ */
@@ -3433,11 +3453,138 @@ function addSourceToRoute(key){
 
   }
 
+if (key === 'appointment') {
 
-  if(
-    key ===
-    'appointment'
-  ){
+  // -----------------------------------------
+  // PICKUP / DELIVERY
+  // Use operational load dates first.
+  // Fall back to the linked broker opportunity.
+  // -----------------------------------------
+
+  let pickupValue = '';
+  let deliveryValue = '';
+
+  let pickupHours = '';
+  let deliveryHours = '';
+
+  if (isOpp) {
+
+    pickupValue =
+      opportunityDateLocal(
+        l.pickup_date
+      );
+
+    deliveryValue =
+      opportunityDateLocal(
+        l.delivery_date
+      );
+
+    pickupHours =
+      l.pickup_hours || '';
+
+    deliveryHours =
+      l.delivery_hours || '';
+
+  } else {
+
+    // Operational load appointment
+    pickupValue =
+      dtLocal(
+        l.pickup_appt_start
+      );
+
+    deliveryValue =
+      dtLocal(
+        l.delivery_appt_start
+      );
+
+
+    // If the operational load does not contain
+    // the original broker dates, find the
+    // Opportunity that created this load.
+
+    const sourceOpportunity =
+      opportunities.find(
+        o =>
+          o.load_id === l.id ||
+          (
+            o.external_ref &&
+            l.broker_load_number &&
+            o.external_ref ===
+              l.broker_load_number
+          )
+      );
+
+
+    if (!pickupValue && sourceOpportunity) {
+
+      pickupValue =
+        opportunityDateLocal(
+          sourceOpportunity.pickup_date
+        );
+
+    }
+
+
+    if (!deliveryValue && sourceOpportunity) {
+
+      deliveryValue =
+        opportunityDateLocal(
+          sourceOpportunity.delivery_date
+        );
+
+    }
+
+
+    if (sourceOpportunity) {
+
+      pickupHours =
+        sourceOpportunity.pickup_hours || '';
+
+      deliveryHours =
+        sourceOpportunity.delivery_hours || '';
+
+    }
+
+  }
+
+
+  // -----------------------------------------
+  // Put dates into Route Plan
+  // -----------------------------------------
+
+  $('pickupAt').value =
+    pickupValue;
+
+  $('deliveryAt').value =
+    deliveryValue;
+
+
+  // -----------------------------------------
+  // Preserve broker appointment instructions
+  // -----------------------------------------
+
+  if (pickupHours) {
+
+    appendRouteNote(
+      `Pickup hours / appointment: ${pickupHours}`
+    );
+
+  }
+
+
+  if (deliveryHours) {
+
+    appendRouteNote(
+      `Delivery hours / appointment: ${deliveryHours}`
+    );
+
+  }
+
+
+  drawPreview();
+  updateHandoff();
+}
 
     if(isOpp){
 
@@ -5407,15 +5554,53 @@ $('saveFleet')
   );
 
 
-$('sourceGrid')
-  .addEventListener(
-    'click',
-    e => {
+$('sourceGrid').addEventListener('click', e => {
 
-      const b =
-        e.target.closest(
-          '[data-add-source]'
-        );
+  const b =
+    e.target.closest(
+      '[data-add-source]'
+    );
+
+  if (!b) return;
+
+
+  // Add the broker/load information
+  // into the Route Plan.
+  addSourceToRoute(
+    b.dataset.addSource
+  );
+
+
+  // Visual confirmation
+  b.textContent =
+    'Added to Plan ✓';
+
+  b.classList.add(
+    'added'
+  );
+
+
+  // Briefly disable so it doesn't
+  // accidentally get clicked twice.
+  b.disabled = true;
+
+
+  // Return button to normal after
+  // a short confirmation period.
+  setTimeout(() => {
+
+    b.textContent =
+      'Add to Route Plan';
+
+    b.classList.remove(
+      'added'
+    );
+
+    b.disabled = false;
+
+  }, 1800);
+
+});
 
 
       if(b){
