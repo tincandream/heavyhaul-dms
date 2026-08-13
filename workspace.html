@@ -1371,11 +1371,12 @@ function drawActions(){
       ? '<button id="btnClearHold">Clear Hold</button>'
       : '<button class="danger" id="btnHold">Put On Hold</button>'}
     <span class="spacer"></span>
+  <button class="ghost sm" id="btnPacket">Print Trip Packet</button>
     <button class="ghost sm" id="btnRefresh">Refresh</button>
   `;
 
   $('btnCheckIn').addEventListener('click', openCheckIn);
-  $('btnRefresh').addEventListener('click', async () => { await refreshAll(); toast('Refreshed'); });
+$('btnPacket').addEventListener('click', printTripPacket);  
   if ($('btnHold'))      $('btnHold').addEventListener('click', openHold);
   if ($('btnClearHold')) $('btnClearHold').addEventListener('click', clearHold);
 
@@ -2742,6 +2743,256 @@ $('dc_save').addEventListener('click', saveDoc);
 $('ac_save').addEventListener('click', saveAccessorialProcessing);
 
 boot();
+
+  /* ============================================================
+   DRIVER TRIP PACKET — printable
+   ============================================================ */
+
+const DISPATCHER = {
+  name:  'Dianna V. Mwaka',
+  phone: '[ADD PHONE]',
+  email: 'diannavmwaka@gmail.com'
+};
+
+function pkEsc(s){
+  return String(s == null ? '' : s)
+    .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function pkVal(v){
+  return (v === null || v === undefined || v === '') ? '—' : pkEsc(v);
+}
+
+function pkDate(v){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d)) return pkEsc(v);
+  return d.toLocaleDateString('en-US',
+    { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+function pkDT(v){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d)) return pkEsc(v);
+  return d.toLocaleString('en-US',
+    { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+}
+
+function pkRow(label, value){
+  return '<tr><th>' + pkEsc(label) + '</th><td>' + value + '</td></tr>';
+}
+
+async function printTripPacket(){
+
+  toast('Building trip packet…');
+
+  // fetch state reviews + points for this load
+  let reviews = [], points = [];
+
+  try {
+    const rv = await db.from('route_state_reviews')
+      .select('*').eq('load_id', LOAD_ID).order('state');
+    if (!rv.error) reviews = rv.data || [];
+
+    if (reviews.length){
+      const ids = reviews.map(r => r.id);
+      const pt = await db.from('route_state_points')
+        .select('*').in('review_id', ids);
+      if (!pt.error) points = pt.data || [];
+    }
+  } catch (e){
+    console.warn('packet: state data unavailable', e);
+  }
+
+  const num   = pick(LOAD, F.number) || LOAD_ID.slice(0,8);
+  const oc    = pick(LOAD, F.oCity),  os = pick(LOAD, F.oState);
+  const dc    = pick(LOAD, F.dCity),  ds = pick(LOAD, F.dState);
+  const L     = pick(LOAD, F.lengthFt), W = pick(LOAD, F.widthFt);
+  const H     = pick(LOAD, F.heightFt), WT = pick(LOAD, F.weightLbs);
+
+  const dims = [
+    L  ? L + "' L"  : null,
+    W  ? W + "' W"  : null,
+    H  ? H + "' H"  : null,
+    WT ? Number(WT).toLocaleString() + ' lb' : null
+  ].filter(Boolean).join('  ·  ') || '—';
+
+  const flags = [
+    pick(LOAD, F.superload)  ? 'SUPERLOAD'  : null,
+    pick(LOAD, F.oversize)   ? 'OVERSIZE'   : null,
+    pick(LOAD, F.overweight) ? 'OVERWEIGHT' : null
+  ].filter(Boolean).join('  ·  ');
+
+  /* ---------- permits ---------- */
+  const permitRows = PERMITS.length
+    ? PERMITS.map(p => {
+        const restr = [
+          p.daylight_only ? 'Daylight only' : null,
+          p.wind_limit_mph ? p.wind_limit_mph + ' mph wind limit' : null,
+          p.travel_time_restrictions,
+          p.curfew_notes,
+          p.route_restrictions
+        ].filter(Boolean).join(' · ');
+        return '<tr><td><b>' + pkVal(p.state) + '</b></td>' +
+          '<td>' + pkVal(p.permit_number) + '</td>' +
+          '<td>' + pkVal(p.issuing_authority) + '</td>' +
+          '<td>' + pkVal(toDateInput(p.valid_from)) + ' → ' +
+                   pkVal(toDateInput(p.valid_to)) + '</td>' +
+          '<td>' + (restr ? pkEsc(restr) : '—') + '</td></tr>';
+      }).join('')
+    : '<tr><td colspan="5">No permits recorded.</td></tr>';
+
+  /* ---------- escorts ---------- */
+  const escortRows = ESCORTS.length
+    ? ESCORTS.map(e =>
+        '<tr><td><b>' + pkEsc(titleize(e.role)) + '</b></td>' +
+        '<td>' + pkVal(e.vehicle_info) + '</td>' +
+        '<td>' + pkVal(e.driver_name) + '</td>' +
+        '<td>' + pkVal(e.driver_phone) + '</td>' +
+        '<td>' + pkEsc(pkDT(e.meeting_time)) + '<br>' +
+                 pkVal(e.meeting_location) + '</td></tr>'
+      ).join('')
+    : '<tr><td colspan="5">No escorts assigned.</td></tr>';
+
+  /* ---------- state sections ---------- */
+  const stateSections = reviews.length
+    ? reviews.map(r => {
+        const snap = r.state_rule_snapshot || {};
+        const pts = points
+          .filter(p => p.review_id === r.id)
+          .filter(p => p.handoff_level === 'required' ||
+                       p.handoff_level === 'suggested');
+
+        const ptRows = pts.length
+          ? pts.map(p =>
+              '<tr><td>' + pkEsc(titleize(p.point_type)) + '</td>' +
+              '<td><b>' + pkVal(p.location_name) + '</b></td>' +
+              '<td>' + pkVal(p.notes) + '</td>' +
+              '<td>' + (p.handoff_level === 'required'
+                          ? '<b>REQUIRED</b>' : 'Suggested') + '</td></tr>'
+            ).join('')
+          : '';
+
+        return '<div class="pk-state">' +
+          '<h3>' + pkEsc(r.state) + '</h3>' +
+          (r.driver_handoff_notes
+            ? '<div class="pk-handoff"><b>Driver instructions</b><br>' +
+              pkEsc(r.driver_handoff_notes).replace(/\n/g,'<br>') + '</div>'
+            : '') +
+          (snap.travel_time_notes
+            ? '<p><b>Travel windows / curfew:</b><br>' +
+              pkEsc(snap.travel_time_notes).replace(/\n/g,'<br>') + '</p>'
+            : '') +
+          (snap.holiday_restrictions
+            ? '<p><b>Holiday restrictions:</b><br>' +
+              pkEsc(snap.holiday_restrictions).replace(/\n/g,'<br>') + '</p>'
+            : '') +
+          (ptRows
+            ? '<table class="pk-tbl"><thead><tr><th>Type</th><th>Location</th>' +
+              '<th>Notes</th><th>Level</th></tr></thead><tbody>' +
+              ptRows + '</tbody></table>'
+            : '') +
+          '</div>';
+      }).join('')
+    : '<p>No state reviews recorded for this load.</p>';
+
+  /* ---------- build document ---------- */
+  const html =
+'<!DOCTYPE html><html><head><meta charset="utf-8">' +
+'<title>Trip Packet — Load ' + pkEsc(num) + '</title>' +
+'<style>' +
+'*{box-sizing:border-box}' +
+'body{font:12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;' +
+'color:#16181d;margin:0;padding:26px 30px 40px;max-width:8.5in}' +
+'h1{font-size:20px;margin:0 0 2px;letter-spacing:.5px}' +
+'h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#555;' +
+'margin:22px 0 7px;padding-bottom:4px;border-bottom:2px solid #16181d}' +
+'h3{font-size:14px;margin:14px 0 6px}' +
+'.pk-head{display:flex;justify-content:space-between;align-items:flex-start;' +
+'border-bottom:3px solid #16181d;padding-bottom:10px}' +
+'.pk-sub{color:#555;font-size:12px;margin-top:3px}' +
+'.pk-flags{display:inline-block;background:#16181d;color:#fff;padding:3px 10px;' +
+'font-weight:700;letter-spacing:1px;font-size:11px;margin-top:6px}' +
+'table{width:100%;border-collapse:collapse;margin-top:4px}' +
+'th,td{text-align:left;vertical-align:top;padding:5px 7px;border-bottom:1px solid #ddd;font-size:11.5px}' +
+'.pk-kv th{width:150px;color:#555;font-weight:600}' +
+'.pk-tbl thead th{background:#f2f2f0;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}' +
+'.pk-2col{display:flex;gap:26px}.pk-2col>div{flex:1}' +
+'.pk-state{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #ccc}' +
+'.pk-handoff{background:#f6f6f3;border-left:4px solid #16181d;padding:9px 12px;margin:8px 0}' +
+'.pk-notes{border:1px solid #999;height:150px;margin-top:6px}' +
+'.pk-foot{margin-top:26px;padding-top:10px;border-top:1px solid #ccc;' +
+'color:#777;font-size:10.5px}' +
+'@media print{body{padding:0}.pk-state{page-break-inside:avoid}' +
+'h2{page-break-after:avoid}}' +
+'</style></head><body>' +
+
+'<div class="pk-head"><div>' +
+'<h1>DRIVER TRIP PACKET</h1>' +
+'<div class="pk-sub">Load ' + pkEsc(num) + '  ·  ' +
+pkEsc(oc || '?') + (os ? ', ' + pkEsc(os) : '') + '  →  ' +
+pkEsc(dc || '?') + (ds ? ', ' + pkEsc(ds) : '') + '</div>' +
+(flags ? '<div class="pk-flags">' + pkEsc(flags) + '</div>' : '') +
+'</div><div style="text-align:right;font-size:11px;color:#555">' +
+'<b>' + pkEsc(DISPATCHER.name) + '</b><br>' +
+pkEsc(DISPATCHER.phone) + '<br>' +
+pkEsc(DISPATCHER.email) + '<br>' +
+'Printed ' + new Date().toLocaleDateString('en-US',
+  {month:'short',day:'numeric',year:'numeric'}) +
+'</div></div>' +
+
+'<h2>At a glance</h2>' +
+'<div class="pk-2col"><div><table class="pk-kv">' +
+pkRow('Pickup',    pkDate(pick(LOAD, F.pickup))) +
+pkRow('Delivery',  pkDate(pick(LOAD, F.delivery))) +
+pkRow('Miles',     pick(LOAD, F.miles) ? Number(pick(LOAD, F.miles)).toLocaleString() : '—') +
+'</table></div><div><table class="pk-kv">' +
+pkRow('Commodity', pkVal(pick(LOAD, F.commodity))) +
+pkRow('Equipment', pkVal(titleize(pick(LOAD, F.equipment)))) +
+pkRow('Dimensions', dims) +
+'</table></div></div>' +
+
+'<h2>Pickup</h2><table class="pk-kv">' +
+pkRow('Location', pkVal(oc) + (os ? ', ' + pkEsc(os) : '')) +
+pkRow('Date',     pkDate(pick(LOAD, F.pickup))) +
+'</table>' +
+
+'<h2>Delivery</h2><table class="pk-kv">' +
+pkRow('Location', pkVal(dc) + (ds ? ', ' + pkEsc(ds) : '')) +
+pkRow('Date',     pkDate(pick(LOAD, F.delivery))) +
+'</table>' +
+
+'<h2>Fleet</h2><table class="pk-kv">' +
+pkRow('Driver',  pkVal(pick(LOAD, F.driver)) + '  ' + pkVal(pick(LOAD, F.driverPhone))) +
+pkRow('Tractor', pkVal(pick(LOAD, F.truck))) +
+pkRow('Trailer', pkVal(pick(LOAD, F.trailer))) +
+'</table>' +
+
+'<h2>Permits</h2><table class="pk-tbl"><thead><tr>' +
+'<th>State</th><th>Permit #</th><th>Authority</th><th>Valid</th><th>Restrictions</th>' +
+'</tr></thead><tbody>' + permitRows + '</tbody></table>' +
+
+'<h2>Escorts</h2><table class="pk-tbl"><thead><tr>' +
+'<th>Role</th><th>Vehicle</th><th>Driver</th><th>Phone</th><th>Meet</th>' +
+'</tr></thead><tbody>' + escortRows + '</tbody></table>' +
+
+'<h2>State-by-state</h2>' + stateSections +
+
+'<h2>Driver notes</h2><div class="pk-notes"></div>' +
+
+'<div class="pk-foot">Call dispatch before deviating from the permitted route. ' +
+'Permits must be in the cab at all times. ' +
+'Load ' + pkEsc(num) + ' · Heavy Haul Command</div>' +
+
+'</body></html>';
+
+  const w = window.open('', '_blank');
+  if (!w){ toast('Allow pop-ups to print the packet', true); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+}
 </script>
 </body>
 </html>
