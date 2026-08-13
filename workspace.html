@@ -3342,6 +3342,120 @@ function applyCarrierTerms(){
   }
 
 })();
+
+
+  /* ============================================================
+   CARRIER TERMS ON THE ACCESSORIALS TAB
+   Shows the agreed terms from the carrier's profile so claims
+   can be checked against what was actually negotiated.
+   ============================================================ */
+
+let CARRIER_TERMS = null;
+
+async function fetchCarrierTerms(){
+
+  CARRIER_TERMS = null;
+  if (!LOAD) return;
+
+  const carrierId =
+    LOAD.carrier_id ||
+    LOAD.carrier_company_id ||
+    null;
+
+  if (!carrierId) return;
+
+  try {
+
+    const car = await db
+      .from('carriers')
+      .select('legal_name')
+      .eq('id', carrierId)
+      .maybeSingle();
+
+    const pr = await db
+      .from('carrier_profiles')
+      .select('detention_rate_per_hour, detention_after_hours,' +
+              'tonu_minimum, layover_rate_per_day,' +
+              'minimum_day_rate, negotiables, requirements')
+      .eq('carrier_id', carrierId)
+      .maybeSingle();
+
+    if (pr.error || !pr.data) return;
+
+    CARRIER_TERMS = pr.data;
+    CARRIER_TERMS._carrier =
+      car.data ? car.data.legal_name : 'Carrier';
+
+  } catch (e){
+    console.warn('carrier terms unavailable', e);
+  }
+}
+
+function carrierTermsCard(){
+
+  if (!CARRIER_TERMS){
+    return '<div class="card box">' +
+      '<h3>Agreed Terms</h3>' +
+      '<div class="small muted">No carrier profile found for this load. ' +
+      'Set terms in Fleet Setup &rarr; Profile.</div>' +
+      '</div>';
+  }
+
+  const t = CARRIER_TERMS;
+
+  const line = (label, value) =>
+    '<dt>' + label + '</dt><dd>' +
+    (value == null || value === '' ? '—' : value) + '</dd>';
+
+  return '<div class="card box">' +
+    '<h3>Agreed Terms &mdash; ' + esc(t._carrier) + '</h3>' +
+    '<dl class="kv">' +
+      line('Detention',
+        t.detention_rate_per_hour != null
+          ? money(t.detention_rate_per_hour) + ' / hr' +
+            (t.detention_after_hours != null
+              ? ' after ' + t.detention_after_hours + ' hr' : '')
+          : null) +
+      line('Layover',
+        t.layover_rate_per_day != null
+          ? money(t.layover_rate_per_day) + ' / day' : null) +
+      line('TONU',
+        t.tonu_minimum != null ? money(t.tonu_minimum) : null) +
+      line('Minimum day rate',
+        t.minimum_day_rate != null ? money(t.minimum_day_rate) : null) +
+    '</dl>' +
+    (t.negotiables
+      ? '<div class="small muted" style="margin-top:10px">' +
+        '<b>Negotiable:</b> ' + esc(t.negotiables) + '</div>'
+      : '') +
+    (t.requirements
+      ? '<div class="small muted" style="margin-top:6px">' +
+        '<b>Requirements:</b> ' + esc(t.requirements) + '</div>'
+      : '') +
+    '<div class="small muted" style="margin-top:10px">' +
+      'From the carrier profile. Compare claims against these before approving.' +
+    '</div>' +
+    '</div>';
+}
+
+/* inject the card at the top of the Accessorials tab */
+const _origDrawAccessorials = drawAccessorials;
+
+drawAccessorials = function(){
+
+  _origDrawAccessorials();
+
+  const panel = $('tab-accessorials');
+  if (!panel) return;
+  if (document.getElementById('ctCard')) return;
+
+  const holder = document.createElement('div');
+  holder.id = 'ctCard';
+  holder.style.marginBottom = '12px';
+  holder.innerHTML = carrierTermsCard();
+
+  panel.insertBefore(holder, panel.firstChild);
+};
 </script>
 </body>
 </html>
