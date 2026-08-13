@@ -4597,6 +4597,42 @@ $('save').disabled =
       const loadId =
         r.data.id;
 
+      // ----------------------------------------------------------
+// LINK SOURCE OPPORTUNITY TO THE CREATED LOAD
+// Prevent duplicate LD-xxxx loads from the same opportunity.
+// ----------------------------------------------------------
+
+if (
+  SOURCE_OPPORTUNITY_ID &&
+  !EDIT_LOAD_ID
+) {
+
+  const opportunityLink =
+    await db
+      .from('load_opportunities')
+      .update({
+        load_id: loadId
+      })
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .eq(
+        'id',
+        SOURCE_OPPORTUNITY_ID
+      );
+
+  if (opportunityLink.error) {
+
+    console.warn(
+      'Could not link opportunity to load:',
+      opportunityLink.error.message
+    );
+
+  }
+
+}
+
 
       if (EDIT_LOAD_ID) {
         await db
