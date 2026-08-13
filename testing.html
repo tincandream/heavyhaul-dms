@@ -2706,14 +2706,6 @@ async function buildTestingFallbackNav(
 
 
         <button
-  type="button"
-  id="fillPermitEscortTest"
-  class="assignment-action"
->
-  Fill Test Data
-</button>
-
-        <button
           id="testingNavSignOut"
           type="button"
           style="
@@ -2805,12 +2797,7 @@ async function buildTestingFallbackNav(
     ? profile.data.tenant_id
     : null;
 
-}
-  $('fillPermitEscortTest')
-  .addEventListener(
-    'click',
-    fillPermitEscortTestData
-  );
+
 // =========================================================
 // START
 // =========================================================
@@ -2943,6 +2930,23 @@ async function start() {
       populateBrokerLoad
     );
 
+  document
+  .getElementById(
+    'populateBrokerLoad'
+  )
+  .addEventListener(
+    'click',
+    populateBrokerLoad
+  );
+
+  document
+  .getElementById(
+    'fillPermitEscortTest'
+  )
+  .addEventListener(
+    'click',
+    fillPermitEscortTestData
+  );
 
   await loadTrainingStatus();
 
