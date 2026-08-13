@@ -1123,6 +1123,9 @@ async function refreshAll(){
     fetchPrivateNotes(),
     fetchDocuments()
   ]);
+
+  await fetchCarrierTerms();
+  
   drawHero();
   drawActions();
   drawCounts();
