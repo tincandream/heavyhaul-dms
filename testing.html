@@ -855,15 +855,28 @@
 
       <div class="button-row">
 
-        <button
-          class="secondary hidden"
-          id="exitButton"
-          type="button"
-        >
-          Exit Training Mode
-        </button>
+       <button
+  class="primary"
+  type="button"
+  id="fillPermitEscortTest"
+>
+  Fill Permit & Escort Test Data
+</button>
 
-      </div>
+<button
+  class="secondary hidden"
+  id="exitButton"
+  type="button"
+>
+  Exit Training Mode
+</button>
+
+</div>
+
+<div
+  class="message"
+  id="permitEscortMessage"
+></div>
 
     </section>
 
@@ -1475,6 +1488,22 @@ let trainingActive =
 // =========================================================
 // MESSAGE
 // =========================================================
+  function fillPermitEscortTestData() {
+
+  $('permresp').value = 'permit_service';
+  $('permco').value = 'Ozark Heavy Haul Permits';
+  $('permname').value = 'Megan Carter';
+  $('permphone').value = '(501) 555-0148';
+  $('permemail').value = 'permits@ozarkheavyhaul.test';
+
+  $('escresp').value = 'escort_company';
+  $('escco').value = 'Mid-South Pilot Cars';
+  $('escname').value = 'Daniel Brooks';
+  $('escphone').value = '(901) 555-0186';
+
+  refreshAssemblyStatus();
+
+}
 
 function showMessage(
   id,
@@ -2526,6 +2555,15 @@ async function buildTestingFallbackNav(
 
         <span>|</span>
 
+
+        <button
+  type="button"
+  id="fillPermitEscortTest"
+  class="assignment-action"
+>
+  Fill Test Data
+</button>
+
         <button
           id="testingNavSignOut"
           type="button"
@@ -2619,6 +2657,11 @@ async function buildTestingFallbackNav(
     : null;
 
 }
+  $('fillPermitEscortTest')
+  .addEventListener(
+    'click',
+    fillPermitEscortTestData
+  );
 // =========================================================
 // START
 // =========================================================
