@@ -2921,16 +2921,7 @@ async function start() {
     );
 
 
-  document
-    .getElementById(
-      'populateBrokerLoad'
-    )
-    .addEventListener(
-      'click',
-      populateBrokerLoad
-    );
-
-  document
+ document
   .getElementById(
     'populateBrokerLoad'
   )
@@ -2939,14 +2930,15 @@ async function start() {
     populateBrokerLoad
   );
 
-  document
+document
   .getElementById(
     'fillPermitEscortTest'
   )
   .addEventListener(
     'click',
     fillPermitEscortTestData
-  );
+  ); 
+  
 
   await loadTrainingStatus();
 
