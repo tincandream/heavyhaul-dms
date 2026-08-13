@@ -3581,72 +3581,9 @@ if (key === 'appointment') {
   }
 
 
-drawPreview();
-updateHandoff();
-}
-
-if(
-  key ===
-  'commodity'
-){
-
-if (key === 'appointment') {
-
   drawPreview();
   updateHandoff();
 }
-
-if(
-  key ===
-  'commodity'
-){
-
-if (key === 'appointment') {
-  
-      $('deliveryAt').value =
-        opportunityDateLocal(
-          l.delivery_date
-        );
-
-
-      if(
-        l.pickup_hours
-      ){
-
-        appendRouteNote(
-          `Pickup hours / appointment: ${l.pickup_hours}`
-        );
-
-      }
-
-
-      if(
-        l.delivery_hours
-      ){
-
-        appendRouteNote(
-          `Delivery hours / appointment: ${l.delivery_hours}`
-        );
-
-      }
-
-    }else{
-
-      $('pickupAt').value =
-        dtLocal(
-          l.pickup_appt_start
-        );
-
-
-      $('deliveryAt').value =
-        dtLocal(
-          l.delivery_appt_start
-        );
-
-    }
-
-  }
-
 
   if(
     key ===
@@ -5608,18 +5545,6 @@ $('sourceGrid').addEventListener('click', e => {
   }, 1800);
 
 });
-
-
-      if(b){
-
-        addSourceToRoute(
-          b.dataset.addSource
-        );
-
-      }
-
-    }
-  );
 
 
 [
