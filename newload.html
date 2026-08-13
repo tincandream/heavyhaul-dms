@@ -4540,24 +4540,7 @@ $('save').disabled =
             : $('ratecon').value ===
               'true',
 
-   carrier_approved_at:
 
-  $('appr').value ===
-  'true'
-
-    ? new Date()
-        .toISOString()
-
-    : null,
-
-carrier_approved_by:
-
-  $('appr').value ===
-  'true'
-
-    ? val('apprby')
-
-    : null,
 
 carrier_approved_at:
   $('appr').value === 'true'
@@ -4573,6 +4556,8 @@ route_planning_hidden:
   $('appr').value === 'true'
     ? false
     : true,
+
+        
 
         customer_reference:
           val('custref'),
