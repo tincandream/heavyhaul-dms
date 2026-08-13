@@ -3190,6 +3190,158 @@ async function ttInitWorkspace(){
   }
   ttInitWorkspace();
 })();
+
+
+
+
+  /* ============================================================
+   CARRIER TERMS → ACCESSORIAL CALCULATOR
+   Pulls the agreed terms from the load's carrier profile so
+   accessorials price against what was actually negotiated.
+   ============================================================ */
+
+let CARRIER_TERMS = null;
+
+async function loadCarrierTerms(){
+
+  const params = new URLSearchParams(location.search);
+  const loadId = params.get('load_id');
+  if (!loadId) return;
+
+  try {
+
+    // load -> carrier
+    const ld = await db
+      .from('loads')
+      .select('carrier_id, load_number')
+      .eq('id', loadId)
+      .maybeSingle();
+
+    if (ld.error || !ld.data || !ld.data.carrier_id) return;
+
+    // carrier -> name
+    const car = await db
+      .from('carriers')
+      .select('legal_name')
+      .eq('id', ld.data.carrier_id)
+      .maybeSingle();
+
+    // carrier -> profile terms
+    const pr = await db
+      .from('carrier_profiles')
+      .select('detention_rate_per_hour, detention_after_hours,' +
+              'tonu_minimum, layover_rate_per_day,' +
+              'minimum_day_rate, negotiables')
+      .eq('carrier_id', ld.data.carrier_id)
+      .maybeSingle();
+
+    if (pr.error || !pr.data) return;
+
+    CARRIER_TERMS = pr.data;
+    CARRIER_TERMS._carrier = car.data ? car.data.legal_name : 'Carrier';
+    CARRIER_TERMS._load    = ld.data.load_number || '';
+
+    showCarrierTermsBanner();
+    applyCarrierTerms();
+
+  } catch (e){
+    console.warn('carrier terms unavailable', e);
+  }
+}
+
+function showCarrierTermsBanner(){
+
+  if (!CARRIER_TERMS) return;
+
+  const panel = document.getElementById('accessorialPanel');
+  if (!panel || document.getElementById('carrierTermsBanner')) return;
+
+  const t = CARRIER_TERMS;
+
+  const bits = [];
+  if (t.detention_rate_per_hour != null)
+    bits.push('Detention $' + t.detention_rate_per_hour + '/hr' +
+      (t.detention_after_hours != null
+        ? ' after ' + t.detention_after_hours + ' hr' : ''));
+  if (t.layover_rate_per_day != null)
+    bits.push('Layover $' + t.layover_rate_per_day + '/day');
+  if (t.tonu_minimum != null)
+    bits.push('TONU $' + t.tonu_minimum);
+
+  const box = document.createElement('div');
+  box.id = 'carrierTermsBanner';
+  box.style.cssText =
+    'background:#F1F4D8;border:1px solid #B8B05D;border-radius:8px;' +
+    'padding:10px 13px;margin-bottom:14px;font-size:12.5px;color:#3C3A4B;';
+
+  box.innerHTML =
+    '<b>Agreed terms — ' + String(t._carrier).replace(/[<>]/g,'') + '</b>' +
+    (t._load ? ' · Load ' + String(t._load).replace(/[<>]/g,'') : '') +
+    '<div style="margin-top:3px">' +
+      (bits.length ? bits.join('  ·  ')
+                   : 'No accessorial terms set on this carrier profile.') +
+    '</div>' +
+    (t.negotiables
+      ? '<div style="margin-top:5px;color:#6b7280">Negotiable: ' +
+        String(t.negotiables).replace(/[<>]/g,'') + '</div>'
+      : '');
+
+  panel.insertBefore(box, panel.firstChild);
+}
+
+function applyCarrierTerms(){
+
+  if (!CARRIER_TERMS) return;
+
+  const typeEl = document.getElementById('accessorialType');
+  const rateEl = document.getElementById('accessorialRate');
+  const freeEl = document.getElementById('accessorialFreeTime');
+  if (!typeEl || !rateEl) return;
+
+  const t    = CARRIER_TERMS;
+  const kind = String(typeEl.value || '').toLowerCase();
+
+  let rate = null, freeMinutes = null;
+
+  if (kind.indexOf('detention') !== -1){
+    rate = t.detention_rate_per_hour;
+    if (t.detention_after_hours != null)
+      freeMinutes = Number(t.detention_after_hours) * 60;
+  } else if (kind.indexOf('layover') !== -1){
+    rate = t.layover_rate_per_day;
+  } else if (kind.indexOf('tonu') !== -1){
+    rate = t.tonu_minimum;
+  }
+
+  // only prefill an empty field - never overwrite what you typed
+  if (rate != null && !String(rateEl.value || '').trim()){
+    rateEl.value = rate;
+    rateEl.dispatchEvent(new Event('input',  { bubbles:true }));
+    rateEl.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+
+  if (freeEl && freeMinutes != null && !String(freeEl.value || '').trim()){
+    freeEl.value = freeMinutes;
+    freeEl.dispatchEvent(new Event('input',  { bubbles:true }));
+    freeEl.dispatchEvent(new Event('change', { bubbles:true }));
+  }
+}
+
+(function ctBoot(){
+
+  if (typeof db === 'undefined' || !db){
+    setTimeout(ctBoot, 300);
+    return;
+  }
+
+  loadCarrierTerms();
+
+  const typeEl = document.getElementById('accessorialType');
+  if (typeEl){
+    typeEl.addEventListener('change', applyCarrierTerms);
+  }
+
+})();
 </script>
 </body>
 </html>
