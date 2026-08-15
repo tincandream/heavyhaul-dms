@@ -1364,84 +1364,440 @@ function render() {
 
 
   /* ----------------------------------------------------------
-     Rows
-     ---------------------------------------------------------- */
+   Rows
+   ---------------------------------------------------------- */
 
-  $('body').innerHTML =
+$('body').innerHTML =
 
-    list.map(
-      r => {
+  list.map(
+    r => {
+
+      const displayLoadId =
+        r.load_id ||
+        r.next_load_id;
+
+      const displayLoadNumber =
+        r.load_number ||
+        r.next_load_number;
+
+      const displayStatus =
+        r.load_status ||
+        r.next_load_status ||
+        r.display_status ||
+        '';
+
+      const displayDriver =
+        r.driver_name ||
+        r.next_driver_name;
+
+      const displayTrailerType =
+        r.trailer_type ||
+        r.next_trailer_type;
+
+      const displayTrailerNumber =
+        r.trailer_number ||
+        r.next_trailer_number;
+
+      const displayBroker =
+        r.broker_name ||
+        r.next_broker_name;
+
+      const displayOrigin =
+        r.origin ||
+        r.next_origin;
+
+      const displayDestination =
+        r.destination ||
+        r.next_destination;
+
+      const displayEventAt =
+        r.next_event_at ||
+        r.next_pickup_appt_start ||
+        r.next_delivery_appt_start;
+
+      const displayPermitsIssued =
+        r.load_id
+          ? r.permits_issued
+          : r.next_permits_issued;
+
+      const displayPermitsTotal =
+        r.load_id
+          ? r.permits_total
+          : r.next_permits_total;
+
+      const displayEscortsConfirmed =
+        r.load_id
+          ? r.escorts_confirmed
+          : r.next_escorts_confirmed;
+
+      const displayEscortsTotal =
+        r.load_id
+          ? r.escorts_total
+          : r.next_escorts_total;
 
 
-        const needs =
-
-          r.next_action &&
-
-          r.next_action !==
-          'On track';
+      const needs =
+        r.next_action &&
+        r.next_action !== 'On track';
 
 
+      return (
 
-        return (
+        '<tr class="row' +
 
-          '<tr class="row' +
+        (
+          r.priority === 'critical'
+            ? ' crit'
+            : ''
+        ) +
+
+        '"' +
+
+        (
+          displayLoadId
+
+            ? ' data-load="' +
+              displayLoadId +
+              '"'
+
+            : ''
+        ) +
+
+        '>' +
+
+
+        /* Truck */
+
+        '<td>' +
+
+          '<span class="unit">' +
+            esc(
+              r.truck_number || ''
+            ) +
+          '</span>' +
 
           (
-            r.priority === 'critical'
-              ? ' crit'
+            displayTrailerType
+
+              ? '<div class="sub2">' +
+
+                  pretty(
+                    displayTrailerType
+                  ) +
+
+                  (
+                    displayTrailerNumber
+                      ? ' ' +
+                        esc(
+                          displayTrailerNumber
+                        )
+                      : ''
+                  ) +
+
+                '</div>'
+
               : ''
           ) +
 
-          '"' +
-
-   (
-  (r.load_id || r.next_load_id)
-
-    ? ' data-load="' +
-      (r.load_id || r.next_load_id) +
-      '"'
-
-    : ''
-) +
-
-          '>' +
+        '</td>' +
 
 
+        /* Driver */
 
-          /* Truck */
+        '<td>' +
 
-          '<td>' +
+          (
+            displayDriver
 
-            '<span class="unit">' +
-              esc(
-                r.truck_number || ''
-              ) +
-            '</span>' +
+              ? esc(
+                  displayDriver
+                )
 
-            (
-              r.trailer_type
+              : '<span class="sub2">' +
+                  'unassigned' +
+                '</span>'
+          ) +
 
-                ? '<div class="sub2">' +
+          (
+            r.driver_hours_remaining_min != null
 
-                    pretty(
-                      r.trailer_type
+              ? '<div class="sub2">' +
+
+                  Math.floor(
+                    r.driver_hours_remaining_min /
+                    60
+                  ) +
+
+                  'h ' +
+
+                  (
+                    r.driver_hours_remaining_min %
+                    60
+                  ) +
+
+                  'm HOS' +
+
+                '</div>'
+
+              : ''
+          ) +
+
+        '</td>' +
+
+
+        /* Current Load */
+
+        '<td>' +
+
+          (
+            r.load_number
+
+              ? '<span class="ldnum">' +
+
+                  esc(
+                    r.load_number
+                  ) +
+
+                '</span>' +
+
+                (
+                  r.broker_name
+
+                    ? '<div class="sub2">' +
+
+                        esc(
+                          r.broker_name
+                        ) +
+
+                      '</div>'
+
+                    : ''
+                )
+
+              : '<span class="sub2">' +
+                  '—' +
+                '</span>'
+          ) +
+
+        '</td>' +
+
+
+        /* Next Load */
+
+        '<td>' +
+
+          (
+            r.next_load_id
+
+              ? '<div class="next-load-card">' +
+
+                  '<button class="next-load-link" type="button" ' +
+                    'data-next-load="' +
+                    esc(
+                      r.next_load_id
+                    ) +
+                  '">' +
+
+                    esc(
+                      r.next_load_number ||
+                      'Open next load'
+                    ) +
+
+                  '</button>' +
+
+                  '<div class="next-load-meta">' +
+
+                    esc(
+                      pretty(
+                        r.next_load_status ||
+                        'booked'
+                      )
                     ) +
 
                     (
-                      r.trailer_number
-                        ? ' ' +
+                      r.next_origin ||
+                      r.next_destination
+
+                        ? '<br>' +
+
                           esc(
-                            r.trailer_number
+                            r.next_origin ||
+                            'Origin TBD'
+                          ) +
+
+                          ' → ' +
+
+                          esc(
+                            r.next_destination ||
+                            'Destination TBD'
                           )
+
                         : ''
                     ) +
 
-                  '</div>'
+                    (
+                      r.next_permits_total != null
 
-                : ''
+                        ? '<br>Permits ' +
+
+                          esc(
+                            r.next_permits_issued ||
+                            0
+                          ) +
+
+                          '/' +
+
+                          esc(
+                            r.next_permits_total ||
+                            0
+                          )
+
+                        : ''
+                    ) +
+
+                  '</div>' +
+
+                '</div>'
+
+              : '<span class="next-load-none">—</span>'
+          ) +
+
+        '</td>' +
+
+
+        /* Status */
+
+        '<td>' +
+
+          '<span class="pill">' +
+
+            esc(
+              pretty(
+                displayStatus
+              )
             ) +
 
-          '</td>' +
+          '</span>' +
+
+        '</td>' +
+
+
+        /* Location */
+
+        '<td>' +
+
+          (
+            r.current_location_text
+
+              ? esc(
+                  r.current_location_text
+                )
+
+              : (
+                  displayOrigin
+
+                    ? esc(
+                        displayOrigin
+                      )
+
+                    : '<span class="sub2">' +
+                        '—' +
+                      '</span>'
+                )
+          ) +
+
+          age(
+            r.check_in_age_min
+          ) +
+
+        '</td>' +
+
+
+        /* Destination */
+
+        '<td>' +
+
+          (
+            displayDestination
+
+              ? esc(
+                  displayDestination
+                )
+
+              : '<span class="sub2">' +
+                  '—' +
+                '</span>'
+          ) +
+
+        '</td>' +
+
+
+        /* Next event */
+
+        '<td>' +
+
+          when(
+            displayEventAt
+          ) +
+
+        '</td>' +
+
+
+        /* Permits */
+
+        '<td>' +
+
+          frac(
+            displayPermitsIssued,
+            displayPermitsTotal
+          ) +
+
+        '</td>' +
+
+
+        /* Escorts */
+
+        '<td>' +
+
+          frac(
+            displayEscortsConfirmed,
+            displayEscortsTotal
+          ) +
+
+        '</td>' +
+
+
+        /* Next action */
+
+        '<td>' +
+
+          '<span class="act' +
+
+          (
+            needs
+              ? ' need'
+              : ''
+          ) +
+
+          '">' +
+
+            esc(
+              r.next_action ||
+              ''
+            ) +
+
+          '</span>' +
+
+        '</td>' +
+
+
+        '</tr>'
+
+      );
+
+    }
+
+  ).join('');
 
 
 
