@@ -734,29 +734,11 @@ async function getProtectedTrainingStatus() {
   // REUSE AN ARCHIVED TT CARRIER WITH THE SAME MC NUMBER
   // ---------------------------------------------------------
 
-  let trainingActive = false;
+ const trainingStatus =
+  await getProtectedTrainingStatus();
 
-  try {
-
-    const status =
-      await db.rpc(
-        'get_training_mode_status'
-      );
-
-    trainingActive =
-      !status.error &&
-      status.data &&
-      status.data.active === true;
-
-  }
-  catch (error) {
-
-    console.warn(
-      'Could not check Training Mode:',
-      error
-    );
-
-  }
+const trainingActive =
+  trainingStatus.active === true;
 
 
   if (
@@ -1231,22 +1213,107 @@ function ttFill(setName){
   });
 }
 
-const trainingStatus =
-  await getProtectedTrainingStatus();
 
-const active =
-  trainingStatus.active === true;
-  
-catch (e){ /* training mode unavailable — leave buttons hidden */ }
+  async function ttInit() {
 
-if (!active) return;
+  try {
 
-// put a Fill button next to each save button
-...
+    const trainingStatus =
+      await getProtectedTrainingStatus();
+
+
+    const active =
+      trainingStatus.active === true;
+
+
+    if (!active) {
+      return;
+    }
+
+
+    [
+      ['c_save', 'carrier'],
+      ['d_save', 'driver'],
+      ['t_save', 'tractor'],
+      ['r_save', 'trailer']
+    ]
+    .forEach(
+      function(pair) {
+
+        const saveBtn =
+          document.getElementById(
+            pair[0]
+          );
+
+
+        if (
+          !saveBtn ||
+          document.getElementById(
+            'ttfill_' + pair[1]
+          )
+        ) {
+          return;
+        }
+
+
+        const button =
+          document.createElement(
+            'button'
+          );
+
+
+        button.id =
+          'ttfill_' + pair[1];
+
+        button.type =
+          'button';
+
+        button.textContent =
+          'Fill test data';
+
+        button.style.cssText =
+          'margin-right:8px;' +
+          'background:#B8B05D;' +
+          'border:1px solid #B8B05D;' +
+          'color:#3C3A4B;' +
+          'font-weight:600;' +
+          'cursor:pointer;';
+
+
+        button.addEventListener(
+          'click',
+          function() {
+            ttFill(
+              pair[1]
+            );
+          }
+        );
+
+
+        saveBtn
+          .parentNode
+          .insertBefore(
+            button,
+            saveBtn
+          );
+
+      }
+    );
+
+  }
+  catch (error) {
+
+    console.warn(
+      'Training Mode initialization failed:',
+      error
+    );
+
+  }
+
 }
 
-ttInit();
 
+ttInit();
 
   
   [['c_save','carrier'], ['d_save','driver'],
