@@ -147,11 +147,6 @@
 
 <header></header>
 
-<nav
-  id="fleetCommandTabs"
-  aria-label="Fleet Command navigation">
-</nav>
-
 <!-- =========================================================
      FLEET COMMAND WORKSPACE NAV
      ========================================================= -->
@@ -421,6 +416,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="nav.js"></script>
+<script src="fleet-command-tabs.js"></script>
 
 <script>
 // ===== FILL IN THESE TWO VALUES =====
@@ -576,375 +572,389 @@ async function refresh() {
   }
 }
 
-$('c_save').addEventListener('click', async () => {
+/* ============================================================
+   TRAINING MODE STATUS
+   Supabase SQL is the source of truth.
+   ============================================================ */
 
+async function getProtectedTrainingStatus() {
+  const result = await db.rpc('get_training_mode_status');
+
+  if (result.error) {
+    console.warn('Training Mode status failed:', result.error.message);
+    return { active: false, expires_at: null };
+  }
+
+  return result.data || { active: false, expires_at: null };
+}
+
+
+/* ============================================================
+   SAVE CARRIER
+   ============================================================ */
+
+$('c_save').addEventListener('click', async () => {
   if (!val('c_legal')) {
-    say(
-      'c_msg',
-      'Legal name is required.',
-      'err'
-    );
+    say('c_msg', 'Legal name is required.', 'err');
     return;
   }
 
   $('c_save').disabled = true;
 
-
   const carrierData = {
-
-    tenant_id:
-      tenant,
-
-    legal_name:
-      val('c_legal'),
-
-    dba_name:
-      val('c_dba'),
-
-    mc_number:
-      val('c_mc'),
-
-    dot_number:
-      val('c_dot'),
-
-    phone:
-      val('c_phone'),
-
-    after_hours_phone:
-      val('c_ah'),
-
-    email:
-      val('c_email'),
-
-    address_line1:
-      val('c_addr'),
-
-    city:
-      val('c_city'),
-
-    state:
-      val('c_state')
-        ? val('c_state').toUpperCase()
-        : null,
-
-    postal_code:
-      val('c_zip'),
-
-    notes:
-      val('c_notes')
-
+    tenant_id: tenant,
+    legal_name: val('c_legal'),
+    dba_name: val('c_dba'),
+    mc_number: val('c_mc'),
+    dot_number: val('c_dot'),
+    phone: val('c_phone'),
+    after_hours_phone: val('c_ah'),
+    email: val('c_email'),
+    address_line1: val('c_addr'),
+    city: val('c_city'),
+    state: val('c_state') ? val('c_state').toUpperCase() : null,
+    postal_code: val('c_zip'),
+    notes: val('c_notes')
   };
 
+  const trainingStatus = await getProtectedTrainingStatus();
+  const trainingActive = trainingStatus.active === true;
+  let result = null;
 
-  let result;
-
-$('c_save').addEventListener('click', async () => {
-async function getProtectedTrainingStatus() {
-
-  const sessionResult =
-    await db.auth.getSession();
-
-  if (
-    !sessionResult.data ||
-    !sessionResult.data.session
-  ) {
-
-    return {
-      active: false,
-      expires_at: null
-    };
-
-  }
-
-
-  const result =
-    await db.rpc(
-      'get_training_mode_status'
-    );
-
-
-  if (result.error) {
-
-    console.warn(
-      'Training Mode status failed:',
-      result.error.message
-    );
-
-    return {
-      active: false,
-      expires_at: null
-    };
-
-  }
-
-
-  return (
-    result.data || {
-      active: false,
-      expires_at: null
-    }
-  );
-
-}
-
-
-
-  
-async function getProtectedTrainingStatus() {
-
-  const sessionResult =
-    await db.auth.getSession();
-
-  if (
-    !sessionResult.data ||
-    !sessionResult.data.session
-  ) {
-    return {
-      active: false,
-      expires_at: null
-    };
-  }
-
-
-  const result =
-    await db.rpc(
-      'get_training_mode_status'
-    );
-
-
-  if (result.error) {
-
-    console.warn(
-      'Training Mode status failed:',
-      result.error.message
-    );
-
-    return {
-      active: false,
-      expires_at: null
-    };
-  }
-
-
-  return (
-    result.data || {
-      active: false,
-      expires_at: null
-    }
-  );
-
-}
-  // ---------------------------------------------------------
-  // TRAINING MODE:
-  // REUSE AN ARCHIVED TT CARRIER WITH THE SAME MC NUMBER
-  // ---------------------------------------------------------
-
- const trainingStatus =
-  await getProtectedTrainingStatus();
-
-const trainingActive =
-  trainingStatus.active === true;
-
-
-  if (
-    trainingActive &&
-    carrierData.mc_number
-  ) {
-
-    const existing =
-      await db
-        .from('carriers')
-        .select('id,is_training,archived_at')
-        .eq(
-          'tenant_id',
-          tenant
-        )
-        .eq(
-          'mc_number',
-          carrierData.mc_number
-        )
-        .maybeSingle();
-
+  if (trainingActive && carrierData.mc_number) {
+    const existing = await db
+      .from('carriers')
+      .select('id,is_training,archived_at')
+      .eq('tenant_id', tenant)
+      .eq('mc_number', carrierData.mc_number)
+      .maybeSingle();
 
     if (existing.error) {
-
-      $('c_save').disabled =
-        false;
-
-      say(
-        'c_msg',
-        existing.error.message,
-        'err'
-      );
-
+      $('c_save').disabled = false;
+      say('c_msg', existing.error.message, 'err');
       return;
     }
 
-
-    if (
-      existing.data &&
-      existing.data.is_training === true
-    ) {
-
-      result =
-        await db
-          .from('carriers')
-          .update({
-            ...carrierData,
-
-            archived_at:
-              null,
-
-            updated_at:
-              new Date().toISOString()
-          })
-          .eq(
-            'id',
-            existing.data.id
-          )
-          .eq(
-            'tenant_id',
-            tenant
-          );
-
+    if (existing.data && existing.data.is_training === true) {
+      result = await db
+        .from('carriers')
+        .update({
+          ...carrierData,
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.data.id)
+        .eq('tenant_id', tenant);
     }
-
   }
-
-
-  // ---------------------------------------------------------
-  // NORMAL NEW CARRIER
-  // ---------------------------------------------------------
 
   if (!result) {
-
-    result =
-      await db
-        .from('carriers')
-        .insert(
-          carrierData
-        );
-
+    result = await db.from('carriers').insert(carrierData);
   }
 
-
-  $('c_save').disabled =
-    false;
-
+  $('c_save').disabled = false;
 
   if (result.error) {
-
-    say(
-      'c_msg',
-      result.error.message,
-      'err'
-    );
-
+    say('c_msg', result.error.message, 'err');
     return;
   }
 
-
   say(
     'c_msg',
-    trainingActive
-      ? 'Training carrier ready.'
-      : 'Carrier saved.',
+    trainingActive ? 'Training carrier ready.' : 'Carrier saved.',
     'ok'
   );
 
-
   [
-    'c_legal',
-    'c_dba',
-    'c_mc',
-    'c_dot',
-    'c_phone',
-    'c_ah',
-    'c_email',
-    'c_addr',
-    'c_city',
-    'c_state',
-    'c_zip',
-    'c_notes'
-  ]
-  .forEach(
-    id => {
-      $(id).value = '';
-    }
-  );
+    'c_legal','c_dba','c_mc','c_dot','c_phone','c_ah','c_email',
+    'c_addr','c_city','c_state','c_zip','c_notes'
+  ].forEach(id => { $(id).value = ''; });
 
-
-  refresh();
-
+  await refresh();
 });
 
+
+/* ============================================================
+   SAVE DRIVER
+   ============================================================ */
+
 $('d_save').addEventListener('click', async () => {
-  if (!val('d_carrier')) { say('d_msg','Add a carrier first.','err'); return; }
+  if (!val('d_carrier')) {
+    say('d_msg', 'Add a carrier first.', 'err');
+    return;
+  }
+
   if (!val('d_first') || !val('d_last')) {
-    say('d_msg','First and last name are required.','err'); return; }
+    say('d_msg', 'First and last name are required.', 'err');
+    return;
+  }
+
   $('d_save').disabled = true;
+
   const ends = val('d_end');
-  const r = await db.from('drivers').insert({
-    tenant_id: tenant, carrier_id: val('d_carrier'),
-    first_name: val('d_first'), last_name: val('d_last'),
-    phone: val('d_phone'), email: val('d_email'),
+  const driverData = {
+    tenant_id: tenant,
+    carrier_id: val('d_carrier'),
+    first_name: val('d_first'),
+    last_name: val('d_last'),
+    phone: val('d_phone'),
+    email: val('d_email'),
     cdl_number: val('d_cdl'),
     cdl_state: val('d_cdlst') ? val('d_cdlst').toUpperCase() : null,
     endorsements: ends ? ends.split(',').map(x => x.trim().toUpperCase()) : [],
     hire_date: val('d_hire'),
     oversize_experienced: $('d_over').value === 'true',
     notes: val('d_notes')
-  });
+  };
+
+  const trainingStatus = await getProtectedTrainingStatus();
+  const trainingActive = trainingStatus.active === true;
+  let result = null;
+
+  if (trainingActive && driverData.cdl_number) {
+    const existing = await db
+      .from('drivers')
+      .select('id,is_training,archived_at')
+      .eq('tenant_id', tenant)
+      .eq('cdl_number', driverData.cdl_number)
+      .maybeSingle();
+
+    if (existing.error) {
+      $('d_save').disabled = false;
+      say('d_msg', existing.error.message, 'err');
+      return;
+    }
+
+    if (existing.data && existing.data.is_training === true) {
+      result = await db
+        .from('drivers')
+        .update({
+          ...driverData,
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.data.id)
+        .eq('tenant_id', tenant);
+    }
+  }
+
+  if (!result) {
+    result = await db.from('drivers').insert(driverData);
+  }
+
   $('d_save').disabled = false;
-  if (r.error) { say('d_msg', r.error.message, 'err'); return; }
-  say('d_msg', 'Driver saved.', 'ok');
-  ['d_first','d_last','d_phone','d_email','d_cdl','d_cdlst','d_end',
-   'd_hire','d_notes'].forEach(i => $(i).value = '');
-  refresh();
+
+  if (result.error) {
+    say('d_msg', result.error.message, 'err');
+    return;
+  }
+
+  say(
+    'd_msg',
+    trainingActive ? 'Training driver ready.' : 'Driver saved.',
+    'ok'
+  );
+
+  [
+    'd_first','d_last','d_phone','d_email','d_cdl','d_cdlst',
+    'd_end','d_hire','d_notes'
+  ].forEach(id => { $(id).value = ''; });
+
+  await refresh();
 });
+
+
+/* ============================================================
+   SAVE TRUCK
+   ============================================================ */
 
 $('t_save').addEventListener('click', async () => {
-  if (!val('t_carrier')) { say('t_msg','Add a carrier first.','err'); return; }
-  if (!val('t_unit')) { say('t_msg','Unit number is required.','err'); return; }
+  if (!val('t_carrier')) {
+    say('t_msg', 'Add a carrier first.', 'err');
+    return;
+  }
+
+  if (!val('t_unit')) {
+    say('t_msg', 'Unit number is required.', 'err');
+    return;
+  }
+
   $('t_save').disabled = true;
-  const r = await db.from('equipment').insert({
-    tenant_id: tenant, carrier_id: val('t_carrier'),
-    unit_number: val('t_unit'), equipment_type: 'tractor',
+
+  const truckData = {
+    tenant_id: tenant,
+    carrier_id: val('t_carrier'),
+    unit_number: val('t_unit'),
+    equipment_type: 'tractor',
     default_driver_id: val('t_driver'),
-    make: val('t_make'), model: val('t_model'), year: num('t_year'),
-    vin: val('t_vin'), plate_number: val('t_plate'),
+    make: val('t_make'),
+    model: val('t_model'),
+    year: num('t_year'),
+    vin: val('t_vin'),
+    plate_number: val('t_plate'),
     plate_state: val('t_plst') ? val('t_plst').toUpperCase() : null,
-    axle_count: num('t_axles'), empty_weight_lb: num('t_empty'),
-    operational_status: $('t_op').value, notes: val('t_notes')
-  });
+    axle_count: num('t_axles'),
+    empty_weight_lb: num('t_empty'),
+    operational_status: $('t_op').value,
+    notes: val('t_notes')
+  };
+
+  const trainingStatus = await getProtectedTrainingStatus();
+  const trainingActive = trainingStatus.active === true;
+  let result = null;
+
+  if (trainingActive) {
+    const existing = await db
+      .from('equipment')
+      .select('id,is_training,status,archived_at')
+      .eq('tenant_id', tenant)
+      .eq('equipment_type', 'tractor')
+      .eq('unit_number', truckData.unit_number)
+      .maybeSingle();
+
+    if (existing.error) {
+      $('t_save').disabled = false;
+      say('t_msg', existing.error.message, 'err');
+      return;
+    }
+
+    if (existing.data && existing.data.is_training === true) {
+      result = await db
+        .from('equipment')
+        .update({
+          ...truckData,
+          status: 'active',
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.data.id)
+        .eq('tenant_id', tenant);
+    }
+  }
+
+  if (!result) {
+    result = await db.from('equipment').insert({
+      ...truckData,
+      ...(trainingActive ? { status: 'active' } : {})
+    });
+  }
+
   $('t_save').disabled = false;
-  if (r.error) { say('t_msg', r.error.message, 'err'); return; }
-  say('t_msg', 'Truck saved. It will appear on the Fleet Board.', 'ok');
-  ['t_unit','t_make','t_model','t_year','t_vin','t_plate','t_plst',
-   't_axles','t_empty','t_notes'].forEach(i => $(i).value = '');
-  refresh();
+
+  if (result.error) {
+    say('t_msg', result.error.message, 'err');
+    return;
+  }
+
+  say(
+    't_msg',
+    trainingActive
+      ? 'Training truck ready. It will appear on the Fleet Board.'
+      : 'Truck saved. It will appear on the Fleet Board.',
+    'ok'
+  );
+
+  [
+    't_unit','t_make','t_model','t_year','t_vin','t_plate','t_plst',
+    't_axles','t_empty','t_notes'
+  ].forEach(id => { $(id).value = ''; });
+
+  await refresh();
 });
+
+
+/* ============================================================
+   SAVE TRAILER
+   ============================================================ */
 
 $('r_save').addEventListener('click', async () => {
-  if (!val('r_carrier')) { say('r_msg','Add a carrier first.','err'); return; }
-  if (!val('r_unit')) { say('r_msg','Unit number is required.','err'); return; }
-  $('r_save').disabled = true;
-  const r = await db.from('equipment').insert({
-    tenant_id: tenant, carrier_id: val('r_carrier'),
-    unit_number: val('r_unit'), equipment_type: $('r_type').value,
-    make: val('r_make'), year: num('r_year'), axle_count: num('r_axles'),
-    deck_length_in: num('r_dlen'), deck_height_in: num('r_dht'),
-    empty_weight_lb: num('r_empty'), max_payload_lb: num('r_pay'),
-    plate_number: val('r_plate'), notes: val('r_notes')
-  });
-  $('r_save').disabled = false;
-  if (r.error) { say('r_msg', r.error.message, 'err'); return; }
-  say('r_msg', 'Trailer saved.', 'ok');
-  ['r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
-   'r_pay','r_plate','r_notes'].forEach(i => $(i).value = '');
-  refresh();
-});
+  if (!val('r_carrier')) {
+    say('r_msg', 'Add a carrier first.', 'err');
+    return;
+  }
 
+  if (!val('r_unit')) {
+    say('r_msg', 'Unit number is required.', 'err');
+    return;
+  }
+
+  $('r_save').disabled = true;
+
+  const trailerData = {
+    tenant_id: tenant,
+    carrier_id: val('r_carrier'),
+    unit_number: val('r_unit'),
+    equipment_type: $('r_type').value,
+    make: val('r_make'),
+    year: num('r_year'),
+    axle_count: num('r_axles'),
+    deck_length_in: num('r_dlen'),
+    deck_height_in: num('r_dht'),
+    empty_weight_lb: num('r_empty'),
+    max_payload_lb: num('r_pay'),
+    plate_number: val('r_plate'),
+    notes: val('r_notes')
+  };
+
+  const trainingStatus = await getProtectedTrainingStatus();
+  const trainingActive = trainingStatus.active === true;
+  let result = null;
+
+  if (trainingActive) {
+    const existing = await db
+      .from('equipment')
+      .select('id,is_training,status,archived_at')
+      .eq('tenant_id', tenant)
+      .eq('unit_number', trailerData.unit_number)
+      .maybeSingle();
+
+    if (existing.error) {
+      $('r_save').disabled = false;
+      say('r_msg', existing.error.message, 'err');
+      return;
+    }
+
+    if (existing.data && existing.data.is_training === true) {
+      result = await db
+        .from('equipment')
+        .update({
+          ...trailerData,
+          status: 'active',
+          archived_at: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.data.id)
+        .eq('tenant_id', tenant);
+    }
+  }
+
+  if (!result) {
+    result = await db.from('equipment').insert({
+      ...trailerData,
+      ...(trainingActive ? { status: 'active' } : {})
+    });
+  }
+
+  $('r_save').disabled = false;
+
+  if (result.error) {
+    say('r_msg', result.error.message, 'err');
+    return;
+  }
+
+  say(
+    'r_msg',
+    trainingActive ? 'Training trailer ready.' : 'Trailer saved.',
+    'ok'
+  );
+
+  [
+    'r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
+    'r_pay','r_plate','r_notes'
+  ].forEach(id => { $(id).value = ''; });
+
+  await refresh();
+});
 
 async function loadProfileForCarrier() {
 
@@ -1137,7 +1147,6 @@ document.querySelectorAll('.tab').forEach(t => {
     $('p-' + t.dataset.p).classList.add('on');
   });
 });
-
   /* ============================================================
    TRAINING MODE — TEST DATA AUTO-FILL
    Buttons appear only while protected Training Mode is active.
@@ -1218,129 +1227,54 @@ function ttFill(setName){
   });
 }
 
-
-  async function ttInit() {
-
+async function ttInit() {
   try {
+    const trainingStatus = await getProtectedTrainingStatus();
 
-    const trainingStatus =
-      await getProtectedTrainingStatus();
-
-
-    const active =
-      trainingStatus.active === true;
-
-
-    if (!active) {
+    if (trainingStatus.active !== true) {
       return;
     }
-
 
     [
       ['c_save', 'carrier'],
       ['d_save', 'driver'],
       ['t_save', 'tractor'],
       ['r_save', 'trailer']
-    ]
-    .forEach(
-      function(pair) {
+    ].forEach(pair => {
+      const saveBtn = document.getElementById(pair[0]);
 
-        const saveBtn =
-          document.getElementById(
-            pair[0]
-          );
-
-
-        if (
-          !saveBtn ||
-          document.getElementById(
-            'ttfill_' + pair[1]
-          )
-        ) {
-          return;
-        }
-
-
-        const button =
-          document.createElement(
-            'button'
-          );
-
-
-        button.id =
-          'ttfill_' + pair[1];
-
-        button.type =
-          'button';
-
-        button.textContent =
-          'Fill test data';
-
-        button.style.cssText =
-          'margin-right:8px;' +
-          'background:#B8B05D;' +
-          'border:1px solid #B8B05D;' +
-          'color:#3C3A4B;' +
-          'font-weight:600;' +
-          'cursor:pointer;';
-
-
-        button.addEventListener(
-          'click',
-          function() {
-            ttFill(
-              pair[1]
-            );
-          }
-        );
-
-
-        saveBtn
-          .parentNode
-          .insertBefore(
-            button,
-            saveBtn
-          );
-
+      if (!saveBtn || document.getElementById('ttfill_' + pair[1])) {
+        return;
       }
-    );
 
+      const button = document.createElement('button');
+      button.id = 'ttfill_' + pair[1];
+      button.type = 'button';
+      button.textContent = 'Fill test data';
+      button.style.cssText =
+        'margin-right:8px;' +
+        'background:#B8B05D;' +
+        'border:1px solid #B8B05D;' +
+        'color:#3C3A4B;' +
+        'font-weight:600;' +
+        'cursor:pointer;';
+
+      button.addEventListener('click', () => {
+        ttFill(pair[1]);
+      });
+
+      saveBtn.parentNode.insertBefore(button, saveBtn);
+    });
   }
   catch (error) {
-
-    console.warn(
-      'Training Mode initialization failed:',
-      error
-    );
-
+    console.warn('Training Mode initialization failed:', error);
   }
-
 }
 
-
-ttInit();
-
-  
-  [['c_save','carrier'], ['d_save','driver'],
-   ['t_save','tractor'], ['r_save','trailer']].forEach(function(pair){
-    const saveBtn = document.getElementById(pair[0]);
-    if (!saveBtn || document.getElementById('ttfill_' + pair[1])) return;
-    const b = document.createElement('button');
-    b.id = 'ttfill_' + pair[1];
-    b.type = 'button';
-    b.textContent = 'Fill test data';
-    b.style.cssText = 'margin-right:8px;background:#B8B05D;border:1px solid #B8B05D;' +
-                      'color:#3C3A4B;font-weight:600;cursor:pointer;';
-    b.addEventListener('click', function(){ ttFill(pair[1]); });
-    saveBtn.parentNode.insertBefore(b, saveBtn);
-  });
-}
 
 ttInit();
 </script>
 
-<script src="fleet-command-tabs.js"></script>
-<script>buildFleetCommandTabs('fleet.html');</script>
 
 </body>
 </html>
