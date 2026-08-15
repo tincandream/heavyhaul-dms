@@ -572,22 +572,228 @@ async function refresh() {
 }
 
 $('c_save').addEventListener('click', async () => {
-  if (!val('c_legal')) { say('c_msg','Legal name is required.','err'); return; }
+
+  if (!val('c_legal')) {
+    say(
+      'c_msg',
+      'Legal name is required.',
+      'err'
+    );
+    return;
+  }
+
   $('c_save').disabled = true;
-  const r = await db.from('carriers').insert({
-    tenant_id: tenant, legal_name: val('c_legal'), dba_name: val('c_dba'),
-    mc_number: val('c_mc'), dot_number: val('c_dot'), phone: val('c_phone'),
-    after_hours_phone: val('c_ah'), email: val('c_email'),
-    address_line1: val('c_addr'), city: val('c_city'),
-    state: val('c_state') ? val('c_state').toUpperCase() : null,
-    postal_code: val('c_zip'), notes: val('c_notes')
-  });
-  $('c_save').disabled = false;
-  if (r.error) { say('c_msg', r.error.message, 'err'); return; }
-  say('c_msg', 'Carrier saved.', 'ok');
-  ['c_legal','c_dba','c_mc','c_dot','c_phone','c_ah','c_email','c_addr',
-   'c_city','c_state','c_zip','c_notes'].forEach(i => $(i).value = '');
+
+
+  const carrierData = {
+
+    tenant_id:
+      tenant,
+
+    legal_name:
+      val('c_legal'),
+
+    dba_name:
+      val('c_dba'),
+
+    mc_number:
+      val('c_mc'),
+
+    dot_number:
+      val('c_dot'),
+
+    phone:
+      val('c_phone'),
+
+    after_hours_phone:
+      val('c_ah'),
+
+    email:
+      val('c_email'),
+
+    address_line1:
+      val('c_addr'),
+
+    city:
+      val('c_city'),
+
+    state:
+      val('c_state')
+        ? val('c_state').toUpperCase()
+        : null,
+
+    postal_code:
+      val('c_zip'),
+
+    notes:
+      val('c_notes')
+
+  };
+
+
+  let result;
+
+
+  // ---------------------------------------------------------
+  // TRAINING MODE:
+  // REUSE AN ARCHIVED TT CARRIER WITH THE SAME MC NUMBER
+  // ---------------------------------------------------------
+
+  let trainingActive = false;
+
+  try {
+
+    const status =
+      await db.rpc(
+        'get_training_mode_status'
+      );
+
+    trainingActive =
+      !status.error &&
+      status.data &&
+      status.data.active === true;
+
+  }
+  catch (error) {
+
+    console.warn(
+      'Could not check Training Mode:',
+      error
+    );
+
+  }
+
+
+  if (
+    trainingActive &&
+    carrierData.mc_number
+  ) {
+
+    const existing =
+      await db
+        .from('carriers')
+        .select('id,is_training,archived_at')
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .eq(
+          'mc_number',
+          carrierData.mc_number
+        )
+        .maybeSingle();
+
+
+    if (existing.error) {
+
+      $('c_save').disabled =
+        false;
+
+      say(
+        'c_msg',
+        existing.error.message,
+        'err'
+      );
+
+      return;
+    }
+
+
+    if (
+      existing.data &&
+      existing.data.is_training === true
+    ) {
+
+      result =
+        await db
+          .from('carriers')
+          .update({
+            ...carrierData,
+
+            archived_at:
+              null,
+
+            updated_at:
+              new Date().toISOString()
+          })
+          .eq(
+            'id',
+            existing.data.id
+          )
+          .eq(
+            'tenant_id',
+            tenant
+          );
+
+    }
+
+  }
+
+
+  // ---------------------------------------------------------
+  // NORMAL NEW CARRIER
+  // ---------------------------------------------------------
+
+  if (!result) {
+
+    result =
+      await db
+        .from('carriers')
+        .insert(
+          carrierData
+        );
+
+  }
+
+
+  $('c_save').disabled =
+    false;
+
+
+  if (result.error) {
+
+    say(
+      'c_msg',
+      result.error.message,
+      'err'
+    );
+
+    return;
+  }
+
+
+  say(
+    'c_msg',
+    trainingActive
+      ? 'Training carrier ready.'
+      : 'Carrier saved.',
+    'ok'
+  );
+
+
+  [
+    'c_legal',
+    'c_dba',
+    'c_mc',
+    'c_dot',
+    'c_phone',
+    'c_ah',
+    'c_email',
+    'c_addr',
+    'c_city',
+    'c_state',
+    'c_zip',
+    'c_notes'
+  ]
+  .forEach(
+    id => {
+      $(id).value = '';
+    }
+  );
+
+
   refresh();
+
 });
 
 $('d_save').addEventListener('click', async () => {
