@@ -633,7 +633,102 @@ $('c_save').addEventListener('click', async () => {
 
   let result;
 
+$('c_save').addEventListener('click', async () => {
+async function getProtectedTrainingStatus() {
 
+  const sessionResult =
+    await db.auth.getSession();
+
+  if (
+    !sessionResult.data ||
+    !sessionResult.data.session
+  ) {
+
+    return {
+      active: false,
+      expires_at: null
+    };
+
+  }
+
+
+  const result =
+    await db.rpc(
+      'get_training_mode_status'
+    );
+
+
+  if (result.error) {
+
+    console.warn(
+      'Training Mode status failed:',
+      result.error.message
+    );
+
+    return {
+      active: false,
+      expires_at: null
+    };
+
+  }
+
+
+  return (
+    result.data || {
+      active: false,
+      expires_at: null
+    }
+  );
+
+}
+
+
+
+  
+async function getProtectedTrainingStatus() {
+
+  const sessionResult =
+    await db.auth.getSession();
+
+  if (
+    !sessionResult.data ||
+    !sessionResult.data.session
+  ) {
+    return {
+      active: false,
+      expires_at: null
+    };
+  }
+
+
+  const result =
+    await db.rpc(
+      'get_training_mode_status'
+    );
+
+
+  if (result.error) {
+
+    console.warn(
+      'Training Mode status failed:',
+      result.error.message
+    );
+
+    return {
+      active: false,
+      expires_at: null
+    };
+  }
+
+
+  return (
+    result.data || {
+      active: false,
+      expires_at: null
+    }
+  );
+
+}
   // ---------------------------------------------------------
   // TRAINING MODE:
   // REUSE AN ARCHIVED TT CARRIER WITH THE SAME MC NUMBER
@@ -1136,15 +1231,24 @@ function ttFill(setName){
   });
 }
 
-async function ttInit(){
-  let active = false;
-  try {
-    const r = await db.rpc('get_training_mode_status');
-    if (!r.error && r.data) active = r.data.active === true;
-  } catch (e){ /* training mode unavailable — leave buttons hidden */ }
-  if (!active) return;
+const trainingStatus =
+  await getProtectedTrainingStatus();
 
-  // put a Fill button next to each save button
+const active =
+  trainingStatus.active === true;
+  
+catch (e){ /* training mode unavailable — leave buttons hidden */ }
+
+if (!active) return;
+
+// put a Fill button next to each save button
+...
+}
+
+ttInit();
+
+
+  
   [['c_save','carrier'], ['d_save','driver'],
    ['t_save','tractor'], ['r_save','trailer']].forEach(function(pair){
     const saveBtn = document.getElementById(pair[0]);
