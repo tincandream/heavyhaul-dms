@@ -1394,15 +1394,15 @@ function render() {
 
           '"' +
 
-          (
-            r.load_id
+   (
+  (r.load_id || r.next_load_id)
 
-              ? ' data-load="' +
-                r.load_id +
-                '"'
+    ? ' data-load="' +
+      (r.load_id || r.next_load_id) +
+      '"'
 
-              : ''
-          ) +
+    : ''
+) +
 
           '>' +
 
