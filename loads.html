@@ -673,6 +673,39 @@ let group =
    LOAD STATUS GROUPS
    ============================================================ */
 
+const ACTIVE = [
+
+  'quoted',
+
+  'booked',
+
+  'dispatched',
+
+  'en_route_to_pickup',
+
+  'at_shipper',
+
+  'at_pickup',
+
+  'loading',
+
+  'loaded',
+
+  'in_transit',
+
+  'at_weigh_station',
+
+  'under_inspection',
+
+  'at_receiver',
+
+  'at_delivery',
+
+  'unloading'
+
+];
+
+
 const CLOSED = [
 
   'delivered',
@@ -958,6 +991,10 @@ async function load() {
 
         ' driver_id,' +
 
+        ' tractor_id,' +
+
+        ' trailer_id,' +
+
         ' origin_facility_id,' +
 
         ' dest_facility_id'
@@ -966,16 +1003,6 @@ async function load() {
       .is(
         'archived_at',
         null
-      )
-      .in(
-        'status',
-        [
-          'delivered',
-          'pod_pending',
-          'paperwork',
-          'invoiced',
-          'paid'
-        ]
       )
       .order(
         'created_at',
@@ -1018,6 +1045,7 @@ async function load() {
     brokersResult,
     driversResult,
     facilitiesResult,
+    equipmentResult,
     marginsResult
   ] =
 
@@ -1053,6 +1081,13 @@ async function load() {
 
 
       db
+        .from('equipment')
+        .select(
+          'id, unit_number, equipment_type'
+        ),
+
+
+      db
         .from('v_load_margin')
         .select(
           'load_id, total_revenue, total_cost'
@@ -1080,6 +1115,10 @@ async function load() {
 
 
   const facility =
+    {};
+
+
+  const equipment =
     {};
 
 
@@ -1163,6 +1202,22 @@ async function load() {
 
 
   (
+    equipmentResult.data || []
+  )
+  .forEach(
+    item => {
+
+      equipment[item.id] = {
+        unit_number: item.unit_number || null,
+        equipment_type: item.equipment_type || null
+      };
+
+    }
+  );
+
+
+
+  (
     marginsResult.data || []
   )
   .forEach(
@@ -1217,6 +1272,27 @@ async function load() {
           ]
 
           || null,
+
+
+        tractor_number:
+
+          equipment[item.tractor_id]
+            ? equipment[item.tractor_id].unit_number
+            : null,
+
+
+        trailer_number:
+
+          equipment[item.trailer_id]
+            ? equipment[item.trailer_id].unit_number
+            : null,
+
+
+        trailer_type:
+
+          equipment[item.trailer_id]
+            ? equipment[item.trailer_id].equipment_type
+            : null,
 
 
         route:
@@ -1465,6 +1541,12 @@ function tiles() {
     all:
       rows.length,
 
+    active:
+      rows.filter(
+        row =>
+          ACTIVE.includes(row.status)
+      ).length,
+
     delivered:
       rows.filter(
         row =>
@@ -1501,6 +1583,11 @@ function tiles() {
     [
       'all',
       'Total loads'
+    ],
+
+    [
+      'active',
+      'Active'
     ],
 
     [
@@ -1631,6 +1718,18 @@ function render() {
         /* ------------------------------------------------------
            Group filter
            ------------------------------------------------------ */
+
+        if (
+          group === 'active' &&
+          !ACTIVE.includes(
+            row.status
+          )
+        ) {
+
+          return false;
+
+        }
+
 
         if (
           group === 'delivered' &&
@@ -2044,13 +2143,43 @@ function render() {
 
 
 
-          /* Carrier */
+          /* Carrier / Equipment */
 
           '<td>' +
 
             esc(
               row.carrier_name ||
               '—'
+            ) +
+
+            (
+              row.tractor_number ||
+              row.trailer_number
+
+                ? '<div class="sub2">' +
+
+                    (
+                      row.tractor_number
+                        ? 'Truck ' + esc(row.tractor_number)
+                        : ''
+                    ) +
+
+                    (
+                      row.tractor_number && row.trailer_number
+                        ? ' · '
+                        : ''
+                    ) +
+
+                    (
+                      row.trailer_number
+                        ? esc(pretty(row.trailer_type || 'Trailer')) +
+                          ' ' + esc(row.trailer_number)
+                        : ''
+                    ) +
+
+                  '</div>'
+
+                : ''
             ) +
 
           '</td>' +
@@ -2175,19 +2304,17 @@ function render() {
 
             money(
 
-              (
-                Number(
-                  row.linehaul_rate
-                ) || 0
-              )
+              row.linehaul_rate == null &&
+              row.fuel_surcharge == null
 
-              +
+                ? null
 
-              (
-                Number(
-                  row.fuel_surcharge
-                ) || 0
-              )
+                : (
+                    Number(row.linehaul_rate) || 0
+                  ) +
+                  (
+                    Number(row.fuel_surcharge) || 0
+                  )
 
             ) +
 
