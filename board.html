@@ -1448,17 +1448,17 @@ function render() {
           /* Driver */
 
           '<td>' +
+(
+   (r.driver_name || r.next_driver_name)
 
-            (
-              r.driver_name
+  ? esc(
+      r.driver_name ||
+      r.next_driver_name
+    )
 
-                ? esc(
-                    r.driver_name
-                  )
-
-                : '<span class="sub2">' +
-                    'unassigned' +
-                  '</span>'
+  : '<span class="sub2">' +
+      'unassigned' +
+    '</span>'
             ) +
 
             (
