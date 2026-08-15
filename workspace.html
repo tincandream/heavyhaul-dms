@@ -1058,7 +1058,10 @@ async function boot(){
 
   const requestedTab = params.get('tab');
 
-  TENANT_ID = await buildNav(db, 'Load Workspace');
+ TENANT_ID = await buildNav(
+  db,
+  'Dispatch'
+);
 
   if (!LOAD_ID){
     const e = $('loadErr');
