@@ -245,6 +245,26 @@ textarea{min-height:76px;resize:vertical}
           <option value="at_delivery">Arrived at delivery</option>
           <option value="unloaded">Unloaded</option>
           <option value="delay">Delay / problem</option>
+          const hosHours =
+  num(
+    $('ci_hos_hours').value
+  ) || 0;
+
+const hosMinutes =
+  num(
+    $('ci_hos_minutes').value
+  ) || 0;
+
+const hosRemainingMin =
+  (
+    $('ci_hos_hours').value === '' &&
+    $('ci_hos_minutes').value === ''
+  )
+    ? null
+    : (
+        hosHours * 60 +
+        hosMinutes
+      );
         </select>
       </div>
       <div class="field"><label for="ci_when">Occurred at</label>
@@ -253,6 +273,7 @@ textarea{min-height:76px;resize:vertical}
       <div class="field"><label for="ci_state">State</label><input id="ci_state" maxlength="2" placeholder="AL" style="text-transform:uppercase"></div>
       <div class="field"><label for="ci_miles">Odometer / miles remaining</label><input type="number" id="ci_miles" placeholder="240"></div>
       <div class="field"><label for="ci_eta">Updated ETA</label><input type="datetime-local" id="ci_eta"></div>
+      
       <div class="field">
   <label for="ci_hos_hours">HOS remaining — hours</label>
   <input
@@ -744,6 +765,7 @@ const CHECKIN = {
   state:    'state',
   miles:    'odometer',
   eta:      'eta',
+  hos:      'hos_remaining_min',
   notes:    'note',
   source:   'source'
 };
