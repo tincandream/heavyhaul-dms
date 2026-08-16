@@ -253,6 +253,27 @@ textarea{min-height:76px;resize:vertical}
       <div class="field"><label for="ci_state">State</label><input id="ci_state" maxlength="2" placeholder="AL" style="text-transform:uppercase"></div>
       <div class="field"><label for="ci_miles">Odometer / miles remaining</label><input type="number" id="ci_miles" placeholder="240"></div>
       <div class="field"><label for="ci_eta">Updated ETA</label><input type="datetime-local" id="ci_eta"></div>
+      <div class="field">
+  <label for="ci_hos_hours">HOS remaining — hours</label>
+  <input
+    type="number"
+    id="ci_hos_hours"
+    min="0"
+    max="14"
+    placeholder="6"
+  >
+</div>
+
+<div class="field">
+  <label for="ci_hos_minutes">HOS remaining — minutes</label>
+  <input
+    type="number"
+    id="ci_hos_minutes"
+    min="0"
+    max="59"
+    placeholder="30"
+  >
+</div>
       <div class="field full"><label for="ci_notes">Notes</label>
         <textarea id="ci_notes" placeholder="Fueled at Love's, weather clear, on schedule."></textarea></div>
     </div>
