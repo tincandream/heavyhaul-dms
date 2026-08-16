@@ -3310,6 +3310,184 @@ drawAccessorials = function(){
 
   panel.insertBefore(holder, panel.firstChild);
 };
+
+
+/* ============================================================
+   LOAD BOARD DETAIL — resolved names for the Overview tab
+   loads holds foreign keys; v_load_board resolves them.
+   ============================================================ */
+
+let LOAD_BOARD = null;
+
+async function fetchLoadBoard(){
+  LOAD_BOARD = null;
+  try {
+    const r = await db
+      .from('v_load_board')
+      .select('*')
+      .eq('id', LOAD_ID)
+      .maybeSingle();
+    if (!r.error) LOAD_BOARD = r.data || null;
+  } catch (e){
+    console.warn('v_load_board unavailable', e);
+  }
+}
+
+/* inches -> feet, one decimal */
+function inFt(v){
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  if (isNaN(n)) return null;
+  return Math.round((n / 12) * 10) / 10;
+}
+
+function lbVal(v){
+  return (v === null || v === undefined || v === '') ? '—' : esc(v);
+}
+
+/* rebuild Overview using resolved values */
+const _origDrawOverview = drawOverview;
+
+drawOverview = function(){
+
+  if (!LOAD){ _origDrawOverview(); return; }
+
+  const b = LOAD_BOARD || {};
+
+  const L  = inFt(LOAD.length_in);
+  const W  = inFt(LOAD.width_in  != null ? LOAD.width_in  : b.width_in);
+  const H  = inFt(LOAD.height_in != null ? LOAD.height_in : b.height_in);
+  const WT = LOAD.weight_lb != null ? LOAD.weight_lb : b.weight_lb;
+
+  const permIssued = PERMITS.filter(p => p.status === 'issued').length;
+  const permOpen   = PERMITS.filter(p =>
+    !['issued','not_required','cancelled'].includes(p.status)).length;
+  const escOK      = ESCORTS.filter(e =>
+    ['confirmed','en_route','completed'].includes(e.status)).length;
+  const escOpen    = ESCORTS.filter(e =>
+    ['needed','quoted','booked'].includes(e.status)).length;
+  const clDone     = CHECKLIST.filter(c => !!c.done_at).length;
+
+  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
+  const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
+  const mar = rev - cst;
+  const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
+
+  const isOS =
+    (W != null && W > 8.5) ||
+    (H != null && H > 13.5) ||
+    (L != null && L > 53);
+  const isOW = WT != null && Number(WT) > 80000;
+  const isSL = LOAD.is_superload || b.is_superload;
+
+  $('tab-overview').innerHTML = `
+  <div class="grid2">
+
+    <div class="card box">
+      <h3>Route &amp; Schedule</h3>
+      <dl class="kv">
+        <dt>Origin</dt><dd>${lbVal(b.origin)}</dd>
+        <dt>Destination</dt><dd>${lbVal(b.destination)}</dd>
+        <dt>Pickup</dt><dd>${esc(fmtDT(
+          LOAD.pickup_appt_start || b.pickup_appt_start))}</dd>
+        <dt>Delivery</dt><dd>${esc(fmtDT(
+          LOAD.delivery_appt_start || b.delivery_appt_start))}</dd>
+        <dt>Miles</dt><dd>${LOAD.total_miles
+          ? Number(LOAD.total_miles).toLocaleString() : '—'}</dd>
+        <dt>Commodity</dt><dd>${lbVal(LOAD.commodity)}</dd>
+        <dt>Broker</dt><dd>${lbVal(b.broker_name)}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Dimensions</h3>
+      <dl class="kv">
+        <dt>Length</dt><dd>${L != null ? L + " ft" : '—'}</dd>
+        <dt>Width</dt><dd>${W != null ? W + " ft" : '—'}</dd>
+        <dt>Height</dt><dd>${H != null ? H + " ft" : '—'}</dd>
+        <dt>Weight</dt><dd>${WT != null
+          ? Number(WT).toLocaleString() + ' lb' : '—'}</dd>
+        <dt>Axles</dt><dd>${lbVal(LOAD.axle_count)}</dd>
+        <dt>Classification</dt><dd>
+          ${isSL ? '<span class="pill bad">Superload</span> ' : ''}
+          ${isOS ? '<span class="pill warn">Oversize</span> ' : ''}
+          ${isOW ? '<span class="pill warn">Overweight</span> ' : ''}
+          ${(!isSL && !isOS && !isOW) ? '—' : ''}
+        </dd>
+        <dt>Route survey</dt><dd>${LOAD.requires_route_survey
+          ? 'Required' : 'Not required'}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Carrier, Truck &amp; Driver</h3>
+      <dl class="kv">
+        <dt>Carrier</dt><dd>${lbVal(b.carrier_name)}</dd>
+        <dt>Driver</dt><dd>${lbVal(b.driver_name)}</dd>
+        <dt>Tractor</dt><dd>${lbVal(WS_EQUIP.tractor)}</dd>
+        <dt>Trailer</dt><dd>${lbVal(WS_EQUIP.trailer)}</dd>
+      </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Readiness</h3>
+      <dl class="kv">
+        <dt>Permits</dt><dd>${permIssued} issued${permOpen
+          ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>`
+          : ''} of ${PERMITS.length}</dd>
+        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen
+          ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>`
+          : ''} of ${ESCORTS.length}</dd>
+        <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
+        <dt>Revenue</dt><dd>${money(rev)}</dd>
+        <dt>Cost</dt><dd>${money(cst)}</dd>
+        <dt>Margin</dt><dd style="font-weight:700;color:${mar >= 0
+          ? 'var(--ok)' : 'var(--bad)'}">
+          ${money(mar)}${pct !== null
+            ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
+      </dl>
+    </div>
+
+  </div>`;
+};
+
+/* tractor + trailer unit numbers (not in v_load_board) */
+let WS_EQUIP = { tractor:null, trailer:null };
+
+async function fetchWorkspaceEquipment(){
+  WS_EQUIP = { tractor:null, trailer:null };
+  if (!LOAD) return;
+
+  const ids = [LOAD.tractor_id, LOAD.trailer_id].filter(Boolean);
+  if (!ids.length) return;
+
+  try {
+    const r = await db
+      .from('equipment')
+      .select('id, unit_number')
+      .in('id', ids);
+
+    if (r.error || !r.data) return;
+
+    r.data.forEach(function(e){
+      if (e.id === LOAD.tractor_id) WS_EQUIP.tractor = e.unit_number;
+      if (e.id === LOAD.trailer_id) WS_EQUIP.trailer = e.unit_number;
+    });
+  } catch (e){
+    console.warn('equipment lookup failed', e);
+  }
+}
+
+/* hook both fetches into the refresh cycle */
+const _origRefreshAll = refreshAll;
+
+refreshAll = async function(){
+  await _origRefreshAll();
+  await fetchLoadBoard();
+  await fetchWorkspaceEquipment();
+  drawActiveTab();
+};
+  
 </script>
 </body>
 </html>
