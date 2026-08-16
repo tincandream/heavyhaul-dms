@@ -1480,43 +1480,105 @@ function openCheckIn(){
   $('ci_state').value = '';
   $('ci_miles').value = '';
   $('ci_eta').value   = '';
+
+  $('ci_hos_hours').value = '';
+  $('ci_hos_minutes').value = '';
+
   $('ci_notes').value = '';
   dlgCheckIn.showModal();
 }
 
-
 async function saveCheckIn(){
-
   clearErr('ci_err');
-
   const btn = $('ci_save');
   btn.disabled = true;
 
+  const type  = $('ci_type').value;
+  const when  = fromLocalInput($('ci_when').value) || new Date().toISOString();
+  const city  = txt($('ci_city').value);
+  const state = upper($('ci_state').value);
+  const notes = txt($('ci_notes').value);
 
-  const type =
-    $('ci_type').value;
+  /* HOS remaining */
+  const hoursRaw   = $('ci_hos_hours').value;
+  const minutesRaw = $('ci_hos_minutes').value;
 
-  const when =
-    fromLocalInput(
-      $('ci_when').value
-    ) ||
-    new Date().toISOString();
+  const hosHours   = num(hoursRaw) ?? 0;
+  const hosMinutes = num(minutesRaw) ?? 0;
 
-  const city =
-    txt(
-      $('ci_city').value
-    );
+  if (hosHours < 0 || hosHours > 14){
+    showErr('ci_err', {
+      message: 'HOS hours must be between 0 and 14.'
+    });
+    btn.disabled = false;
+    return;
+  }
 
-  const state =
-    upper(
-      $('ci_state').value
-    );
+  if (hosMinutes < 0 || hosMinutes > 59){
+    showErr('ci_err', {
+      message: 'HOS minutes must be between 0 and 59.'
+    });
+    btn.disabled = false;
+    return;
+  }
 
-  const notes =
-    txt(
-      $('ci_notes').value
-    );
+  const hosRemainingMin =
+    hoursRaw === '' && minutesRaw === ''
+      ? null
+      : (hosHours * 60) + hosMinutes;
 
+  /* Build check-in */
+  const row = {
+    tenant_id: TENANT_ID,
+    load_id: LOAD_ID
+  };
+
+  row[CHECKIN.type]   = type;
+  row[CHECKIN.when]   = when;
+  row[CHECKIN.city]   = city;
+  row[CHECKIN.state]  = state;
+  row[CHECKIN.miles]  = num($('ci_miles').value);
+  row[CHECKIN.eta]    = fromLocalInput($('ci_eta').value);
+  row[CHECKIN.hos]    = hosRemainingMin;
+  row[CHECKIN.notes]  = notes;
+  row[CHECKIN.source] = 'dispatcher';
+
+  const { error } = await db.from('check_ins').insert(row);
+
+  if (error){
+    showErr('ci_err', error);
+    btn.disabled = false;
+    return;
+  }
+
+  const where = [city, state].filter(Boolean).join(', ');
+
+  const hosText =
+    hosRemainingMin == null
+      ? null
+      : Math.floor(hosRemainingMin / 60) +
+        'h ' +
+        (hosRemainingMin % 60) +
+        'm HOS remaining';
+
+  await logEvent({
+    event_type: 'check_in',
+    subject: titleize(type) + ' check-in',
+    body: [
+      where || null,
+      hosText,
+      notes
+    ].filter(Boolean).join(' · '),
+    is_milestone: false
+  });
+
+  btn.disabled = false;
+  dlgCheckIn.close();
+
+  toast('Driver check-in logged');
+
+  await refreshAll();
+}
 
   /* ----------------------------------------
      HOS Remaining
