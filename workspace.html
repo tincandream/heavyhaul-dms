@@ -2563,7 +2563,34 @@ async function deleteChecklistItem(id){
   if (error){ fail('deleteChecklistItem', error); return; }
   await fetchChecklist(); drawCounts(); drawChecklist();
 }
+async function fetchRoutePlan(){
 
+  ROUTE_PLAN = null;
+
+  const { data, error } =
+    await db
+      .from('route_plans')
+      .select(
+        'id,load_id,route_name,origin,destination,states,loaded_miles,pickup_at,delivery_at,workflow_status,updated_at'
+      )
+      .eq('tenant_id', TENANT_ID)
+      .eq('load_id', LOAD_ID)
+      .order('updated_at', {
+        ascending: false
+      })
+      .limit(1)
+      .maybeSingle();
+
+  if (error){
+    console.warn(
+      'Route plan could not be loaded:',
+      error
+    );
+    return;
+  }
+
+  ROUTE_PLAN = data || null;
+}
 /* ============================================================
    EXPENSES
    ============================================================ */
