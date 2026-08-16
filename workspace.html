@@ -1484,55 +1484,229 @@ function openCheckIn(){
   dlgCheckIn.showModal();
 }
 
+
 async function saveCheckIn(){
+
   clearErr('ci_err');
-  const btn = $('ci_save'); btn.disabled = true;
 
-  const type  = $('ci_type').value;
-  const when  = fromLocalInput($('ci_when').value) || new Date().toISOString();
-  const city  = txt($('ci_city').value);
-  const state = upper($('ci_state').value);
-  const notes = txt($('ci_notes').value);
+  const btn = $('ci_save');
+  btn.disabled = true;
 
-  const row = { tenant_id: TENANT_ID, load_id: LOAD_ID };
-  row[CHECKIN.type]  = type;
-  row[CHECKIN.when]  = when;
-  row[CHECKIN.city]  = city;
-  row[CHECKIN.state] = state;
-  row[CHECKIN.miles] = num($('ci_miles').value);
-  row[CHECKIN.eta]   = fromLocalInput($('ci_eta').value);
-  row[CHECKIN.notes] = notes;
-  row[CHECKIN.source] = 'dispatcher';
 
-  const { error } = await db.from('check_ins').insert(row);
-  if (error){ showErr('ci_err', error); btn.disabled = false; return; }
+  const type =
+    $('ci_type').value;
 
-  const where = [city, state].filter(Boolean).join(', ');
+  const when =
+    fromLocalInput(
+      $('ci_when').value
+    ) ||
+    new Date().toISOString();
+
+  const city =
+    txt(
+      $('ci_city').value
+    );
+
+  const state =
+    upper(
+      $('ci_state').value
+    );
+
+  const notes =
+    txt(
+      $('ci_notes').value
+    );
+
+
+  /* ----------------------------------------
+     HOS Remaining
+     ---------------------------------------- */
+
+  const hosHours =
+    num(
+      $('ci_hos_hours').value
+    ) || 0;
+
+  const hosMinutes =
+    num(
+      $('ci_hos_minutes').value
+    ) || 0;
+
+
+  if (
+    hosHours < 0 ||
+    hosHours > 14
+  ) {
+
+    showErr(
+      'ci_err',
+      {
+        message:
+          'HOS hours must be between 0 and 14.'
+      }
+    );
+
+    btn.disabled = false;
+    return;
+  }
+
+
+  if (
+    hosMinutes < 0 ||
+    hosMinutes > 59
+  ) {
+
+    showErr(
+      'ci_err',
+      {
+        message:
+          'HOS minutes must be between 0 and 59.'
+      }
+    );
+
+    btn.disabled = false;
+    return;
+  }
+
+
+  const hosRemainingMin =
+    (
+      $('ci_hos_hours').value === '' &&
+      $('ci_hos_minutes').value === ''
+    )
+      ? null
+      : (
+          hosHours * 60 +
+          hosMinutes
+        );
+
+
+  /* ----------------------------------------
+     Check-in record
+     ---------------------------------------- */
+
+  const row = {
+
+    tenant_id:
+      TENANT_ID,
+
+    load_id:
+      LOAD_ID
+
+  };
+
+
+  row[CHECKIN.type] =
+    type;
+
+  row[CHECKIN.when] =
+    when;
+
+  row[CHECKIN.city] =
+    city;
+
+  row[CHECKIN.state] =
+    state;
+
+  row[CHECKIN.miles] =
+    num(
+      $('ci_miles').value
+    );
+
+  row[CHECKIN.eta] =
+    fromLocalInput(
+      $('ci_eta').value
+    );
+
+  row[CHECKIN.hos] =
+    hosRemainingMin;
+
+  row[CHECKIN.notes] =
+    notes;
+
+  row[CHECKIN.source] =
+    'dispatcher';
+
+
+  const { error } =
+    await db
+      .from('check_ins')
+      .insert(row);
+
+
+  if (error){
+
+    showErr(
+      'ci_err',
+      error
+    );
+
+    btn.disabled = false;
+    return;
+  }
+
+
+  const where =
+    [
+      city,
+      state
+    ]
+    .filter(Boolean)
+    .join(', ');
+
+
+  const hosText =
+    hosRemainingMin == null
+      ? null
+      : (
+          Math.floor(
+            hosRemainingMin / 60
+          ) +
+          'h ' +
+          (
+            hosRemainingMin % 60
+          ) +
+          'm HOS remaining'
+        );
+
+
   await logEvent({
-    event_type: 'check_in',
-    subject: titleize(type) + (where ? ' — ' + where : ''),
-    body: notes,
-    is_milestone: ['at_pickup','loaded','at_delivery','unloaded'].includes(type)
+
+    event_type:
+      'check_in',
+
+    subject:
+      titleize(type) +
+      ' check-in',
+
+    body:
+      [
+        where || null,
+        hosText,
+        notes
+      ]
+      .filter(Boolean)
+      .join(' · '),
+
+    is_milestone:
+      false
+
   });
 
+
   btn.disabled = false;
+
   dlgCheckIn.close();
-  toast('Check-in logged');
+
+  toast(
+    'Driver check-in logged'
+  );
+
   await refreshAll();
+
 }
 
-function openStatus(newStatus){
-  PENDING_STATUS = newStatus;
-  clearErr('st_err');
-  $('st_notes').value = '';
-  $('st_title').textContent =
-    newStatus === 'cancelled'
-      ? 'Cancel Load'
-      : `${titleize(currentStatus())} → ${titleize(newStatus)}`;
-  $('st_save').textContent = newStatus === 'cancelled' ? 'Cancel Load' : 'Confirm';
-  $('st_save').className = newStatus === 'cancelled' ? 'danger' : 'primary';
-  dlgStatus.showModal();
-}
+  
 
 async function saveStatus(){
   if (!PENDING_STATUS) return;
