@@ -1,3 +1,185 @@
+Sunday 2:59 PM
+heavyhaul-dms-main (8)(1).zip
+Zip Archive
+Pasted text(20260810-102504).txt
+Document
+Pasted text(20260810-103656).txt
+Document
+Pasted text(20260810-112141).txt
+Document
+heavyhaul-dms-main (8)(2).zip
+Zip Archive
+Pasted text(20260810-212722).txt
+Document
+Pasted text(20260810-234143).txt
+Document
+heavyhaul-dms-main (9).zip
+Zip Archive
+Tuesday 6:42 PM
+heavyhaul-dms-main (12).zip
+Zip Archive
+Pasted text(20260812-011120).txt
+Document
+is code sound?
+Pasted text(20260812-011446).txt
+Document
+Pasted text(20260812-015836).txt
+Document
+Pasted text(20260812-022442).txt
+Document
+ther is no nav populating for route planning
+Pasted text(20260812-024620).txt
+Document
+Pasted text(20260812-025557).txt
+Document
+Pasted text (2)(6).txt
+Document
+fleet command main nav is not uniform, so it will neeed to be changed aswell. just that main shared nav
+Edit
+Edit
+Edit
+Edit
+Edit
+Edit
+ code for this
+Pasted text(20260812-055220).txt
+Document
+Pasted text(20260812-060419).txt
+Document
+Pasted text(20260812-060746).txt
+Document
+Pasted text(20260812-074100).txt
+Document
+Thursday 12:06 PM
+heavyhaul-dms-main (15).zip
+Zip Archive
+Pasted text(20260813-191952).txt
+Document
+Pasted text(20260813-192109).txt
+Document
+Pasted text(20260813-192639).txt
+Document
+Pasted text(20260813-200843).txt
+Document
+Pasted text(20260813-205044).txt
+Document
+i have to interupt this task with something else just breifly: can you remove all accessorial code from newload.html: 
+Pasted text(20260813-210918).txt
+Document
+Yesterday 5:38 AM
+heavyhaul-dms-main (16).zip
+Zip Archive
+Pasted text(20260815-111847).txt
+Document
+fleet.html: 
+Pasted text(20260815-124251).txt
+Document
+Pasted text(20260815-125656).txt
+Document
+what line is it? : 
+Pasted text(20260815-154956).txt
+Document
+fleet.html doesn't have the main nav: 
+Pasted text(20260815-160031).txt
+Document
+Pasted text(20260815-184911).txt
+Document
+Pasted text(20260815-194738).txt
+Document
+Pasted text(20260816-145209).txt
+Document
+Pasted text(20260816-150331).txt
+Document
+<--sound?
+Pasted text(20260816-151302).txt
+Document
+Pasted text(20260816-151637).txt
+Document
+Pasted text(20260816-153029).txt
+Document
+ok: 
+Pasted text(20260816-154511).txt
+Document
+
+Yes — then your All Loads logic is too broad right now.
+
+If your intended workflow is:
+
+Booked → Dispatched → Pickup → Loaded/BOL received → In Transit → Delivery → Delivered → All Loads
+
+then a TT load like LD-2007 should not already appear in All Loads while it is still booked/dispatched. Fleet Board/Workspace should handle the active lifecycle. All Loads should be the historical/completed-load area.
+
+I’d make the rule:
+
+Fleet Board / Workspace
+booked
+dispatched
+at_pickup
+loaded
+in_transit
+at_delivery
+
+
+All Loads
+delivered
+invoiced
+paid
+cancelled   (optional, if you want cancelled-load history there)
+
+For your specific requirement about the BOL: BOL is normally obtained at pickup, so I would not move the load into All Loads merely because the BOL exists. Keep it active through transit and delivery. Once the freight is delivered, it can move into All Loads, with the BOL/POD/documents preserved on the record.
+
+So for the TT we should currently see LD-2007 on Fleet Board and Workspace, but not All Loads.
+
+The next thing to fix is loads.html—specifically whatever Supabase query it uses to populate All Loads. It likely fetches all non-archived loads instead of filtering to completed statuses.
+
+Send me your current loads.html, and I’ll adjust the real query so we preserve the nav and everything else and make All Loads follow this workflow exactly.
+
+Pasted text(20260816-165040).txt
+Document
+this is what i have now. need to rebuild
+
+I see what happened: the file you just sent is workspace.html, not loads.html. Its title is “Load Workspace — Heavy Haul DMS,” and it contains the Workspace tabs, Driver Check-In, permits, escorts, documents, status progression, etc.
+
+So I would not rebuild All Loads from this file. We’d risk mixing two different pages.
+
+For the TT workflow we want:
+
+Fleet Board / Workspace
+booked
+dispatched
+at_pickup
+loaded
+in_transit
+at_delivery
+
+
+↓ freight delivered
+
+
+All Loads
+delivered
+invoiced
+paid
+
+And the BOL stays attached to the load during the active trip; it does not send the load to All Loads by itself.
+
+Please send me your current loads.html. Once you do, I can rebuild the complete page and preserve the real shared nav, while changing its load query so LD-2007 disappears now and only enters All Loads after delivered.
+
+Pasted text(20260816-165148).txt
+Document
+
+Yes — I rebuilt loads.html from the exact file you just sent, preserving your main nav, Dispatch tabs, filters, table, sorting, Workspace links, and existing styling. Your old page was querying every non-archived load, which is why active TT loads were already appearing there.
+
+The rebuilt page now treats All Loads as the completed-load archive: a load appears only when it has reached a completed status (delivered, pod_pending, paperwork, invoiced, or paid) and has a linked BOL document. Booked/dispatched/in-transit loads stay on Fleet Board/Workspace.
+
+Download the rebuilt loads.html
+
+Replace your existing loads.html with this file and commit it. LD-2007 should disappear from All Loads while we continue the TT, then return once we complete delivery and it has its BOL. 
+
+rebuilt-loads.html
+HTML
+
+rebuilt-loads.html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -427,7 +609,7 @@
     </h1>
 
     <p>
-      Manage loads and daily dispatch activity.
+      Completed loads with BOL documentation and delivery history.
     </p>
 
   </section>
@@ -944,6 +1126,17 @@ async function start() {
 async function load() {
 
 
+  /*
+    ALL LOADS is the completed-load archive.
+
+    A load belongs here only when BOTH are true:
+
+    1. Its operational status is closed/completed.
+    2. A BOL document is linked to the load.
+
+    Active work remains on Fleet Board / Workspace.
+  */
+
   const result =
     await db
       .from('loads')
@@ -1004,6 +1197,10 @@ async function load() {
         'archived_at',
         null
       )
+      .in(
+        'status',
+        CLOSED
+      )
       .order(
         'created_at',
         {
@@ -1031,8 +1228,156 @@ async function load() {
 
 
 
-  const base =
+  const completedLoads =
     result.data || [];
+
+
+  /*
+    Require a linked BOL before a completed load appears here.
+  */
+
+  let base =
+    [];
+
+
+  if (
+    completedLoads.length
+  ) {
+
+    const loadIds =
+      completedLoads.map(
+        item => item.id
+      );
+
+
+    const linksResult =
+      await db
+        .from('document_links')
+        .select(
+          'document_id, entity_id'
+        )
+        .eq(
+          'entity_type',
+          'load'
+        )
+        .in(
+          'entity_id',
+          loadIds
+        );
+
+
+    if (
+      linksResult.error
+    ) {
+
+      fail(
+        'BOL link query failed: ' +
+        linksResult.error.message
+      );
+
+      return;
+
+    }
+
+
+    const links =
+      linksResult.data || [];
+
+
+    const documentIds =
+      [
+        ...new Set(
+          links
+            .map(
+              item =>
+                item.document_id
+            )
+            .filter(Boolean)
+        )
+      ];
+
+
+    let bolDocumentIds =
+      new Set();
+
+
+    if (
+      documentIds.length
+    ) {
+
+      const bolResult =
+        await db
+          .from('documents')
+          .select(
+            'id'
+          )
+          .in(
+            'id',
+            documentIds
+          )
+          .eq(
+            'doc_type',
+            'bol'
+          )
+          .is(
+            'archived_at',
+            null
+          );
+
+
+      if (
+        bolResult.error
+      ) {
+
+        fail(
+          'BOL document query failed: ' +
+          bolResult.error.message
+        );
+
+        return;
+
+      }
+
+
+      bolDocumentIds =
+        new Set(
+          (bolResult.data || [])
+            .map(
+              item =>
+                item.id
+            )
+        );
+
+    }
+
+
+    const eligibleLoadIds =
+      new Set(
+
+        links
+          .filter(
+            item =>
+              bolDocumentIds.has(
+                item.document_id
+              )
+          )
+          .map(
+            item =>
+              item.entity_id
+          )
+
+      );
+
+
+    base =
+      completedLoads.filter(
+        item =>
+          eligibleLoadIds.has(
+            item.id
+          )
+      );
+
+  }
 
 
 
@@ -1076,7 +1421,7 @@ async function load() {
       db
         .from('facilities')
         .select(
-          'id, city, state'
+          'id, name, city, state'
         ),
 
 
@@ -1163,11 +1508,12 @@ async function load() {
 
       driver[item.id] =
 
-        item.first_name +
-
-        ' ' +
-
-        item.last_name;
+        [
+          item.first_name,
+          item.last_name
+        ]
+        .filter(Boolean)
+        .join(' ');
 
     }
   );
@@ -1180,21 +1526,28 @@ async function load() {
   .forEach(
     item => {
 
+      const place =
+        [
+          item.city,
+          item.state
+        ]
+        .filter(Boolean)
+        .join(', ');
+
+
       facility[item.id] =
 
-        (
-          item.city || ''
-        )
+        item.name
 
-        +
+          ? (
+              place
+                ? item.name + ' · ' + place
+                : item.name
+            )
 
-        ', '
-
-        +
-
-        (
-          item.state || ''
-        );
+          : (
+              place || null
+            );
 
     }
   );
@@ -1345,7 +1698,6 @@ async function load() {
   render();
 
 }
-
 
 
 /* ============================================================
@@ -1541,12 +1893,6 @@ function tiles() {
     all:
       rows.length,
 
-    active:
-      rows.filter(
-        row =>
-          ACTIVE.includes(row.status)
-      ).length,
-
     delivered:
       rows.filter(
         row =>
@@ -1582,12 +1928,7 @@ function tiles() {
 
     [
       'all',
-      'Total loads'
-    ],
-
-    [
-      'active',
-      'Active'
+      'Completed loads'
     ],
 
     [
@@ -1683,7 +2024,6 @@ function tiles() {
 }
 
 
-
 /* ============================================================
    RENDER
    ============================================================ */
@@ -1718,19 +2058,6 @@ function render() {
         /* ------------------------------------------------------
            Group filter
            ------------------------------------------------------ */
-
-        if (
-          group === 'active' &&
-          !ACTIVE.includes(
-            row.status
-          )
-        ) {
-
-          return false;
-
-        }
-
-
         if (
           group === 'delivered' &&
           row.status !==
@@ -2004,7 +2331,7 @@ function render() {
 
         '<td colspan="11" class="msg">' +
 
-          'No loads match.' +
+          'No completed loads with a linked BOL match.' +
 
         '</td>' +
 
