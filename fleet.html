@@ -693,9 +693,11 @@ $('c_save').addEventListener('click', async () => {
     }
   }
 
-  if (!result) {
-    result = await db.from('carriers').insert(carrierData);
-  }
+if (!result) {
+  result = await db
+    .from('drivers')
+    .insert(driverData);
+}
 
   $('c_save').disabled = false;
 
