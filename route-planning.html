@@ -1,6 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+
+<title>New Load — Dispatch</title>
+
+
+<style>
+
+
+  :root {
+    --bg:#f5f4f0;
+    --card:#fff;
+    --ink:#22221f;
+    --muted:#73726c;
+    --line:#e2e0da;
+    --line2:#cfccc4;
+    --accent:#185fa5;
+    --danger:#a32d2d;
+    --dangerbg:#fcebeb;
+    --warn:#8a5a10;
+    --warnbg:#fdf3e3;
+    --ok:#0f6e56;
+    --okbg:#e4f4ee;
+  }
+
+
+  * {
+    box-sizing:border-box;
+  }
+
+
+  body {
+    margin:0;
+    background:var(--bg);
+newload-calculator-links.html
+HTML
+ready for fleet
+
+Ready — I updated fleet.html next.
+
+Download the updated fleet.html
+
+I kept both nav systems intact and did not touch your carrier/driver/truck/trailer save logic. The Fleet profile still stores the real baseline terms such as target RPM, minimum RPM, minimum day rate, detention, TONU, and layover.
+
+What I added is a Calculator Source Terms section under the Fleet Profile. It explains that these carrier terms are the baseline Calculators will use once that carrier is assigned to a load, and it provides quick links to Rate / Profit and Accessorial calculators.
+
+The important distinction is preserved: Fleet Setup owns the carrier baseline, while a specific load can still have negotiated load-specific terms that override that baseline.
+
+I also verified the rebuilt file still contains the main nav.js, Fleet Command navigation, buildFleetCommandTabs('fleet.html'), and your existing profile fields.
+
+Next is route-planning.html, where we can connect the saved loaded miles directly into the Rate / Profit workflow. 
+
+fleet-calculator-links.html
+HTML
+ready for route planning
+
+Ready — I updated route-planning.html.
+
+Download the updated route-planning.html
+
+I preserved the main nav and Fleet Command nav, then added a Calculator Handoff inside the Workflow Handoff area. The new Open Rate / Profit Calculator button carries the current saved load ID into Calculators and also passes the route’s loaded_miles when available.
+
+That fits the way your Route Planning page already works: it owns the proposed route and its mileage, while the next step uses that route data elsewhere in the workflow.
+
+So the connection is now:
+
+Route Planning mileage → Rate / Profit Calculator → selected load context
+
+This completes the first integration pass across the six pages we were targeting: Calculators, Workspace, Fleet Board, New Load, Fleet Setup, and Route Planning. 
+
+route-planning-calculator-links.html
+HTML
+
+route-planning-calculator-links.html
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -490,6 +572,18 @@ main{
 /* ============================================================
    ACTIONS
    ============================================================ */
+
+
+.calc-tools {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.calc-tools .action {
+  margin:0;
+}
 
 .actions{
   display:flex;
@@ -1400,6 +1494,22 @@ button:disabled{
               Open State Rules ↗
             </a>
 
+          </div>
+
+          <div class="divider"></div>
+
+          <h3>Calculator Handoff</h3>
+          <p class="hint">
+            Use this route's loaded mileage with the selected load in Calculators.
+          </p>
+
+          <div class="calc-tools">
+            <button
+              class="action secondary"
+              id="openProfitCalc"
+              type="button">
+              Open Rate / Profit Calculator
+            </button>
           </div>
 
         </div>
@@ -5101,6 +5211,66 @@ function buildFleetCommandTabs(
 }
 
 
+function openRouteProfitCalculator(){
+
+  if(
+    !currentLoad ||
+    currentLoad._kind !== 'load'
+  ){
+
+    alert(
+      'Open a saved load from the Route Planning Queue first.'
+    );
+
+    return;
+  }
+
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    'tab',
+    'profit'
+  );
+
+  params.set(
+    'load_id',
+    currentLoad.id
+  );
+
+
+  if(
+    currentPlan &&
+    currentPlan.loaded_miles != null
+  ){
+
+    params.set(
+      'loaded_miles',
+      currentPlan.loaded_miles
+    );
+
+  }
+  else if(
+    $('loadedMiles') &&
+    $('loadedMiles').value
+  ){
+
+    params.set(
+      'loaded_miles',
+      $('loadedMiles').value
+    );
+
+  }
+
+
+  location.href =
+    'calculators.html?' +
+    params.toString();
+
+}
+
+
 /* ============================================================
    START
    ============================================================ */
@@ -5805,6 +5975,12 @@ document
 /* ============================================================
    START PAGE
    ============================================================ */
+
+$('openProfitCalc')
+  .addEventListener(
+    'click',
+    openRouteProfitCalculator
+  );
 
 start();
 
