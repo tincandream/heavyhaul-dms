@@ -2942,6 +2942,57 @@ document
 
 
 start();
+
+
+window.addEventListener(
+  'pageshow',
+  async function () {
+
+    const sessionResult =
+      await db.auth.getSession();
+
+    if (
+      !sessionResult.data ||
+      !sessionResult.data.session
+    ) {
+      return;
+    }
+
+    await loadTrainingStatus();
+
+    if (TENANT_ID) {
+      await loadCounts();
+    }
+
+  }
+);
+
+
+document.addEventListener(
+  'visibilitychange',
+  async function () {
+
+    if (
+      document.visibilityState !==
+      'visible'
+    ) {
+      return;
+    }
+
+    const sessionResult =
+      await db.auth.getSession();
+
+    if (
+      !sessionResult.data ||
+      !sessionResult.data.session
+    ) {
+      return;
+    }
+
+    await loadTrainingStatus();
+
+  }
+);
   /* ============================================================
    TRAINING MODE — FILL TEST DATA (BROKER LOAD)
    Button appears only while protected Training Mode is active.
