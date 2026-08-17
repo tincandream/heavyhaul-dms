@@ -342,6 +342,23 @@ async function start(){
 const STATUS_PILL = { new:'p-new', reviewing:'p-rev', quoted:'p-quo',
   negotiating:'p-neg', booked:'p-book', lost:'p-lost', expired:'p-lost', declined:'p-lost' };
 
+
+function uniq(key){
+  return [...new Set(rows.map(r=>r[key]).filter(Boolean))].sort();
+}
+
+function fillFilters(){
+  const map = { fstatus:'status', fsource:'source_type' };
+  for (const id in map){
+    const sel=$(id), keep=sel.value, first=sel.options[0].textContent;
+    sel.innerHTML = '<option value="">'+first+'</option>' +
+      uniq(map[id]).map(v=>'<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+    sel.value = keep;
+  }
+}
+
+
+  
 async function load(){
   const r = await db.from('load_opportunities').select('*')
     .is('closed_at', null)
@@ -349,7 +366,7 @@ async function load(){
 
   if (r.error){ fail('Query failed: ' + r.error.message); return; }
   rows = r.data || [];
-  fillFilters(); tiles(); render();
+tiles(); render();
 }
 
 function tiles(){
