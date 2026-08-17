@@ -540,6 +540,18 @@ async function refresh() {
   // outside Training Mode, hide retired training equipment
   if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
 
+ let ttOn = false;
+  try {
+    const ts = await db.rpc('get_training_mode_status');
+    if (!ts.error && ts.data) ttOn = ts.data.active === true;
+  } catch (err){ }
+
+  let eqQuery = db.from('equipment').select('*, drivers(first_name, last_name)')
+    .is('archived_at', null);
+
+  // outside Training Mode, hide retired training equipment
+  if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
+
   const e = await eqQuery.order('unit_number');
   const eq = e.data || [];
 
