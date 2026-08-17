@@ -343,17 +343,9 @@ const STATUS_PILL = { new:'p-new', reviewing:'p-rev', quoted:'p-quo',
   negotiating:'p-neg', booked:'p-book', lost:'p-lost', expired:'p-lost', declined:'p-lost' };
 
 async function load(){
-  let trainingOn = false;
-  try {
-    const ts = await db.rpc('get_training_mode_status');
-    if (!ts.error && ts.data) trainingOn = ts.data.active === true;
-  } catch (e){ }
-
-  let q = db.from('load_opportunities').select('*');
-
-  if (!trainingOn) q = q.eq('is_training', false);
-
-  const r = await q.order('first_seen_at', { ascending:false });
+  const r = await db.from('load_opportunities').select('*')
+    .is('closed_at', null)
+    .order('first_seen_at', { ascending:false });
 
   if (r.error){ fail('Query failed: ' + r.error.message); return; }
   rows = r.data || [];
