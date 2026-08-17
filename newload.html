@@ -341,6 +341,28 @@
   border-color:var(--accent);
 }
 
+
+.calc-tools {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.calc-tools button {
+  margin:0;
+  padding:8px 12px;
+  border:1px solid var(--line2);
+  background:var(--card);
+  color:var(--accent);
+  border-radius:7px;
+  font-size:12px;
+}
+
+.calc-tools button:hover {
+  border-color:var(--accent);
+}
+
 .assignment-summary {
   margin:10px 0 14px;
   padding:10px 12px;
@@ -1102,6 +1124,25 @@ dialog.assign-dialog::backdrop {
   </div>
 
 
+  <div class="card">
+    <h2>Financial Review</h2>
+    <p class="hint">
+      Use the selected load's saved rate, route mileage, and carrier terms in Calculators.
+      Save the load first if this is a new unsaved record.
+    </p>
+
+    <div class="calc-tools">
+      <button type="button" id="openProfitCalc">
+        Open Rate / Profit Calculator
+      </button>
+
+      <button type="button" id="openAccessorialCalc">
+        Open Accessorial Calculator
+      </button>
+    </div>
+  </div>
+
+
   <div class="workflow-band ready-band">
     <span>Dispatch Readiness</span>
     <span class="band-note">Final review before release to Fleet Board</span>
@@ -1412,6 +1453,63 @@ else {
   start();
 
 }
+
+
+function currentCalculatorLoadId() {
+  return EDIT_LOAD_ID || null;
+}
+
+
+function openProfitCalculator() {
+
+  const loadId =
+    currentCalculatorLoadId();
+
+  if (!loadId) {
+    say(
+      'Save the load first, then open the Rate / Profit Calculator.',
+      'err'
+    );
+    return;
+  }
+
+  location.href =
+    'calculators.html?tab=profit&load_id=' +
+    encodeURIComponent(loadId);
+}
+
+
+function openAccessorialCalculatorFromNewLoad() {
+
+  const loadId =
+    currentCalculatorLoadId();
+
+  if (!loadId) {
+    say(
+      'Save the load first, then open the Accessorial Calculator.',
+      'err'
+    );
+    return;
+  }
+
+  location.href =
+    'calculators.html?tab=accessorial&load_id=' +
+    encodeURIComponent(loadId);
+}
+
+
+$('openProfitCalc')
+  ?.addEventListener(
+    'click',
+    openProfitCalculator
+  );
+
+
+$('openAccessorialCalc')
+  ?.addEventListener(
+    'click',
+    openAccessorialCalculatorFromNewLoad
+  );
 
 
 // Accept 13'6 or 13'6" and convert to inches
