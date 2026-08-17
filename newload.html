@@ -1947,7 +1947,7 @@ async function loadPickers() {
     await db
       .from('brokers')
       .select(
-        'id,name,payment_terms_days'
+        'id,name,payment_terms_days',
       )
       .is(
         'archived_at',
