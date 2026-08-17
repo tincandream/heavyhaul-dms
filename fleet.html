@@ -1251,25 +1251,109 @@ const TT = {
 };
 
 function ttFill(setName){
-  const data = TT[setName];
-  if (!data) return;
-  Object.keys(data).forEach(function(id){
-    const el = document.getElementById(id);
-    if (!el) return;                       // skip fields this form doesn't have
-    if (el.tagName === 'SELECT'){
-      // only set if the option exists
-      const wanted = String(data[id]).toLowerCase();
-      const match = Array.from(el.options).find(function(o){
-        return o.value.toLowerCase() === wanted ||
-               o.textContent.trim().toLowerCase() === wanted;
-      });
-      if (match) el.value = match.value;
-    } else {
-      el.value = data[id];
-    }
-    el.dispatchEvent(new Event('input',  { bubbles:true }));
-    el.dispatchEvent(new Event('change', { bubbles:true }));
-  });
+
+  const data =
+    TT[setName];
+
+  if (!data) {
+    console.warn(
+      'No TT data found for:',
+      setName
+    );
+    return;
+  }
+
+
+  Object.entries(data)
+    .forEach(
+      ([id, value]) => {
+
+        const el =
+          document.getElementById(id);
+
+        if (!el) {
+          console.warn(
+            'TT field not found:',
+            id
+          );
+          return;
+        }
+
+
+        if (el.tagName === 'SELECT') {
+
+          const wanted =
+            String(value)
+              .trim()
+              .toLowerCase();
+
+          const match =
+            Array.from(el.options)
+              .find(
+                option =>
+                  option.value
+                    .trim()
+                    .toLowerCase() === wanted
+
+                  ||
+
+                  option.textContent
+                    .trim()
+                    .toLowerCase() === wanted
+              );
+
+          if (match) {
+            el.value =
+              match.value;
+          }
+
+        }
+        else {
+
+          el.value =
+            value ?? '';
+
+        }
+
+
+        el.dispatchEvent(
+          new Event(
+            'input',
+            {
+              bubbles: true
+            }
+          )
+        );
+
+
+        el.dispatchEvent(
+          new Event(
+            'change',
+            {
+              bubbles: true
+            }
+          )
+        );
+
+      }
+    );
+
+
+  /*
+    Driver-specific confirmation.
+    These are real values, not placeholders.
+  */
+
+  if (setName === 'driver') {
+
+    $('d_first').value =
+      TT.driver.d_first;
+
+    $('d_last').value =
+      TT.driver.d_last;
+
+  }
+
 }
 
 async function ttInit() {
