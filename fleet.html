@@ -485,7 +485,9 @@ async function start() {
 
   buildFleetCommandTabs('fleet.html');
 
-  refresh();
+  await refresh();
+
+  await ttInit();
 
 }
 
@@ -529,80 +531,51 @@ async function refresh() {
     : '<div class="empty">None yet.</div>';
 
  let ttOn = false;
+
   try {
-    const ts = await db.rpc('get_training_mode_status');
-    if (!ts.error && ts.data) ttOn = ts.data.active === true;
-  } catch (err){ }
+    const ts =
+      await db.rpc(
+        'get_training_mode_status'
+      );
 
-  let eqQuery = db.from('equipment').select('*, drivers(first_name, last_name)')
-    .is('archived_at', null);
-
-  // outside Training Mode, hide retired training equipment
-  if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
-
- let ttOn = false;
-
-try {
-
-  const ts =
-    await db.rpc(
-      'get_training_mode_status'
+    if (!ts.error && ts.data) {
+      ttOn =
+        ts.data.active === true;
+    }
+  }
+  catch (err) {
+    console.warn(
+      'Training Mode status check failed:',
+      err
     );
-
-  if (
-    !ts.error &&
-    ts.data
-  ) {
-
-    ttOn =
-      ts.data.active === true;
-
   }
 
-}
-catch (err) {
+  let eqQuery =
+    db
+      .from('equipment')
+      .select(
+        '*, drivers(first_name, last_name)'
+      )
+      .is(
+        'archived_at',
+        null
+      );
 
-  console.warn(
-    'Training Mode status check failed:',
-    err
-  );
+  if (!ttOn) {
+    eqQuery =
+      eqQuery.neq(
+        'status',
+        'inactive'
+      );
+  }
 
-}
-
-
-let eqQuery =
-  db
-    .from('equipment')
-    .select(
-      '*, drivers(first_name, last_name)'
-    )
-    .is(
-      'archived_at',
-      null
+  const e =
+    await eqQuery.order(
+      'unit_number'
     );
 
-
-/* Outside Training Mode,
-   hide retired TT equipment */
-
-if (!ttOn) {
-
-  eqQuery =
-    eqQuery.neq(
-      'status',
-      'inactive'
-    );
-
-}
-
-
-const e =
-  await eqQuery.order(
-    'unit_number'
-  );
-
-const eq =
-  e.data || [];
+  const eq =
+    e.data || [];
 
   const trucks = eq.filter(x => x.equipment_type === 'tractor');
   $('t_list').innerHTML = trucks.length
@@ -1342,9 +1315,6 @@ async function ttInit() {
     console.warn('Training Mode initialization failed:', error);
   }
 }
-
-
-ttInit();
 </script>
 
 
