@@ -108,6 +108,48 @@
     font-size: 12px;
   }
 
+  .hos-line {
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+  }
+
+  .hos-value {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hos-value.good {
+    color: var(--hh-lime-dark, #687025);
+  }
+
+  .hos-value.tight {
+    color: #8a5a10;
+  }
+
+  .hos-value.critical {
+    color: var(--hh-pink-dark, #A14666);
+    font-weight: 600;
+  }
+
+  .hos-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--hh-blue-dark, #668C9D);
+    font: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .hos-link:hover {
+    text-decoration-thickness: 2px;
+  }
+
 </style>
 
 
@@ -401,6 +443,53 @@ function esc(s) {
 
   );
 
+}
+
+
+function hosClass(minutes) {
+
+  if (minutes == null) {
+    return '';
+  }
+
+  if (minutes < 120) {
+    return 'critical';
+  }
+
+  if (minutes < 300) {
+    return 'tight';
+  }
+
+  return 'good';
+}
+
+
+function formatHos(minutes) {
+
+  if (minutes == null) {
+    return 'HOS not reported';
+  }
+
+  const total =
+    Math.max(
+      0,
+      Number(minutes) || 0
+    );
+
+  const hours =
+    Math.floor(
+      total / 60
+    );
+
+  const mins =
+    total % 60;
+
+  return (
+    hours +
+    'h ' +
+    mins +
+    'm HOS'
+  );
 }
 
 
@@ -1519,27 +1608,52 @@ $('body').innerHTML =
           ) +
 
           (
-            r.driver_hours_remaining_min != null
+            displayLoadId
 
-              ? '<div class="sub2">' +
+              ? '<div class="hos-line">' +
 
-                  Math.floor(
-                    r.driver_hours_remaining_min /
-                    60
-                  ) +
+                  '<span class="hos-value ' +
+                    hosClass(
+                      r.driver_hours_remaining_min
+                    ) +
+                  '">' +
+                    esc(
+                      formatHos(
+                        r.driver_hours_remaining_min
+                      )
+                    ) +
+                  '</span>' +
 
-                  'h ' +
-
-                  (
-                    r.driver_hours_remaining_min %
-                    60
-                  ) +
-
-                  'm HOS' +
+                  '<button ' +
+                    'type="button" ' +
+                    'class="hos-link" ' +
+                    'data-hos-load="' +
+                    esc(displayLoadId) +
+                  '">' +
+                    'HOS calc' +
+                  '</button>' +
 
                 '</div>'
 
-              : ''
+              : (
+                  r.driver_hours_remaining_min != null
+
+                    ? '<div class="hos-line">' +
+                        '<span class="hos-value ' +
+                          hosClass(
+                            r.driver_hours_remaining_min
+                          ) +
+                        '">' +
+                          esc(
+                            formatHos(
+                              r.driver_hours_remaining_min
+                            )
+                          ) +
+                        '</span>' +
+                      '</div>'
+
+                    : ''
+                )
           ) +
 
         '</td>' +
@@ -1892,6 +2006,26 @@ $('body')
   .addEventListener(
     'click',
     e => {
+
+      const hosButton =
+        e.target.closest(
+          '[data-hos-load]'
+        );
+
+      if (hosButton) {
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        location.href =
+          'calculators.html?tab=hos&load_id=' +
+          encodeURIComponent(
+            hosButton.dataset.hosLoad
+          );
+
+        return;
+      }
+
 
       const nextButton =
         e.target.closest(
