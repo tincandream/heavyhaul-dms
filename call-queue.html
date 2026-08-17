@@ -74,6 +74,23 @@
   .fld input, .fld select, .fld textarea { width:100%; }
   .spacer { flex:1; }
   .err { color:var(--danger); font-size:12px; font-weight:600; }
+
+  .qual-box {
+    margin-top:14px;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    background:#fbfaf7;
+  }
+  .qual-box.hidden { display:none; }
+  .qual-title { font-size:13px; font-weight:700; margin-bottom:4px; }
+  .qual-sub { font-size:12px; color:var(--muted); margin-bottom:12px; }
+  .checks { display:flex; flex-wrap:wrap; gap:8px 14px; padding-top:2px; }
+  .checks label {
+    display:flex; align-items:center; gap:6px;
+    font-size:12.5px; font-weight:500; color:var(--ink);
+  }
+  .checks input { width:auto; padding:0; }
 </style>
 </head>
 <body>
@@ -115,16 +132,112 @@
           <option value="gatekeeper">Gatekeeper</option>
           <option value="callback_requested">Callback requested</option>
           <option value="not_interested">Not interested</option>
-          <option value="info_sent">Info sent</option>
+          <option value="info_sent">Info / packet sent</option>\n          <option value="follow_up">Follow up</option>\n          <option value="qualified">Qualified — interested</option>
           <option value="load_offered">Load offered</option>
           <option value="booked">Booked</option>
           <option value="bad_number">Bad number</option>
         </select></div>
       <div class="fld"><label for="c_followup">Next follow-up</label>
         <input type="date" id="c_followup"></div>
-      <div class="fld full"><label for="c_note">Note</label>
+      <div class="fld full"><label for="c_note">Call note</label>
         <textarea id="c_note" style="min-height:64px" placeholder="Talked to dispatch, sending packet."></textarea></div>
     </div>
+
+    <div class="qual-box hidden" id="carrierQual">
+      <div class="qual-title">Carrier Qualification</div>
+      <div class="qual-sub">Capture what you learned about the carrier during this call.</div>
+
+      <div class="fg">
+        <div class="fld">
+          <label for="c_role">Contact role</label>
+          <select id="c_role">
+            <option value="">—</option>
+            <option value="owner">Owner</option>
+            <option value="operations_manager">Operations Manager</option>
+            <option value="director_of_operations">Director of Operations</option>
+            <option value="dispatch_manager">Dispatch Manager</option>
+            <option value="fleet_manager">Fleet Manager</option>
+            <option value="transportation_manager">Transportation Manager</option>
+            <option value="dispatcher">Dispatcher</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="fld">
+          <label for="c_equipment">Equipment</label>
+          <input id="c_equipment" placeholder="RGN, lowboy, step deck">
+        </div>
+
+        <div class="fld">
+          <label for="c_fleet_size">Fleet size</label>
+          <input id="c_fleet_size" type="number" min="0" step="1" placeholder="12">
+        </div>
+
+        <div class="fld">
+          <label for="c_support_trucks">Trucks needing support</label>
+          <input id="c_support_trucks" type="number" min="0" step="1" placeholder="3">
+        </div>
+
+        <div class="fld full">
+          <label for="c_lanes">Preferred lanes / operating area</label>
+          <input id="c_lanes" placeholder="AR–TN–MS, Southeast, nationwide">
+        </div>
+
+        <div class="fld full">
+          <label for="c_freight">Preferred freight</label>
+          <input id="c_freight" placeholder="Heavy equipment, machinery, OD, legal open deck">
+        </div>
+
+        <div class="fld full">
+          <label>How they currently source freight</label>
+          <div class="checks">
+            <label><input type="checkbox" id="fs_direct" value="direct"> Direct customers</label>
+            <label><input type="checkbox" id="fs_dedicated" value="dedicated"> Dedicated freight</label>
+            <label><input type="checkbox" id="fs_brokers" value="brokers"> Brokers</label>
+            <label><input type="checkbox" id="fs_loadboards" value="load_boards"> Load boards</label>
+            <label><input type="checkbox" id="fs_other" value="other"> Other</label>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label for="c_direct_customers">Direct customers?</label>
+          <select id="c_direct_customers">
+            <option value="">Unknown</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+
+        <div class="fld">
+          <label for="c_dedicated">Dedicated freight?</label>
+          <select id="c_dedicated">
+            <option value="">Unknown</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+
+        <div class="fld full">
+          <label for="c_independent_dispatch">Uses / needs independent dispatch?</label>
+          <select id="c_independent_dispatch">
+            <option value="">Unknown</option>
+            <option value="interested">Interested</option>
+            <option value="uses_now">Uses independent dispatch now</option>
+            <option value="sometimes">Sometimes / overflow</option>
+            <option value="never_tried">Never tried it</option>
+            <option value="in_house_only">In-house only</option>
+            <option value="not_interested">Not interested</option>
+          </select>
+        </div>
+
+        <div class="fld full">
+          <label for="c_dispatch_need">Primary dispatch need</label>
+          <textarea id="c_dispatch_need" style="min-height:64px"
+            placeholder="Return freight, reduce deadhead, broker calls, rate negotiation, paperwork, driver coordination…"></textarea>
+        </div>
+      </div>
+    </div>
+
     <div id="c_err" class="err"></div>
   </div>
   <div class="df">
@@ -203,6 +316,35 @@ function todayISO(){ const d=new Date(),p=n=>String(n).padStart(2,'0');
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
 function plusDays(n){ const d=new Date(); d.setDate(d.getDate()+n); const p=x=>String(x).padStart(2,'0');
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+
+
+function boolOrNull(v){
+  if (v === 'yes') return true;
+  if (v === 'no') return false;
+  return null;
+}
+
+function freightSources(){
+  return ['fs_direct','fs_dedicated','fs_brokers','fs_loadboards','fs_other']
+    .map(id => $(id))
+    .filter(el => el && el.checked)
+    .map(el => el.value);
+}
+
+function clearCarrierQualification(){
+  ['c_equipment','c_fleet_size','c_support_trucks','c_lanes','c_freight','c_dispatch_need']
+    .forEach(id => { if ($(id)) $(id).value=''; });
+
+  ['c_role','c_direct_customers','c_dedicated','c_independent_dispatch']
+    .forEach(id => { if ($(id)) $(id).value=''; });
+
+  ['fs_direct','fs_dedicated','fs_brokers','fs_loadboards','fs_other']
+    .forEach(id => { if ($(id)) $(id).checked=false; });
+}
+
+function isCarrierCompany(row){
+  return !!row && (row.company_type === 'carrier' || row.company_type === 'both');
+}
 
 let toastTimer=null;
 function toast(m){ const t=$('toast'); t.textContent=m; t.style.opacity='1';
@@ -289,7 +431,7 @@ function render(){
 // ===== sourcing timeline =====
 async function logSourcingEvent(eventType,title,detail,company,followUpAt){
   if(!TENANT_ID)return;
-  const isCarrier=company&&company.company_type==='carrier';
+  const isCarrier=company&&(company.company_type==='carrier'||company.company_type==='both');
   const result=await db.from('sourcing_events').insert({
     tenant_id:TENANT_ID,
     event_type:eventType,
@@ -308,25 +450,38 @@ function openCall(companyId, contactId){
   $('c_err').textContent='';
   $('c_company').value = companyId;
   $('c_contact').value = contactId || '';
+
   const r = rows.find(x=>x.company_id===companyId);
+
   $('callTitle').textContent = 'Log Call — ' + (r ? r.legal_name : '');
   $('c_outcome').value = 'connected';
   $('c_note').value = '';
+
+  clearCarrierQualification();
+
+  const showCarrierQual = isCarrierCompany(r);
+  $('carrierQual').classList.toggle('hidden', !showCarrierQual);
+
   // default next follow-up 14 days out
   $('c_followup').value = plusDays(14);
+
   $('dlgCall').showModal();
 }
 
 async function saveCall(){
   $('c_err').textContent='';
-  const btn=$('c_save'); btn.disabled=true;
+
+  const btn=$('c_save');
+  btn.disabled=true;
+
   const companyId=txt($('c_company').value);
   const outcome=$('c_outcome').value;
   const note=txt($('c_note').value);
   const followup=txt($('c_followup').value);
   const company=rows.find(x=>x.company_id===companyId)||null;
+  const carrierCall=isCarrierCompany(company);
 
-  const r=await db.from('crm_activities').insert({
+  const activity = {
     tenant_id:TENANT_ID,
     company_id:companyId,
     contact_id:txt($('c_contact').value),
@@ -335,19 +490,90 @@ async function saveCall(){
     outcome:outcome,
     body:note,
     next_action_due:followup
-  });
+  };
 
-  btn.disabled=false;
-  if(r.error){$('c_err').textContent=r.error.message;return;}
+  if (carrierCall){
+    activity.contact_role = txt($('c_role').value);
+    activity.equipment = txt($('c_equipment').value);
+    activity.fleet_size = txt($('c_fleet_size').value) === null
+      ? null : Number($('c_fleet_size').value);
+    activity.trucks_needing_support = txt($('c_support_trucks').value) === null
+      ? null : Number($('c_support_trucks').value);
+    activity.preferred_lanes = txt($('c_lanes').value);
+    activity.preferred_freight = txt($('c_freight').value);
+    activity.freight_sources = freightSources();
+    activity.has_direct_customers = boolOrNull($('c_direct_customers').value);
+    activity.has_dedicated_freight = boolOrNull($('c_dedicated').value);
+    activity.independent_dispatch_use = txt($('c_independent_dispatch').value);
+    activity.dispatch_need = txt($('c_dispatch_need').value);
+  }
+
+  const r=await db.from('crm_activities').insert(activity);
+
+  if(r.error){
+    btn.disabled=false;
+    $('c_err').textContent=r.error.message;
+    return;
+  }
+
+  const companyUpdate = {
+    last_contacted_at: new Date().toISOString(),
+    next_touch_date: followup || null,
+    updated_at: new Date().toISOString()
+  };
+
+  if (
+    company &&
+    company.status === 'lead' &&
+    ['connected','callback_requested','info_sent','qualified'].includes(outcome)
+  ){
+    companyUpdate.status = 'contacted';
+  }
+
+  if (outcome === 'info_sent'){
+    companyUpdate.status = 'packet_sent';
+  }
+
+  if (
+    carrierCall &&
+    boolOrNull($('c_direct_customers').value) === true
+  ){
+    companyUpdate.sends_direct_freight = true;
+  }
+
+  const coUpdate = await db
+    .from('companies')
+    .update(companyUpdate)
+    .eq('tenant_id', TENANT_ID)
+    .eq('id', companyId);
+
+  if (coUpdate.error){
+    console.warn('Company follow-up update failed:', coUpdate.error.message);
+  }
 
   const companyName=company?company.legal_name:'Company';
-  const companyType=company&&company.company_type==='carrier'?'carrier':'broker';
+  const companyType=carrierCall?'carrier':'broker';
   const eventType=companyType==='carrier'?'carrier_contacted':'broker_contacted';
+
+  let detail = pretty(outcome)+(note?' · '+note:'');
+
+  if (carrierCall){
+    const qParts = [
+      txt($('c_equipment').value) ? 'Equipment: '+txt($('c_equipment').value) : null,
+      txt($('c_lanes').value) ? 'Lanes: '+txt($('c_lanes').value) : null,
+      txt($('c_freight').value) ? 'Freight: '+txt($('c_freight').value) : null,
+      txt($('c_dispatch_need').value) ? 'Need: '+txt($('c_dispatch_need').value) : null
+    ].filter(Boolean);
+
+    if (qParts.length){
+      detail += ' · ' + qParts.join(' · ');
+    }
+  }
 
   await logSourcingEvent(
     eventType,
     (companyType==='carrier'?'Carrier contacted':'Broker contacted')+' — '+companyName,
-    pretty(outcome)+(note?' · '+note:''),
+    detail,
     company,
     followup
   );
@@ -370,6 +596,7 @@ async function saveCall(){
     );
   }
 
+  btn.disabled=false;
   $('dlgCall').close();
   toast('Call logged');
   loadQueue();
