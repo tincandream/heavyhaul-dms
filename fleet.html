@@ -1,5 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+
+<title>New Load — Dispatch</title>
+
+
+<style>
+
+
+  :root {
+    --bg:#f5f4f0;
+    --card:#fff;
+    --ink:#22221f;
+    --muted:#73726c;
+    --line:#e2e0da;
+    --line2:#cfccc4;
+    --accent:#185fa5;
+    --danger:#a32d2d;
+    --dangerbg:#fcebeb;
+    --warn:#8a5a10;
+    --warnbg:#fdf3e3;
+    --ok:#0f6e56;
+    --okbg:#e4f4ee;
+  }
+
+
+  * {
+    box-sizing:border-box;
+  }
+
+
+  body {
+    margin:0;
+    background:var(--bg);
+newload-calculator-links.html
+HTML
+ready for fleet
+
+Ready — I updated fleet.html next.
+
+Download the updated fleet.html
+
+I kept both nav systems intact and did not touch your carrier/driver/truck/trailer save logic. The Fleet profile still stores the real baseline terms such as target RPM, minimum RPM, minimum day rate, detention, TONU, and layover.
+
+What I added is a Calculator Source Terms section under the Fleet Profile. It explains that these carrier terms are the baseline Calculators will use once that carrier is assigned to a load, and it provides quick links to Rate / Profit and Accessorial calculators.
+
+The important distinction is preserved: Fleet Setup owns the carrier baseline, while a specific load can still have negotiated load-specific terms that override that baseline.
+
+I also verified the rebuilt file still contains the main nav.js, Fleet Command navigation, buildFleetCommandTabs('fleet.html'), and your existing profile fields.
+
+Next is route-planning.html, where we can connect the saved loaded miles directly into the Rate / Profit workflow. 
+
+fleet-calculator-links.html
+HTML
+
+fleet-calculator-links.html
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -140,6 +204,48 @@
   .empty { color:var(--muted); font-size:13px; padding:10px 0; }
   .warn { background:#fdf3e3; border:1px solid #e8d5ac; color:#8a5a10;
           padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+
+
+  .calc-source {
+    margin-top:16px;
+    padding:14px;
+    border:1px solid var(--line);
+    background:#fafbfb;
+  }
+
+  .calc-source h3 {
+    margin:0 0 5px;
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .calc-source p {
+    margin:0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .calc-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+
+  .calc-actions button {
+    margin:0;
+    padding:8px 12px;
+    border:1px solid var(--line2);
+    background:#fff;
+    color:#577584;
+    border-radius:7px;
+    font-size:12px;
+  }
+
+  .calc-actions button:hover {
+    border-color:#7FA5B5;
+  }
   
 </style>
 </head>
@@ -393,6 +499,25 @@
       </button>
 
       <div class="msg" id="p_msg"></div>
+
+      <div class="calc-source">
+        <h3>Calculator Source Terms</h3>
+        <p>
+          These saved carrier terms are the baseline used by Calculators when
+          this carrier is assigned to a load. Load-specific agreed terms can
+          override the baseline where applicable.
+        </p>
+
+        <div class="calc-actions">
+          <button type="button" id="fleetProfitCalc">
+            Open Rate / Profit Calculator
+          </button>
+
+          <button type="button" id="fleetAccessorialCalc">
+            Open Accessorial Calculator
+          </button>
+        </div>
+      </div>
 
     </div>
 
@@ -1204,6 +1329,57 @@ $('p_save')
       await loadProfileForCarrier();
 
     }
+  );
+
+
+function openFleetCalculator(tabName) {
+
+  const carrierId =
+    val('p_carrier');
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    'tab',
+    tabName
+  );
+
+  /*
+    carrier_id is informational context for the calculator page.
+    The actual pricing source remains the carrier assigned to the
+    selected load, so no Fleet Setup data is duplicated or written.
+  */
+  if (carrierId) {
+    params.set(
+      'carrier_id',
+      carrierId
+    );
+  }
+
+  location.href =
+    'calculators.html?' +
+    params.toString();
+}
+
+
+$('fleetProfitCalc')
+  .addEventListener(
+    'click',
+    () =>
+      openFleetCalculator(
+        'profit'
+      )
+  );
+
+
+$('fleetAccessorialCalc')
+  .addEventListener(
+    'click',
+    () =>
+      openFleetCalculator(
+        'accessorial'
+      )
   );
 
 
