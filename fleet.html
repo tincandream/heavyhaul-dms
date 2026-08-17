@@ -541,30 +541,68 @@ async function refresh() {
   if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
 
  let ttOn = false;
-  try {
-    const ts = await db.rpc('get_training_mode_status');
-    if (!ts.error && ts.data) ttOn = ts.data.active === true;
-  } catch (err){ }
 
-  let eqQuery = db.from('equipment').select('*, drivers(first_name, last_name)')
-    .is('archived_at', null);
+try {
 
-  // outside Training Mode, hide retired training equipment
-  if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
+  const ts =
+    await db.rpc(
+      'get_training_mode_status'
+    );
 
-  let ttOn = false;
-  try {
-    const ts = await db.rpc('get_training_mode_status');
-    if (!ts.error && ts.data) ttOn = ts.data.active === true;
-  } catch (err){ }
+  if (
+    !ts.error &&
+    ts.data
+  ) {
 
-  let eqQuery = db.from('equipment').select('*, drivers(first_name, last_name)')
-    .is('archived_at', null);
+    ttOn =
+      ts.data.active === true;
 
-  if (!ttOn) eqQuery = eqQuery.neq('status', 'inactive');
+  }
 
-  const e = await eqQuery.order('unit_number');
-  const eq = e.data || [];
+}
+catch (err) {
+
+  console.warn(
+    'Training Mode status check failed:',
+    err
+  );
+
+}
+
+
+let eqQuery =
+  db
+    .from('equipment')
+    .select(
+      '*, drivers(first_name, last_name)'
+    )
+    .is(
+      'archived_at',
+      null
+    );
+
+
+/* Outside Training Mode,
+   hide retired TT equipment */
+
+if (!ttOn) {
+
+  eqQuery =
+    eqQuery.neq(
+      'status',
+      'inactive'
+    );
+
+}
+
+
+const e =
+  await eqQuery.order(
+    'unit_number'
+  );
+
+const eq =
+  e.data || [];
 
   const trucks = eq.filter(x => x.equipment_type === 'tractor');
   $('t_list').innerHTML = trucks.length
