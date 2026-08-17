@@ -756,32 +756,53 @@ $('d_save').addEventListener('click', async () => {
   const trainingActive = trainingStatus.active === true;
   let result = null;
 
-  if (trainingActive && driverData.cdl_number) {
-    const existing = await db
-      .from('drivers')
-      .select('id,is_training,archived_at')
-      .eq('tenant_id', tenant)
-      .eq('cdl_number', driverData.cdl_number)
-      .maybeSingle();
+if (trainingActive && driverData.cdl_number) {
 
-    if (existing.error) {
-      $('d_save').disabled = false;
-      say('d_msg', existing.error.message, 'err');
-      return;
-    }
+  const existing = await db
+    .from('drivers')
+    .select('id,is_training,archived_at')
+    .eq('tenant_id', tenant)
+    .eq('cdl_number', driverData.cdl_number)
+    .order('created_at', { ascending: false })
+    .limit(1);
 
-    if (existing.data && existing.data.is_training === true) {
-      result = await db
-        .from('drivers')
-        .update({
-          ...driverData,
-          archived_at: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.data.id)
-        .eq('tenant_id', tenant);
-    }
+  if (existing.error) {
+
+    $('d_save').disabled = false;
+
+    say(
+      'd_msg',
+      existing.error.message,
+      'err'
+    );
+
+    return;
   }
+
+
+  const existingDriver =
+    existing.data?.[0] || null;
+
+
+  if (
+    existingDriver &&
+    existingDriver.is_training === true
+  ) {
+
+    result = await db
+      .from('drivers')
+      .update({
+        ...driverData,
+        is_training: true,
+        archived_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingDriver.id)
+      .eq('tenant_id', tenant);
+
+  }
+
+}
 
   if (!result) {
     result = await db.from('drivers').insert(driverData);
