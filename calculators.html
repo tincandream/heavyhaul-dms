@@ -997,6 +997,47 @@ main {
 
 
   <!-- ========================================================
+       SHARED LOAD CONTEXT
+       Pulls live load information into the calculators without
+       making calculators.html a second source of truth.
+       ======================================================== -->
+
+  <div class="calc-card" id="calcLoadContext" style="margin-bottom:22px;">
+    <h2>Load Context</h2>
+    <p class="calc-hint">
+      Select a load to pull its saved rate, route mileage, carrier terms,
+      and latest driver HOS into the calculators. Nothing is changed on
+      the load until you explicitly save an accessorial.
+    </p>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="calcLoad">Load</label>
+        <select id="calcLoad">
+          <option value="">— Select a load —</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Current context</label>
+        <div id="calcLoadSummary" style="padding:10px 11px;border:1px solid #D9DEE1;background:#FBFCFC;min-height:40px;">
+          No load selected.
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-actions">
+      <button type="button" class="calc-btn secondary" id="openCalcLoadWorkspace">
+        Open Load Workspace
+      </button>
+      <button type="button" class="calc-btn secondary" id="refreshCalcLoad">
+        Refresh Load Data
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ========================================================
        HOS CALCULATOR
        ======================================================== -->
 
@@ -2517,11 +2558,8 @@ async function startPage() {
     typeof window.supabase ===
     'undefined'
   ) {
-
     return;
-
   }
-
 
   db =
     window.supabase.createClient(
@@ -2529,22 +2567,16 @@ async function startPage() {
       SUPABASE_ANON_KEY
     );
 
-
   const session =
     await db.auth.getSession();
-
 
   if (
     !session.data.session
   ) {
-
     location.href =
       'index.html';
-
     return;
-
   }
-
 
   const navTenant =
     await buildNav(
@@ -2552,16 +2584,11 @@ async function startPage() {
       'Calculators'
     );
 
-
   tenant =
     navTenant ||
     null;
 
-
-  if (
-    !tenant
-  ) {
-
+  if (!tenant) {
     const profile =
       await db
         .from('app_users')
@@ -2572,53 +2599,54 @@ async function startPage() {
         )
         .maybeSingle();
 
-
     if (
       !profile.error &&
       profile.data
     ) {
-
       tenant =
         profile.data.tenant_id;
-
     }
-
   }
 
+  if (!tenant) {
+    console.warn('Calculators: tenant could not be resolved.');
+    return;
+  }
 
-  await loadAccessorialLoads();
-
+  await Promise.all([
+    loadCalculatorLoads(),
+    loadAccessorialLoads()
+  ]);
 
   const pageParams =
     new URLSearchParams(
       location.search
     );
 
-
   const requestedLoadId =
-    pageParams.get(
-      'load_id'
-    );
+    pageParams.get('load_id') ||
+    pageParams.get('load') ||
+    '';
 
+  if (requestedLoadId) {
+    if (
+      $('calcLoad') &&
+      Array.from($('calcLoad').options)
+        .some(option => option.value === requestedLoadId)
+    ) {
+      $('calcLoad').value = requestedLoadId;
+    }
 
-  if (
-    requestedLoadId &&
-    $('accessorialLoad') &&
-    Array.from(
-      $('accessorialLoad').options
-    ).some(
-      option =>
-        option.value ===
-        requestedLoadId
-    )
-  ) {
+    if (
+      $('accessorialLoad') &&
+      Array.from($('accessorialLoad').options)
+        .some(option => option.value === requestedLoadId)
+    ) {
+      $('accessorialLoad').value = requestedLoadId;
+    }
 
-    $('accessorialLoad')
-      .value =
-      requestedLoadId;
-
+    await syncCalculatorLoadContext(requestedLoadId);
   }
-
 }
 
 
@@ -4649,142 +4677,466 @@ $('openLoadAccessorials')
 toggleAccessorialFields();
 
 
-startPage();
-
-  /* ============================================================
-   CARRIER TERMS → ACCESSORIAL CALCULATOR
-   Pulls the agreed terms from the load's carrier profile so
-   accessorials price against what was actually negotiated.
+/* ============================================================
+   SHARED LOAD CONTEXT
+   Database remains the source of truth. This layer only reads
+   saved load/fleet/route/check-in values and prefills calculators.
    ============================================================ */
 
+let CALC_LOADS = [];
+let CALC_LOAD_CONTEXT = null;
 let CALC_CARRIER_TERMS = null;
 
-async function loadCalcCarrierTerms(){
 
-  const params = new URLSearchParams(location.search);
-  const loadId = params.get('load_id');
-  if (!loadId) return;
+async function loadCalculatorLoads(){
 
-  try {
+  if (!db || !tenant || !$('calcLoad')) return;
 
-    const ld = await db
+  const result =
+    await db
       .from('loads')
-      .select('carrier_id, load_number')
-      .eq('id', loadId)
-      .maybeSingle();
+      .select(
+        'id,load_number,commodity,status,carrier_id,driver_id,' +
+        'linehaul_rate,fuel_surcharge,total_miles,created_at,archived_at'
+      )
+      .eq('tenant_id', tenant)
+      .is('archived_at', null)
+      .order('created_at', { ascending:false })
+      .limit(250);
 
-    if (ld.error || !ld.data || !ld.data.carrier_id) return;
+  if (result.error){
+    console.warn('Calculators: loads unavailable', result.error);
+    return;
+  }
 
-    const car = await db
-      .from('carriers')
-      .select('legal_name')
-      .eq('id', ld.data.carrier_id)
-      .maybeSingle();
+  CALC_LOADS = result.data || [];
 
-    const pr = await db
-      .from('carrier_profiles')
-      .select('detention_rate_per_hour, detention_after_hours,' +
-              'tonu_minimum, layover_rate_per_day,' +
-              'minimum_day_rate, negotiables')
-      .eq('carrier_id', ld.data.carrier_id)
-      .maybeSingle();
+  const current = $('calcLoad').value;
 
-    if (pr.error || !pr.data) return;
+  $('calcLoad').innerHTML =
+    '<option value="">— Select a load —</option>' +
+    CALC_LOADS.map(load => {
+      const number = load.load_number || 'Load';
+      const commodity = load.commodity ? ' · ' + load.commodity : '';
+      const status = load.status ? ' · ' + accessorialPretty(load.status) : '';
+      return '<option value="' + load.id + '">' +
+        number + commodity + status +
+      '</option>';
+    }).join('');
 
-    CALC_CARRIER_TERMS = pr.data;
-    CALC_CARRIER_TERMS._carrier =
-      car.data ? car.data.legal_name : 'Carrier';
-    CALC_CARRIER_TERMS._load = ld.data.load_number || '';
-
-    showCalcTermsBanner();
-    applyCalcCarrierTerms();
-
-  } catch (e){
-    console.warn('carrier terms unavailable', e);
+  if (
+    current &&
+    Array.from($('calcLoad').options)
+      .some(option => option.value === current)
+  ){
+    $('calcLoad').value = current;
   }
 }
 
+
+async function latestRouteForLoad(loadId){
+
+  const result =
+    await db
+      .from('route_plans')
+      .select('id,route_name,origin,destination,loaded_miles,states,workflow_status,updated_at')
+      .eq('tenant_id', tenant)
+      .eq('load_id', loadId)
+      .order('updated_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+
+  if (result.error){
+    console.warn('Calculators: route plan unavailable', result.error);
+    return null;
+  }
+
+  return result.data || null;
+}
+
+
+async function latestHosForLoad(loadId){
+
+  const result =
+    await db
+      .from('check_ins')
+      .select('hos_remaining_min,occurred_at,location_text,state')
+      .eq('tenant_id', tenant)
+      .eq('load_id', loadId)
+      .not('hos_remaining_min', 'is', null)
+      .order('occurred_at', { ascending:false })
+      .limit(1)
+      .maybeSingle();
+
+  if (result.error){
+    console.warn('Calculators: latest HOS unavailable', result.error);
+    return null;
+  }
+
+  return result.data || null;
+}
+
+
+async function loadCalcCarrierTermsForLoad(load){
+
+  CALC_CARRIER_TERMS = null;
+
+  if (!load || !load.carrier_id){
+    removeCalcTermsBanner();
+    return null;
+  }
+
+  const [carrierResult, profileResult] =
+    await Promise.all([
+      db
+        .from('carriers')
+        .select('legal_name')
+        .eq('id', load.carrier_id)
+        .maybeSingle(),
+      db
+        .from('carrier_profiles')
+        .select(
+          'target_rate_per_mile,minimum_rate_per_mile,minimum_day_rate,' +
+          'max_deadhead_miles,detention_rate_per_hour,detention_after_hours,' +
+          'tonu_minimum,layover_rate_per_day,negotiables'
+        )
+        .eq('carrier_id', load.carrier_id)
+        .maybeSingle()
+    ]);
+
+  if (profileResult.error || !profileResult.data){
+    removeCalcTermsBanner();
+    return null;
+  }
+
+  CALC_CARRIER_TERMS = {
+    ...profileResult.data,
+    _carrier:
+      carrierResult.data?.legal_name ||
+      'Carrier',
+    _load:
+      load.load_number ||
+      ''
+  };
+
+  showCalcTermsBanner();
+  applyCalcCarrierTerms();
+
+  return CALC_CARRIER_TERMS;
+}
+
+
+function removeCalcTermsBanner(){
+  const old = document.getElementById('carrierTermsBanner');
+  if (old) old.remove();
+}
+
+
 function showCalcTermsBanner(){
 
+  removeCalcTermsBanner();
+
   if (!CALC_CARRIER_TERMS) return;
-  if (document.getElementById('carrierTermsBanner')) return;
 
   const panel =
-    document.getElementById('accessorialPanel') ||
-    document.getElementById('accessorialType');
+    document.getElementById('accessorialPanel');
 
   if (!panel) return;
 
   const t = CALC_CARRIER_TERMS;
-
   const bits = [];
-  if (t.detention_rate_per_hour != null)
-    bits.push('Detention $' + t.detention_rate_per_hour + '/hr' +
-      (t.detention_after_hours != null
-        ? ' after ' + t.detention_after_hours + ' hr' : ''));
-  if (t.layover_rate_per_day != null)
-    bits.push('Layover $' + t.layover_rate_per_day + '/day');
-  if (t.tonu_minimum != null)
-    bits.push('TONU $' + t.tonu_minimum);
 
-  const clean = s => String(s == null ? '' : s).replace(/[<>]/g,'');
+  if (t.detention_rate_per_hour != null){
+    bits.push(
+      'Detention ' + money(t.detention_rate_per_hour) + '/hr' +
+      (t.detention_after_hours != null
+        ? ' after ' + t.detention_after_hours + ' hr'
+        : '')
+    );
+  }
+
+  if (t.layover_rate_per_day != null){
+    bits.push('Layover ' + money(t.layover_rate_per_day) + '/day');
+  }
+
+  if (t.tonu_minimum != null){
+    bits.push('TONU ' + money(t.tonu_minimum));
+  }
 
   const box = document.createElement('div');
   box.id = 'carrierTermsBanner';
+  box.className = 'calc-card';
   box.style.cssText =
-    'background:#F1F4D8;border:1px solid #B8B05D;border-radius:8px;' +
-    'padding:10px 13px;margin-bottom:14px;font-size:12.5px;color:#3C3A4B;';
+    'margin-bottom:16px;border-left:4px solid #B8C34A;background:#F1F4D8;';
 
   box.innerHTML =
-    '<b>Agreed terms — ' + clean(t._carrier) + '</b>' +
-    (t._load ? ' · Load ' + clean(t._load) : '') +
-    '<div style="margin-top:3px">' +
-      (bits.length ? bits.join('  ·  ')
-                   : 'No accessorial terms set on this carrier profile.') +
+    '<h2>Agreed Carrier Terms</h2>' +
+    '<div class="calc-hint" style="margin-bottom:8px">' +
+      escCalc(t._carrier) +
+      (t._load ? ' · Load ' + escCalc(t._load) : '') +
+    '</div>' +
+    '<div style="font-size:12.5px">' +
+      (bits.length
+        ? bits.join(' &nbsp;·&nbsp; ')
+        : 'No accessorial terms are stored on this carrier profile.') +
     '</div>' +
     (t.negotiables
-      ? '<div style="margin-top:5px;color:#6b7280">Negotiable: ' +
-        clean(t.negotiables) + '</div>'
+      ? '<div style="margin-top:6px;font-size:11.5px;color:#747B82">Negotiables: ' +
+        escCalc(t.negotiables) + '</div>'
       : '');
 
-  // place it above the accessorial form
-  if (panel.id === 'accessorialPanel'){
-    panel.insertBefore(box, panel.firstChild);
-  } else {
-    const holder = panel.closest('div');
-    if (holder && holder.parentNode){
-      holder.parentNode.insertBefore(box, holder);
-    }
-  }
+  panel.insertBefore(box, panel.firstChild);
 }
+
+
+function escCalc(value){
+  return String(value == null ? '' : value)
+    .replace(/[&<>\"]/g, c => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '\"':'&quot;'
+    }[c]));
+}
+
 
 function applyCalcCarrierTerms(){
 
   if (!CALC_CARRIER_TERMS) return;
 
-  const typeEl = document.getElementById('accessorialType');
-  const rateEl = document.getElementById('accessorialRate');
-  const freeEl = document.getElementById('accessorialFreeTime');
+  const typeEl = $('accessorialType');
+  const rateEl = $('accessorialRate');
+  const freeEl = $('detentionFreeMinutes');
+
   if (!typeEl || !rateEl) return;
 
-  const t    = CALC_CARRIER_TERMS;
+  const t = CALC_CARRIER_TERMS;
   const kind = String(typeEl.value || '').toLowerCase();
 
-  let rate = null, freeMinutes = null;
+  let rate = null;
+  let freeMinutes = null;
 
-  if (kind.indexOf('detention') !== -1){
+  if (kind === 'detention'){
     rate = t.detention_rate_per_hour;
-    if (t.detention_after_hours != null)
+    if (t.detention_after_hours != null){
       freeMinutes = Number(t.detention_after_hours) * 60;
-  } else if (kind.indexOf('layover') !== -1){
+    }
+  }
+  else if (kind === 'layover'){
     rate = t.layover_rate_per_day;
-  } else if (kind.indexOf('tonu') !== -1){
+  }
+  else if (kind === 'tonu'){
     rate = t.tonu_minimum;
   }
 
-  // only fill an empty field — never overwrite what you typed
-  if (rate !=
+  /* Carrier terms are the agreed baseline for the selected load.
+     Prefill them when the load changes or accessorial type changes. */
+  if (rate != null && Number.isFinite(Number(rate))){
+    rateEl.value = Number(rate);
+  }
 
+  if (
+    kind === 'detention' &&
+    freeEl &&
+    freeMinutes != null &&
+    Number.isFinite(freeMinutes)
+  ){
+    freeEl.value = Math.round(freeMinutes);
+  }
+}
+
+
+async function syncCalculatorLoadContext(loadId){
+
+  if (!loadId){
+    CALC_LOAD_CONTEXT = null;
+    CALC_CARRIER_TERMS = null;
+    removeCalcTermsBanner();
+
+    if ($('calcLoadSummary')){
+      $('calcLoadSummary').textContent = 'No load selected.';
+    }
+
+    return;
+  }
+
+  let load =
+    CALC_LOADS.find(x => x.id === loadId) ||
+    null;
+
+  if (!load){
+    const result =
+      await db
+        .from('loads')
+        .select(
+          'id,load_number,commodity,status,carrier_id,driver_id,' +
+          'linehaul_rate,fuel_surcharge,total_miles,created_at,archived_at'
+        )
+        .eq('tenant_id', tenant)
+        .eq('id', loadId)
+        .maybeSingle();
+
+    if (result.error || !result.data) return;
+    load = result.data;
+  }
+
+  const [route, hos] =
+    await Promise.all([
+      latestRouteForLoad(loadId),
+      latestHosForLoad(loadId),
+      loadCalcCarrierTermsForLoad(load)
+    ]);
+
+  CALC_LOAD_CONTEXT = {
+    load,
+    route,
+    hos
+  };
+
+  if (
+    $('accessorialLoad') &&
+    Array.from($('accessorialLoad').options)
+      .some(option => option.value === loadId)
+  ){
+    $('accessorialLoad').value = loadId;
+  }
+
+  /* PROFIT CALCULATOR */
+  if ($('linehaul')){
+    $('linehaul').value =
+      load.linehaul_rate ??
+      '';
+  }
+
+  if ($('fuel')){
+    $('fuel').value =
+      load.fuel_surcharge ??
+      0;
+  }
+
+  if ($('loadedMiles')){
+    $('loadedMiles').value =
+      route?.loaded_miles ??
+      load.total_miles ??
+      '';
+  }
+
+  /* HOS CALCULATOR
+     check_ins stores the latest remaining HOS in minutes. We only
+     prefill the clock we truly have; window/cycle remain ELD inputs. */
+  if (
+    $('driveRemaining') &&
+    hos?.hos_remaining_min != null
+  ){
+    $('driveRemaining').value =
+      (Number(hos.hos_remaining_min) / 60)
+        .toFixed(2);
+  }
+
+  const summary = [];
+  summary.push(load.load_number || 'Load');
+
+  if (load.status){
+    summary.push(accessorialPretty(load.status));
+  }
+
+  const miles =
+    route?.loaded_miles ??
+    load.total_miles;
+
+  if (miles != null){
+    summary.push(String(miles) + ' loaded mi');
+  }
+
+  if (route?.origin || route?.destination){
+    summary.push(
+      (route.origin || 'Origin TBD') +
+      ' → ' +
+      (route.destination || 'Destination TBD')
+    );
+  }
+
+  if (hos?.hos_remaining_min != null){
+    summary.push(
+      formatMinutes(hos.hos_remaining_min) +
+      ' latest HOS'
+    );
+  }
+
+  if ($('calcLoadSummary')){
+    $('calcLoadSummary').textContent =
+      summary.join(' · ');
+  }
+
+  applyCalcCarrierTerms();
+
+  /* Recalculate only when enough values exist. */
+  if (Number($('linehaul')?.value || 0) > 0){
+    calculateProfit();
+  }
+}
+
+
+$('calcLoad')?.addEventListener(
+  'change',
+  async () => {
+    await syncCalculatorLoadContext($('calcLoad').value);
+  }
+);
+
+
+$('refreshCalcLoad')?.addEventListener(
+  'click',
+  async () => {
+    const loadId = $('calcLoad').value;
+    await loadCalculatorLoads();
+    if (loadId){
+      $('calcLoad').value = loadId;
+      await syncCalculatorLoadContext(loadId);
+    }
+  }
+);
+
+
+$('openCalcLoadWorkspace')?.addEventListener(
+  'click',
+  () => {
+    const loadId = $('calcLoad').value;
+    if (!loadId) return;
+    location.href =
+      'workspace.html?id=' +
+      encodeURIComponent(loadId);
+  }
+);
+
+
+$('accessorialLoad')?.addEventListener(
+  'change',
+  async () => {
+    const loadId = $('accessorialLoad').value;
+
+    if (
+      loadId &&
+      $('calcLoad') &&
+      Array.from($('calcLoad').options)
+        .some(option => option.value === loadId)
+    ){
+      $('calcLoad').value = loadId;
+      await syncCalculatorLoadContext(loadId);
+    }
+  }
+);
+
+
+$('accessorialType')?.addEventListener(
+  'change',
+  () => {
+    applyCalcCarrierTerms();
+  }
+);
+
+
+startPage();
 </script>
 
 
