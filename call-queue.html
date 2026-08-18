@@ -1,3 +1,255 @@
+Sun, Aug 9 at 2:59 PM
+heavyhaul-dms-main (8)(1).zip
+Zip Archive
+Pasted text(20260810-102504).txt
+Document
+Pasted text(20260810-103656).txt
+Document
+Pasted text(20260810-112141).txt
+Document
+heavyhaul-dms-main (8)(2).zip
+Zip Archive
+Pasted text(20260810-212722).txt
+Document
+Pasted text(20260810-234143).txt
+Document
+heavyhaul-dms-main (9).zip
+Zip Archive
+Tuesday 6:42 PM
+heavyhaul-dms-main (12).zip
+Zip Archive
+Pasted text(20260812-011120).txt
+Document
+is code sound?
+Pasted text(20260812-011446).txt
+Document
+Pasted text(20260812-015836).txt
+Document
+Pasted text(20260812-022442).txt
+Document
+ther is no nav populating for route planning
+Pasted text(20260812-024620).txt
+Document
+Pasted text(20260812-025557).txt
+Document
+Pasted text (2)(6).txt
+Document
+fleet command main nav is not uniform, so it will neeed to be changed aswell. just that main shared nav
+Edit
+Edit
+Edit
+Edit
+Edit
+Edit
+ code for this
+Pasted text(20260812-055220).txt
+Document
+Pasted text(20260812-060419).txt
+Document
+Pasted text(20260812-060746).txt
+Document
+Pasted text(20260812-074100).txt
+Document
+Thursday 12:06 PM
+heavyhaul-dms-main (15).zip
+Zip Archive
+Pasted text(20260813-191952).txt
+Document
+Pasted text(20260813-192109).txt
+Document
+Pasted text(20260813-192639).txt
+Document
+Pasted text(20260813-200843).txt
+Document
+Pasted text(20260813-205044).txt
+Document
+i have to interupt this task with something else just breifly: can you remove all accessorial code from newload.html: 
+Pasted text(20260813-210918).txt
+Document
+Saturday 5:38 AM
+heavyhaul-dms-main (16).zip
+Zip Archive
+Pasted text(20260815-111847).txt
+Document
+fleet.html: 
+Pasted text(20260815-124251).txt
+Document
+Pasted text(20260815-125656).txt
+Document
+what line is it? : 
+Pasted text(20260815-154956).txt
+Document
+fleet.html doesn't have the main nav: 
+Pasted text(20260815-160031).txt
+Document
+Pasted text(20260815-184911).txt
+Document
+Pasted text(20260815-194738).txt
+Document
+Pasted text(20260816-145209).txt
+Document
+Pasted text(20260816-150331).txt
+Document
+<--sound?
+Pasted text(20260816-151302).txt
+Document
+Pasted text(20260816-151637).txt
+Document
+Pasted text(20260816-153029).txt
+Document
+ok: 
+Pasted text(20260816-154511).txt
+Document
+Pasted text(20260816-165040).txt
+Document
+this is what i have now. need to rebuild
+Pasted text(20260816-165148).txt
+Document
+Today 2:36 PM
+Pasted text(20260817-193655).txt
+Document
+Pasted text(20260817-193831).txt
+Document
+Pasted text(20260817-195623).txt
+Document
+Pasted text(20260817-202825).txt
+Document
+drivers and assigned driver are not linking 
+Pasted text(20260817-213158).txt
+Document
+Pasted text (2)(7).txt
+Document
+Pasted text (3)(1).txt
+Document
+Pasted text (4).txt
+Document
+Pasted text (5).txt
+Document
+Pasted text (6).txt
+Document
+Pasted text(20260817-234329).txt
+Document
+Pasted text(20260818-013834).txt
+Document
+from my understanding we are adding fields and also giving the log calls a retreivable place to go. please let me know what pages will be involved in this update so we can have a cohesive workflow
+
+That error means the column name is fixed now, but the value we're trying to save into company_contacts.role is not one of the values allowed by its existing check constraint.
+
+For example, the page may be trying to save:
+
+warehouse_logistics_manager
+
+or:
+
+vp_operations
+
+while your database may only allow a smaller predefined set.
+
+So don't change the HTML again yet. First, let's see exactly what Supabase permits.
+
+Run this in the Supabase SQL Editor:
+
+select
+  conname as constraint_name,
+  pg_get_constraintdef(oid) as definition
+from pg_constraint
+where conrelid = 'public.company_contacts'::regclass
+  and contype = 'c';
+
+Paste the result here.
+
+Then I'll adjust the dropdown in call-queue.html to use the actual allowed role values from your database.
+
+Also, the company itself already saved, so don't create Barnhart again. Once we correct the role values, you'll use Edit → Barnhart → add the contact → Save Changes.
+
+constraint_name,definition
+company_contacts_role_check,"CHECK ((role = ANY (ARRAY['dispatch'::text, 'sales'::text, 'ops'::text, 'accounting'::text, 'permits'::text, 'safety'::text, 'owner'::text, 'after_hours'::text, 'other'::text])))"
+
+Perfect — now we know exactly what the database expects.
+
+Your existing company_contacts.role column only permits these values:
+
+dispatch, sales, ops, accounting, permits, safety, owner, after_hours, or other.
+
+So we should not change the database constraint. The better design is to use:
+
+Role = broad department/function, such as ops
+Title = the person's actual job title, such as Warehouse & Logistics Manager or VP of Operations
+
+Your database already has a title column, which is perfect for this.
+
+For the Barnhart example, we'd store:
+
+First name: Jeffery
+Last name: Harris
+Role: Operations
+Title: Warehouse & Logistics Manager
+Direct phone: (901) 270-1236
+Email: jharris@barnhartcrane.com
+
+And for a VP of Operations:
+
+Role: Operations
+Title: VP of Operations
+
+That's actually better CRM design than trying to cram every possible job title into a constrained role field.
+
+So I'll adjust the Call Queue form to have two separate fields:
+
+Department / Role: Operations, Dispatch, Sales, Accounting, Permits, Safety, Owner, After Hours, Other
+
+Job Title: free-text field — VP of Operations, Fleet Manager, Warehouse & Logistics Manager, Transportation Manager, etc.
+
+That will fix this error without another SQL migration, and it will make your company records more flexible going forward.
+
+ok
+
+Done. I corrected the Call Queue to match your actual Supabase constraint.
+
+Download the corrected call-queue.html
+
+What changed
+
+The Primary Contact section now separates:
+
+Department / Role
+
+Operations
+Dispatch
+Sales
+Accounting
+Permits
+Safety
+Owner
+After Hours
+Other
+
+Job Title is now a separate free-text field, so you can enter anything specific, such as:
+
+Warehouse & Logistics Manager
+VP of Operations
+Fleet Manager
+Director of Operations
+
+For Barnhart, use:
+
+Department / Role: Operations
+Job Title: Warehouse & Logistics Manager
+
+The page now saves those correctly as:
+
+company_contacts.role = ops
+company_contacts.title = Warehouse & Logistics Manager
+
+It also reloads both fields when you click Edit, and the job title appears in History.
+
+No SQL change is needed for this one—your existing database already has both role and title. 
+
+call-queue.html
+HTML
+
+© Mapbox Terms© OpenStreetMap
+call-queue.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,19 +634,21 @@
 
       <div class="fld"><label for="co_first">First name</label><input id="co_first" placeholder="optional"></div>
       <div class="fld"><label for="co_last">Last name</label><input id="co_last"></div>
-      <div class="fld"><label for="co_role">Contact role</label>
+      <div class="fld"><label for="co_role">Department / role</label>
         <select id="co_role">
           <option value="">—</option>
+          <option value="ops">Operations</option>
+          <option value="dispatch">Dispatch</option>
+          <option value="sales">Sales</option>
+          <option value="accounting">Accounting</option>
+          <option value="permits">Permits</option>
+          <option value="safety">Safety</option>
           <option value="owner">Owner</option>
-          <option value="operations_manager">Operations Manager</option>
-          <option value="director_of_operations">Director of Operations</option>
-          <option value="vp_operations">VP of Operations</option>
-          <option value="dispatch_manager">Dispatch Manager</option>
-          <option value="fleet_manager">Fleet Manager</option>
-          <option value="transportation_manager">Transportation Manager</option>
-          <option value="dispatcher">Dispatcher</option>
+          <option value="after_hours">After Hours</option>
           <option value="other">Other</option>
         </select></div>
+      <div class="fld"><label for="co_title">Job title</label>
+        <input id="co_title" placeholder="VP of Operations, Fleet Manager, Warehouse & Logistics Manager"></div>
       <div class="fld"><label for="co_direct">Direct phone</label><input id="co_direct"></div>
       <div class="fld"><label for="co_contact_email">Direct email</label><input id="co_contact_email" type="email"></div>
 
@@ -800,7 +1054,7 @@ function clearCompanyForm(){
   [
     'co_name','co_dba','co_mc','co_dot','co_phone','co_email','co_website',
     'co_address','co_city','co_state','co_zip',
-    'co_first','co_last','co_direct','co_contact_email','co_notes'
+    'co_first','co_last','co_title','co_direct','co_contact_email','co_notes'
   ].forEach(id=>$(id).value='');
 
   $('co_type').value='broker';
@@ -873,6 +1127,7 @@ async function editCompany(companyId){
   $('co_first').value=p.first_name || '';
   $('co_last').value=p.last_name || '';
   $('co_role').value=p.role || '';
+  $('co_title').value=p.title || '';
   $('co_direct').value=p.direct_phone || '';
   $('co_contact_email').value=p.email || '';
 
@@ -959,8 +1214,9 @@ async function saveCo(){
   const direct=txt($('co_direct').value);
   const email=txt($('co_contact_email').value);
   const role=txt($('co_role').value);
+  const title=txt($('co_title').value);
 
-  const hasContact=!!(first||last||direct||email||role);
+  const hasContact=!!(first||last||direct||email||role||title);
 
   if(hasContact){
     const contactData={
@@ -969,6 +1225,7 @@ async function saveCo(){
       first_name:first,
       last_name:last,
       role:role,
+      title:title,
       direct_phone:direct,
       email:email,
       is_primary:true
@@ -1066,6 +1323,7 @@ async function openHistory(companyId){
 
   $('h_profile').innerHTML=
     '<div><b>Primary contact:</b> '+esc([p.first_name,p.last_name].filter(Boolean).join(' ') || '—')+
+      (p.title?' · '+esc(p.title):'')+
       (p.role?' · '+esc(pretty(p.role)):'')+'</div>'+
     '<div><b>Phone:</b> '+esc(p.direct_phone || c.main_phone || '—')+'</div>'+
     '<div><b>Email:</b> '+esc(p.email || c.main_email || '—')+'</div>'+
