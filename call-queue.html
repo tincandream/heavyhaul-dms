@@ -872,7 +872,7 @@ async function editCompany(companyId){
 
   $('co_first').value=p.first_name || '';
   $('co_last').value=p.last_name || '';
-  $('co_role').value=p.contact_role || '';
+  $('co_role').value=p.role || '';
   $('co_direct').value=p.direct_phone || '';
   $('co_contact_email').value=p.email || '';
 
@@ -968,7 +968,7 @@ async function saveCo(){
       company_id:savedCompany.id,
       first_name:first,
       last_name:last,
-      contact_role:role,
+      role:role,
       direct_phone:direct,
       email:email,
       is_primary:true
@@ -1066,7 +1066,7 @@ async function openHistory(companyId){
 
   $('h_profile').innerHTML=
     '<div><b>Primary contact:</b> '+esc([p.first_name,p.last_name].filter(Boolean).join(' ') || '—')+
-      (p.contact_role?' · '+esc(pretty(p.contact_role)):'')+'</div>'+
+      (p.role?' · '+esc(pretty(p.role)):'')+'</div>'+
     '<div><b>Phone:</b> '+esc(p.direct_phone || c.main_phone || '—')+'</div>'+
     '<div><b>Email:</b> '+esc(p.email || c.main_email || '—')+'</div>'+
     '<div><b>Website:</b> '+esc(c.website || '—')+'</div>'+
