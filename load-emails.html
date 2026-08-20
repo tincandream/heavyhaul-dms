@@ -295,7 +295,7 @@ tbody tr:hover{
    ========================================================= */
 
 dialog{
-  width:min(680px,94vw);
+  width:min(760px,94vw);
   border:0;
   padding:0;
   box-shadow:0 18px 55px rgba(25,35,40,.25);
@@ -309,6 +309,7 @@ dialog::backdrop{
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap:12px;
   padding:15px 18px;
   border-bottom:1px solid var(--le-line);
 }
@@ -395,6 +396,7 @@ dialog::backdrop{
 }
 
 @media(max-width:600px){
+
   main{
     padding:20px 13px 50px;
   }
@@ -418,6 +420,7 @@ dialog::backdrop{
 <main>
 
   <section class="page-intro">
+
     <div>
       <h1>LOAD EMAILS</h1>
       <p>
@@ -431,6 +434,7 @@ dialog::backdrop{
       type="button">
       + Add Email Source
     </button>
+
   </section>
 
 
@@ -472,8 +476,8 @@ dialog::backdrop{
     <h2>Broker Load Email Sources</h2>
 
     <p class="hint">
-      Keep the broker email lists you monitor in one place.
-      Freight worth pursuing should be entered into Opportunities.
+      Keep the broker email lists and load-alert sources you monitor in one place.
+      Freight worth pursuing can be sent directly into Opportunities.
     </p>
 
     <div class="toolbar">
@@ -500,6 +504,7 @@ dialog::backdrop{
       </button>
 
     </div>
+
 
     <div class="table-wrap">
 
@@ -542,8 +547,8 @@ dialog::backdrop{
     <h2>Load Email Workflow</h2>
 
     <p class="hint">
-      Load Emails is a sourcing intake point. The actual freight record belongs
-      in Opportunities.
+      Load Emails is a sourcing intake point. Promising freight should become
+      an Opportunity before it enters Dispatch.
     </p>
 
     <div style="
@@ -555,7 +560,7 @@ dialog::backdrop{
       <div class="summary-card">
         <div class="summary-label">1 · Receive</div>
         <div class="meta">
-          Review broker load lists and individual load emails.
+          Review broker load lists and load-alert emails.
         </div>
       </div>
 
@@ -569,7 +574,7 @@ dialog::backdrop{
       <div class="summary-card">
         <div class="summary-label">3 · Capture</div>
         <div class="meta">
-          Add promising freight to your private Opportunities board.
+          Use Add Opportunity to capture promising freight.
         </div>
       </div>
 
@@ -598,13 +603,206 @@ dialog::backdrop{
 
 
 <!-- =========================================================
-     ADD / EDIT SOURCE
+     ADD EMAILED LOAD TO OPPORTUNITIES
+     ========================================================= -->
+
+<dialog id="opportunityDialog">
+
+  <div class="dialog-head">
+
+    <h2>Add Email Load to Opportunities</h2>
+
+    <button
+      class="small-button"
+      type="button"
+      id="closeOpportunity">
+      Close
+    </button>
+
+  </div>
+
+
+  <div class="dialog-body">
+
+    <div class="grid">
+
+      <div class="field">
+        <label for="oppBroker">Broker / Company</label>
+        <input id="oppBroker" readonly>
+      </div>
+
+      <div class="field">
+        <label for="oppRef">Broker Load # / Reference</label>
+        <input
+          id="oppRef"
+          placeholder="Load number">
+      </div>
+
+
+      <div class="field">
+        <label for="oppOriginCity">Origin City</label>
+        <input id="oppOriginCity">
+      </div>
+
+      <div class="field">
+        <label for="oppOriginState">Origin State</label>
+        <input
+          id="oppOriginState"
+          maxlength="2"
+          placeholder="AR">
+      </div>
+
+
+      <div class="field">
+        <label for="oppDestCity">Destination City</label>
+        <input id="oppDestCity">
+      </div>
+
+      <div class="field">
+        <label for="oppDestState">Destination State</label>
+        <input
+          id="oppDestState"
+          maxlength="2"
+          placeholder="TN">
+      </div>
+
+
+      <div class="field">
+        <label for="oppPickup">Pickup Date</label>
+        <input
+          id="oppPickup"
+          type="date">
+      </div>
+
+      <div class="field">
+        <label for="oppMiles">Loaded Miles</label>
+        <input
+          id="oppMiles"
+          type="number"
+          min="0">
+      </div>
+
+
+      <div class="field">
+        <label for="oppCommodity">Commodity</label>
+        <input
+          id="oppCommodity"
+          placeholder="Grain, excavator, machinery...">
+      </div>
+
+      <div class="field">
+        <label for="oppEquipment">Equipment Needed</label>
+        <input
+          id="oppEquipment"
+          placeholder="Hopper Bottom, RGN, Step Deck...">
+      </div>
+
+
+      <div class="field">
+        <label for="oppLength">Length (ft)</label>
+        <input
+          id="oppLength"
+          type="number"
+          step="0.1">
+      </div>
+
+      <div class="field">
+        <label for="oppWidth">Width (ft)</label>
+        <input
+          id="oppWidth"
+          type="number"
+          step="0.1">
+      </div>
+
+
+      <div class="field">
+        <label for="oppHeight">Height (ft)</label>
+        <input
+          id="oppHeight"
+          type="number"
+          step="0.1">
+      </div>
+
+      <div class="field">
+        <label for="oppWeight">Weight (lb)</label>
+        <input
+          id="oppWeight"
+          type="number">
+      </div>
+
+
+      <div class="field">
+        <label for="oppPostedRate">Posted Rate ($)</label>
+        <input
+          id="oppPostedRate"
+          type="number"
+          step="0.01">
+      </div>
+
+      <div class="field">
+        <label for="oppQuotedRate">Quoted Rate ($)</label>
+        <input
+          id="oppQuotedRate"
+          type="number"
+          step="0.01">
+      </div>
+
+
+      <div class="field full">
+
+        <label for="oppNotes">
+          Notes
+        </label>
+
+        <textarea
+          id="oppNotes"
+          placeholder="Paste useful details from the broker email here."></textarea>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="notice"
+      id="oppNotice">
+    </div>
+
+  </div>
+
+
+  <div class="dialog-foot">
+
+    <button
+      class="action secondary"
+      id="cancelOpportunity"
+      type="button">
+      Cancel
+    </button>
+
+    <button
+      class="action"
+      id="saveOpportunity"
+      type="button">
+      Add to Opportunities
+    </button>
+
+  </div>
+
+</dialog>
+
+
+<!-- =========================================================
+     ADD / EDIT EMAIL SOURCE
      ========================================================= -->
 
 <dialog id="sourceDialog">
 
   <div class="dialog-head">
-    <h2 id="dialogTitle">Add Load Email Source</h2>
+
+    <h2 id="dialogTitle">
+      Add Load Email Source
+    </h2>
 
     <button
       class="small-button"
@@ -612,79 +810,151 @@ dialog::backdrop{
       id="closeDialog">
       Close
     </button>
+
   </div>
+
 
   <div class="dialog-body">
 
     <div class="grid">
 
       <div class="field">
-        <label for="brokerName">Broker / Company *</label>
+        <label for="brokerName">
+          Broker / Company *
+        </label>
         <input id="brokerName">
       </div>
 
+
       <div class="field">
-        <label for="emailAddress">Load Email Address</label>
+
+        <label for="emailAddress">
+          Load Email Address
+        </label>
+
         <input
           id="emailAddress"
           type="email"
           placeholder="loads@broker.com">
+
       </div>
 
+
       <div class="field">
-        <label for="frequency">Frequency</label>
+
+        <label for="frequency">
+          Frequency
+        </label>
 
         <select id="frequency">
-          <option value="">— Select —</option>
-          <option>Multiple Daily</option>
-          <option>Daily</option>
-          <option>Weekdays</option>
-          <option>Weekly</option>
-          <option>Occasional</option>
+
+          <option value="">
+            — Select —
+          </option>
+
+          <option>
+            Multiple Daily
+          </option>
+
+          <option>
+            Daily
+          </option>
+
+          <option>
+            Weekdays
+          </option>
+
+          <option>
+            Weekly
+          </option>
+
+          <option>
+            Occasional
+          </option>
+
         </select>
+
       </div>
+
 
       <div class="field">
-        <label for="sourceStatus">Status</label>
+
+        <label for="sourceStatus">
+          Status
+        </label>
 
         <select id="sourceStatus">
-          <option value="active">Active</option>
-          <option value="watch">Needs Review</option>
-          <option value="inactive">Inactive</option>
+
+          <option value="active">
+            Active
+          </option>
+
+          <option value="watch">
+            Needs Review
+          </option>
+
+          <option value="inactive">
+            Inactive
+          </option>
+
         </select>
+
       </div>
 
+
       <div class="field full">
-        <label for="freightLanes">Freight / Lanes</label>
+
+        <label for="freightLanes">
+          Freight / Lanes
+        </label>
 
         <input
           id="freightLanes"
-          placeholder="Heavy equipment · AR / TN / MS · RGN">
+          placeholder="Hopper Bottom · Grain · AR / TN / MS">
+
       </div>
 
+
       <div class="field">
-        <label for="lastReceived">Last Received</label>
+
+        <label for="lastReceived">
+          Last Received
+        </label>
+
         <input
           id="lastReceived"
           type="datetime-local">
+
       </div>
 
+
       <div class="field">
-        <label for="portalUrl">Related Portal / Website</label>
+
+        <label for="portalUrl">
+          Related Portal / Website
+        </label>
+
         <input
           id="portalUrl"
           placeholder="Optional">
+
       </div>
 
+
       <div class="field full">
-        <label for="notes">Notes</label>
+
+        <label for="notes">
+          Notes
+        </label>
 
         <textarea
           id="notes"
           placeholder="What they send, useful contacts, typical lanes, timing, special instructions..."></textarea>
+
       </div>
 
     </div>
+
 
     <div
       class="notice"
@@ -692,6 +962,7 @@ dialog::backdrop{
     </div>
 
   </div>
+
 
   <div class="dialog-foot">
 
@@ -731,7 +1002,8 @@ const SUPABASE_URL =
   'https://zyhdatteglxozsgnjhrm.supabase.co';
 
 const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYXNlIiwicmVmIjoienloZGF0dGVnbHhvenNnbmpocm0iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NTI4MTMxMCwiZXhwIjoyMTAwODU3MzEwfQ.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
 
 const db =
   window.supabase.createClient(
@@ -739,12 +1011,26 @@ const db =
     SUPABASE_ANON_KEY
   );
 
-const $ =
-  id => document.getElementById(id);
 
-let tenant = null;
-let rows = [];
-let editingId = null;
+const $ =
+  id =>
+    document.getElementById(id);
+
+
+let tenant =
+  null;
+
+
+let rows =
+  [];
+
+
+let editingId =
+  null;
+
+
+let opportunitySourceId =
+  null;
 
 
 /* =========================================================
@@ -770,10 +1056,14 @@ function esc(value){
 
 function prettyDate(value){
 
-  if (!value) return '—';
+  if (!value){
+    return '—';
+  }
+
 
   const d =
     new Date(value);
+
 
   if (
     Number.isNaN(
@@ -782,6 +1072,7 @@ function prettyDate(value){
   ){
     return '—';
   }
+
 
   return d.toLocaleString(
     'en-US',
@@ -805,8 +1096,10 @@ function notice(
   const el =
     $('dialogNotice');
 
+
   el.textContent =
     text || '';
+
 
   el.className =
     'notice' +
@@ -816,26 +1109,73 @@ function notice(
 }
 
 
+function opportunityNotice(
+  text,
+  error = false
+){
+
+  const el =
+    $('oppNotice');
+
+
+  el.textContent =
+    text || '';
+
+
+  el.className =
+    'notice' +
+    (text ? ' show ' : '') +
+    (error ? 'err' : 'ok');
+
+}
+
+
+function numberOrNull(id){
+
+  const value =
+    $(id)
+      .value
+      .trim();
+
+
+  if (
+    value === ''
+  ){
+    return null;
+  }
+
+
+  const number =
+    Number(value);
+
+
+  return Number.isFinite(number)
+    ? number
+    : null;
+
+}
+
+
 /* =========================================================
-   LOAD DATA
-
-   This page expects a table named:
-       load_email_sources
-
-   If that table has not been created yet, the page will
-   still load and explain the missing migration in Console.
+   LOAD EMAIL SOURCES
    ========================================================= */
 
 async function fetchRows(){
 
   const result =
     await db
-      .from('load_email_sources')
+
+      .from(
+        'load_email_sources'
+      )
+
       .select('*')
+
       .eq(
         'tenant_id',
         tenant
       )
+
       .order(
         'broker_name',
         {
@@ -844,22 +1184,33 @@ async function fetchRows(){
       );
 
 
-  if (result.error){
+  if (
+    result.error
+  ){
 
     console.warn(
       'load_email_sources:',
       result.error.message
     );
 
-    rows = [];
+
+    rows =
+      [];
+
 
     render();
 
-    $('emptyState').style.display =
+
+    $('emptyState')
+      .style
+      .display =
       'block';
 
-    $('emptyState').textContent =
-      'Load Email storage is not enabled yet. The load_email_sources migration is needed.';
+
+    $('emptyState')
+      .textContent =
+      result.error.message;
+
 
     return;
 
@@ -905,7 +1256,9 @@ function render(){
         }
 
 
-        if (!query){
+        if (
+          !query
+        ){
           return true;
         }
 
@@ -918,8 +1271,11 @@ function render(){
             row.freight_lanes,
             row.notes
           ]
+
           .filter(Boolean)
+
           .join(' ')
+
           .toLowerCase();
 
 
@@ -931,59 +1287,92 @@ function render(){
     );
 
 
-  $('sourceCount').textContent =
+  $('sourceCount')
+    .textContent =
     rows.length;
 
 
-  $('activeCount').textContent =
+  $('activeCount')
+    .textContent =
     rows.filter(
       row =>
-        row.status === 'active'
+        row.status ===
+        'active'
     ).length;
 
 
   const today =
     new Date();
 
+
   const todayKey =
-    today.toISOString().slice(0,10);
+    today
+      .toISOString()
+      .slice(
+        0,
+        10
+      );
 
 
-  $('todayCount').textContent =
+  $('todayCount')
+    .textContent =
     rows.filter(
       row =>
         row.last_received_at &&
         String(
           row.last_received_at
-        ).slice(0,10) === todayKey
+        )
+        .slice(
+          0,
+          10
+        ) ===
+        todayKey
     ).length;
 
 
-  $('reviewCount').textContent =
+  $('reviewCount')
+    .textContent =
     rows.filter(
       row =>
-        row.status === 'watch'
+        row.status ===
+        'watch'
     ).length;
 
 
-  $('emailRows').innerHTML =
+  $('emailRows')
+    .innerHTML =
     filtered
+
       .map(
         row => {
 
           const statusClass =
-            row.status === 'inactive'
+
+            row.status ===
+            'inactive'
+
               ? 'inactive'
-              : row.status === 'watch'
+
+              : row.status ===
+                'watch'
+
                 ? 'watch'
+
                 : '';
 
 
           const statusText =
-            row.status === 'watch'
+
+            row.status ===
+            'watch'
+
               ? 'Needs Review'
-              : row.status === 'inactive'
+
+              : row.status ===
+                'inactive'
+
                 ? 'Inactive'
+
                 : 'Active';
 
 
@@ -991,6 +1380,7 @@ function render(){
             <tr>
 
               <td>
+
                 <div class="broker-name">
                   ${esc(row.broker_name || 'Broker')}
                 </div>
@@ -1000,32 +1390,49 @@ function render(){
                     ? `<div class="meta">${esc(row.notes)}</div>`
                     : ''
                 }
+
               </td>
+
 
               <td>
                 ${esc(row.email_address || '—')}
               </td>
 
+
               <td>
                 ${esc(row.frequency || '—')}
               </td>
+
 
               <td>
                 ${esc(row.freight_lanes || '—')}
               </td>
 
+
               <td>
                 ${esc(prettyDate(row.last_received_at))}
               </td>
 
+
               <td>
+
                 <span class="status ${statusClass}">
                   ${statusText}
                 </span>
+
               </td>
 
+
               <td>
+
                 <div class="row-actions">
+
+                  <button
+                    class="small-button"
+                    type="button"
+                    data-opportunity="${row.id}">
+                    Add Opportunity
+                  </button>
 
                   <button
                     class="small-button"
@@ -1035,6 +1442,7 @@ function render(){
                   </button>
 
                 </div>
+
               </td>
 
             </tr>
@@ -1042,20 +1450,29 @@ function render(){
 
         }
       )
+
       .join('');
 
 
-  $('emptyState').style.display =
+  $('emptyState')
+    .style
+    .display =
     filtered.length
       ? 'none'
       : 'block';
 
 
-  if (!filtered.length){
+  if (
+    !filtered.length
+  ){
 
-    $('emptyState').textContent =
+    $('emptyState')
+      .textContent =
+
       rows.length
+
         ? 'No email sources match this filter.'
+
         : 'No load-email sources have been added yet.';
 
   }
@@ -1079,19 +1496,418 @@ function render(){
       }
     );
 
+
+  document
+    .querySelectorAll(
+      '[data-opportunity]'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          () =>
+            openOpportunity(
+              button.dataset.opportunity
+            )
+        );
+
+      }
+    );
+
 }
 
 
 /* =========================================================
-   DIALOG
+   ADD EMAIL LOAD TO OPPORTUNITIES
+   ========================================================= */
+
+function openOpportunity(
+  sourceId
+){
+
+  const source =
+    rows.find(
+      row =>
+        String(row.id) ===
+        String(sourceId)
+    );
+
+
+  if (
+    !source
+  ){
+    return;
+  }
+
+
+  opportunitySourceId =
+    source.id;
+
+
+  $('oppBroker')
+    .value =
+    source.broker_name || '';
+
+
+  $('oppRef').value = '';
+
+  $('oppOriginCity').value = '';
+  $('oppOriginState').value = '';
+
+  $('oppDestCity').value = '';
+  $('oppDestState').value = '';
+
+  $('oppPickup').value = '';
+  $('oppMiles').value = '';
+
+  $('oppCommodity').value = '';
+  $('oppEquipment').value = '';
+
+  $('oppLength').value = '';
+  $('oppWidth').value = '';
+  $('oppHeight').value = '';
+  $('oppWeight').value = '';
+
+  $('oppPostedRate').value = '';
+  $('oppQuotedRate').value = '';
+
+
+  const sourceNotes =
+    [];
+
+
+  if (
+    source.email_address
+  ){
+
+    sourceNotes.push(
+      'Email source: ' +
+      source.email_address
+    );
+
+  }
+
+
+  if (
+    source.freight_lanes
+  ){
+
+    sourceNotes.push(
+      'Source freight / lanes: ' +
+      source.freight_lanes
+    );
+
+  }
+
+
+  if (
+    source.portal_url
+  ){
+
+    sourceNotes.push(
+      'Related portal: ' +
+      source.portal_url
+    );
+
+  }
+
+
+  sourceNotes.push(
+    'Captured from Load Emails.'
+  );
+
+
+  $('oppNotes')
+    .value =
+    sourceNotes.join(
+      '\n'
+    );
+
+
+  opportunityNotice(
+    ''
+  );
+
+
+  $('opportunityDialog')
+    .showModal();
+
+}
+
+
+/* =========================================================
+   SAVE EMAILED LOAD AS OPPORTUNITY
+   ========================================================= */
+
+async function saveEmailOpportunity(){
+
+  const source =
+    rows.find(
+      row =>
+        String(row.id) ===
+        String(opportunitySourceId)
+    );
+
+
+  if (
+    !source
+  ){
+
+    opportunityNotice(
+      'Load Email source could not be found.',
+      true
+    );
+
+    return;
+
+  }
+
+
+  const width =
+    numberOrNull(
+      'oppWidth'
+    );
+
+
+  const height =
+    numberOrNull(
+      'oppHeight'
+    );
+
+
+  const length =
+    numberOrNull(
+      'oppLength'
+    );
+
+
+  const weight =
+    numberOrNull(
+      'oppWeight'
+    );
+
+
+  const row = {
+
+    tenant_id:
+      tenant,
+
+
+    broker_name:
+      source.broker_name,
+
+
+    source_type:
+      'email',
+
+
+    status:
+      'new',
+
+
+    external_ref:
+      $('oppRef')
+        .value
+        .trim() ||
+      null,
+
+
+    origin_city:
+      $('oppOriginCity')
+        .value
+        .trim() ||
+      null,
+
+
+    origin_state:
+      $('oppOriginState')
+        .value
+        .trim()
+        .toUpperCase() ||
+      null,
+
+
+    dest_city:
+      $('oppDestCity')
+        .value
+        .trim() ||
+      null,
+
+
+    dest_state:
+      $('oppDestState')
+        .value
+        .trim()
+        .toUpperCase() ||
+      null,
+
+
+    pickup_date:
+      $('oppPickup')
+        .value ||
+      null,
+
+
+    miles:
+      numberOrNull(
+        'oppMiles'
+      ),
+
+
+    commodity:
+      $('oppCommodity')
+        .value
+        .trim() ||
+      null,
+
+
+    equipment_needed:
+      $('oppEquipment')
+        .value
+        .trim() ||
+      null,
+
+
+    length_ft:
+      length,
+
+
+    width_ft:
+      width,
+
+
+    height_ft:
+      height,
+
+
+    weight_lbs:
+      weight,
+
+
+    is_superload:
+      false,
+
+
+    is_oversize:
+
+      (
+        width != null &&
+        width > 8.5
+      )
+
+      ||
+
+      (
+        height != null &&
+        height > 13.5
+      )
+
+      ||
+
+      (
+        length != null &&
+        length > 53
+      ),
+
+
+    is_overweight:
+
+      weight != null &&
+      weight > 80000,
+
+
+    posted_rate:
+      numberOrNull(
+        'oppPostedRate'
+      ),
+
+
+    quoted_rate:
+      numberOrNull(
+        'oppQuotedRate'
+      ),
+
+
+    booked_rate:
+      null,
+
+
+    notes:
+      $('oppNotes')
+        .value
+        .trim() ||
+      null
+
+  };
+
+
+  const button =
+    $('saveOpportunity');
+
+
+  button.disabled =
+    true;
+
+
+  const result =
+    await db
+
+      .from(
+        'load_opportunities'
+      )
+
+      .insert(
+        row
+      )
+
+      .select('*')
+
+      .single();
+
+
+  button.disabled =
+    false;
+
+
+  if (
+    result.error
+  ){
+
+    opportunityNotice(
+      result.error.message,
+      true
+    );
+
+    return;
+
+  }
+
+
+  $('opportunityDialog')
+    .close();
+
+
+  location.href =
+    'sourcing.html';
+
+}
+
+
+/* =========================================================
+   SOURCE DIALOG
    ========================================================= */
 
 function clearForm(){
 
-  editingId = null;
+  editingId =
+    null;
 
-  $('dialogTitle').textContent =
+
+  $('dialogTitle')
+    .textContent =
     'Add Load Email Source';
+
 
   $('brokerName').value = '';
   $('emailAddress').value = '';
@@ -1102,10 +1918,16 @@ function clearForm(){
   $('portalUrl').value = '';
   $('notes').value = '';
 
-  $('deleteBtn').style.display =
+
+  $('deleteBtn')
+    .style
+    .display =
     'none';
 
-  notice('');
+
+  notice(
+    ''
+  );
 
 }
 
@@ -1114,13 +1936,16 @@ function openAdd(){
 
   clearForm();
 
+
   $('sourceDialog')
     .showModal();
 
 }
 
 
-function openEdit(id){
+function openEdit(
+  id
+){
 
   const row =
     rows.find(
@@ -1130,7 +1955,9 @@ function openEdit(id){
     );
 
 
-  if (!row){
+  if (
+    !row
+  ){
     return;
   }
 
@@ -1139,36 +1966,51 @@ function openEdit(id){
     row.id;
 
 
-  $('dialogTitle').textContent =
+  $('dialogTitle')
+    .textContent =
     'Edit Load Email Source';
 
 
-  $('brokerName').value =
-    row.broker_name || '';
+  $('brokerName')
+    .value =
+    row.broker_name ||
+    '';
 
 
-  $('emailAddress').value =
-    row.email_address || '';
+  $('emailAddress')
+    .value =
+    row.email_address ||
+    '';
 
 
-  $('frequency').value =
-    row.frequency || '';
+  $('frequency')
+    .value =
+    row.frequency ||
+    '';
 
 
-  $('sourceStatus').value =
-    row.status || 'active';
+  $('sourceStatus')
+    .value =
+    row.status ||
+    'active';
 
 
-  $('freightLanes').value =
-    row.freight_lanes || '';
+  $('freightLanes')
+    .value =
+    row.freight_lanes ||
+    '';
 
 
-  $('portalUrl').value =
-    row.portal_url || '';
+  $('portalUrl')
+    .value =
+    row.portal_url ||
+    '';
 
 
-  $('notes').value =
-    row.notes || '';
+  $('notes')
+    .value =
+    row.notes ||
+    '';
 
 
   if (
@@ -1190,31 +2032,55 @@ function openEdit(id){
       const pad =
         n =>
           String(n)
-            .padStart(2,'0');
+            .padStart(
+              2,
+              '0'
+            );
 
 
-      $('lastReceived').value =
+      $('lastReceived')
+        .value =
+
         `${d.getFullYear()}-` +
-        `${pad(d.getMonth()+1)}-` +
-        `${pad(d.getDate())}T` +
-        `${pad(d.getHours())}:` +
-        `${pad(d.getMinutes())}`;
+
+        `${pad(
+          d.getMonth() + 1
+        )}-` +
+
+        `${pad(
+          d.getDate()
+        )}T` +
+
+        `${pad(
+          d.getHours()
+        )}:` +
+
+        `${pad(
+          d.getMinutes()
+        )}`;
 
     }
 
-  } else {
+  }
 
-    $('lastReceived').value =
+  else {
+
+    $('lastReceived')
+      .value =
       '';
 
   }
 
 
-  $('deleteBtn').style.display =
+  $('deleteBtn')
+    .style
+    .display =
     'inline-flex';
 
 
-  notice('');
+  notice(
+    ''
+  );
 
 
   $('sourceDialog')
@@ -1224,7 +2090,7 @@ function openEdit(id){
 
 
 /* =========================================================
-   SAVE
+   SAVE SOURCE
    ========================================================= */
 
 async function saveSource(){
@@ -1235,7 +2101,9 @@ async function saveSource(){
       .trim();
 
 
-  if (!broker){
+  if (
+    !broker
+  ){
 
     notice(
       'Broker / Company is required.',
@@ -1252,43 +2120,63 @@ async function saveSource(){
     tenant_id:
       tenant,
 
+
     broker_name:
       broker,
+
 
     email_address:
       $('emailAddress')
         .value
-        .trim() || null,
+        .trim() ||
+      null,
+
 
     frequency:
       $('frequency')
-        .value || null,
+        .value ||
+      null,
+
 
     status:
       $('sourceStatus')
-        .value || 'active',
+        .value ||
+      'active',
+
 
     freight_lanes:
       $('freightLanes')
         .value
-        .trim() || null,
+        .trim() ||
+      null,
+
 
     last_received_at:
-      $('lastReceived').value
+
+      $('lastReceived')
+        .value
+
         ? new Date(
-            $('lastReceived').value
-          ).toISOString()
+            $('lastReceived')
+              .value
+          )
+          .toISOString()
+
         : null,
+
 
     portal_url:
       $('portalUrl')
         .value
-        .trim() || null,
+        .trim() ||
+      null,
+
 
     notes:
       $('notes')
         .value
-        .trim() || null
+        .trim() ||
+      null
 
   };
 
@@ -1296,32 +2184,52 @@ async function saveSource(){
   let result;
 
 
-  if (editingId){
+  if (
+    editingId
+  ){
 
     result =
       await db
-        .from('load_email_sources')
-        .update(data)
+
+        .from(
+          'load_email_sources'
+        )
+
+        .update(
+          data
+        )
+
         .eq(
           'id',
           editingId
         )
+
         .eq(
           'tenant_id',
           tenant
         );
 
-  } else {
+  }
+
+  else {
 
     result =
       await db
-        .from('load_email_sources')
-        .insert(data);
+
+        .from(
+          'load_email_sources'
+        )
+
+        .insert(
+          data
+        );
 
   }
 
 
-  if (result.error){
+  if (
+    result.error
+  ){
 
     notice(
       result.error.message,
@@ -1343,12 +2251,14 @@ async function saveSource(){
 
 
 /* =========================================================
-   DELETE
+   DELETE SOURCE
    ========================================================= */
 
 async function deleteSource(){
 
-  if (!editingId){
+  if (
+    !editingId
+  ){
     return;
   }
 
@@ -1364,19 +2274,27 @@ async function deleteSource(){
 
   const result =
     await db
-      .from('load_email_sources')
+
+      .from(
+        'load_email_sources'
+      )
+
       .delete()
+
       .eq(
         'id',
         editingId
       )
+
       .eq(
         'tenant_id',
         tenant
       );
 
 
-  if (result.error){
+  if (
+    result.error
+  ){
 
     notice(
       result.error.message,
@@ -1461,6 +2379,31 @@ $('statusFilter')
   );
 
 
+$('closeOpportunity')
+  .addEventListener(
+    'click',
+    () =>
+      $('opportunityDialog')
+        .close()
+  );
+
+
+$('cancelOpportunity')
+  .addEventListener(
+    'click',
+    () =>
+      $('opportunityDialog')
+        .close()
+  );
+
+
+$('saveOpportunity')
+  .addEventListener(
+    'click',
+    saveEmailOpportunity
+  );
+
+
 /* =========================================================
    START
    ========================================================= */
@@ -1468,7 +2411,8 @@ $('statusFilter')
 async function start(){
 
   const session =
-    await db.auth.getSession();
+    await db.auth
+      .getSession();
 
 
   if (
@@ -1490,7 +2434,9 @@ async function start(){
     );
 
 
-  if (!tenant){
+  if (
+    !tenant
+  ){
 
     alert(
       'No profile linked to this login.'
