@@ -3,109 +3,222 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sourcing — Dispatch</title>
+
+<title>Sourcing — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
 <style>
-  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
-          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5; --accentbg:#e7f0f9;
-          --ok:#0f6e56; --okbg:#e4f4ee; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink);
-         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
-  main { padding:22px 18px 60px; max-width:1100px; margin:0 auto; }
-  h2.section { font-size:15px; font-weight:600; margin:0 0 4px; }
-  p.lead { color:var(--muted); margin:0 0 20px; font-size:13.5px; }
-  .cards { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-  a.card { display:block; text-decoration:none; color:inherit; background:var(--card);
-    border:1px solid var(--line); border-radius:12px; padding:18px 18px 16px;
-    transition:.12s; }
-  a.card:hover { border-color:var(--accent); box-shadow:0 3px 14px rgba(24,95,165,.10);
-    transform:translateY(-1px); }
-  .card .ico { width:38px; height:38px; border-radius:9px; background:var(--accentbg);
-    display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:12px; }
-  .card h3 { margin:0 0 4px; font-size:15.5px; font-weight:600; }
-  .card p { margin:0; color:var(--muted); font-size:12.5px; line-height:1.45; }
-  .card .go { margin-top:12px; font-size:12.5px; color:var(--accent); font-weight:600; }
-  .msg { padding:26px; text-align:center; color:var(--muted); }
+:root {
+  --bg:#f5f4f0;
+  --card:#fff;
+  --ink:#22221f;
+  --muted:#73726c;
+  --line:#e2e0da;
+  --accent:#6B92A5;
+  --accentbg:#EAF3F6;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+main {
+  padding:28px 24px 60px;
+  max-width:1180px;
+  margin:0 auto;
+}
+
+.page-intro {
+  margin-bottom:22px;
+}
+
+.page-intro h1 {
+  margin:0;
+  font-family:"Cinzel",Georgia,serif;
+  font-size:30px;
+  font-weight:600;
+  letter-spacing:1px;
+}
+
+.page-intro p {
+  margin:5px 0 0;
+  color:var(--accent);
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:19px;
+  font-style:italic;
+}
+
+.cards {
+  display:grid;
+  gap:14px;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+}
+
+a.card {
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:0;
+  padding:18px 18px 16px;
+  transition:.12s;
+}
+
+a.card:hover {
+  border-color:var(--accent);
+  box-shadow:0 3px 14px rgba(107,146,165,.10);
+  transform:translateY(-1px);
+}
+
+.card .ico {
+  width:38px;
+  height:38px;
+  background:var(--accentbg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  margin-bottom:12px;
+}
+
+.card h3 {
+  margin:0 0 4px;
+  font-size:15.5px;
+  font-weight:600;
+}
+
+.card p {
+  margin:0;
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.45;
+}
+
+.card .go {
+  margin-top:12px;
+  font-size:12.5px;
+  color:var(--accent);
+  font-weight:600;
+}
 </style>
 </head>
+
 <body>
 
 <header></header>
 
 <main>
-  <h2 class="section">Sourcing</h2>
-  <p class="lead">Find and win freight — work your relationships into your own private load board.</p>
 
-  <div class="cards" id="cards">
-    <a class="card" href="opportunities.html">
+  <section class="page-intro">
+    <h1>SOURCING</h1>
+    <p>Find and win freight — work your relationships into your own private load board.</p>
+  </section>
+
+  <div class="cards">
+
+    <a class="card" href="sourcing.html">
       <div class="ico">📋</div>
       <h3>Opportunities</h3>
-      <p>Your private load board — freight you've captured from calls, emails, and portals, ready to quote and book.</p>
+      <p>Your private load board — freight captured from calls, emails, and portals, ready to review, quote and book.</p>
       <div class="go">Open →</div>
     </a>
 
     <a class="card" href="call-queue.html">
       <div class="ico">📞</div>
       <h3>Call Queue</h3>
-      <p>Your daily call list — brokers and carriers due for a touch, in priority order.</p>
+      <p>Your daily broker and carrier outreach queue, organized by priority and follow-up.</p>
       <div class="go">Open →</div>
     </a>
 
     <a class="card" href="portals.html">
       <div class="ico">🌐</div>
       <h3>Portals</h3>
-      <p>Broker load portals to sweep each morning, with what's due to check.</p>
+      <p>Broker load portals and sourcing sites to review during your daily freight search.</p>
       <div class="go">Open →</div>
     </a>
 
-    <a class="card" href="inbox.html">
+    <a class="card" href="load-emails.html">
       <div class="ico">✉️</div>
       <h3>Load Emails</h3>
-      <p>Broker daily load-email feeds you're subscribed to, and where the freight lives in each.</p>
+      <p>Broker load-email feeds, recurring freight emails and load opportunities received by email.</p>
       <div class="go">Open →</div>
     </a>
 
     <a class="card" href="templates.html">
       <div class="ico">📄</div>
       <h3>Templates</h3>
-      <p>Your dispatcher documents and the full paperwork flow from onboarding a carrier through delivery.</p>
+      <p>Dispatcher documents, messages and paperwork templates used throughout the load workflow.</p>
       <div class="go">Open →</div>
     </a>
 
-    <a href="calculators.html" class="hub-card">
-  <h3>Calculators</h3>
-  <p>HOS and dispatch profit planning tools.</p>
-</a>
+    <a class="card" href="calculators.html">
+      <div class="ico">🧮</div>
+      <h3>Calculators</h3>
+      <p>HOS, dispatch profit, detention and accessorial planning tools.</p>
+      <div class="go">Open →</div>
+    </a>
 
-<a href="field-manual.html" class="hub-card">
-  <h3>Field Manual</h3>
-  <p>Heavy haul dispatch reference and refresher guide.</p>
-</a>    
+    <a class="card" href="field-manual.html">
+      <div class="ico">📘</div>
+      <h3>Field Manual</h3>
+      <p>Heavy haul dispatch reference, workflow guidance and refresher material.</p>
+      <div class="go">Open →</div>
+    </a>
 
     <a class="card" href="testing.html">
-  <div class="ico">🧪</div>
-  <h3>Testing</h3>
-  <p>Enable protected Training Mode, review test records, and reset disposable training data.</p>
-  <div class="go">Open →</div>
-</a>
-    
+      <div class="ico">🧪</div>
+      <h3>Testing</h3>
+      <p>Enable protected Training Mode, populate TT records and reset disposable training data.</p>
+      <div class="go">Open →</div>
+    </a>
+
   </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="nav.js"></script>
-<script
-const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+<script>
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBiYXNlIiwicmVmIjoienloZGF0dGVnbHhvenNnbmpocm0iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NTI4MTMxMCwiZXhwIjoyMTAwODU3MzEwfQ.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 
 if (typeof window.supabase !== 'undefined') {
-  window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.db =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
   (async () => {
-    const s = await window.db.auth.getSession();
-    if (!s.data.session) { location.href = 'index.html'; return; }
-    await buildNav(window.db, 'Sourcing');
+    const s =
+      await window.db.auth.getSession();
+
+    if (!s.data.session) {
+      location.href = 'index.html';
+      return;
+    }
+
+    await buildNav(
+      window.db,
+      'Sourcing'
+    );
   })();
 }
 </script>
+
 </body>
 </html>
