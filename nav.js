@@ -304,44 +304,30 @@ async function buildNav(
   // ========================================================
 
   const brandRow = setStyles(
-    document.createElement('div'),
-    {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent:
-        'space-between',
+  document.createElement('div'),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    minHeight: '54px',
+    padding: '0 26px',
+    borderBottom: '1px solid #eeeeee',
+    boxSizing: 'border-box'
+  }
+);
 
-      minHeight: '54px',
-
-      padding:
-        '0 26px',
-
-      borderBottom:
-        '1px solid #eeeeee',
-
-      boxSizing:
-        'border-box'
-    }
-  );
-
-
-  const brand = setStyles(
-    document.createElement('a'),
-    {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent:
-        'flex-start',
-
-      width: '100%',
-
-      color: '#222222',
-
-      textDecoration:
-        'none'
-    }
-  );
-
+const brand = setStyles(
+  document.createElement('a'),
+  {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: 'auto',
+    marginLeft: 'auto',
+    color: '#222222',
+    textDecoration: 'none'
+  }
+);
 
   brand.href =
     'welcome.html';
