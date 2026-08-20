@@ -1883,13 +1883,45 @@ async function saveEmailOpportunity(){
   }
 
 
+    // ---------------------------------------------------------
+  // MARK THIS EMAIL SOURCE AS RECEIVED
+  // ---------------------------------------------------------
+
+  const receivedAt =
+    new Date().toISOString();
+
+  const sourceUpdate =
+    await db
+      .from('load_email_sources')
+      .update({
+        last_received_at: receivedAt
+      })
+      .eq(
+        'id',
+        opportunitySourceId
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      );
+
+
+  if (sourceUpdate.error) {
+
+    console.warn(
+      'Could not update Last Received:',
+      sourceUpdate.error.message
+    );
+
+  }
+
+
   $('opportunityDialog')
     .close();
 
 
   location.href =
     'sourcing.html';
-
 }
 
 
