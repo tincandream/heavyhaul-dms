@@ -68,7 +68,7 @@ const HUB_PAGES = {
 // ============================================================
 
 const SOURCING_NAV = [
-  ['sourcing.html',     'Opportunities'],
+  ['opportunities.html',     'Opportunities'],
   ['call-queue.html',   'Call Queue'],
   ['portals.html',      'Portals'],
   ['load-emails.html',  'Load Emails'],
