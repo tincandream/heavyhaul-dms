@@ -667,13 +667,41 @@ dialog.assign-dialog::backdrop {
     <div id="legal"></div>
   </div>
 
-  <div class="card">
-    <h2>Dispatch Queue</h2>
-    <p class="hint">
-      Loads being assembled before release to Fleet Board.
-    </p>
-    <div id="dispatchQueue">Loading draft loads…</div>
+ <div class="card">
+
+  <div style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  ">
+
+    <div>
+      <h2 style="margin-bottom:4px;">
+        Dispatch Queue
+      </h2>
+
+      <p class="hint" style="margin:0;">
+        Loads being assembled before release to Fleet Board.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      id="clearDispatchQueue"
+      class="secondary">
+      Clear Queue
+    </button>
+
   </div>
+
+  <div
+    id="dispatchQueue"
+    style="margin-top:16px;">
+    Loading draft loads…
+  </div>
+
+</div>
 
 
   <div class="workflow-band assigned-band">
@@ -3660,21 +3688,24 @@ function updateSaveLabel() {
 async function loadDispatchQueue() {
 
   const box =
-    document.getElementById('dispatchQueue');
+    document.getElementById(
+      'dispatchQueue'
+    );
 
   if (!box) {
-    console.error('Dispatch Queue container not found.');
     return;
   }
 
+
   box.textContent =
     'Loading draft loads…';
+
 
   const result =
     await db
       .from('loads')
       .select(
-        'id,load_number,broker_load_number,commodity,status,pickup_appt_start'
+        'id,load_number,broker_load_number,commodity,status,pickup_appt_start,created_at'
       )
       .eq(
         'tenant_id',
@@ -3691,37 +3722,56 @@ async function loadDispatchQueue() {
         }
       );
 
+
   if (result.error) {
 
     box.textContent =
       'Could not load Dispatch Queue: ' +
       result.error.message;
 
-    console.error(
-      'Dispatch Queue:',
-      result.error
-    );
-
     return;
   }
+
 
   const loads =
     result.data || [];
 
+
   if (!loads.length) {
 
     box.textContent =
-      'No draft / quoted loads waiting.';
+      'No draft loads waiting.';
 
     return;
   }
+
 
   box.innerHTML =
     loads
       .map(
         load => {
 
-          const parts =
+          const dateValue =
+            load.pickup_appt_start ||
+            load.created_at;
+
+
+          const dateText =
+            dateValue
+              ? new Date(
+                  dateValue
+                ).toLocaleDateString(
+                  'en-US',
+                  {
+                    month:'short',
+                    day:'numeric',
+                    year:'numeric'
+                  }
+                )
+              : 'No date';
+
+
+          const title =
             [
               load.load_number,
 
@@ -3730,31 +3780,42 @@ async function loadDispatchQueue() {
                   load.broker_load_number
                 : '',
 
-              load.commodity || ''
+              load.commodity ||
+              ''
             ]
             .filter(Boolean)
             .join(' · ');
 
+
           return `
             <div
               style="
-                padding:10px 0;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:18px;
+                padding:11px 0;
                 border-bottom:1px solid var(--line);
               "
             >
+
               <a
                 href="newload.html?load=${encodeURIComponent(load.id)}"
+                style="font-weight:600;"
               >
-                ${parts.replace(
-                  /[&<>"]/g,
-                  c => ({
-                    '&':'&amp;',
-                    '<':'&lt;',
-                    '>':'&gt;',
-                    '"':'&quot;'
-                  }[c])
-                )}
+                ${escapeHtml(title)}
               </a>
+
+              <span
+                style="
+                  white-space:nowrap;
+                  color:var(--muted);
+                  font-size:12px;
+                "
+              >
+                ${escapeHtml(dateText)}
+              </span>
+
             </div>
           `;
 
@@ -3764,6 +3825,62 @@ async function loadDispatchQueue() {
 
 }
 
+
+document
+  .getElementById(
+    'clearDispatchQueue'
+  )
+  ?.addEventListener(
+    'click',
+    async () => {
+
+      const confirmed =
+        confirm(
+          'Clear all Draft / Quoted loads from the Dispatch Queue?\n\nThis cannot be undone.'
+        );
+
+
+      if (!confirmed) {
+        return;
+      }
+
+
+      const result =
+        await db
+          .from('loads')
+          .delete()
+          .eq(
+            'tenant_id',
+            tenant
+          )
+          .eq(
+            'status',
+            'quoted'
+          );
+
+
+      if (result.error) {
+
+        alert(
+          'Could not clear Dispatch Queue: ' +
+          result.error.message
+        );
+
+        return;
+      }
+
+
+      await loadDispatchQueue();
+
+
+      say(
+        'Dispatch Queue cleared.',
+        'ok'
+      );
+
+    }
+  );
+  
 async function loadExistingDraft() {
   const params = new URLSearchParams(window.location.search);
   EDIT_LOAD_ID = params.get('load');
