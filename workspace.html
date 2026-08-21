@@ -191,7 +191,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-profit-hos-overview">
+<body data-workspace-version="2026-08-21-tt-current-time">
 
 <header></header>
 
@@ -2135,74 +2135,66 @@ function drawActions(){
 const TT_CHECKIN_ROUTE = [
   {
     type:'at_pickup',
-    when:'2026-08-13T08:00',
     city:'Hugg & Hall Equipment Co., Little Rock',
     state:'AR',
     miles:137,
-    eta:'2026-08-13T13:00',
+    etaMinutes:300,
     notes:'TT TRAINING — Arrived at pickup. Driver checked in at Hugg & Hall Equipment Co. in Little Rock, AR.'
   },
   {
     type:'departure',
-    when:'2026-08-13T09:05',
     city:'Little Rock',
     state:'AR',
     miles:137,
-    eta:'2026-08-13T13:00',
+    etaMinutes:235,
     notes:'TT TRAINING — Loaded, secured and departed pickup. Eastbound toward Memphis, TN.'
   },
   {
     type:'en_route',
-    when:'2026-08-13T09:35',
     city:'Lonoke',
     state:'AR',
     miles:113,
-    eta:'2026-08-13T13:00',
+    etaMinutes:205,
     notes:'TT TRAINING — Driver check-in at Lonoke, AR. Load secure. Continuing eastbound toward Memphis.'
   },
   {
     type:'en_route',
-    when:'2026-08-13T10:20',
     city:'Brinkley',
     state:'AR',
     miles:72,
-    eta:'2026-08-13T13:00',
+    etaMinutes:160,
     notes:'TT TRAINING — Driver check-in at Brinkley, AR. Continuing eastbound. No issues reported.'
   },
   {
     type:'en_route',
-    when:'2026-08-13T11:05',
     city:'Forrest City',
     state:'AR',
     miles:46,
-    eta:'2026-08-13T13:00',
+    etaMinutes:115,
     notes:'TT TRAINING — Driver check-in at Forrest City, AR. Load secure. Continuing eastbound toward Memphis, TN. No delays reported.'
   },
   {
     type:'en_route',
-    when:'2026-08-13T12:05',
     city:'West Memphis',
     state:'AR',
     miles:12,
-    eta:'2026-08-13T13:00',
+    etaMinutes:55,
     notes:'TT TRAINING — Approaching Tennessee state line from West Memphis, AR. Load secure and route proceeding as planned.'
   },
   {
     type:'en_route',
-    when:'2026-08-13T12:35',
     city:'Memphis',
     state:'TN',
     miles:5,
-    eta:'2026-08-13T13:00',
+    etaMinutes:25,
     notes:'TT TRAINING — Entered Memphis, TN. Proceeding to Thompson Machinery for delivery.'
   },
   {
     type:'at_delivery',
-    when:'2026-08-13T13:00',
     city:'Thompson Machinery, Memphis',
     state:'TN',
     miles:0,
-    eta:'2026-08-13T13:00',
+    etaMinutes:0,
     notes:'TT TRAINING — Arrived at Thompson Machinery in Memphis, TN for delivery.'
   }
 ];
@@ -2227,11 +2219,34 @@ function fillTTCheckIn(index){
   TT_CHECKIN_INDEX =
     safeIndex;
 
+
+  /*
+    TT TRAINING TIME RULE:
+    Always use the real local time when this training point is filled.
+    This keeps each newly logged TT check-in newer than the prior one,
+    so Workspace / Timeline / Fleet Board can identify the current
+    location correctly.
+  */
+  const now =
+    new Date();
+
+  const eta =
+    new Date(
+      now.getTime() +
+      Number(
+        step.etaMinutes || 0
+      ) *
+      60000
+    );
+
+
   $('ci_type').value =
     step.type;
 
   $('ci_when').value =
-    step.when;
+    toLocalInput(
+      now
+    );
 
   $('ci_city').value =
     step.city;
@@ -2243,7 +2258,9 @@ function fillTTCheckIn(index){
     step.miles;
 
   $('ci_eta').value =
-    step.eta;
+    toLocalInput(
+      eta
+    );
 
   $('ci_notes').value =
     step.notes;
@@ -2253,10 +2270,9 @@ function fillTTCheckIn(index){
     (safeIndex + 1) +
     ' of ' +
     TT_CHECKIN_ROUTE.length +
-    ' filled'
+    ' filled · current time used'
   );
 }
-
 
 async function findNextTTCheckIn(){
 
