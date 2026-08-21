@@ -1,5 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+
+<title>New Load — Dispatch</title>
+
+
+<style>
+
+
+  :root {
+    --bg:#f5f4f0;
+    --card:#fff;
+    --ink:#22221f;
+    --muted:#73726c;
+    --line:#e2e0da;
+    --line2:#cfccc4;
+    --accent:#185fa5;
+    --danger:#a32d2d;
+    --dangerbg:#fcebeb;
+    --warn:#8a5a10;
+    --warnbg:#fdf3e3;
+    --ok:#0f6e56;
+    --okbg:#e4f4ee;
+  }
+
+
+  * {
+    box-sizing:border-box;
+  }
+
+
+  body {
+    margin:0;
+    background:var(--bg);
+newload-calculator-links.html
+HTML
+ready for fleet
+
+Ready — I updated fleet.html next.
+
+Download the updated fleet.html
+
+I kept both nav systems intact and did not touch your carrier/driver/truck/trailer save logic. The Fleet profile still stores the real baseline terms such as target RPM, minimum RPM, minimum day rate, detention, TONU, and layover.
+
+What I added is a Calculator Source Terms section under the Fleet Profile. It explains that these carrier terms are the baseline Calculators will use once that carrier is assigned to a load, and it provides quick links to Rate / Profit and Accessorial calculators.
+
+The important distinction is preserved: Fleet Setup owns the carrier baseline, while a specific load can still have negotiated load-specific terms that override that baseline.
+
+I also verified the rebuilt file still contains the main nav.js, Fleet Command navigation, buildFleetCommandTabs('fleet.html'), and your existing profile fields.
+
+Next is route-planning.html, where we can connect the saved loaded miles directly into the Rate / Profit workflow. 
+
+fleet-calculator-links.html
+HTML
+
+fleet-calculator-links.html
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -182,23 +246,6 @@
   .calc-actions button:hover {
     border-color:#7FA5B5;
   }
-
-  .tt-btn {
-    display:none;
-    margin:0 0 0 14px;
-    padding:8px 12px;
-    background:#6B92A5;
-    color:#fff;
-    border:0;
-    border-radius:7px;
-    font-size:12px;
-    font-weight:600;
-    cursor:pointer;
-  }
-
-  .tt-btn.show {
-    display:inline-block;
-  }
   
 </style>
 </head>
@@ -210,7 +257,10 @@
      FLEET COMMAND WORKSPACE NAV
      ========================================================= -->
 
-
+<nav
+  id="fleetCommandTabs"
+  aria-label="Fleet Command navigation">
+</nav>
 
 <main>
 
@@ -448,10 +498,6 @@
         Save profile
       </button>
 
-      <button id="p_fill_test" class="tt-btn">
-        Fill test data
-      </button>
-
       <div class="msg" id="p_msg"></div>
 
       <div class="calc-source">
@@ -495,11 +541,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="nav.js"></script>
+<script src="fleet-command-tabs.js"></script>
 
 <script>
 // ===== FILL IN THESE TWO VALUES =====
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4S[...]
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
 // ====================================
 
 const $ = id => document.getElementById(id);
@@ -561,12 +608,64 @@ async function start() {
     return;
   }
 
- 
+  buildFleetCommandTabs('fleet.html');
 
   await refresh();
 
   await ttInit();
 
+}
+
+
+
+function clearProfileFields() {
+  [
+    'p_target_rpm',
+    'p_min_rpm',
+    'p_day_rate',
+    'p_deadhead',
+    'p_detention_rate',
+    'p_detention_after',
+    'p_tonu',
+    'p_layover',
+    'p_negotiables',
+    'p_preferences',
+    'p_requirements',
+    'p_notes'
+  ].forEach(id => {
+    const el = $(id);
+    if (el) el.value = '';
+  });
+
+  if ($('p_msg')) {
+    $('p_msg').textContent = '';
+    $('p_msg').className = 'msg';
+  }
+}
+
+
+function clearFleetEntryForms() {
+  [
+    'c_legal','c_dba','c_mc','c_dot','c_phone','c_ah','c_email',
+    'c_addr','c_city','c_state','c_zip','c_notes',
+
+    'd_first','d_last','d_phone','d_email','d_cdl','d_cdlst',
+    'd_end','d_hire','d_notes',
+
+    't_unit','t_make','t_model','t_year','t_vin','t_plate','t_plst',
+    't_axles','t_empty','t_notes',
+
+    'r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
+    'r_pay','r_plate','r_notes'
+  ].forEach(id => {
+    const el = $(id);
+    if (el) el.value = '';
+  });
+
+  if ($('d_over')) $('d_over').value = 'false';
+  if ($('t_op')) $('t_op').value = 'available';
+
+  clearProfileFields();
 }
 
 
@@ -578,11 +677,21 @@ async function refresh() {
   $('step1').style.display = carriers.length ? 'none' : 'block';
 
   ['d_carrier','t_carrier','r_carrier','p_carrier'].forEach(id => {
-    const keep = $(id).value;
-    $(id).innerHTML = carriers.map(x =>
+    const select = $(id);
+    const keep = select.value;
+
+    select.innerHTML = carriers.map(x =>
       '<option value="' + x.id + '">' + esc(x.legal_name) + '</option>').join('')
       || '<option value="">— add a carrier first —</option>';
-    if (keep) $(id).value = keep;
+
+    if (
+      keep &&
+      carriers.some(x => x.id === keep)
+    ) {
+      select.value = keep;
+    } else if (!carriers.length) {
+      select.value = '';
+    }
   });
 
   $('c_list').innerHTML = carriers.length
@@ -676,7 +785,14 @@ async function refresh() {
     .eq('tenant_id', tenant)
     .order('updated_at', { ascending:false });
 
-  const profiles = pr.data || [];
+  const activeCarrierIds =
+    new Set(carriers.map(x => x.id));
+
+  const profiles =
+    (pr.data || [])
+      .filter(x =>
+        activeCarrierIds.has(x.carrier_id)
+      );
 
   $('p_list').innerHTML = profiles.length
     ? rowsTable(
@@ -692,6 +808,8 @@ async function refresh() {
 
   if ($('p_carrier').value) {
     await loadProfileForCarrier();
+  } else {
+    clearProfileFields();
   }
 }
 
@@ -1024,23 +1142,18 @@ $('r_save').addEventListener('click', async () => {
     return;
   }
 
-  if (!val('r_type')) {
-    say('r_msg', 'Trailer type is required.', 'err');
-    return;
-  }
-
   $('r_save').disabled = true;
 
   const trailerData = {
     tenant_id: tenant,
     carrier_id: val('r_carrier'),
     unit_number: val('r_unit'),
-    equipment_type: val('r_type'),
+    equipment_type: $('r_type').value,
     make: val('r_make'),
     year: num('r_year'),
     axle_count: num('r_axles'),
-    deck_length_inches: num('r_dlen'),
-    deck_height_inches: num('r_dht'),
+    deck_length_in: num('r_dlen'),
+    deck_height_in: num('r_dht'),
     empty_weight_lb: num('r_empty'),
     max_payload_lb: num('r_pay'),
     plate_number: val('r_plate'),
@@ -1056,7 +1169,6 @@ $('r_save').addEventListener('click', async () => {
       .from('equipment')
       .select('id,is_training,status,archived_at')
       .eq('tenant_id', tenant)
-      .eq('equipment_type', trailerData.equipment_type)
       .eq('unit_number', trailerData.unit_number)
       .maybeSingle();
 
@@ -1096,24 +1208,17 @@ $('r_save').addEventListener('click', async () => {
 
   say(
     'r_msg',
-    trainingActive
-      ? 'Training trailer ready. It will appear on the Fleet Board.'
-      : 'Trailer saved. It will appear on the Fleet Board.',
+    trainingActive ? 'Training trailer ready.' : 'Trailer saved.',
     'ok'
   );
 
   [
-    'r_unit','r_make','r_year','r_axles','r_dlen','r_dht',
-    'r_empty','r_pay','r_plate','r_notes'
+    'r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
+    'r_pay','r_plate','r_notes'
   ].forEach(id => { $(id).value = ''; });
 
   await refresh();
 });
-
-
-/* ============================================================
-   LOAD PROFILE FOR CARRIER
-   ============================================================ */
 
 async function loadProfileForCarrier() {
 
@@ -1121,54 +1226,53 @@ async function loadProfileForCarrier() {
     val('p_carrier');
 
   if (!carrierId) {
+    clearProfileFields();
     return;
   }
 
-  const result =
+  const r =
     await db
       .from('carrier_profiles')
       .select('*')
+      .eq('tenant_id', tenant)
       .eq('carrier_id', carrierId)
       .maybeSingle();
 
-  if (result.error) {
-    console.warn(
-      'Error loading profile:',
-      result.error.message
+  if (r.error) {
+    say(
+      'p_msg',
+      r.error.message,
+      'err'
     );
     return;
   }
 
   const x =
-    result.data;
-
-  if (!x) {
-    return;
-  }
+    r.data || {};
 
   $('p_target_rpm').value =
-    x.target_rate_per_mile || '';
+    x.target_rate_per_mile ?? '';
 
   $('p_min_rpm').value =
-    x.minimum_rate_per_mile || '';
+    x.minimum_rate_per_mile ?? '';
 
   $('p_day_rate').value =
-    x.minimum_day_rate || '';
+    x.minimum_day_rate ?? '';
 
   $('p_deadhead').value =
-    x.max_deadhead_miles || '';
+    x.max_deadhead_miles ?? '';
 
   $('p_detention_rate').value =
-    x.detention_rate_per_hour || '';
+    x.detention_rate_per_hour ?? '';
 
   $('p_detention_after').value =
-    x.detention_after_hours || '';
+    x.detention_after_hours ?? '';
 
   $('p_tonu').value =
-    x.tonu_minimum || '';
+    x.tonu_minimum ?? '';
 
   $('p_layover').value =
-    x.layover_rate_per_day || '';
+    x.layover_rate_per_day ?? '';
 
   $('p_negotiables').value =
     x.negotiables || '';
@@ -1359,46 +1463,252 @@ document.querySelectorAll('.tab').forEach(t => {
     $('p-' + t.dataset.p).classList.add('on');
   });
 });
-
-/* ============================================================
-   TRAINING MODE — TEST DATA AUTO-FILL FOR PROFILE
-   Button appears only while protected Training Mode is active.
+  /* ============================================================
+   TRAINING MODE — TEST DATA AUTO-FILL
+   Buttons appear only while protected Training Mode is active.
    ============================================================ */
 
-const TT_PROFILE = {
-  p_target_rpm:      '3.50',
-  p_min_rpm:         '2.75',
-  p_day_rate:        '500',
-  p_deadhead:        '150',
-  p_detention_rate:  '50',
-  p_detention_after: '2',
-  p_tonu:            '250',
-  p_layover:         '350',
-  p_negotiables:     'Fuel surcharge: 10%. Accessorials negotiable. Weekly settlements preferred.',
-  p_preferences:     'Prefers regional loads within 500 miles. Home time every 2 weeks. Southeast lanes preferred.',
-  p_requirements:    'DOT certified. Cargo insurance required. Roll-on/roll-off capable equipment needed.',
-  p_notes:           'Training profile. All values are examples for demo purposes only.'
+const TT = {
+  carrier: {
+    c_legal: 'Delta Ridge Heavy Transport LLC',
+    c_dba:   'Delta Ridge Heavy Haul',
+    c_mc:    'MC-884213',
+    c_dot:   '3921745',
+    c_phone: '(901) 555-0142',
+    c_ah:    '(901) 555-0198',
+    c_email: 'dispatch@deltaridgeheavy.com',
+    c_addr:  '4820 Getwell Road',
+    c_city:  'Memphis',
+    c_state: 'TN',
+    c_zip:   '38118',
+    c_notes: 'Training test carrier. RGN and step deck. Southeast regional lanes.'
+  },
+  driver: {
+    d_first: 'Marcus',
+    d_last:  'Whitfield',
+    d_phone: '(901) 555-0367',
+    d_email: 'mwhitfield@deltaridgeheavy.com',
+    d_cdl:   'TN-4471903',
+    d_cdlst: 'TN',
+    d_end:   'T, N',
+    d_hire:  '2019-04-15',
+    d_notes: 'Training driver. 12 years heavy haul, oversize experienced.'
+  },
+  tractor: {
+    t_unit:  '407',
+    t_make:  'Peterbilt',
+    t_model: '389',
+    t_year:  '2021',
+    t_vin:   '1XPXD49X1MD745203',
+    t_plate: 'H84129',
+    t_plst:  'TN',
+    t_axles: '3',
+    t_empty: '19500',
+    t_notes: 'Training unit. Day cab, 550hp, wet kit.'
+  },
+  trailer: {
+    r_unit:  'RG-212',
+    r_type:  'RGN',
+    r_make:  'Fontaine',
+    r_year:  '2019',
+    r_plate: 'T29844',
+    r_axles: '3',
+    r_dlen:  '53',
+    r_dht:   '18',
+    r_empty: '17800',
+    r_pay:   '55000',
+    r_notes: 'Training unit. Detachable gooseneck, 3-axle.'
+  }
 };
 
-$('p_fill_test').addEventListener('click', () => {
-  Object.entries(TT_PROFILE).forEach(([id, value]) => {
-    const el = $(id);
-    if (el) {
-      el.value = value;
-      el.dispatchEvent(new Event('input',  { bubbles:true }));
-      el.dispatchEvent(new Event('change', { bubbles:true }));
-    }
-  });
-});
+function ttFill(setName){
+
+  const data =
+    TT[setName];
+
+  if (!data) {
+    console.warn(
+      'No TT data found for:',
+      setName
+    );
+    return;
+  }
+
+
+  Object.entries(data)
+    .forEach(
+      ([id, value]) => {
+
+        const el =
+          document.getElementById(id);
+
+        if (!el) {
+          console.warn(
+            'TT field not found:',
+            id
+          );
+          return;
+        }
+
+
+        if (el.tagName === 'SELECT') {
+
+          const wanted =
+            String(value)
+              .trim()
+              .toLowerCase();
+
+          const match =
+            Array.from(el.options)
+              .find(
+                option =>
+                  option.value
+                    .trim()
+                    .toLowerCase() === wanted
+
+                  ||
+
+                  option.textContent
+                    .trim()
+                    .toLowerCase() === wanted
+              );
+
+          if (match) {
+            el.value =
+              match.value;
+          }
+
+        }
+        else {
+
+          el.value =
+            value ?? '';
+
+        }
+
+
+        el.dispatchEvent(
+          new Event(
+            'input',
+            {
+              bubbles: true
+            }
+          )
+        );
+
+
+        el.dispatchEvent(
+          new Event(
+            'change',
+            {
+              bubbles: true
+            }
+          )
+        );
+
+      }
+    );
+
+
+  /*
+    Driver-specific confirmation.
+    These are real values, not placeholders.
+  */
+
+  if (setName === 'driver') {
+
+    $('d_first').value =
+      TT.driver.d_first;
+
+    $('d_last').value =
+      TT.driver.d_last;
+
+  }
+
+}
 
 async function ttInit() {
-  const ts = await getProtectedTrainingStatus();
-  if (ts.active) {
-    $('p_fill_test').classList.add('show');
+  try {
+    const trainingStatus = await getProtectedTrainingStatus();
+
+    if (trainingStatus.active !== true) {
+      return;
+    }
+
+    [
+      ['c_save', 'carrier'],
+      ['d_save', 'driver'],
+      ['t_save', 'tractor'],
+      ['r_save', 'trailer']
+    ].forEach(pair => {
+      const saveBtn = document.getElementById(pair[0]);
+
+      if (!saveBtn || document.getElementById('ttfill_' + pair[1])) {
+        return;
+      }
+
+      const button = document.createElement('button');
+      button.id = 'ttfill_' + pair[1];
+      button.type = 'button';
+      button.textContent = 'Fill test data';
+      button.style.cssText =
+        'margin-right:8px;' +
+        'background:#B8B05D;' +
+        'border:1px solid #B8B05D;' +
+        'color:#3C3A4B;' +
+        'font-weight:600;' +
+        'cursor:pointer;';
+
+      button.addEventListener('click', () => {
+        ttFill(pair[1]);
+      });
+
+      saveBtn.parentNode.insertBefore(button, saveBtn);
+    });
+  }
+  catch (error) {
+    console.warn('Training Mode initialization failed:', error);
   }
 }
 
+
+// ============================================================
+// RETURN FROM TESTING / TRAINING RESET
+//
+// Browsers can restore fleet.html from memory when using Back.
+// If Training Mode has ended, refresh from Supabase and clear
+// any stale form values that were left on screen by the TT.
+// ============================================================
+
+window.addEventListener(
+  'pageshow',
+  async event => {
+
+    if (!db || !tenant) {
+      return;
+    }
+
+    try {
+      const trainingStatus =
+        await getProtectedTrainingStatus();
+
+      if (trainingStatus.active !== true) {
+        clearFleetEntryForms();
+      }
+
+      await refresh();
+    }
+    catch (error) {
+      console.warn(
+        'Fleet page refresh after Training Mode:',
+        error
+      );
+    }
+  }
+);
+
 </script>
+
 
 </body>
 </html>
