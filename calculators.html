@@ -1101,6 +1101,42 @@ main {
 
             <div class="field">
 
+              <label for="hosObservedAt">
+                ELD observed at
+              </label>
+
+              <input
+                id="hosObservedAt"
+                type="datetime-local"
+              >
+
+              <div class="explain">
+                Enter the local date/time when these HOS clocks were read from the driver's ELD.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="hosPlannedBreakAt">
+                Planned qualifying break
+              </label>
+
+              <input
+                id="hosPlannedBreakAt"
+                type="datetime-local"
+              >
+
+              <div class="explain">
+                Optional planning time for the next qualifying break.
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
               <label for="driveRemaining">
                 Driving time remaining
               </label>
@@ -3387,9 +3423,107 @@ async function saveCalculationSnapshot(
    HOS CALCULATOR
    ============================================================ */
 
+function hosLocalToIso(value) {
+
+  if (!value) {
+    return null;
+  }
+
+  const d =
+    new Date(value);
+
+  return Number.isNaN(
+    d.getTime()
+  )
+    ? null
+    : d.toISOString();
+}
+
+
+function hosAddHours(isoValue, hoursValue) {
+
+  if (
+    !isoValue ||
+    !Number.isFinite(
+      Number(hoursValue)
+    )
+  ) {
+    return null;
+  }
+
+  const start =
+    new Date(isoValue);
+
+  if (
+    Number.isNaN(
+      start.getTime()
+    )
+  ) {
+    return null;
+  }
+
+  return new Date(
+    start.getTime() +
+    Number(hoursValue) *
+    60 *
+    60 *
+    1000
+  ).toISOString();
+}
+
+
+function hosEarliestDeadline(items) {
+
+  const valid =
+    items
+      .filter(
+        item =>
+          item &&
+          item.at
+      )
+      .map(
+        item => ({
+          ...item,
+          ms:
+            new Date(
+              item.at
+            ).getTime()
+        })
+      )
+      .filter(
+        item =>
+          Number.isFinite(
+            item.ms
+          )
+      )
+      .sort(
+        (a, b) =>
+          a.ms -
+          b.ms
+      );
+
+  return (
+    valid[0] ||
+    null
+  );
+}
+
+
 function calculateHos() {
 
   lastHosCalculation = null;
+
+
+  const observedAt =
+    hosLocalToIso(
+      $('hosObservedAt')?.value
+    );
+
+
+  const plannedBreakAt =
+    hosLocalToIso(
+      $('hosPlannedBreakAt')?.value
+    );
 
 
   const driveRemaining =
@@ -3442,6 +3576,7 @@ function calculateHos() {
 
 
   if (
+    !observedAt ||
     driveRemaining <= 0 ||
     windowRemaining <= 0 ||
     cycleRemaining <= 0 ||
@@ -3460,7 +3595,7 @@ function calculateHos() {
 
     $('hosStatusDetail')
       .textContent =
-      'Enter positive remaining ELD clocks and planned driving time.';
+      'Enter the ELD observed time, positive remaining clocks, and planned driving time.';
 
 
     return;
@@ -3520,6 +3655,67 @@ function calculateHos() {
       driveSinceBreak +
       tripDrive
     ) > 8;
+
+
+  const driveClockEndsAt =
+    hosAddHours(
+      observedAt,
+      driveRemaining
+    );
+
+
+  const windowEndsAt =
+    hosAddHours(
+      observedAt,
+      windowRemaining
+    );
+
+
+  const cycleEndsAt =
+    hosAddHours(
+      observedAt,
+      cycleRemaining
+    );
+
+
+  const breakHoursRemaining =
+    Math.max(
+      0,
+      8 -
+      driveSinceBreak
+    );
+
+
+  const breakDueAt =
+    hosAddHours(
+      observedAt,
+      breakHoursRemaining
+    );
+
+
+  const nextDeadline =
+    hosEarliestDeadline([
+      {
+        kind:'break_due',
+        label:'30-minute break due',
+        at:breakDueAt
+      },
+      {
+        kind:'drive_clock',
+        label:'11-hour drive clock',
+        at:driveClockEndsAt
+      },
+      {
+        kind:'window',
+        label:'14-hour window',
+        at:windowEndsAt
+      },
+      {
+        kind:'cycle',
+        label:'Cycle projection',
+        at:cycleEndsAt
+      }
+    ]);
 
 
 
@@ -3722,6 +3918,8 @@ function calculateHos() {
 
   lastHosCalculation = {
     inputs: {
+      observedAt,
+      plannedBreakAt,
       driveRemaining,
       windowRemaining,
       cycleRemaining,
@@ -3748,6 +3946,20 @@ function calculateHos() {
       totalWindowDemand,
       totalCycleDemand,
       breakNeeded,
+      driveClockEndsAt,
+      windowEndsAt,
+      cycleEndsAt,
+      breakDueAt,
+      nextDeadlineKind:
+        nextDeadline?.kind ||
+        null,
+      nextDeadlineLabel:
+        nextDeadline?.label ||
+        null,
+      nextDeadlineAt:
+        nextDeadline?.at ||
+        null,
+      plannedBreakAt,
       warnings
     }
   };
@@ -3800,6 +4012,8 @@ $('resetHos')
 
 
       [
+        'hosObservedAt',
+        'hosPlannedBreakAt',
         'driveRemaining',
         'windowRemaining',
         'cycleRemaining',
@@ -6389,6 +6603,44 @@ function ttLocalDateTime(date) {
 
 function fillHosTestData() {
 
+  const now =
+    new Date();
+
+  const observed =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      8,
+      0,
+      0,
+      0
+    );
+
+  const plannedBreak =
+    new Date(
+      observed.getTime() +
+      6 *
+      60 *
+      60 *
+      1000
+    );
+
+
+  ttSetValue(
+    'hosObservedAt',
+    ttLocalDateTime(
+      observed
+    )
+  );
+
+  ttSetValue(
+    'hosPlannedBreakAt',
+    ttLocalDateTime(
+      plannedBreak
+    )
+  );
+
   ttSetValue(
     'driveRemaining',
     '6.5'
@@ -6426,7 +6678,7 @@ function fillHosTestData() {
 
   ttSetValue(
     'breakPlanned',
-    'no'
+    'yes'
   );
 
   calculateHos();
