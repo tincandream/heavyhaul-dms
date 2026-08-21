@@ -664,9 +664,27 @@ dialog.assign-dialog::backdrop {
     <div id="chgt"></div>
     <div id="cwgt"></div>
     <div id="legal"></div>
-    <div id="dispatchQueue"></div>
   </div>
 
+
+
+
+  <!-- =====================================================
+       DISPATCH QUEUE
+       ===================================================== -->
+
+  <div class="card" id="dispatchQueueCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px;">
+      <div>
+        <h2 style="margin-bottom:4px">Dispatch Queue</h2>
+        <p class="hint" style="margin-bottom:0">
+          Draft loads saved in New Load stay here until they are released to Fleet Board.
+        </p>
+      </div>
+      <button type="button" class="secondary" id="refreshDispatchQueue">Refresh</button>
+    </div>
+    <div id="dispatchQueue">Loading Dispatch Queue…</div>
+  </div>
 
   <div class="workflow-band assigned-band">
     <span>Assigned to Load</span>
@@ -860,7 +878,7 @@ dialog.assign-dialog::backdrop {
       <div>
         <h2>State Rules</h2>
         <p class="hint" style="margin-bottom:0">
-          Review the saved permit and escort rules for the states on this load.
+          Review the saved operating rules for the states on this load.
         </p>
       </div>
 
@@ -885,7 +903,7 @@ dialog.assign-dialog::backdrop {
 
   <div class="workflow-band added-band">
     <span>Load-Specific Details</span>
-    <span class="band-note">Driver Handoff · Permits · Escorts · Documents</span>
+    <span class="band-note">Driver Handoff · Documents</span>
   </div>
 
   <!-- =====================================================
@@ -949,16 +967,11 @@ dialog.assign-dialog::backdrop {
 
       <p class="hint" style="margin-top:10px">
         The briefing pulls from the load: assigned driver and equipment, pickup and delivery,
-        route, State Rules review, permits, escorts, and special instructions.
+        route, State Rules review, documents, and special instructions.
       </p>
 
       <div class="full">
         <label>Documents approved for driver</label>
-
-        <label style="display:block;margin-top:8px">
-          <input type="checkbox" id="driverDocPermits" checked>
-          Permit copies
-        </label>
 
         <label style="display:block;margin-top:8px">
           <input type="checkbox" id="driverDocRoute" checked>
@@ -990,39 +1003,7 @@ dialog.assign-dialog::backdrop {
        PERMITS & ESCORTS
        ===================================================== -->
 
-  <div class="card load-specific-card">
-
-    <h2>Permits & Escorts</h2>
-
-    <p class="hint">
-      Confirm who is responsible and who the dispatcher should contact.
-    </p>
-
-    <div class="grid">
-
-      
-
-      
-
-      
-
-      
-
-      
-
-      
-
-      
-
-      
-
-      
-
-
-
-    </div>
-
-  </div>
+  
 
       
  
@@ -3464,9 +3445,6 @@ function fleetReady() {
 }
 
 
-function requirementsReady() {
-  return true;
-}
 
 
 function dispatchReady() {
@@ -3611,36 +3589,62 @@ function updateSaveLabel() {
 }
 
 async function loadDispatchQueue() {
+  const host = $('dispatchQueue');
+  if (!host) return;
+
+  host.textContent = 'Loading Dispatch Queue…';
+
   const r = await db
     .from('loads')
-    .select('id,load_number,broker_load_number,commodity,status,pickup_appt_start')
+    .select('id,load_number,broker_load_number,commodity,status,pickup_appt_start,created_at,archived_at,route_planning_hidden')
     .eq('tenant_id', tenant)
-    .eq('status', 'quoted')
+    .is('archived_at', null)
+    .or('status.eq.quoted,and(status.eq.booked,route_planning_hidden.eq.true)')
     .order('created_at', { ascending:false });
 
   if (r.error) {
-    $('dispatchQueue').textContent = 'Could not load dispatch queue: ' + r.error.message;
+    host.textContent = 'Could not load Dispatch Queue: ' + r.error.message;
     return;
   }
 
   const list = r.data || [];
+
   if (!list.length) {
-    $('dispatchQueue').textContent = 'No draft / quoted loads waiting.';
+    host.textContent = 'No draft loads waiting in the Dispatch Queue.';
     return;
   }
 
-  $('dispatchQueue').innerHTML = list.map(x => {
+  host.innerHTML = list.map(x => {
     const bits = [
-      x.load_number,
+      x.load_number || 'Load',
       x.broker_load_number ? 'Broker #' + x.broker_load_number : '',
-      x.commodity || ''
+      x.commodity || '',
+      x.status ? queuePrettyStatus(x.status) : ''
     ].filter(Boolean).join(' · ');
-    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)">' +
-      '<a href="newload.html?load=' + encodeURIComponent(x.id) + '">' +
-      bits.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) +
-      '</a></div>';
+
+    const pickup = x.pickup_appt_start
+      ? new Date(x.pickup_appt_start).toLocaleString('en-US', {
+          month:'short', day:'numeric', hour:'numeric', minute:'2-digit'
+        })
+      : 'Pickup not set';
+
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">' +
+      '<a href="newload.html?load=' + encodeURIComponent(x.id) + '" style="font-weight:600">' +
+      escapeHtml(bits) +
+      '</a>' +
+      '<div class="hint" style="margin:3px 0 0">' + escapeHtml(pickup) + '</div>' +
+      '</div>';
   }).join('');
 }
+
+function queuePrettyStatus(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+$('refreshDispatchQueue')?.addEventListener('click', loadDispatchQueue);
+
 
 async function loadExistingDraft() {
   const params = new URLSearchParams(window.location.search);
@@ -3767,8 +3771,6 @@ function buildDriverBriefing() {
     fleet ? 'Fleet: ' + fleet : '',
     route.length ? 'Route: ' + route.join(' → ') : '',
     STATE_RULES_REVIEWED ? 'State Rules: reviewed' : 'State Rules: not reviewed',
-    val('permresp') ? 'Permits: ' + selectedText('permresp') : '',
-    val('escresp') ? 'Escorts: ' + selectedText('escresp') : '',
 
   ].filter(Boolean);
 
@@ -4192,8 +4194,6 @@ $('status').addEventListener('change', updateSaveLabel);
   'driver',
   'tractor',
   'trailer',
-  'permresp',
-  'escresp',
   'status'
 ]
 .forEach(
