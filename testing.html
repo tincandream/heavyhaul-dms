@@ -1598,27 +1598,14 @@ showMessage(
 );
 
 
-  const updateResult =
-    await db
-      .from('loads')
-      .update(testData)
-      .eq(
-        'tenant_id',
-        TENANT_ID
-      )
-      .eq(
-        'id',
-        loadId
-      )
-      .select(
-        'id, load_number, broker_load_number'
-      )
-      .single();
+const updateResult =
+  await db.rpc(
+    'fill_tt_permit_escort_data'
+  );
 
-
-  button.disabled = false;
-
-
+button.disabled = false;
+  
+  
   if (updateResult.error) {
 
     showMessage(
