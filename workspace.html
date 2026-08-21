@@ -144,13 +144,82 @@ textarea{min-height:76px;resize:vertical}
   opacity:0;transition:.22s;z-index:9999;pointer-events:none;max-width:90vw}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.bad{background:var(--bad)}
+
+/* ---------- OPERATIONAL SUMMARY ---------- */
+.ops-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  margin:14px 0;
+}
+.ops-card{
+  border:1px solid var(--line);
+  background:var(--card);
+  padding:14px;
+  min-height:104px;
+}
+.ops-card h3{
+  margin:0 0 8px;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+}
+.ops-main{
+  font-size:15px;
+  font-weight:600;
+  line-height:1.35;
+}
+.ops-sub{
+  margin-top:5px;
+  font-size:11.5px;
+  color:var(--muted);
+  line-height:1.45;
+}
+.ops-wide{
+  grid-column:span 2;
+}
+.readiness-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-top:10px;
+}
+.ready-item{
+  border:1px solid var(--line);
+  padding:9px 10px;
+  font-size:11.5px;
+  background:#fff;
+}
+.ready-item.ok{
+  background:var(--ok-soft);
+  color:var(--ok);
+}
+.ready-item.warn{
+  background:var(--warn-soft);
+  color:#8a5a00;
+}
+.ready-item.bad{
+  background:var(--bad-soft);
+  color:var(--bad);
+}
+@media(max-width:1000px){
+  .ops-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .readiness-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:640px){
+  .ops-grid{grid-template-columns:1fr;}
+  .ops-wide{grid-column:auto;}
+  .readiness-grid{grid-template-columns:1fr;}
+}
+
 </style>
 
 
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-rewrite">
+<body data-workspace-version="2026-08-21-operational-summary">
 
 <header></header>
 
@@ -161,6 +230,11 @@ textarea{min-height:76px;resize:vertical}
   <!-- HERO -->
   <section id="hero" class="card hero">
     <div class="muted">Loading load…</div>
+  </section>
+
+  <!-- OPERATIONAL SUMMARY -->
+  <section id="operationalSummary" class="ops-grid">
+    <div class="ops-card ops-wide"><h3>Current Load</h3><div class="ops-main">Loading…</div></div>
   </section>
 
   <!-- ACTIONS -->
@@ -762,7 +836,16 @@ let CHARGES = [];
 let ACCESSORIALS = [];
 let MARGIN = null;
 let CHECKLIST = [];
-let PRIVATE_NOTES = [];  
+let PRIVATE_NOTES = [];
+let ORIGIN_FACILITY = null;
+let DEST_FACILITY = null;
+let CARRIER = null;
+let DRIVER = null;
+let TRACTOR = null;
+let TRAILER = null;
+let ROUTE_PLAN = null;
+let CALENDAR_EVENTS = [];
+let LATEST_CHECKIN = null;
 let ACTIVE_TAB = 'overview';
 let PENDING_STATUS = null;
 
@@ -1249,10 +1332,12 @@ async function refreshAll(){
     fetchMargin(),
     fetchChecklist(),
     fetchPrivateNotes(),
-    fetchDocuments()
+    fetchDocuments(),
+    fetchOperationalRelationships()
   ]);
 
   drawHero();
+  drawOperationalSummary();
   drawActions();
   drawCounts();
   drawActiveTab();
@@ -1399,6 +1484,366 @@ async function fetchChecklist(){
   PRIVATE_NOTES = data || [];
 }
 
+
+/* ---------- OPERATIONAL RELATIONSHIPS ---------- */
+
+function entityLabel(row, kind=''){
+  if(!row) return '';
+  if(kind === 'facility'){
+    return [
+      row.name || row.facility_name || row.company_name,
+      row.city,
+      row.state
+    ].filter(Boolean).join(', ');
+  }
+  if(kind === 'driver'){
+    return [
+      row.first_name,
+      row.last_name
+    ].filter(Boolean).join(' ') || row.name || '';
+  }
+  if(kind === 'equipment'){
+    const unit = row.unit_number || row.unit || row.name || '';
+    const type = row.equipment_type || row.type || '';
+    return [unit,type ? titleize(type) : ''].filter(Boolean).join(' · ');
+  }
+  if(kind === 'carrier'){
+    return row.dba_name || row.legal_name || row.company_name || row.name || '';
+  }
+  return row.name || row.title || '';
+}
+
+async function maybeById(table,id){
+  if(!id) return null;
+  const r = await db
+    .from(table)
+    .select('*')
+    .eq('tenant_id',TENANT_ID)
+    .eq('id',id)
+    .maybeSingle();
+  if(r.error){
+    console.warn('Workspace optional lookup',table,r.error.message);
+    return null;
+  }
+  return r.data || null;
+}
+
+async function fetchOperationalRelationships(){
+  ORIGIN_FACILITY = null;
+  DEST_FACILITY = null;
+  CARRIER = null;
+  DRIVER = null;
+  TRACTOR = null;
+  TRAILER = null;
+  ROUTE_PLAN = null;
+  CALENDAR_EVENTS = [];
+  LATEST_CHECKIN = null;
+
+  const originId = LOAD.origin_facility_id || null;
+  const destId = LOAD.dest_facility_id || null;
+  const carrierId = LOAD.carrier_id || null;
+  const driverId = LOAD.driver_id || null;
+  const tractorId = LOAD.tractor_id || null;
+  const trailerId = LOAD.trailer_id || null;
+
+  const lookups = await Promise.allSettled([
+    maybeById('facilities',originId),
+    maybeById('facilities',destId),
+    maybeById('carriers',carrierId),
+    maybeById('drivers',driverId),
+    maybeById('equipment',tractorId),
+    maybeById('equipment',trailerId)
+  ]);
+
+  ORIGIN_FACILITY = lookups[0].status === 'fulfilled' ? lookups[0].value : null;
+  DEST_FACILITY   = lookups[1].status === 'fulfilled' ? lookups[1].value : null;
+  CARRIER         = lookups[2].status === 'fulfilled' ? lookups[2].value : null;
+  DRIVER          = lookups[3].status === 'fulfilled' ? lookups[3].value : null;
+  TRACTOR         = lookups[4].status === 'fulfilled' ? lookups[4].value : null;
+  TRAILER         = lookups[5].status === 'fulfilled' ? lookups[5].value : null;
+
+  try{
+    const rp = await db
+      .from('route_plans')
+      .select('*')
+      .eq('tenant_id',TENANT_ID)
+      .eq('load_id',LOAD_ID)
+      .order('updated_at',{ascending:false})
+      .limit(1)
+      .maybeSingle();
+    if(!rp.error) ROUTE_PLAN = rp.data || null;
+    else console.warn('route_plans',rp.error.message);
+  }catch(e){
+    console.warn('route_plans skipped',e);
+  }
+
+  try{
+    const ce = await db
+      .from('calendar_events')
+      .select('*')
+      .eq('tenant_id',TENANT_ID)
+      .eq('load_id',LOAD_ID)
+      .order('starts_at',{ascending:true});
+    if(!ce.error) CALENDAR_EVENTS = ce.data || [];
+    else console.warn('calendar_events',ce.error.message);
+  }catch(e){
+    console.warn('calendar_events skipped',e);
+  }
+
+  try{
+    const ci = await db
+      .from('check_ins')
+      .select('*')
+      .eq('tenant_id',TENANT_ID)
+      .eq('load_id',LOAD_ID)
+      .order('occurred_at',{ascending:false})
+      .limit(1)
+      .maybeSingle();
+    if(!ci.error) LATEST_CHECKIN = ci.data || null;
+    else console.warn('check_ins',ci.error.message);
+  }catch(e){
+    console.warn('check_ins skipped',e);
+  }
+}
+
+function loadOriginLabel(){
+  return entityLabel(ORIGIN_FACILITY,'facility') ||
+    [LOAD.origin_city,LOAD.origin_state].filter(Boolean).join(', ') ||
+    'Origin not set';
+}
+
+function loadDestinationLabel(){
+  return entityLabel(DEST_FACILITY,'facility') ||
+    [LOAD.dest_city,LOAD.dest_state].filter(Boolean).join(', ') ||
+    'Destination not set';
+}
+
+function nextScheduledEvent(){
+  const now = Date.now();
+  const future = (CALENDAR_EVENTS || [])
+    .filter(x => x.starts_at && new Date(x.starts_at).getTime() >= now)
+    .sort((a,b) => new Date(a.starts_at) - new Date(b.starts_at));
+  if(future.length) return future[0];
+
+  const candidates = [
+    LOAD.pickup_appt_start ? {title:'Pickup',starts_at:LOAD.pickup_appt_start} : null,
+    LOAD.delivery_appt_start ? {title:'Delivery',starts_at:LOAD.delivery_appt_start} : null
+  ].filter(Boolean)
+   .filter(x => new Date(x.starts_at).getTime() >= now)
+   .sort((a,b) => new Date(a.starts_at) - new Date(b.starts_at));
+
+  return candidates[0] || null;
+}
+
+function formatInches(v){
+  if(v == null || v === '') return '—';
+  const n = Number(v);
+  if(!Number.isFinite(n)) return String(v);
+  const ft = Math.floor(n/12);
+  const inch = Math.round(n - ft*12);
+  return `${ft}' ${inch}"`;
+}
+
+function operationalRpm(){
+  const rev = Number(LOAD.linehaul_rate || 0) + Number(LOAD.fuel_surcharge || 0);
+  const miles = Number(LOAD.total_miles || ROUTE_PLAN?.loaded_miles || 0);
+  return rev > 0 && miles > 0 ? rev/miles : null;
+}
+
+function permitSummary(){
+  const total = PERMITS.length;
+  const good = PERMITS.filter(p =>
+    ['issued','approved','active','received','complete'].includes(
+      String(p.status || '').toLowerCase()
+    )
+  ).length;
+  return {total,good};
+}
+
+function escortSummary(){
+  const total = ESCORTS.length;
+  const good = ESCORTS.filter(e =>
+    ['confirmed','assigned','active','complete','completed'].includes(
+      String(e.status || '').toLowerCase()
+    )
+  ).length;
+  return {total,good};
+}
+
+function readinessItems(){
+  const permit = permitSummary();
+  const escort = escortSummary();
+
+  const dimsOK =
+    LOAD.width_in != null &&
+    LOAD.height_in != null &&
+    LOAD.weight_lb != null;
+
+  const fleetOK =
+    !!LOAD.carrier_id &&
+    !!LOAD.driver_id &&
+    !!LOAD.tractor_id &&
+    !!LOAD.trailer_id;
+
+  const routeOK =
+    !!ROUTE_PLAN;
+
+  const scheduleOK =
+    !!LOAD.pickup_appt_start &&
+    !!LOAD.delivery_appt_start;
+
+  const permitsOK =
+    permit.total === 0
+      ? !LOAD.permits_required
+      : permit.good === permit.total;
+
+  const escortsRequired =
+    Number(LOAD.escorts_required || 0);
+
+  const escortsOK =
+    escortsRequired > 0
+      ? escort.good >= escortsRequired
+      : true;
+
+  return [
+    ['Fleet',fleetOK, fleetOK ? 'Assigned' : 'Assignment incomplete'],
+    ['Route',routeOK, routeOK ? (ROUTE_PLAN.route_name || 'Saved') : 'No saved route'],
+    ['Schedule',scheduleOK, scheduleOK ? 'Pickup + delivery set' : 'Appointment missing'],
+    ['Dimensions',dimsOK, dimsOK ? 'Recorded' : 'Missing dimensions/weight'],
+    ['Permits',permitsOK,
+      permit.total ? `${permit.good}/${permit.total} ready` :
+      (LOAD.permit_responsibility ? titleize(LOAD.permit_responsibility) : 'No permits entered')],
+    ['Escorts',escortsOK,
+      escort.total ? `${escort.good}/${escort.total} ready` :
+      (LOAD.escort_responsibility ? titleize(LOAD.escort_responsibility) : 'No escorts entered')],
+    ['Documents',DOCUMENTS.length > 0, DOCUMENTS.length ? `${DOCUMENTS.length} attached` : 'No documents'],
+    ['Checklist',
+      CHECKLIST.length > 0 && CHECKLIST.every(x => x.completed || x.is_complete || x.done),
+      CHECKLIST.length
+        ? `${CHECKLIST.filter(x => x.completed || x.is_complete || x.done).length}/${CHECKLIST.length} complete`
+        : 'No checklist']
+  ];
+}
+
+function drawOperationalSummary(){
+  const host = $('operationalSummary');
+  if(!host || !LOAD) return;
+
+  const p = permitSummary();
+  const e = escortSummary();
+  const next = nextScheduledEvent();
+
+  const currentLocation = LATEST_CHECKIN
+    ? [
+        LATEST_CHECKIN.location_text,
+        LATEST_CHECKIN.state
+      ].filter(Boolean).join(', ')
+    : loadOriginLabel();
+
+  const routeName =
+    ROUTE_PLAN?.route_name ||
+    `${loadOriginLabel()} → ${loadDestinationLabel()}`;
+
+  const states =
+    Array.isArray(ROUTE_PLAN?.states)
+      ? ROUTE_PLAN.states.join(' → ')
+      : '';
+
+  const rpm = operationalRpm();
+
+  const dims = [
+    `L ${formatInches(LOAD.length_in)}`,
+    `W ${formatInches(LOAD.width_in)}`,
+    `H ${formatInches(LOAD.height_in)}`,
+    LOAD.weight_lb != null
+      ? `${Number(LOAD.weight_lb).toLocaleString()} lb`
+      : 'Weight —'
+  ].join(' · ');
+
+  const readiness = readinessItems();
+
+  host.innerHTML = `
+    <div class="ops-card ops-wide">
+      <h3>Current Load</h3>
+      <div class="ops-main">${esc(LOAD.load_number || LOAD_ID.slice(0,8))} · ${esc(LOAD.commodity || 'Commodity not set')}</div>
+      <div class="ops-sub">${esc(loadOriginLabel())} → ${esc(loadDestinationLabel())}<br>
+        ${esc(titleize(currentStatus()))}
+        ${LOAD.broker_load_number ? ' · Broker #' + esc(LOAD.broker_load_number) : ''}
+      </div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Current Location</h3>
+      <div class="ops-main">${esc(currentLocation || 'No check-in yet')}</div>
+      <div class="ops-sub">${LATEST_CHECKIN?.occurred_at ? 'Last check-in ' + esc(fmtDT(LATEST_CHECKIN.occurred_at)) : 'Using load origin until first check-in'}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Next Event</h3>
+      <div class="ops-main">${next ? esc(next.title || titleize(next.event_type || 'Scheduled event')) : 'No upcoming event'}</div>
+      <div class="ops-sub">${next ? esc(fmtDT(next.starts_at)) : 'Add pickup, delivery, or calendar event'}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Permits</h3>
+      <div class="ops-main">${p.total ? `${p.good}/${p.total} ready` : 'None booked'}</div>
+      <div class="ops-sub">Responsibility: ${esc(titleize(LOAD.permit_responsibility || 'not assigned'))}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Escorts</h3>
+      <div class="ops-main">${e.total ? `${e.good}/${e.total} ready` : 'None booked'}</div>
+      <div class="ops-sub">Responsibility: ${esc(titleize(LOAD.escort_responsibility || 'not assigned'))}</div>
+    </div>
+
+    <div class="ops-card ops-wide">
+      <h3>Route</h3>
+      <div class="ops-main">${esc(routeName)}</div>
+      <div class="ops-sub">
+        ${states ? 'States: ' + esc(states) + '<br>' : ''}
+        ${ROUTE_PLAN?.loaded_miles ?? LOAD.total_miles ?? '—'} loaded miles
+        ${ROUTE_PLAN?.workflow_status ? ' · ' + esc(titleize(ROUTE_PLAN.workflow_status)) : ''}
+      </div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Schedule</h3>
+      <div class="ops-main">Pickup ${esc(fmtDT(LOAD.pickup_appt_start))}</div>
+      <div class="ops-sub">Delivery ${esc(fmtDT(LOAD.delivery_appt_start))}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Dimensions</h3>
+      <div class="ops-main">${esc(dims)}</div>
+      <div class="ops-sub">${LOAD.axle_count ? esc(LOAD.axle_count) + ' axles' : 'Axles not recorded'}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>Truck & Driver</h3>
+      <div class="ops-main">${esc(entityLabel(TRACTOR,'equipment') || 'Truck unassigned')}</div>
+      <div class="ops-sub">${esc(entityLabel(DRIVER,'driver') || 'Driver unassigned')}<br>${esc(entityLabel(TRAILER,'equipment') || 'Trailer unassigned')}</div>
+    </div>
+
+    <div class="ops-card">
+      <h3>RPM</h3>
+      <div class="ops-main">${rpm != null ? '$' + rpm.toFixed(2) + '/mi' : '—'}</div>
+      <div class="ops-sub">${esc(money(LOAD.linehaul_rate))} linehaul${LOAD.fuel_surcharge ? ' + ' + esc(money(LOAD.fuel_surcharge)) + ' FSC' : ''}</div>
+    </div>
+
+    <div class="ops-card ops-wide">
+      <h3>Readiness</h3>
+      <div class="readiness-grid">
+        ${readiness.map(([label,ok,detail]) => `
+          <div class="ready-item ${ok ? 'ok' : 'warn'}">
+            <b>${esc(label)}</b><br>${esc(detail)}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+
 /* ---------- TABS ---------- */
 function switchTab(name){
   ACTIVE_TAB = name;
@@ -1434,10 +1879,10 @@ function drawHero(){
   const tone   = STATUS_TONE[status] !== undefined ? STATUS_TONE[status] : 'grey';
   const held   = isOnHold();
 
-  const oc = pick(LOAD, F.oCity), os = pick(LOAD, F.oState);
-  const dc = pick(LOAD, F.dCity), ds = pick(LOAD, F.dState);
-  const route = (oc || os || dc || ds)
-    ? `${esc(oc||'?')}${os?', '+esc(os):''} &rarr; ${esc(dc||'?')}${ds?', '+esc(ds):''}`
+  const originLabel = loadOriginLabel();
+  const destinationLabel = loadDestinationLabel();
+  const route = (originLabel || destinationLabel)
+    ? `${esc(originLabel || '?')} &rarr; ${esc(destinationLabel || '?')}`
     : '<span class="muted">Route not set</span>';
 
   const pickupD = pick(LOAD, F.pickup), delivD = pick(LOAD, F.delivery);
@@ -1445,16 +1890,16 @@ function drawHero(){
 
   /* dimension chips */
   const chips = [];
-  const L = pick(LOAD, F.lengthFt), W = pick(LOAD, F.widthFt),
-        H = pick(LOAD, F.heightFt), WT = pick(LOAD, F.weightLbs);
-  if (L)  chips.push(`<span class="chip">L <b>${esc(L)}'</b></span>`);
-  if (W)  chips.push(`<span class="chip${Number(W) > 8.5 ? ' hot' : ''}">W <b>${esc(W)}'</b></span>`);
-  if (H)  chips.push(`<span class="chip${Number(H) > 13.5 ? ' hot' : ''}">H <b>${esc(H)}'</b></span>`);
-  if (WT) chips.push(`<span class="chip${Number(WT) > 80000 ? ' hot' : ''}">GVW <b>${Number(WT).toLocaleString()} lb</b></span>`);
+  const L = LOAD.length_in, W = LOAD.width_in,
+        H = LOAD.height_in, WT = LOAD.weight_lb;
+  if (L != null)  chips.push(`<span class="chip">L <b>${esc(formatInches(L))}</b></span>`);
+  if (W != null)  chips.push(`<span class="chip${Number(W) > 102 ? ' hot' : ''}">W <b>${esc(formatInches(W))}</b></span>`);
+  if (H != null)  chips.push(`<span class="chip${Number(H) > 162 ? ' hot' : ''}">H <b>${esc(formatInches(H))}</b></span>`);
+  if (WT != null) chips.push(`<span class="chip${Number(WT) > 80000 ? ' hot' : ''}">GVW <b>${Number(WT).toLocaleString()} lb</b></span>`);
   const ax = pick(LOAD, F.axles);
   if (ax) chips.push(`<span class="chip">${esc(ax)} axles</span>`);
-  const eq = pick(LOAD, F.equipment);
-  if (eq) chips.push(`<span class="chip">${esc(titleize(eq))}</span>`);
+  const eq = entityLabel(TRAILER,'equipment') || ROUTE_PLAN?.equipment_type || pick(LOAD, F.equipment);
+  if (eq) chips.push(`<span class="chip">${esc(eq)}</span>`);
   if (pick(LOAD, F.superload))   chips.push('<span class="chip red">SUPERLOAD</span>');
   else if (pick(LOAD, F.oversize)) chips.push('<span class="chip hot">Oversize</span>');
   if (pick(LOAD, F.overweight))  chips.push('<span class="chip hot">Overweight</span>');
