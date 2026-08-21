@@ -2022,6 +2022,50 @@ function drawOverview(){
     !!(c.done_at || c.completed || c.is_complete || c.done)
   ).length;
 
+  const permitCompany =
+  LOAD.permit_contact_company ||
+  '';
+
+const permitContact =
+  LOAD.permit_contact_name ||
+  '';
+
+const permitResponsibility =
+  LOAD.permit_responsibility ||
+  '';
+
+
+const escortCompany =
+  LOAD.escort_contact_company ||
+  '';
+
+const escortContact =
+  LOAD.escort_contact_name ||
+  '';
+
+const escortResponsibility =
+  LOAD.escort_responsibility ||
+  '';
+
+
+const permitEscortRequired =
+  PERMITS.some(
+    p =>
+      p.escort_front === true ||
+      p.escort_rear === true ||
+      p.escort_police === true ||
+      p.escort_high_pole === true
+  );
+
+
+const escortRequiredCount =
+  Math.max(
+    permitEscortRequired ? 1 : 0,
+    Number(
+      LOAD.escorts_required || 0
+    )
+  );
+
   const rev = MARGIN ? Number(MARGIN.total_revenue || 0) :
     Number(LOAD.linehaul_rate || 0) + Number(LOAD.fuel_surcharge || 0);
 
