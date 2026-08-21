@@ -145,6 +145,45 @@ textarea{min-height:76px;resize:vertical}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.bad{background:var(--bad)}
 
+/* ---------- TRIP PACKET (print) ---------- */
+#tripPacket{display:none}
+.tp-page{padding:0}
+.tp-header{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+.tp-header h1{font-size:20px;margin:0}
+.tp-header .tp-sub{color:var(--muted);font-size:12px;margin-top:2px}
+.tp-header .tp-num{text-align:right;font-size:22px;font-weight:800}
+.tp-section{margin-bottom:14px;break-inside:avoid}
+.tp-section h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#000;
+  border-bottom:1px solid #999;padding-bottom:3px;margin-bottom:8px}
+.tp-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:13px}
+.tp-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.tp-grid dt{color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.tp-grid dd{margin:0 0 6px;font-weight:600}
+.tp-banner{background:#000;color:#fff;font-weight:800;text-align:center;
+  padding:8px;margin-bottom:12px;letter-spacing:.5px}
+.tp-warn{border:2px solid #000;padding:8px 10px;margin-bottom:10px;font-weight:700}
+.tp-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+.tp-table th,.tp-table td{border:1px solid #999;padding:5px 7px;text-align:left}
+.tp-table th{background:#eee}
+.tp-checklist{list-style:none;padding:0;margin:0;font-size:13px}
+.tp-checklist li{padding:4px 0;border-bottom:1px dotted #ccc;display:flex;gap:8px}
+.tp-checklist li:before{content:"☐";font-size:15px}
+.tp-notes-box{border:1px solid #999;min-height:80px;padding:8px;font-size:12px}
+.tp-footer{margin-top:16px;font-size:10px;color:#666;text-align:center;border-top:1px solid #ccc;padding-top:6px}
+
+@media print{
+  body.printing-packet .wrap,
+  body.printing-packet header,
+  body.printing-packet #toast,
+  body.printing-packet dialog{
+    display:none !important;
+  }
+  body.printing-packet #tripPacket{
+    display:block !important;
+  }
+  @page{ margin: 0.5in; }
+}
 
 </style>
 
@@ -667,6 +706,9 @@ textarea{min-height:76px;resize:vertical}
   
 <div id="toast"></div>
 
+<!-- ============ DRIVER TRIP PACKET (print-only) ============ -->
+<div id="tripPacket"></div>
+
 <script src="nav.js"></script>
 <script>
 /* ============================================================
@@ -933,7 +975,7 @@ function drawDocuments(){
       <thead><tr><th>Document</th><th>Type</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`
-    : '<div class="card"><div class="empty">No documents on this load. Click “+ Upload”.</div></div>'}
+    : '<div class="card"><div class="empty">No documents on this load. Click "+ Upload".</div></div>'}
   `;
 
   $$('#tab-documents button[data-view]').forEach(b=>
@@ -1627,6 +1669,183 @@ function formatInches(v){
 }
 
 
+/* ============================================================
+   DRIVER TRIP PACKET (print handoff)
+   ============================================================ */
+
+function tripPacketPermitRows(){
+  if (!PERMITS.length){
+    return '<tr><td colspan="5">No permits on file for this load.</td></tr>';
+  }
+  return PERMITS.map(p => {
+    const escorts = [
+      p.escort_front && 'Front', p.escort_rear && 'Rear',
+      p.escort_police && 'Police', p.escort_high_pole && 'High pole'
+    ].filter(Boolean).join(', ') || '—';
+    const restr = [
+      p.daylight_only && 'Daylight only',
+      p.wind_limit_mph ? `${p.wind_limit_mph} mph wind limit` : null,
+      p.weekend_travel_allowed === false && 'No weekend travel',
+      p.holiday_travel_allowed === false && 'No holiday travel',
+      p.curfew_notes,
+      p.route_restrictions
+    ].filter(Boolean).join(' · ') || '—';
+    return `<tr>
+      <td><b>${esc(p.state || '—')}</b></td>
+      <td>${esc(p.permit_number || '—')}</td>
+      <td>${esc(toDateInput(p.valid_from) || '—')} to ${esc(toDateInput(p.valid_to) || '—')}</td>
+      <td>${esc(escorts)}</td>
+      <td>${esc(restr)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function tripPacketEscortRows(){
+  if (!ESCORTS.length){
+    return '<tr><td colspan="5">No escorts assigned to this load.</td></tr>';
+  }
+  return ESCORTS.map(e => `<tr>
+    <td><b>${esc(titleize(e.role))}</b></td>
+    <td>${esc(e.driver_name || '—')}${e.driver_phone ? ' · ' + esc(e.driver_phone) : ''}</td>
+    <td>${esc(e.vehicle_info || '—')}</td>
+    <td>${esc(fmtDT(e.meeting_time))}</td>
+    <td>${esc(e.meeting_location || '—')}</td>
+  </tr>`).join('');
+}
+
+function tripPacketChecklistItems(){
+  const relevant = CHECKLIST.filter(c =>
+    ['Pre-departure','In-transit','Delivery'].includes(c.phase || 'Other')
+  );
+  const list = relevant.length ? relevant : CHECKLIST;
+  if (!list.length){
+    return '<li>No pre-trip checklist has been created for this load yet.</li>';
+  }
+  return list.map(c => `<li>${esc(c.item || '(untitled)')}</li>`).join('');
+}
+
+function buildTripPacketHTML(){
+  const number = pick(LOAD, F.number) || LOAD_ID.slice(0,8);
+  const status = currentStatus();
+  const origin = loadOriginLabel();
+  const destination = loadDestinationLabel();
+  const pickup = pickupValue();
+  const delivery = deliveryValue();
+
+  const dims = [
+    LOAD.length_in != null ? 'L ' + formatInches(LOAD.length_in) : null,
+    LOAD.width_in  != null ? 'W ' + formatInches(LOAD.width_in)  : null,
+    LOAD.height_in != null ? 'H ' + formatInches(LOAD.height_in) : null,
+    LOAD.weight_lb != null ? Number(LOAD.weight_lb).toLocaleString() + ' lb GVW' : null,
+    axleValue() != null ? axleValue() + ' axles' : null
+  ].filter(Boolean).join('   ·   ') || 'Not recorded';
+
+  const flagBits = [];
+  if (LOAD.is_superload || LOAD.superload) flagBits.push('SUPERLOAD');
+  else if (LOAD.is_oversize || Number(LOAD.width_in||0) > 102 || Number(LOAD.height_in||0) > 162) flagBits.push('OVERSIZE');
+  if (LOAD.is_overweight || Number(LOAD.weight_lb||0) > 80000) flagBits.push('OVERWEIGHT');
+  if (LOAD.route_survey_required || ROUTE_PLAN?.route_survey_required) flagBits.push('ROUTE SURVEY REQUIRED');
+
+  const escortsRequired = permitRequiredEscortCount();
+
+  const carrierName = entityLabel(CARRIER,'carrier') || '—';
+  const driverName = entityLabel(DRIVER,'driver') || pick(LOAD, F.driver) || '—';
+  const driverPhone = DRIVER?.phone || DRIVER?.phone_number || DRIVER?.mobile || pick(LOAD, F.driverPhone) || '—';
+  const truckName = entityLabel(TRACTOR,'equipment') || pick(LOAD, F.truck) || '—';
+  const trailerName = entityLabel(TRAILER,'equipment') || pick(LOAD, F.trailer) || '—';
+
+  return `
+    <div class="tp-page">
+      <div class="tp-header">
+        <div>
+          <h1>DRIVER TRIP PACKET</h1>
+          <div class="tp-sub">Dianna V. Mwaka, Dispatch Services</div>
+        </div>
+        <div class="tp-num">
+          Load ${esc(number)}<br>
+          <span style="font-size:12px;font-weight:600">${esc(titleize(status))}</span>
+        </div>
+      </div>
+
+      ${flagBits.length ? `<div class="tp-banner">${esc(flagBits.join('  ·  '))}</div>` : ''}
+
+      <div class="tp-section">
+        <h2>Route</h2>
+        <dl class="tp-grid">
+          <dt>Origin</dt><dd>${esc(origin)}</dd>
+          <dt>Destination</dt><dd>${esc(destination)}</dd>
+          <dt>Pickup</dt><dd>${esc(fmtDT(pickup))}</dd>
+          <dt>Delivery</dt><dd>${esc(fmtDT(delivery))}</dd>
+          <dt>Commodity</dt><dd>${esc(LOAD.commodity || '—')}</dd>
+          <dt>Equipment</dt><dd>${esc(entityLabel(TRAILER,'equipment') || LOAD.equipment_type || '—')}</dd>
+        </dl>
+        ${ROUTE_PLAN?.route_restrictions || LOAD.route_restrictions ? `
+          <div class="tp-warn">Route restrictions: ${esc(ROUTE_PLAN?.route_restrictions || LOAD.route_restrictions)}</div>
+        ` : ''}
+      </div>
+
+      <div class="tp-section">
+        <h2>Load Dimensions</h2>
+        <div style="font-size:14px;font-weight:700">${esc(dims)}</div>
+      </div>
+
+      <div class="tp-section">
+        <h2>Truck &amp; Carrier</h2>
+        <dl class="tp-grid cols3">
+          <dt>Carrier</dt><dd>${esc(carrierName)}</dd>
+          <dt>Driver</dt><dd>${esc(driverName)}</dd>
+          <dt>Driver phone</dt><dd>${esc(driverPhone)}</dd>
+          <dt>Truck</dt><dd>${esc(truckName)}</dd>
+          <dt>Trailer</dt><dd>${esc(trailerName)}</dd>
+          <dt>Escorts required</dt><dd>${escortsRequired || 'None'}</dd>
+        </dl>
+      </div>
+
+      <div class="tp-section">
+        <h2>Permits</h2>
+        <table class="tp-table">
+          <thead><tr><th>State</th><th>Permit #</th><th>Valid</th><th>Escorts req.</th><th>Restrictions</th></tr></thead>
+          <tbody>${tripPacketPermitRows()}</tbody>
+        </table>
+      </div>
+
+      <div class="tp-section">
+        <h2>Escort Contacts</h2>
+        <table class="tp-table">
+          <thead><tr><th>Role</th><th>Driver / phone</th><th>Vehicle</th><th>Meet time</th><th>Meet location</th></tr></thead>
+          <tbody>${tripPacketEscortRows()}</tbody>
+        </table>
+      </div>
+
+      <div class="tp-section">
+        <h2>Driver Checklist</h2>
+        <ul class="tp-checklist">${tripPacketChecklistItems()}</ul>
+      </div>
+
+      <div class="tp-section">
+        <h2>Dispatch Notes for Driver</h2>
+        <div class="tp-notes-box"></div>
+      </div>
+
+      <div class="tp-footer">
+        Printed ${esc(fmtDT(new Date().toISOString()))} · Load ${esc(number)} · Dianna V. Mwaka, Dispatch Services
+      </div>
+    </div>
+  `;
+}
+
+function openTripPacket(){
+  if (!LOAD){ toast('Load not ready yet', true); return; }
+  $('tripPacket').innerHTML = buildTripPacketHTML();
+  document.body.classList.add('printing-packet');
+  window.print();
+}
+
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-packet');
+});
+
+
 /* ---------- TABS ---------- */
 function switchTab(name){
   ACTIVE_TAB = name;
@@ -1779,11 +1998,13 @@ function drawActions(){
       ? '<button id="btnClearHold">Clear Hold</button>'
       : '<button class="danger" id="btnHold">Put On Hold</button>'}
     <span class="spacer"></span>
+    <button class="ghost sm" id="btnTripPacket">🖨 Trip Packet</button>
     <button class="ghost sm" id="btnRefresh">Refresh</button>
   `;
 
   $('btnCheckIn').addEventListener('click', openCheckIn);
   $('btnRefresh').addEventListener('click', async () => { await refreshAll(); toast('Refreshed'); });
+  $('btnTripPacket').addEventListener('click', openTripPacket);
   if ($('btnHold'))      $('btnHold').addEventListener('click', openHold);
   if ($('btnClearHold')) $('btnClearHold').addEventListener('click', clearHold);
 
@@ -2719,7 +2940,7 @@ function drawChecklist(){
 
   if (!CHECKLIST.length){
     $('tab-checklist').innerHTML = head +
-      '<div class="card"><div class="empty">No checklist yet. Click “Apply standard checklist” to start.</div></div>';
+      '<div class="card"><div class="empty">No checklist yet. Click "Apply standard checklist" to start.</div></div>';
     return;
   }
 
@@ -2936,7 +3157,7 @@ function drawAccessorials(){
       :
       `<div class="card"><div class="empty">
         No accessorials are attached to this load yet.
-        Use the Accessorial Calculator and choose this load when you click “Add to Load”.
+        Use the Accessorial Calculator and choose this load when you click "Add to Load".
       </div></div>`
     }
   `;
