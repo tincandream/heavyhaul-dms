@@ -752,8 +752,8 @@ $('c_save').addEventListener('click', async () => {
 
 if (!result) {
   result = await db
-    .from('drivers')
-    .insert(driverData);
+    .from('carriers')
+    .insert(carrierData);
 }
 
   $('c_save').disabled = false;
