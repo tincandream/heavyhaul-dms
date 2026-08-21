@@ -1000,65 +1000,23 @@ dialog.assign-dialog::backdrop {
 
     <div class="grid">
 
-      <div>
-        <label>Permit responsibility</label>
-        <select id="permresp">
-          <option value="dispatcher">Me (dispatcher)</option>
-          <option value="carrier">Carrier</option>
-          <option value="broker">Broker</option>
-          <option value="permit_service">Permit service</option>
-          <option value="shipper">Shipper</option>
-        </select>
-      </div>
+      
 
-      <div>
-        <label>Permit company</label>
-        <input id="permco">
-      </div>
+      
 
-      <div>
-        <label>Permit contact</label>
-        <input id="permname">
-      </div>
+      
 
-      <div>
-        <label>Permit phone</label>
-        <input id="permphone">
-      </div>
+      
 
-      <div>
-        <label>Permit email</label>
-        <input
-          id="permemail"
-          type="email"
-        >
-      </div>
+      
 
-      <div>
-        <label>Escort responsibility</label>
-        <select id="escresp">
-          <option value="dispatcher">Me (dispatcher)</option>
-          <option value="carrier">Carrier</option>
-          <option value="broker">Broker</option>
-          <option value="escort_company">Escort company</option>
-          <option value="shipper">Shipper</option>
-        </select>
-      </div>
+      
 
-      <div>
-        <label>Escort company</label>
-        <input id="escco">
-      </div>
+      
 
-      <div>
-        <label>Escort contact</label>
-        <input id="escname">
-      </div>
+      
 
-      <div>
-        <label>Escort phone</label>
-        <input id="escphone">
-      </div>
+      
 
 
 
@@ -1578,130 +1536,10 @@ function ftin(inches) {
 // TRAINING MODE — PERMIT & ESCORT TEST DATA
 // ============================================================
 
-async function getNewLoadTrainingStatus() {
-  try {
-    const result =
-      await db.rpc(
-        'get_training_mode_status'
-      );
-
-    if (result.error) {
-      console.warn(
-        'Training Mode status:',
-        result.error.message
-      );
-
-      return { active:false };
-    }
-
-    return result.data || { active:false };
-  }
-  catch (error) {
-    console.warn(
-      'Training Mode status:',
-      error
-    );
-
-    return { active:false };
-  }
-}
 
 
-async function initNewLoadTrainingTools() {
-  const button =
-    $('fillPermitEscortTest');
-
-  if (!button) {
-    return;
-  }
-
-  const status =
-    await getNewLoadTrainingStatus();
-
-  button.style.display =
-    status.active === true
-      ? 'inline-flex'
-      : 'none';
-}
 
 
-async function fillNewLoadPermitEscortTestData() {
-  const button =
-    $('fillPermitEscortTest');
-
-  if (!button) {
-    return;
-  }
-
-  const status =
-    await getNewLoadTrainingStatus();
-
-  if (status.active !== true) {
-    button.style.display =
-      'none';
-
-    say(
-      'Enable Training Mode first.',
-      'err'
-    );
-
-    return;
-  }
-
-  $('permresp').value =
-    'permit_service';
-
-  $('permco').value =
-    'Ozark Heavy Haul Permits';
-
-  $('permname').value =
-    'Megan Carter';
-
-  $('permphone').value =
-    '(501) 555-0148';
-
-  $('permemail').value =
-    'permits@ozarkheavyhaul.test';
-
-  $('escresp').value =
-    'escort_company';
-
-  $('escco').value =
-    'Mid-South Pilot Cars';
-
-  $('escname').value =
-    'Daniel Brooks';
-
-  $('escphone').value =
-    '(901) 555-0186';
-
-  refreshAssemblyStatus();
-
-  try {
-    const rpcResult =
-      await db.rpc(
-        'fill_tt_permit_escort_data'
-      );
-
-    if (rpcResult.error) {
-      console.warn(
-        'TT permit/escort RPC:',
-        rpcResult.error.message
-      );
-    }
-  }
-  catch (error) {
-    console.warn(
-      'TT permit/escort RPC:',
-      error
-    );
-  }
-
-  say(
-    'Permit & Escort test data filled.',
-    'ok'
-  );
-}
 
 
 async function start() {
@@ -1813,8 +1651,6 @@ async function start() {
   updateSaveLabel();
 
   refreshAssemblyStatus();
-
-  await initNewLoadTrainingTools();
 
 }
 
@@ -3629,17 +3465,7 @@ function fleetReady() {
 
 
 function requirementsReady() {
-  const permitResponsibility = $('permresp');
-  const escortResponsibility = $('escresp');
-
-  if (!permitResponsibility || !escortResponsibility) {
-    return false;
-  }
-
-  return Boolean(
-    permitResponsibility.value &&
-    escortResponsibility.value
-  );
+  return true;
 }
 
 
@@ -3863,17 +3689,7 @@ async function loadExistingDraft() {
   set('del', x.delivery_appt_start ? String(x.delivery_appt_start).slice(0,16) : '');
   set('status', x.status || 'quoted');
   set('priority', x.priority || 'normal');
-  set('permresp', x.permit_responsibility);
-  set('permco', x.permit_contact_company);
-  set('permname', x.permit_contact_name);
-  set('permphone', x.permit_contact_phone);
-  set('permemail', x.permit_contact_email);
-  set('escresp', x.escort_responsibility);
-  set('escco', x.escort_contact_company);
-  set('escname', x.escort_contact_name);
-  set('escphone', x.escort_contact_phone);
-
-  set('custref', x.customer_reference);
+set('custref', x.customer_reference);
   set('po', x.purchase_order);
   set('notes', x.notes);
 
@@ -4613,33 +4429,6 @@ $('save').disabled =
         priority:
           $('priority').value,
 
-        permit_responsibility:
-          $('permresp').value,
-
-        permit_contact_company:
-          val('permco'),
-
-        permit_contact_name:
-          val('permname'),
-
-        permit_contact_phone:
-          val('permphone'),
-
-        permit_contact_email:
-          val('permemail'),
-
-        escort_responsibility:
-          $('escresp').value,
-
-        escort_contact_company:
-          val('escco'),
-
-        escort_contact_name:
-          val('escname'),
-
-        escort_contact_phone:
-          val('escphone'),
-
         carrier_approved_at:
   $('appr').value === 'true'
     ? new Date().toISOString()
@@ -4914,30 +4703,6 @@ route_planning_hidden:
     }
   );
 
-
-// ============================================================
-// TRAINING MODE — PERMIT & ESCORT BUTTON
-// ============================================================
-
-$('fillPermitEscortTest')
-  ?.addEventListener(
-    'click',
-    fillNewLoadPermitEscortTestData
-  );
-
-
-window.addEventListener(
-  'pageshow',
-  async () => {
-
-    if (!db) {
-      return;
-    }
-
-    await initNewLoadTrainingTools();
-
-  }
-);
 
 </script>
 
