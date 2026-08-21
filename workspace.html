@@ -2631,44 +2631,332 @@ function openPermit(id){
 }
 
 /* --- PERMIT FILL TEST DATA — training/demo only, never touches the database --- */
+
+  /* --- PERMIT FILL TEST DATA — training/demo only, never touches the database --- */
 function fillPermitTestData(){
-  const today = new Date();
-  const appliedAt = new Date(today); appliedAt.setDate(appliedAt.getDate() - 3);
-  const issuedAt  = new Date(today); issuedAt.setDate(issuedAt.getDate() - 1);
-  const validFrom = new Date(today);
-  const validTo   = new Date(today); validTo.setDate(validTo.getDate() + 5);
 
-  $('pm_state').value                    = 'TN';
-  $('pm_status').value                   = 'issued';
-  $('pm_permit_number').value            = 'TT-TRAINING-' + Math.floor(1000 + Math.random()*9000);
-  $('pm_issuing_authority').value        = 'TDOT';
-  $('pm_permit_service_id').value        = '';
-  $('pm_fee').value                      = '95.00';
-  $('pm_service_fee').value              = '35.00';
+  const today =
+    new Date();
 
-  $('pm_applied_at').value               = toLocalInput(appliedAt);
-  $('pm_issued_at').value                = toLocalInput(issuedAt);
-  $('pm_valid_from').value                = toDateInput(validFrom);
-  $('pm_valid_to').value                  = toDateInput(validTo);
+  const appliedAt =
+    new Date(today);
 
-  $('pm_escort_front').checked           = true;
-  $('pm_escort_rear').checked            = true;
-  $('pm_escort_police').checked          = false;
-  $('pm_escort_high_pole').checked       = false;
+  appliedAt.setDate(
+    appliedAt.getDate() - 3
+  );
 
-  $('pm_daylight_only').checked          = true;
-  $('pm_weekend_travel_allowed').checked = false;
-  $('pm_holiday_travel_allowed').checked = false;
-  $('pm_wind_limit_mph').value           = '35';
 
-  $('pm_travel_time_restrictions').value = 'TT TRAINING — Sunrise to sunset only. No travel 7-9am / 4-6pm in metro areas.';
-  $('pm_curfew_notes').value             = 'TT TRAINING — No movement through Nashville metro during posted curfew hours.';
-  $('pm_route_restrictions').value       = 'TT TRAINING — I-40 E to US-231 S. No SR-96 bridge (weight restricted).';
+  const issuedAt =
+    new Date(today);
 
-  $('pm_driver_has_permit').checked      = true;
-  $('pm_driver_briefed_at').value        = toLocalInput(issuedAt);
+  issuedAt.setDate(
+    issuedAt.getDate() - 1
+  );
 
-  $('pm_notes').value = 'TT TRAINING — Sample permit for practicing the Permits tab. Safe to delete.';
+
+  const validFrom =
+    new Date(today);
+
+
+  const validTo =
+    new Date(today);
+
+  validTo.setDate(
+    validTo.getDate() + 5
+  );
+
+
+  /*
+    IMPORTANT:
+    Preserve the permit state already being edited.
+
+    AR permit -> Arkansas TT test data
+    TN permit -> Tennessee TT test data
+
+    Only default to AR when this is a brand-new permit
+    with no state selected yet.
+  */
+  const state =
+    String(
+      $('pm_state').value ||
+      'AR'
+    )
+      .trim()
+      .toUpperCase();
+
+
+  $('pm_state').value =
+    state;
+
+
+  $('pm_status').value =
+    'issued';
+
+
+  $('pm_permit_number').value =
+    'TT-' +
+    state +
+    '-' +
+    Math.floor(
+      1000 +
+      Math.random() *
+      9000
+    );
+
+
+  $('pm_permit_service_id').value =
+    '';
+
+
+  $('pm_applied_at').value =
+    toLocalInput(
+      appliedAt
+    );
+
+
+  $('pm_issued_at').value =
+    toLocalInput(
+      issuedAt
+    );
+
+
+  $('pm_valid_from').value =
+    toDateInput(
+      validFrom
+    );
+
+
+  $('pm_valid_to').value =
+    toDateInput(
+      validTo
+    );
+
+
+  $('pm_driver_has_permit').checked =
+    true;
+
+
+  $('pm_driver_briefed_at').value =
+    toLocalInput(
+      issuedAt
+    );
+
+
+  /* ========================================================
+     ARKANSAS TRAINING PERMIT
+     ======================================================== */
+
+  if (
+    state ===
+    'AR'
+  ) {
+
+    $('pm_issuing_authority').value =
+      'ARDOT';
+
+
+    $('pm_fee').value =
+      '80.00';
+
+
+    $('pm_service_fee').value =
+      '35.00';
+
+
+    $('pm_escort_front').checked =
+      true;
+
+
+    $('pm_escort_rear').checked =
+      false;
+
+
+    $('pm_escort_police').checked =
+      false;
+
+
+    $('pm_escort_high_pole').checked =
+      false;
+
+
+    $('pm_daylight_only').checked =
+      true;
+
+
+    $('pm_weekend_travel_allowed').checked =
+      false;
+
+
+    $('pm_holiday_travel_allowed').checked =
+      false;
+
+
+    $('pm_wind_limit_mph').value =
+      '35';
+
+
+    $('pm_travel_time_restrictions').value =
+      'TT TRAINING — Arkansas oversize movement during permitted daylight travel hours.';
+
+
+    $('pm_curfew_notes').value =
+      'TT TRAINING — Review Little Rock metro travel restrictions before movement.';
+
+
+    $('pm_route_restrictions').value =
+      'TT TRAINING — Follow the approved Arkansas portion of the Little Rock to Memphis route.';
+
+
+    $('pm_notes').value =
+      'TT TRAINING — Arkansas sample permit for TT-ABC-260811-01.';
+
+  }
+
+
+  /* ========================================================
+     TENNESSEE TRAINING PERMIT
+     ======================================================== */
+
+  else if (
+    state ===
+    'TN'
+  ) {
+
+    $('pm_issuing_authority').value =
+      'TDOT';
+
+
+    $('pm_fee').value =
+      '95.00';
+
+
+    $('pm_service_fee').value =
+      '35.00';
+
+
+    $('pm_escort_front').checked =
+      true;
+
+
+    $('pm_escort_rear').checked =
+      true;
+
+
+    $('pm_escort_police').checked =
+      false;
+
+
+    $('pm_escort_high_pole').checked =
+      false;
+
+
+    $('pm_daylight_only').checked =
+      true;
+
+
+    $('pm_weekend_travel_allowed').checked =
+      false;
+
+
+    $('pm_holiday_travel_allowed').checked =
+      false;
+
+
+    $('pm_wind_limit_mph').value =
+      '35';
+
+
+    $('pm_travel_time_restrictions').value =
+      'TT TRAINING — Tennessee oversize movement during approved permit travel hours.';
+
+
+    $('pm_curfew_notes').value =
+      'TT TRAINING — Review Memphis metro curfew restrictions before movement.';
+
+
+    $('pm_route_restrictions').value =
+      'TT TRAINING — Follow the approved Tennessee portion of the route into Memphis.';
+
+
+    $('pm_notes').value =
+      'TT TRAINING — Tennessee sample permit for TT-ABC-260811-01.';
+
+  }
+
+
+  /* ========================================================
+     OTHER STATE
+     Keep state — use generic training values.
+     ======================================================== */
+
+  else {
+
+    $('pm_issuing_authority').value =
+      state +
+      ' DOT';
+
+
+    $('pm_fee').value =
+      '75.00';
+
+
+    $('pm_service_fee').value =
+      '35.00';
+
+
+    $('pm_escort_front').checked =
+      false;
+
+
+    $('pm_escort_rear').checked =
+      false;
+
+
+    $('pm_escort_police').checked =
+      false;
+
+
+    $('pm_escort_high_pole').checked =
+      false;
+
+
+    $('pm_daylight_only').checked =
+      true;
+
+
+    $('pm_weekend_travel_allowed').checked =
+      false;
+
+
+    $('pm_holiday_travel_allowed').checked =
+      false;
+
+
+    $('pm_wind_limit_mph').value =
+      '35';
+
+
+    $('pm_travel_time_restrictions').value =
+      'TT TRAINING — Review the permit travel restrictions for ' +
+      state +
+      '.';
+
+
+    $('pm_curfew_notes').value =
+      'TT TRAINING — Review applicable metro and local curfews.';
+
+
+    $('pm_route_restrictions').value =
+      'TT TRAINING — Follow the approved permit route.';
+
+
+    $('pm_notes').value =
+      'TT TRAINING — Sample ' +
+      state +
+      ' permit.';
+
+  }
+
 }
 
 /* --- PERMIT SAVE — standalone. Touches only the permits table. --- */
