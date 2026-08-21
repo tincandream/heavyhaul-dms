@@ -2176,8 +2176,48 @@ const escortRequiredCount =
         <dt>Route</dt><dd>${ROUTE_PLAN ? 'Saved' : '<span style="color:var(--warn);font-weight:600">Not saved</span>'}</dd>
         <dt>Schedule</dt><dd>${pickup && delivery ? 'Pickup + delivery set' : '<span style="color:var(--warn);font-weight:600">Missing appointment</span>'}</dd>
         <dt>Dimensions</dt><dd>${((LOAD.width_in != null || SOURCE_OPPORTUNITY?.width_ft != null) && (LOAD.height_in != null || SOURCE_OPPORTUNITY?.height_ft != null) && (LOAD.weight_lb != null || SOURCE_OPPORTUNITY?.weight_lbs != null)) ? 'Recorded' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
-        <dt>Permits</dt><dd>${permIssued} issued${permOpen ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>` : ''} of ${PERMITS.length}</dd>
-        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${Math.max(ESCORTS.length, permitRequiredEscortCount())}${permitRequiredEscortCount() > ESCORTS.length ? ` · <span style="color:var(--warn);font-weight:600">${Math.max(permitRequiredEscortCount() - escOK,0)} required</span>` : ''}</dd>
+       <dt>Permits</dt>
+<dd>
+  ${
+    PERMITS.length
+      ? `${permIssued} issued · ${permOpen} outstanding of ${PERMITS.length}`
+      : 'No permit records created yet'
+  }
+
+  ${
+    permitResponsibility
+      ? `<div class="small muted">
+          ${esc(titleize(permitResponsibility))}
+          ${permitCompany ? ' · ' + esc(permitCompany) : ''}
+          ${permitContact ? ' · ' + esc(permitContact) : ''}
+        </div>`
+      : ''
+  }
+</dd>
+
+
+<dt>Escorts</dt>
+<dd>
+  ${
+    escortRequiredCount > 0
+      ? `${escOK} confirmed of ${escortRequiredCount} required`
+      : (
+          ESCORTS.length
+            ? `${escOK} confirmed of ${ESCORTS.length}`
+            : 'No escort requirement recorded'
+        )
+  }
+
+  ${
+    escortResponsibility
+      ? `<div class="small muted">
+          ${esc(titleize(escortResponsibility))}
+          ${escortCompany ? ' · ' + esc(escortCompany) : ''}
+          ${escortContact ? ' · ' + esc(escortContact) : ''}
+        </div>`
+      : ''
+  }
+</dd>
         <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
         <dt>Revenue</dt><dd>${money(rev)}</dd>
         <dt>Cost</dt><dd>${money(cst)}</dd>
