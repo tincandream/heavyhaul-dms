@@ -145,73 +145,6 @@ textarea{min-height:76px;resize:vertical}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.bad{background:var(--bad)}
 
-/* ---------- OPERATIONAL SUMMARY ---------- */
-.ops-grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
-  margin:14px 0;
-}
-.ops-card{
-  border:1px solid var(--line);
-  background:var(--card);
-  padding:14px;
-  min-height:104px;
-}
-.ops-card h3{
-  margin:0 0 8px;
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--muted);
-}
-.ops-main{
-  font-size:15px;
-  font-weight:600;
-  line-height:1.35;
-}
-.ops-sub{
-  margin-top:5px;
-  font-size:11.5px;
-  color:var(--muted);
-  line-height:1.45;
-}
-.ops-wide{
-  grid-column:span 2;
-}
-.readiness-grid{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:8px;
-  margin-top:10px;
-}
-.ready-item{
-  border:1px solid var(--line);
-  padding:9px 10px;
-  font-size:11.5px;
-  background:#fff;
-}
-.ready-item.ok{
-  background:var(--ok-soft);
-  color:var(--ok);
-}
-.ready-item.warn{
-  background:var(--warn-soft);
-  color:#8a5a00;
-}
-.ready-item.bad{
-  background:var(--bad-soft);
-  color:var(--bad);
-}
-@media(max-width:1000px){
-  .ops-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .readiness-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-}
-@media(max-width:640px){
-  .ops-grid{grid-template-columns:1fr;}
-  .ops-wide{grid-column:auto;}
-  .readiness-grid{grid-template-columns:1fr;}
-}
 
 </style>
 
@@ -219,7 +152,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-linked-fields">
+<body data-workspace-version="2026-08-21-source-fallbacks">
 
 <header></header>
 
@@ -841,6 +774,7 @@ let TRAILER = null;
 let ROUTE_PLAN = null;
 let CALENDAR_EVENTS = [];
 let LATEST_CHECKIN = null;
+let SOURCE_OPPORTUNITY = null;
 let ACTIVE_TAB = 'overview';
 let PENDING_STATUS = null;
 
@@ -1532,6 +1466,7 @@ async function fetchOperationalRelationships(){
   ROUTE_PLAN = null;
   CALENDAR_EVENTS = [];
   LATEST_CHECKIN = null;
+  SOURCE_OPPORTUNITY = null;
 
   const originId = LOAD.origin_facility_id || null;
   const destId = LOAD.dest_facility_id || null;
@@ -1555,6 +1490,33 @@ async function fetchOperationalRelationships(){
   DRIVER          = lookups[3].status === 'fulfilled' ? lookups[3].value : null;
   TRACTOR         = lookups[4].status === 'fulfilled' ? lookups[4].value : null;
   TRAILER         = lookups[5].status === 'fulfilled' ? lookups[5].value : null;
+
+  try{
+    let oq = await db
+      .from('load_opportunities')
+      .select('*')
+      .eq('tenant_id',TENANT_ID)
+      .eq('load_id',LOAD_ID)
+      .order('first_seen_at',{ascending:false})
+      .limit(1)
+      .maybeSingle();
+
+    if((oq.error || !oq.data) && LOAD.broker_load_number){
+      oq = await db
+        .from('load_opportunities')
+        .select('*')
+        .eq('tenant_id',TENANT_ID)
+        .eq('external_ref',LOAD.broker_load_number)
+        .order('first_seen_at',{ascending:false})
+        .limit(1)
+        .maybeSingle();
+    }
+
+    if(!oq.error) SOURCE_OPPORTUNITY = oq.data || null;
+    else console.warn('load_opportunities',oq.error.message);
+  }catch(e){
+    console.warn('load_opportunities skipped',e);
+  }
 
   try{
     const rp = await db
@@ -1602,14 +1564,40 @@ async function fetchOperationalRelationships(){
 
 function loadOriginLabel(){
   return entityLabel(ORIGIN_FACILITY,'facility') ||
+    [SOURCE_OPPORTUNITY?.pickup_facility_name,SOURCE_OPPORTUNITY?.origin_city,SOURCE_OPPORTUNITY?.origin_state].filter(Boolean).join(', ') ||
     [LOAD.origin_city,LOAD.origin_state].filter(Boolean).join(', ') ||
-    'Origin not set';
+    ROUTE_PLAN?.origin ||
+    '—';
 }
 
 function loadDestinationLabel(){
   return entityLabel(DEST_FACILITY,'facility') ||
+    [SOURCE_OPPORTUNITY?.delivery_facility_name,SOURCE_OPPORTUNITY?.dest_city,SOURCE_OPPORTUNITY?.dest_state].filter(Boolean).join(', ') ||
     [LOAD.dest_city,LOAD.dest_state].filter(Boolean).join(', ') ||
-    'Destination not set';
+    ROUTE_PLAN?.destination ||
+    '—';
+}
+
+function pickupValue(){
+  return LOAD.pickup_appt_start || ROUTE_PLAN?.pickup_at || SOURCE_OPPORTUNITY?.pickup_date || LOAD.pickup_date || LOAD.pickup_at || null;
+}
+
+function deliveryValue(){
+  return LOAD.delivery_appt_start || ROUTE_PLAN?.delivery_at || SOURCE_OPPORTUNITY?.delivery_date || LOAD.delivery_date || LOAD.delivery_at || null;
+}
+
+function axleValue(){
+  return LOAD.axle_count ?? LOAD.axles ?? TRAILER?.axle_count ?? TRAILER?.axles ?? TRACTOR?.axle_count ?? TRACTOR?.axles ?? null;
+}
+
+function permitRequiredEscortCount(){
+  let required = Number(LOAD.escorts_required || 0);
+  for(const p of PERMITS){
+    const roles = [!!p.escort_front,!!p.escort_rear,!!p.escort_police,!!p.escort_high_pole].filter(Boolean).length;
+    required = Math.max(required,roles);
+  }
+  if(required === 0 && LOAD.escort_responsibility === 'escort_company') required = 1;
+  return required;
 }
 
 function nextScheduledEvent(){
@@ -1620,8 +1608,8 @@ function nextScheduledEvent(){
   if(future.length) return future[0];
 
   const candidates = [
-    LOAD.pickup_appt_start ? {title:'Pickup',starts_at:LOAD.pickup_appt_start} : null,
-    LOAD.delivery_appt_start ? {title:'Delivery',starts_at:LOAD.delivery_appt_start} : null
+    pickupValue() ? {title:'Pickup',starts_at:pickupValue()} : null,
+    deliveryValue() ? {title:'Delivery',starts_at:deliveryValue()} : null
   ].filter(Boolean)
    .filter(x => new Date(x.starts_at).getTime() >= now)
    .sort((a,b) => new Date(a.starts_at) - new Date(b.starts_at));
@@ -1636,205 +1624,6 @@ function formatInches(v){
   const ft = Math.floor(n/12);
   const inch = Math.round(n - ft*12);
   return `${ft}' ${inch}"`;
-}
-
-function operationalRpm(){
-  const rev = Number(LOAD.linehaul_rate || 0) + Number(LOAD.fuel_surcharge || 0);
-  const miles = Number(LOAD.total_miles || ROUTE_PLAN?.loaded_miles || 0);
-  return rev > 0 && miles > 0 ? rev/miles : null;
-}
-
-function permitSummary(){
-  const total = PERMITS.length;
-  const good = PERMITS.filter(p =>
-    ['issued','approved','active','received','complete'].includes(
-      String(p.status || '').toLowerCase()
-    )
-  ).length;
-  return {total,good};
-}
-
-function escortSummary(){
-  const total = ESCORTS.length;
-  const good = ESCORTS.filter(e =>
-    ['confirmed','assigned','active','complete','completed'].includes(
-      String(e.status || '').toLowerCase()
-    )
-  ).length;
-  return {total,good};
-}
-
-function readinessItems(){
-  const permit = permitSummary();
-  const escort = escortSummary();
-
-  const dimsOK =
-    LOAD.width_in != null &&
-    LOAD.height_in != null &&
-    LOAD.weight_lb != null;
-
-  const fleetOK =
-    !!LOAD.carrier_id &&
-    !!LOAD.driver_id &&
-    !!LOAD.tractor_id &&
-    !!LOAD.trailer_id;
-
-  const routeOK =
-    !!ROUTE_PLAN;
-
-  const scheduleOK =
-    !!LOAD.pickup_appt_start &&
-    !!LOAD.delivery_appt_start;
-
-  const permitsOK =
-    permit.total === 0
-      ? !LOAD.permits_required
-      : permit.good === permit.total;
-
-  const escortsRequired =
-    Number(LOAD.escorts_required || 0);
-
-  const escortsOK =
-    escortsRequired > 0
-      ? escort.good >= escortsRequired
-      : true;
-
-  return [
-    ['Fleet',fleetOK, fleetOK ? 'Assigned' : 'Assignment incomplete'],
-    ['Route',routeOK, routeOK ? (ROUTE_PLAN.route_name || 'Saved') : 'No saved route'],
-    ['Schedule',scheduleOK, scheduleOK ? 'Pickup + delivery set' : 'Appointment missing'],
-    ['Dimensions',dimsOK, dimsOK ? 'Recorded' : 'Missing dimensions/weight'],
-    ['Permits',permitsOK,
-      permit.total ? `${permit.good}/${permit.total} ready` :
-      (LOAD.permit_responsibility ? titleize(LOAD.permit_responsibility) : 'No permits entered')],
-    ['Escorts',escortsOK,
-      escort.total ? `${escort.good}/${escort.total} ready` :
-      (LOAD.escort_responsibility ? titleize(LOAD.escort_responsibility) : 'No escorts entered')],
-    ['Documents',DOCUMENTS.length > 0, DOCUMENTS.length ? `${DOCUMENTS.length} attached` : 'No documents'],
-    ['Checklist',
-      CHECKLIST.length > 0 && CHECKLIST.every(x => x.completed || x.is_complete || x.done),
-      CHECKLIST.length
-        ? `${CHECKLIST.filter(x => x.completed || x.is_complete || x.done).length}/${CHECKLIST.length} complete`
-        : 'No checklist']
-  ];
-}
-
-function drawOperationalSummary(){
-  const host = $('operationalSummary');
-  if(!host || !LOAD) return;
-
-  const p = permitSummary();
-  const e = escortSummary();
-  const next = nextScheduledEvent();
-
-  const currentLocation = LATEST_CHECKIN
-    ? [
-        LATEST_CHECKIN.location_text,
-        LATEST_CHECKIN.state
-      ].filter(Boolean).join(', ')
-    : loadOriginLabel();
-
-  const routeName =
-    ROUTE_PLAN?.route_name ||
-    `${loadOriginLabel()} → ${loadDestinationLabel()}`;
-
-  const states =
-    Array.isArray(ROUTE_PLAN?.states)
-      ? ROUTE_PLAN.states.join(' → ')
-      : '';
-
-  const rpm = operationalRpm();
-
-  const dims = [
-    `L ${formatInches(LOAD.length_in)}`,
-    `W ${formatInches(LOAD.width_in)}`,
-    `H ${formatInches(LOAD.height_in)}`,
-    LOAD.weight_lb != null
-      ? `${Number(LOAD.weight_lb).toLocaleString()} lb`
-      : 'Weight —'
-  ].join(' · ');
-
-  const readiness = readinessItems();
-
-  host.innerHTML = `
-    <div class="ops-card ops-wide">
-      <h3>Current Load</h3>
-      <div class="ops-main">${esc(LOAD.load_number || LOAD_ID.slice(0,8))} · ${esc(LOAD.commodity || 'Commodity not set')}</div>
-      <div class="ops-sub">${esc(loadOriginLabel())} → ${esc(loadDestinationLabel())}<br>
-        ${esc(titleize(currentStatus()))}
-        ${LOAD.broker_load_number ? ' · Broker #' + esc(LOAD.broker_load_number) : ''}
-      </div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Current Location</h3>
-      <div class="ops-main">${esc(currentLocation || 'No check-in yet')}</div>
-      <div class="ops-sub">${LATEST_CHECKIN?.occurred_at ? 'Last check-in ' + esc(fmtDT(LATEST_CHECKIN.occurred_at)) : 'Using load origin until first check-in'}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Next Event</h3>
-      <div class="ops-main">${next ? esc(next.title || titleize(next.event_type || 'Scheduled event')) : 'No upcoming event'}</div>
-      <div class="ops-sub">${next ? esc(fmtDT(next.starts_at)) : 'Add pickup, delivery, or calendar event'}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Permits</h3>
-      <div class="ops-main">${p.total ? `${p.good}/${p.total} ready` : 'None booked'}</div>
-      <div class="ops-sub">Responsibility: ${esc(titleize(LOAD.permit_responsibility || 'not assigned'))}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Escorts</h3>
-      <div class="ops-main">${e.total ? `${e.good}/${e.total} ready` : 'None booked'}</div>
-      <div class="ops-sub">Responsibility: ${esc(titleize(LOAD.escort_responsibility || 'not assigned'))}</div>
-    </div>
-
-    <div class="ops-card ops-wide">
-      <h3>Route</h3>
-      <div class="ops-main">${esc(routeName)}</div>
-      <div class="ops-sub">
-        ${states ? 'States: ' + esc(states) + '<br>' : ''}
-        ${ROUTE_PLAN?.loaded_miles ?? LOAD.total_miles ?? '—'} loaded miles
-        ${ROUTE_PLAN?.workflow_status ? ' · ' + esc(titleize(ROUTE_PLAN.workflow_status)) : ''}
-      </div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Schedule</h3>
-      <div class="ops-main">Pickup ${esc(fmtDT(LOAD.pickup_appt_start))}</div>
-      <div class="ops-sub">Delivery ${esc(fmtDT(LOAD.delivery_appt_start))}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Dimensions</h3>
-      <div class="ops-main">${esc(dims)}</div>
-      <div class="ops-sub">${LOAD.axle_count ? esc(LOAD.axle_count) + ' axles' : 'Axles not recorded'}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>Truck & Driver</h3>
-      <div class="ops-main">${esc(entityLabel(TRACTOR,'equipment') || 'Truck unassigned')}</div>
-      <div class="ops-sub">${esc(entityLabel(DRIVER,'driver') || 'Driver unassigned')}<br>${esc(entityLabel(TRAILER,'equipment') || 'Trailer unassigned')}</div>
-    </div>
-
-    <div class="ops-card">
-      <h3>RPM</h3>
-      <div class="ops-main">${rpm != null ? '$' + rpm.toFixed(2) + '/mi' : '—'}</div>
-      <div class="ops-sub">${esc(money(LOAD.linehaul_rate))} linehaul${LOAD.fuel_surcharge ? ' + ' + esc(money(LOAD.fuel_surcharge)) + ' FSC' : ''}</div>
-    </div>
-
-    <div class="ops-card ops-wide">
-      <h3>Readiness</h3>
-      <div class="readiness-grid">
-        ${readiness.map(([label,ok,detail]) => `
-          <div class="ready-item ${ok ? 'ok' : 'warn'}">
-            <b>${esc(label)}</b><br>${esc(detail)}
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
 }
 
 
@@ -2243,14 +2032,15 @@ function drawOverview(){
   const origin = loadOriginLabel();
   const destination = loadDestinationLabel();
 
-  const pickup = LOAD.pickup_appt_start || LOAD.pickup_date || LOAD.pickup_at || null;
-  const delivery = LOAD.delivery_appt_start || LOAD.delivery_date || LOAD.delivery_at || null;
+  const pickup = pickupValue();
+  const delivery = deliveryValue();
 
   const miles = ROUTE_PLAN?.loaded_miles ?? LOAD.total_miles ?? LOAD.miles ?? null;
 
   const equipment =
     entityLabel(TRAILER,'equipment') ||
     ROUTE_PLAN?.equipment_type ||
+    SOURCE_OPPORTUNITY?.equipment_needed ||
     LOAD.equipment_type ||
     '—';
 
@@ -2259,12 +2049,11 @@ function drawOverview(){
   const truckName = entityLabel(TRACTOR,'equipment') || '—';
   const trailerName = entityLabel(TRAILER,'equipment') || '—';
 
-  const length = LOAD.length_in != null ? formatInches(LOAD.length_in) : '—';
-  const width = LOAD.width_in != null ? formatInches(LOAD.width_in) : '—';
-  const height = LOAD.height_in != null ? formatInches(LOAD.height_in) : '—';
-  const weight = LOAD.weight_lb != null
-    ? Number(LOAD.weight_lb).toLocaleString() + ' lb'
-    : '—';
+  const length = LOAD.length_in != null ? formatInches(LOAD.length_in) : (SOURCE_OPPORTUNITY?.length_ft != null ? SOURCE_OPPORTUNITY.length_ft + ' ft' : '—');
+  const width = LOAD.width_in != null ? formatInches(LOAD.width_in) : (SOURCE_OPPORTUNITY?.width_ft != null ? SOURCE_OPPORTUNITY.width_ft + ' ft' : '—');
+  const height = LOAD.height_in != null ? formatInches(LOAD.height_in) : (SOURCE_OPPORTUNITY?.height_ft != null ? SOURCE_OPPORTUNITY.height_ft + ' ft' : '—');
+  const weightSource = LOAD.weight_lb ?? SOURCE_OPPORTUNITY?.weight_lbs;
+  const weight = weightSource != null ? Number(weightSource).toLocaleString() + ' lb' : '—';
 
   const oversize =
     LOAD.is_oversize === true ||
@@ -2319,7 +2108,7 @@ function drawOverview(){
         <dt>Width</dt><dd>${esc(width)}</dd>
         <dt>Height</dt><dd>${esc(height)}</dd>
         <dt>Weight</dt><dd>${esc(weight)}</dd>
-        <dt>Axles</dt><dd>${esc(LOAD.axle_count ?? LOAD.axles ?? '—')}</dd>
+        <dt>Axles</dt><dd>${esc(axleValue() ?? '—')}</dd>
         <dt>Classification</dt><dd>${classes.join(' ') || 'Legal / not classified'}</dd>
         <dt>Route survey</dt><dd>${routeSurveyRequired ? 'Required' : 'Not required'}</dd>
       </dl>
@@ -2342,9 +2131,9 @@ function drawOverview(){
         <dt>Fleet</dt><dd>${LOAD.driver_id && LOAD.tractor_id && LOAD.trailer_id ? 'Assigned' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
         <dt>Route</dt><dd>${ROUTE_PLAN ? 'Saved' : '<span style="color:var(--warn);font-weight:600">Not saved</span>'}</dd>
         <dt>Schedule</dt><dd>${pickup && delivery ? 'Pickup + delivery set' : '<span style="color:var(--warn);font-weight:600">Missing appointment</span>'}</dd>
-        <dt>Dimensions</dt><dd>${LOAD.width_in != null && LOAD.height_in != null && LOAD.weight_lb != null ? 'Recorded' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
+        <dt>Dimensions</dt><dd>${((LOAD.width_in != null || SOURCE_OPPORTUNITY?.width_ft != null) && (LOAD.height_in != null || SOURCE_OPPORTUNITY?.height_ft != null) && (LOAD.weight_lb != null || SOURCE_OPPORTUNITY?.weight_lbs != null)) ? 'Recorded' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
         <dt>Permits</dt><dd>${permIssued} issued${permOpen ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>` : ''} of ${PERMITS.length}</dd>
-        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${ESCORTS.length}</dd>
+        <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${Math.max(ESCORTS.length, permitRequiredEscortCount())}${permitRequiredEscortCount() > ESCORTS.length ? ` · <span style="color:var(--warn);font-weight:600">${Math.max(permitRequiredEscortCount() - escOK,0)} required</span>` : ''}</dd>
         <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
         <dt>Revenue</dt><dd>${money(rev)}</dd>
         <dt>Cost</dt><dd>${money(cst)}</dd>
