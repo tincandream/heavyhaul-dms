@@ -303,9 +303,11 @@ textarea{min-height:76px;resize:vertical}
   </div>
   <div class="dlg-foot">
     <button class="primary" id="ci_save">Log Check-In</button>
+    <button type="button" id="ci_tt_next">Fill Next TT Location</button>
+    <button type="button" id="ci_tt_restart">Restart TT Route</button>
     <button onclick="dlgCheckIn.close()">Cancel</button>
     <span class="spacer"></span>
-    <span class="small muted">Also posts a check_in event to the timeline.</span>
+    <span class="small muted">TT controls fill the next realistic Little Rock → Memphis check-in. Log Check-In saves it.</span>
   </div>
 </dialog>
 
@@ -2130,6 +2132,193 @@ function drawActions(){
    ACTION HANDLERS
    ============================================================ */
 
+const TT_CHECKIN_ROUTE = [
+  {
+    type:'at_pickup',
+    when:'2026-08-13T08:00',
+    city:'Hugg & Hall Equipment Co., Little Rock',
+    state:'AR',
+    miles:137,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Arrived at pickup. Driver checked in at Hugg & Hall Equipment Co. in Little Rock, AR.'
+  },
+  {
+    type:'departure',
+    when:'2026-08-13T09:05',
+    city:'Little Rock',
+    state:'AR',
+    miles:137,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Loaded, secured and departed pickup. Eastbound toward Memphis, TN.'
+  },
+  {
+    type:'en_route',
+    when:'2026-08-13T09:35',
+    city:'Lonoke',
+    state:'AR',
+    miles:113,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Driver check-in at Lonoke, AR. Load secure. Continuing eastbound toward Memphis.'
+  },
+  {
+    type:'en_route',
+    when:'2026-08-13T10:20',
+    city:'Brinkley',
+    state:'AR',
+    miles:72,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Driver check-in at Brinkley, AR. Continuing eastbound. No issues reported.'
+  },
+  {
+    type:'en_route',
+    when:'2026-08-13T11:05',
+    city:'Forrest City',
+    state:'AR',
+    miles:46,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Driver check-in at Forrest City, AR. Load secure. Continuing eastbound toward Memphis, TN. No delays reported.'
+  },
+  {
+    type:'en_route',
+    when:'2026-08-13T12:05',
+    city:'West Memphis',
+    state:'AR',
+    miles:12,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Approaching Tennessee state line from West Memphis, AR. Load secure and route proceeding as planned.'
+  },
+  {
+    type:'en_route',
+    when:'2026-08-13T12:35',
+    city:'Memphis',
+    state:'TN',
+    miles:5,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Entered Memphis, TN. Proceeding to Thompson Machinery for delivery.'
+  },
+  {
+    type:'at_delivery',
+    when:'2026-08-13T13:00',
+    city:'Thompson Machinery, Memphis',
+    state:'TN',
+    miles:0,
+    eta:'2026-08-13T13:00',
+    notes:'TT TRAINING — Arrived at Thompson Machinery in Memphis, TN for delivery.'
+  }
+];
+
+let TT_CHECKIN_INDEX = 0;
+
+
+function fillTTCheckIn(index){
+
+  const safeIndex =
+    Math.max(
+      0,
+      Math.min(
+        Number(index) || 0,
+        TT_CHECKIN_ROUTE.length - 1
+      )
+    );
+
+  const step =
+    TT_CHECKIN_ROUTE[safeIndex];
+
+  TT_CHECKIN_INDEX =
+    safeIndex;
+
+  $('ci_type').value =
+    step.type;
+
+  $('ci_when').value =
+    step.when;
+
+  $('ci_city').value =
+    step.city;
+
+  $('ci_state').value =
+    step.state;
+
+  $('ci_miles').value =
+    step.miles;
+
+  $('ci_eta').value =
+    step.eta;
+
+  $('ci_notes').value =
+    step.notes;
+
+  toast(
+    'TT location ' +
+    (safeIndex + 1) +
+    ' of ' +
+    TT_CHECKIN_ROUTE.length +
+    ' filled'
+  );
+}
+
+
+async function findNextTTCheckIn(){
+
+  /*
+    Determine the next training point from TT TRAINING check-ins
+    already saved on this load. This makes the sequence survive
+    page refreshes instead of relying only on a browser counter.
+  */
+  const result =
+    await db
+      .from('check_ins')
+      .select('location_text,state,occurred_at,note')
+      .eq('tenant_id', TENANT_ID)
+      .eq('load_id', LOAD_ID)
+      .order('occurred_at', { ascending:true });
+
+  if (result.error){
+    console.warn(
+      'TT check-in history:',
+      result.error.message
+    );
+    return TT_CHECKIN_INDEX;
+  }
+
+  const trainingRows =
+    (result.data || [])
+      .filter(
+        row =>
+          String(
+            row.note || ''
+          ).includes(
+            'TT TRAINING'
+          )
+      );
+
+  return Math.min(
+    trainingRows.length,
+    TT_CHECKIN_ROUTE.length - 1
+  );
+}
+
+
+async function fillNextTTCheckIn(){
+
+  clearErr('ci_err');
+
+  const nextIndex =
+    await findNextTTCheckIn();
+
+  fillTTCheckIn(
+    nextIndex
+  );
+}
+
+
+function restartTTCheckInRoute(){
+
+  TT_CHECKIN_INDEX = 0;
+  fillTTCheckIn(0);
+}
+
+
 function openCheckIn(){
   clearErr('ci_err');
   $('ci_type').value  = 'en_route';
@@ -2176,6 +2365,20 @@ async function saveCheckIn(){
   btn.disabled = false;
   dlgCheckIn.close();
   toast('Check-in logged');
+
+  if (
+    notes &&
+    notes.includes(
+      'TT TRAINING'
+    )
+  ) {
+    TT_CHECKIN_INDEX =
+      Math.min(
+        TT_CHECKIN_INDEX + 1,
+        TT_CHECKIN_ROUTE.length - 1
+      );
+  }
+
   await refreshAll();
 }
 
@@ -4548,6 +4751,18 @@ async function deletePrivate(){
    WIRE UP + START
    ============================================================ */
 $('ci_save').addEventListener('click', saveCheckIn);
+
+$('ci_tt_next')
+  ?.addEventListener(
+    'click',
+    fillNextTTCheckIn
+  );
+
+$('ci_tt_restart')
+  ?.addEventListener(
+    'click',
+    restartTTCheckInRoute
+  );
 $('hd_save').addEventListener('click', saveHold);
 $('st_save').addEventListener('click', saveStatus);
 
