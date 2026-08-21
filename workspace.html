@@ -100,61 +100,6 @@ tr.clickable:hover td{background:#f7f9fc}
 .box{padding:14px}
 .box h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
 
-/* HOS dispatcher watch */
-.hos-watch{display:grid;gap:12px}
-.hos-next{
-  border:1px solid var(--line);
-  border-left:5px solid var(--ok);
-  border-radius:8px;
-  background:var(--ok-soft);
-  padding:12px 14px;
-}
-.hos-next.watch{border-left-color:var(--warn);background:var(--warn-soft)}
-.hos-next.critical{border-left-color:var(--bad);background:var(--bad-soft)}
-.hos-next .lbl{
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:.7px;
-  font-weight:800;
-  color:var(--muted);
-}
-.hos-next .name{margin-top:3px;font-weight:800;font-size:15px}
-.hos-next .count{margin-top:3px;font-size:22px;font-weight:800}
-.hos-mini-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-}
-.hos-mini{
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:10px 11px;
-  background:#fbfcfd;
-}
-.hos-mini .ttl{
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:.6px;
-  color:var(--muted);
-  font-weight:800;
-  margin-bottom:6px;
-}
-.hos-mini .big{font-size:16px;font-weight:800}
-.hos-mini dl{margin:6px 0 0}
-.hos-mini dt,.hos-mini dd{font-size:11px}
-.hos-mini dt{color:var(--muted)}
-.hos-mini dd{margin:0 0 4px;font-weight:600}
-.hos-disclaimer{
-  font-size:10.5px;
-  color:var(--muted);
-  line-height:1.45;
-  border-top:1px solid var(--line);
-  padding-top:9px;
-}
-@media (max-width:680px){
-  .hos-mini-grid{grid-template-columns:1fr}
-}
-
 /* timeline */
 .tl{position:relative;padding-left:22px}
 .tl:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
@@ -246,7 +191,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-hos-dispatcher-watch">
+<body data-workspace-version="2026-08-21-live-hos-tracker">
 
 <header></header>
 
@@ -765,7 +710,107 @@ textarea{min-height:76px;resize:vertical}
 </dialog>
 
   
+
+<!-- ============ HOS TRACKER DIALOG ============ -->
+<dialog id="dlgHosTracker">
+  <div class="dlg-head">
+    <h3 id="hos_evt_title">Update HOS</h3>
+  </div>
+
+  <div class="dlg-body">
+
+    <div class="fgrid">
+
+      <div class="field">
+        <label for="hos_evt_type">Event</label>
+        <select id="hos_evt_type">
+          <option value="baseline">Baseline HOS</option>
+          <option value="hours_update">Hours Update</option>
+          <option value="break_completed">Break Completed</option>
+          <option value="off_duty">Off Duty</option>
+          <option value="back_on_duty">Back On Duty</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="hos_evt_when">Occurred at</label>
+        <input type="datetime-local" id="hos_evt_when">
+      </div>
+
+    </div>
+
+
+    <fieldset class="fs" id="hosHoursFields">
+      <legend>Reported HOS</legend>
+
+      <div class="fgrid">
+
+        <div class="field">
+          <label for="hos_evt_drive">Drive remaining (hours)</label>
+          <input type="number" min="0" step="0.1" id="hos_evt_drive">
+        </div>
+
+        <div class="field">
+          <label for="hos_evt_window">14-hour window remaining</label>
+          <input type="number" min="0" step="0.1" id="hos_evt_window">
+        </div>
+
+        <div class="field">
+          <label for="hos_evt_cycle">Cycle remaining</label>
+          <input type="number" min="0" step="0.1" id="hos_evt_cycle">
+        </div>
+
+        <div class="field">
+          <label for="hos_evt_since_break">Driving since qualifying break</label>
+          <input type="number" min="0" step="0.1" id="hos_evt_since_break">
+        </div>
+
+      </div>
+    </fieldset>
+
+
+    <fieldset class="fs hide" id="hosBreakFields">
+      <legend>Break</legend>
+
+      <div class="fgrid">
+        <div class="field">
+          <label for="hos_evt_break_minutes">Break minutes</label>
+          <input type="number" min="0" step="1" id="hos_evt_break_minutes" value="30">
+        </div>
+      </div>
+    </fieldset>
+
+
+    <fieldset class="fs hide" id="hosOffDutyFields">
+      <legend>Off Duty / Rest</legend>
+
+      <div class="fgrid">
+        <div class="field">
+          <label for="hos_evt_off_minutes">Off-duty minutes</label>
+          <input type="number" min="0" step="1" id="hos_evt_off_minutes">
+        </div>
+      </div>
+    </fieldset>
+
+
+    <div class="field full" style="margin-top:12px">
+      <label for="hos_evt_note">Note</label>
+      <textarea id="hos_evt_note" placeholder="Driver reported updated ELD values, completed qualifying break, started off duty, etc."></textarea>
+    </div>
+
+    <div id="hos_evt_err" class="err"></div>
+
+  </div>
+
+  <div class="dlg-foot">
+    <button class="primary" id="hos_evt_save">Save HOS Event</button>
+    <button id="hos_evt_filltest" type="button">Fill TT Test Data</button>
+    <button onclick="dlgHosTracker.close()">Cancel</button>
+  </div>
+</dialog>
+
 <div id="toast"></div>
+
 
 <!-- ============ DRIVER TRIP PACKET (print-only) ============ -->
 <div id="tripPacket"></div>
@@ -865,6 +910,7 @@ let ESCORTS = [];
 let EVENTS = [];
 let CHARGES = [];
 let CALCULATIONS = [];
+let HOS_EVENTS = [];
 let ACCESSORIALS = [];
 let MARGIN = null;
 let CHECKLIST = [];
@@ -1007,50 +1053,6 @@ function hosDeadlineText(v){
 }
 
 
-
-function hosRemainingMinutes(v){
-  if(!v) return null;
-  const target = new Date(v);
-  if(Number.isNaN(target.getTime())) return null;
-  return Math.round((target.getTime() - Date.now()) / 60000);
-}
-
-function hosCountdownText(v){
-  const mins = hosRemainingMinutes(v);
-  if(mins === null) return '—';
-
-  if(mins < 0){
-    const overdue = Math.abs(mins);
-    if(overdue < 60) return overdue + ' min overdue';
-    return Math.floor(overdue / 60) + 'h ' +
-      String(overdue % 60).padStart(2,'0') + 'm overdue';
-  }
-
-  if(mins < 60) return mins + ' min remaining';
-
-  return Math.floor(mins / 60) + 'h ' +
-    String(mins % 60).padStart(2,'0') + 'm remaining';
-}
-
-function hosWatchTone(v){
-  const mins = hosRemainingMinutes(v);
-  if(mins === null) return 'watch';
-  if(mins <= 60) return 'critical';
-  if(mins <= 180) return 'watch';
-  return 'good';
-}
-
-function hosHoursText(v){
-  if(v === null || v === undefined || v === '') return '—';
-
-  const total = Number(v);
-  if(!Number.isFinite(total)) return '—';
-
-  const whole = Math.floor(total);
-  const mins = Math.round((total - whole) * 60);
-
-  return whole + 'h ' + String(mins).padStart(2,'0') + 'm';
-}
 
 function ago(v){
   if (!v) return '';
@@ -2628,6 +2630,203 @@ function drawActiveTab(){
 /* ============================================================
    OVERVIEW
    ============================================================ */
+
+async function fetchHosEvents(){
+
+  if(
+    !TENANT_ID ||
+    !LOAD_ID
+  ){
+    HOS_EVENTS = [];
+    return;
+  }
+
+  const result =
+    await db
+      .from('hos_events')
+      .select('*')
+      .eq('tenant_id', TENANT_ID)
+      .eq('load_id', LOAD_ID)
+      .order('occurred_at', { ascending:false })
+      .order('created_at', { ascending:false });
+
+  if(result.error){
+    console.warn(
+      'hos_events',
+      result.error
+    );
+
+    HOS_EVENTS = [];
+    return;
+  }
+
+  HOS_EVENTS =
+    result.data ||
+    [];
+}
+
+
+function latestHosEvent(type){
+
+  return (
+    HOS_EVENTS.find(
+      e =>
+        !type ||
+        e.event_type === type
+    ) ||
+    null
+  );
+}
+
+
+function firstHosEvent(){
+
+  return HOS_EVENTS.length
+    ? HOS_EVENTS[
+        HOS_EVENTS.length - 1
+      ]
+    : null;
+}
+
+
+function latestReportedHosEvent(){
+
+  return (
+    HOS_EVENTS.find(
+      e =>
+        e.event_type === 'baseline' ||
+        e.event_type === 'hours_update' ||
+        e.event_type === 'back_on_duty'
+    ) ||
+    null
+  );
+}
+
+
+function hosEventDeadlineBase(){
+
+  const report =
+    latestReportedHosEvent();
+
+  if(!report){
+    return null;
+  }
+
+  const observedAt =
+    report.occurred_at;
+
+  if(!observedAt){
+    return null;
+  }
+
+  return {
+    report,
+    observedAt,
+    driveEndsAt:
+      report.drive_remaining_hours != null
+        ? new Date(
+            new Date(observedAt).getTime() +
+            Number(report.drive_remaining_hours) * 3600000
+          ).toISOString()
+        : null,
+    windowEndsAt:
+      report.window_remaining_hours != null
+        ? new Date(
+            new Date(observedAt).getTime() +
+            Number(report.window_remaining_hours) * 3600000
+          ).toISOString()
+        : null,
+    cycleEndsAt:
+      report.cycle_remaining_hours != null
+        ? new Date(
+            new Date(observedAt).getTime() +
+            Number(report.cycle_remaining_hours) * 3600000
+          ).toISOString()
+        : null,
+    breakDueAt:
+      report.driving_since_break_hours != null
+        ? new Date(
+            new Date(observedAt).getTime() +
+            Math.max(
+              0,
+              8 - Number(report.driving_since_break_hours)
+            ) * 3600000
+          ).toISOString()
+        : null
+  };
+}
+
+
+function hosTrackerNextDeadline(){
+
+  const base =
+    hosEventDeadlineBase();
+
+  if(!base){
+    return null;
+  }
+
+  const latestBreak =
+    latestHosEvent(
+      'break_completed'
+    );
+
+  let breakDueAt =
+    base.breakDueAt;
+
+  if(
+    latestBreak &&
+    latestBreak.occurred_at &&
+    new Date(latestBreak.occurred_at).getTime() >
+    new Date(base.observedAt).getTime()
+  ){
+    breakDueAt = null;
+  }
+
+  const candidates = [
+    {
+      kind:'break',
+      label:'30-minute break due',
+      at:breakDueAt
+    },
+    {
+      kind:'drive',
+      label:'Drive clock',
+      at:base.driveEndsAt
+    },
+    {
+      kind:'window',
+      label:'14-hour window',
+      at:base.windowEndsAt
+    },
+    {
+      kind:'cycle',
+      label:'Cycle projection',
+      at:base.cycleEndsAt
+    }
+  ]
+    .filter(x => x.at)
+    .map(
+      x => ({
+        ...x,
+        ms:
+          new Date(x.at)
+            .getTime()
+      })
+    )
+    .filter(
+      x =>
+        Number.isFinite(x.ms)
+    )
+    .sort(
+      (a,b) =>
+        a.ms - b.ms
+    );
+
+  return candidates[0] || null;
+}
+
+
 function drawOverview(){
   if (!LOAD){
     $('tab-overview').innerHTML = '<div class="empty">No load.</div>';
@@ -2706,25 +2905,29 @@ const escortRequiredCount =
     )
   );
 
-  const hosCalculations =
-    CALCULATIONS.filter(
+  const latestHos =
+    CALCULATIONS.find(
       c =>
         c.calculator_type ===
         'hos'
-    );
-
-
-  const latestHos =
-    hosCalculations[0] ||
+    ) ||
     null;
 
 
-  const tripStartHos =
-    hosCalculations.length
-      ? hosCalculations[
-          hosCalculations.length - 1
-        ]
-      : null;
+  const hosEventBaseline =
+    HOS_EVENTS.find(
+      e =>
+        e.event_type === 'baseline'
+    ) ||
+    firstHosEvent();
+
+
+  const hosEventCurrent =
+    latestReportedHosEvent();
+
+
+  const hosEventDeadline =
+    hosTrackerNextDeadline();
 
 
   const hosInputs =
@@ -2734,11 +2937,6 @@ const escortRequiredCount =
 
   const hosResults =
     latestHos?.results ||
-    {};
-
-
-  const tripStartHosInputs =
-    tripStartHos?.inputs ||
     {};
 
 
@@ -2783,39 +2981,60 @@ const escortRequiredCount =
     'Next HOS deadline';
 
 
-  const hosWatchClass =
-    hosWatchTone(
-      hosNextDeadlineAt
-    );
+  const trackedObservedAt =
+    hosEventCurrent?.occurred_at ||
+    hosObservedAt;
 
 
-  const tripStartObservedAt =
-    tripStartHosInputs.observedAt ||
-    null;
-
-
-  const tripStartDriveRemaining =
-    tripStartHosInputs.driveRemaining;
-
-
-  const tripStartWindowRemaining =
-    tripStartHosInputs.windowRemaining;
-
-
-  const tripStartCycleRemaining =
-    tripStartHosInputs.cycleRemaining;
-
-
-  const latestDriveRemaining =
+  const trackedDriveRemaining =
+    hosEventCurrent?.drive_remaining_hours ??
     hosInputs.driveRemaining;
 
 
-  const latestWindowRemaining =
+  const trackedWindowRemaining =
+    hosEventCurrent?.window_remaining_hours ??
     hosInputs.windowRemaining;
 
 
-  const latestCycleRemaining =
+  const trackedCycleRemaining =
+    hosEventCurrent?.cycle_remaining_hours ??
     hosInputs.cycleRemaining;
+
+
+  const trackedSinceBreak =
+    hosEventCurrent?.driving_since_break_hours ??
+    hosInputs.driveSinceBreak;
+
+
+  const trackedTripStartAt =
+    hosEventBaseline?.occurred_at ||
+    latestHos?.created_at ||
+    hosObservedAt;
+
+
+  const trackedTripStartDrive =
+    hosEventBaseline?.drive_remaining_hours ??
+    hosInputs.driveRemaining;
+
+
+  const trackedTripStartWindow =
+    hosEventBaseline?.window_remaining_hours ??
+    hosInputs.windowRemaining;
+
+
+  const trackedTripStartCycle =
+    hosEventBaseline?.cycle_remaining_hours ??
+    hosInputs.cycleRemaining;
+
+
+  const trackedNextDeadlineAt =
+    hosEventDeadline?.at ||
+    hosNextDeadlineAt;
+
+
+  const trackedNextDeadlineLabel =
+    hosEventDeadline?.label ||
+    hosNextDeadlineLabel;
 
 
   const latestCarrierProfit =
@@ -3137,121 +3356,109 @@ const escortRequiredCount =
       ${
         latestHos
           ? `
-            <div class="hos-watch">
+            <dl class="kv">
 
-              <div
-                class="hos-next ${
-                  hosWatchClass === 'critical'
-                    ? 'critical'
-                    : (
-                        hosWatchClass === 'watch'
-                          ? 'watch'
-                          : ''
-                      )
-                }"
-                id="hosNextWatch"
-                data-hos-deadline="${esc(hosNextDeadlineAt || '')}"
+              <dt>Observed</dt>
+              <dd>
+                ${esc(fmtDT(trackedObservedAt))}
+                <div class="small muted">Time these ELD clocks were recorded</div>
+              </dd>
+
+              <dt>Next deadline</dt>
+              <dd style="font-weight:700;color:${
+                trackedNextDeadlineAt &&
+                new Date(trackedNextDeadlineAt).getTime() < Date.now()
+                  ? 'var(--bad)'
+                  : 'var(--warn)'
+              }">
+                ${esc(trackedNextDeadlineLabel)}
+                <div class="small">
+                  ${esc(hosDeadlineText(trackedNextDeadlineAt))}
+                </div>
+              </dd>
+
+              <dt>Drive clock</dt>
+              <dd>${esc(hosDeadlineText(hosDriveClockEndsAt))}</dd>
+
+              <dt>14-hour window</dt>
+              <dd>${esc(hosDeadlineText(hosWindowEndsAt))}</dd>
+
+              <dt>Break due</dt>
+              <dd>${esc(hosDeadlineText(hosBreakDueAt))}</dd>
+
+              <dt>Planned break</dt>
+              <dd>${esc(hosDeadlineText(hosPlannedBreakAt))}</dd>
+
+              <dt>Cycle projection</dt>
+              <dd>
+                ${esc(hosDeadlineText(hosCycleEndsAt))}
+                <div class="small muted">
+                  Projection only if on-duty time continues continuously
+                </div>
+              </dd>
+
+              <dt>Saved</dt>
+              <dd class="small muted">
+                ${esc(fmtDT(latestHos.created_at))}
+                ${
+                  latestHos.is_training
+                    ? ' · TT Training'
+                    : ''
+                }
+              </dd>
+
+            </dl>
+
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+
+              <button
+                class="primary sm"
+                onclick="
+                  location.href =
+                    'calculators.html?load_id=' +
+                    encodeURIComponent(LOAD_ID) +
+                    '&tab=hos'
+                "
               >
-                <div class="lbl">Next HOS Deadline</div>
-                <div class="name">${esc(hosNextDeadlineLabel)}</div>
-                <div class="count" id="hosNextCountdown">
-                  ${esc(hosCountdownText(hosNextDeadlineAt))}
-                </div>
-                <div class="small">${esc(fmtDT(hosNextDeadlineAt))}</div>
-              </div>
+                Update HOS
+              </button>
 
+              <button
+                class="sm"
+                onclick="
+                  document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()
+                "
+              >
+                HOS History
+              </button>
 
-              <div class="hos-mini-grid">
+              <button
+                class="sm"
+                onclick="openHosTracker('hours_update')"
+              >
+                Quick HOS Update
+              </button>
 
-                <div class="hos-mini">
-                  <div class="ttl">Trip Start</div>
-                  <div class="big">${esc(fmtDT(tripStartObservedAt))}</div>
+              <button
+                class="sm"
+                onclick="openHosTracker('break_completed')"
+              >
+                Break Completed
+              </button>
 
-                  <dl>
-                    <dt>Drive available</dt>
-                    <dd>${esc(hosHoursText(tripStartDriveRemaining))}</dd>
+              <button
+                class="sm"
+                onclick="openHosTracker('off_duty')"
+              >
+                Off Duty
+              </button>
 
-                    <dt>14-hour window</dt>
-                    <dd>${esc(hosHoursText(tripStartWindowRemaining))}</dd>
-
-                    <dt>Cycle reported</dt>
-                    <dd>${esc(hosHoursText(tripStartCycleRemaining))}</dd>
-                  </dl>
-                </div>
-
-
-                <div class="hos-mini">
-                  <div class="ttl">Last Reported</div>
-                  <div class="big">${esc(fmtDT(hosObservedAt))}</div>
-
-                  <dl>
-                    <dt>Drive reported</dt>
-                    <dd>${esc(hosHoursText(latestDriveRemaining))}</dd>
-
-                    <dt>Window reported</dt>
-                    <dd>${esc(hosHoursText(latestWindowRemaining))}</dd>
-
-                    <dt>Cycle reported</dt>
-                    <dd>${esc(hosHoursText(latestCycleRemaining))}</dd>
-                  </dl>
-                </div>
-
-              </div>
-
-
-              <div class="hos-mini">
-                <div class="ttl">Dispatcher Watch</div>
-
-                <dl class="kv">
-                  <dt>Drive clock end</dt>
-                  <dd>${esc(hosDeadlineText(hosDriveClockEndsAt))}</dd>
-
-                  <dt>14-hour window</dt>
-                  <dd>${esc(hosDeadlineText(hosWindowEndsAt))}</dd>
-
-                  <dt>Break due</dt>
-                  <dd>${esc(hosDeadlineText(hosBreakDueAt))}</dd>
-
-                  <dt>Planned break</dt>
-                  <dd>${esc(hosDeadlineText(hosPlannedBreakAt))}</dd>
-
-                  <dt>Cycle projection</dt>
-                  <dd>${esc(hosDeadlineText(hosCycleEndsAt))}</dd>
-                </dl>
-              </div>
-
-
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-
-                <button
-                  class="primary sm"
-                  onclick="
-                    location.href =
-                      'calculators.html?load_id=' +
-                      encodeURIComponent(LOAD_ID) +
-                      '&tab=hos'
-                  "
-                >
-                  Update HOS
-                </button>
-
-                <button
-                  class="sm"
-                  onclick="
-                    document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()
-                  "
-                >
-                  HOS History
-                </button>
-
-              </div>
-
-
-              <div class="hos-disclaimer">
-                Dispatcher planning tracker only. Trip Start preserves the first saved HOS snapshot;
-                Last Reported shows the newest driver/ELD report. Clock countdowns are planning aids
-                and do not replace the driver's actual ELD.
-              </div>
+              <button
+                class="sm"
+                onclick="openHosTracker('back_on_duty')"
+              >
+                Back On Duty
+              </button>
 
             </div>
           `
@@ -3272,6 +3479,13 @@ const escortRequiredCount =
               >
                 Add HOS Check
               </button>
+
+              <button
+                class="sm"
+                onclick="openHosTracker('baseline')"
+              >
+                Start HOS Tracker
+              </button>
             </div>
           `
       }
@@ -3279,50 +3493,449 @@ const escortRequiredCount =
     </div>
 
   </div>`;
-
-  setTimeout(refreshHosWatchCountdown, 0);
-
 }
 
-function refreshHosWatchCountdown(){
 
-  const el = $('hosNextCountdown');
-  const box = $('hosNextWatch');
+function setHosTrackerMode(){
 
-  if(!el || !box) return;
+  const type =
+    $('hos_evt_type').value;
 
-  const deadline =
-    box.dataset.hosDeadline ||
-    '';
+  const showHours =
+    type === 'baseline' ||
+    type === 'hours_update' ||
+    type === 'back_on_duty';
 
-  el.textContent =
-    hosCountdownText(
-      deadline
+  const showBreak =
+    type === 'break_completed';
+
+  const showOffDuty =
+    type === 'off_duty';
+
+  $('hosHoursFields')
+    .classList
+    .toggle(
+      'hide',
+      !showHours
     );
 
-  const tone =
-    hosWatchTone(
-      deadline
+  $('hosBreakFields')
+    .classList
+    .toggle(
+      'hide',
+      !showBreak
     );
 
-  box.classList.remove(
-    'watch',
-    'critical'
+  $('hosOffDutyFields')
+    .classList
+    .toggle(
+      'hide',
+      !showOffDuty
+    );
+
+  $('hos_evt_title').textContent =
+    type === 'baseline'
+      ? 'Start HOS Tracker'
+      : type === 'hours_update'
+        ? 'Update HOS'
+        : type === 'break_completed'
+          ? 'Break Completed'
+          : type === 'off_duty'
+            ? 'Driver Off Duty'
+            : 'Driver Back On Duty';
+}
+
+
+function clearHosTracker(){
+
+  [
+    'hos_evt_drive',
+    'hos_evt_window',
+    'hos_evt_cycle',
+    'hos_evt_since_break',
+    'hos_evt_off_minutes',
+    'hos_evt_note'
+  ]
+    .forEach(
+      id =>
+        $(id).value = ''
+    );
+
+  $('hos_evt_break_minutes').value =
+    '30';
+
+  $('hos_evt_when').value =
+    toLocalInput(
+      new Date()
+    );
+
+  clearErr(
+    'hos_evt_err'
+  );
+}
+
+
+function openHosTracker(type){
+
+  clearHosTracker();
+
+  $('hos_evt_type').value =
+    type ||
+    (
+      HOS_EVENTS.length
+        ? 'hours_update'
+        : 'baseline'
+    );
+
+  const current =
+    latestReportedHosEvent();
+
+  if(current){
+
+    if(
+      current.drive_remaining_hours != null
+    ){
+      $('hos_evt_drive').value =
+        current.drive_remaining_hours;
+    }
+
+    if(
+      current.window_remaining_hours != null
+    ){
+      $('hos_evt_window').value =
+        current.window_remaining_hours;
+    }
+
+    if(
+      current.cycle_remaining_hours != null
+    ){
+      $('hos_evt_cycle').value =
+        current.cycle_remaining_hours;
+    }
+
+    if(
+      current.driving_since_break_hours != null
+    ){
+      $('hos_evt_since_break').value =
+        current.driving_since_break_hours;
+    }
+  }
+
+  setHosTrackerMode();
+
+  dlgHosTracker.showModal();
+}
+
+
+async function saveHosTrackerEvent(){
+
+  clearErr(
+    'hos_evt_err'
   );
 
-  if(tone === 'watch'){
-    box.classList.add('watch');
+  if(
+    !TENANT_ID ||
+    !LOAD_ID
+  ){
+    showErr(
+      'hos_evt_err',
+      {
+        message:'Load context is not ready.'
+      }
+    );
+
+    return;
   }
 
-  if(tone === 'critical'){
-    box.classList.add('critical');
+  const type =
+    $('hos_evt_type').value;
+
+  const occurredAt =
+    fromLocalInput(
+      $('hos_evt_when').value
+    );
+
+  if(!occurredAt){
+    showErr(
+      'hos_evt_err',
+      {
+        message:'Enter the time this HOS event occurred.'
+      }
+    );
+
+    return;
+  }
+
+  const row = {
+    tenant_id:
+      TENANT_ID,
+
+    load_id:
+      LOAD_ID,
+
+    event_type:
+      type,
+
+    occurred_at:
+      occurredAt,
+
+    drive_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_drive').value
+          )
+        : null,
+
+    window_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_window').value
+          )
+        : null,
+
+    cycle_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_cycle').value
+          )
+        : null,
+
+    driving_since_break_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_since_break').value
+          )
+        : null,
+
+    break_minutes:
+      type === 'break_completed'
+        ? num(
+            $('hos_evt_break_minutes').value
+          )
+        : null,
+
+    off_duty_minutes:
+      type === 'off_duty'
+        ? num(
+            $('hos_evt_off_minutes').value
+          )
+        : null,
+
+    note:
+      txt(
+        $('hos_evt_note').value
+      )
+  };
+
+
+  const result =
+    await db
+      .from('hos_events')
+      .insert(row)
+      .select()
+      .single();
+
+
+  if(result.error){
+    showErr(
+      'hos_evt_err',
+      result.error
+    );
+
+    return;
+  }
+
+
+  if(
+    type === 'baseline' ||
+    type === 'hours_update' ||
+    type === 'back_on_duty'
+  ){
+
+    const minutes =
+      row.drive_remaining_hours != null
+        ? Math.round(
+            Number(
+              row.drive_remaining_hours
+            ) * 60
+          )
+        : null;
+
+    const patch = {
+
+      driver_hours_remaining_min:
+        minutes,
+
+      hours_updated_at:
+        occurredAt,
+
+      updated_at:
+        new Date().toISOString()
+
+    };
+
+    const updateResult =
+      await db
+        .from('loads')
+        .update(patch)
+        .eq(
+          'tenant_id',
+          TENANT_ID
+        )
+        .eq(
+          'id',
+          LOAD_ID
+        );
+
+    if(updateResult.error){
+      console.warn(
+        'HOS live load summary update:',
+        updateResult.error
+      );
+    }
+  }
+
+
+  await logEvent({
+    event_type:
+      'hos',
+
+    subject:
+      type === 'baseline'
+        ? 'HOS baseline'
+        : type === 'hours_update'
+          ? 'HOS hours updated'
+          : type === 'break_completed'
+            ? 'Qualifying break completed'
+            : type === 'off_duty'
+              ? 'Driver off duty'
+              : 'Driver back on duty',
+
+    body:
+      row.note ||
+      (
+        type === 'break_completed'
+          ? (
+              'Completed ' +
+              (
+                row.break_minutes ||
+                30
+              ) +
+              '-minute break.'
+            )
+          : ''
+      ),
+
+    occurred_at:
+      occurredAt,
+
+    is_milestone:
+      false
+  });
+
+
+  dlgHosTracker.close();
+
+  toast(
+    'HOS tracker updated'
+  );
+
+  await refreshAll();
+}
+
+
+function fillHosTrackerTestData(){
+
+  const type =
+    $('hos_evt_type').value;
+
+  $('hos_evt_when').value =
+    toLocalInput(
+      new Date()
+    );
+
+  if(
+    type === 'baseline'
+  ){
+    $('hos_evt_drive').value = '6.5';
+    $('hos_evt_window').value = '8';
+    $('hos_evt_cycle').value = '18';
+    $('hos_evt_since_break').value = '5';
+    $('hos_evt_note').value =
+      'TT TRAINING — Baseline HOS entered from driver ELD.';
+  }
+  else if(
+    type === 'hours_update'
+  ){
+    $('hos_evt_drive').value = '5';
+    $('hos_evt_window').value = '6.5';
+    $('hos_evt_cycle').value = '16.5';
+    $('hos_evt_since_break').value = '6.5';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver reported updated HOS during trip.';
+  }
+  else if(
+    type === 'break_completed'
+  ){
+    $('hos_evt_break_minutes').value = '30';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver completed qualifying 30-minute break.';
+  }
+  else if(
+    type === 'off_duty'
+  ){
+    $('hos_evt_off_minutes').value = '0';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver began off-duty rest period.';
+  }
+  else if(
+    type === 'back_on_duty'
+  ){
+    $('hos_evt_drive').value = '11';
+    $('hos_evt_window').value = '14';
+    $('hos_evt_cycle').value = '17';
+    $('hos_evt_since_break').value = '0';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver returned to duty; values confirmed from ELD.';
   }
 }
 
-setInterval(
-  refreshHosWatchCountdown,
-  30000
-);
+
+$('hos_evt_type')
+  ?.addEventListener(
+    'change',
+    setHosTrackerMode
+  );
+
+
+$('hos_evt_save')
+  ?.addEventListener(
+    'click',
+    saveHosTrackerEvent
+  );
+
+
+$('hos_evt_filltest')
+  ?.addEventListener(
+    'click',
+    fillHosTrackerTestData
+  );
 
 
 /* ============================================================
