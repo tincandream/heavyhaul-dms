@@ -802,6 +802,573 @@ main {
 
 
 
+
+/* ============================================================
+   DRIVER / CARRIER PROFIT CALCULATOR
+   ============================================================ */
+
+function updateDriverPayExplain(){
+  const method =
+    $('cpDriverPayType').value;
+
+  const explain =
+    $('cpDriverPayExplain');
+
+  if(method === 'percent'){
+    explain.textContent =
+      'Enter 25 for 25% of gross load revenue.';
+  }
+  else if(method === 'per_mile'){
+    explain.textContent =
+      'Enter the driver pay rate per total mile.';
+  }
+  else{
+    explain.textContent =
+      'Enter the flat driver pay amount for this load.';
+  }
+}
+
+
+function calculateCarrierProfit(){
+
+  lastCarrierProfitCalculation =
+    null;
+
+  const linehaul =
+    n('cpLinehaul');
+
+  const fuelSurcharge =
+    n('cpFuelSurcharge');
+
+  const otherRevenue =
+    n('cpOtherRevenue');
+
+  const loadedMiles =
+    n('cpLoadedMiles');
+
+  const deadheadMiles =
+    n('cpDeadheadMiles');
+
+  const dispatchRate =
+    n('cpDispatchRate');
+
+  const driverPayType =
+    $('cpDriverPayType').value;
+
+  const driverPayRate =
+    n('cpDriverPayRate');
+
+  const driverExtraPay =
+    n('cpDriverExtraPay');
+
+  const fuelCost =
+    n('cpFuelCost');
+
+  const permitCost =
+    n('cpPermitCost');
+
+  const escortCost =
+    n('cpEscortCost');
+
+  const tollCost =
+    n('cpTollCost');
+
+  const lodgingCost =
+    n('cpLodgingCost');
+
+  const maintenancePerMile =
+    n('cpMaintenancePerMile');
+
+  const overheadCost =
+    n('cpOverheadCost');
+
+  const otherCost =
+    n('cpOtherCost');
+
+
+  const grossRevenue =
+    linehaul +
+    fuelSurcharge +
+    otherRevenue;
+
+  const totalMiles =
+    loadedMiles +
+    deadheadMiles;
+
+  const dispatchFee =
+    grossRevenue *
+    (
+      dispatchRate /
+      100
+    );
+
+  let baseDriverPay = 0;
+
+  if(driverPayType === 'percent'){
+    baseDriverPay =
+      grossRevenue *
+      (
+        driverPayRate /
+        100
+      );
+  }
+  else if(driverPayType === 'per_mile'){
+    baseDriverPay =
+      totalMiles *
+      driverPayRate;
+  }
+  else{
+    baseDriverPay =
+      driverPayRate;
+  }
+
+  const driverPay =
+    baseDriverPay +
+    driverExtraPay;
+
+  const maintenanceReserve =
+    totalMiles *
+    maintenancePerMile;
+
+  const operatingCosts =
+    fuelCost +
+    permitCost +
+    escortCost +
+    tollCost +
+    lodgingCost +
+    maintenanceReserve +
+    overheadCost +
+    otherCost;
+
+  const carrierNet =
+    grossRevenue -
+    dispatchFee -
+    driverPay -
+    operatingCosts;
+
+  const carrierMargin =
+    grossRevenue > 0
+      ? (
+          carrierNet /
+          grossRevenue
+        ) *
+        100
+      : 0;
+
+  const revenuePerMile =
+    totalMiles > 0
+      ? grossRevenue /
+        totalMiles
+      : 0;
+
+  const carrierProfitMile =
+    totalMiles > 0
+      ? carrierNet /
+        totalMiles
+      : 0;
+
+  const driverPayMile =
+    totalMiles > 0
+      ? driverPay /
+        totalMiles
+      : 0;
+
+  const breakEvenRevenue =
+    dispatchFee +
+    driverPay +
+    operatingCosts;
+
+
+  $('cpGrossRevenue').textContent =
+    money(grossRevenue);
+
+  $('cpRevenuePerMile').textContent =
+    totalMiles
+      ? '$' +
+        revenuePerMile.toFixed(2)
+      : '—';
+
+  $('cpDispatchFee').textContent =
+    money(dispatchFee);
+
+  $('cpDriverPay').textContent =
+    money(driverPay);
+
+  $('cpOperatingCosts').textContent =
+    money(operatingCosts);
+
+  $('cpCarrierNet').textContent =
+    money(carrierNet);
+
+  $('cpCarrierNet').className =
+    'metric-value ' +
+    (
+      carrierNet >= 0
+        ? 'money-positive'
+        : 'money-negative'
+    );
+
+  $('cpCarrierMargin').textContent =
+    carrierMargin.toFixed(1) +
+    '%';
+
+  $('cpCarrierProfitMile').textContent =
+    totalMiles
+      ? '$' +
+        carrierProfitMile.toFixed(2)
+      : '—';
+
+  $('cpDriverPayMile').textContent =
+    totalMiles
+      ? '$' +
+        driverPayMile.toFixed(2)
+      : '—';
+
+
+  if(carrierNet < 0){
+    $('carrierProfitStatus').className =
+      'result-status no';
+
+    $('carrierProfitStatusMain').textContent =
+      'Carrier Loss';
+
+    $('carrierProfitStatusDetail').textContent =
+      'Driver pay, dispatch fee and operating costs exceed the entered revenue.';
+  }
+  else if(carrierMargin < 10){
+    $('carrierProfitStatus').className =
+      'result-status tight';
+
+    $('carrierProfitStatusMain').textContent =
+      'Thin Carrier Margin';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The load is positive, but the estimated carrier margin is narrow.';
+  }
+  else{
+    $('carrierProfitStatus').className =
+      'result-status good';
+
+    $('carrierProfitStatusMain').textContent =
+      'Positive Carrier Profit';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The entered revenue covers driver pay, dispatch fee and operating costs.';
+  }
+
+
+  $('cpBreakEven').textContent =
+    'Estimated carrier break-even revenue: ' +
+    money(
+      breakEvenRevenue
+    ) +
+    (
+      totalMiles
+        ? ' · approximately $' +
+          (
+            breakEvenRevenue /
+            totalMiles
+          ).toFixed(2) +
+          ' per total mile.'
+        : '.'
+    );
+
+
+  lastCarrierProfitCalculation = {
+    inputs: {
+      linehaul,
+      fuelSurcharge,
+      otherRevenue,
+      loadedMiles,
+      deadheadMiles,
+      dispatchRate,
+      driverPayType,
+      driverPayRate,
+      driverExtraPay,
+      fuelCost,
+      permitCost,
+      escortCost,
+      tollCost,
+      lodgingCost,
+      maintenancePerMile,
+      overheadCost,
+      otherCost
+    },
+    results: {
+      grossRevenue,
+      totalMiles,
+      revenuePerMile,
+      dispatchFee,
+      baseDriverPay,
+      driverExtraPay,
+      driverPay,
+      maintenanceReserve,
+      operatingCosts,
+      carrierNet,
+      carrierMargin,
+      carrierProfitMile,
+      driverPayMile,
+      breakEvenRevenue
+    }
+  };
+
+  return lastCarrierProfitCalculation;
+}
+
+
+function resetCarrierProfit(){
+
+  [
+    'cpLinehaul',
+    'cpOtherRevenue',
+    'cpLoadedMiles',
+    'cpDeadheadMiles',
+    'cpDriverExtraPay',
+    'cpFuelCost',
+    'cpPermitCost',
+    'cpEscortCost',
+    'cpTollCost',
+    'cpLodgingCost',
+    'cpOverheadCost',
+    'cpOtherCost'
+  ]
+    .forEach(
+      id => {
+        $(id).value = '';
+      }
+    );
+
+  $('cpFuelSurcharge').value =
+    '0';
+
+  $('cpDispatchRate').value =
+    '7';
+
+  $('cpDriverPayType').value =
+    'percent';
+
+  $('cpDriverPayRate').value =
+    '25';
+
+  $('cpMaintenancePerMile').value =
+    '0.35';
+
+  [
+    'cpGrossRevenue',
+    'cpRevenuePerMile',
+    'cpDispatchFee',
+    'cpDriverPay',
+    'cpOperatingCosts',
+    'cpCarrierNet',
+    'cpCarrierMargin',
+    'cpCarrierProfitMile',
+    'cpDriverPayMile'
+  ]
+    .forEach(
+      id => {
+        $(id).textContent = '—';
+        $(id).className = 'metric-value';
+      }
+    );
+
+  $('carrierProfitStatus').className =
+    'result-status';
+
+  $('carrierProfitStatusMain').textContent =
+    'Enter load data';
+
+  $('carrierProfitStatusDetail').textContent =
+    'Select a load or enter the revenue and operating costs.';
+
+  $('cpBreakEven').textContent =
+    'Enter the load information to calculate the carrier break-even revenue.';
+
+  lastCarrierProfitCalculation =
+    null;
+
+  setCalcSaveMessage(
+    'carrierProfitSaveMessage',
+    ''
+  );
+
+  updateDriverPayExplain();
+}
+
+
+function fillCarrierProfitTestData(){
+
+  if(
+    $('calcLoad') &&
+    CALC_LOADS.length
+  ){
+    const ttLoad =
+      CALC_LOADS.find(
+        load =>
+          load.broker_load_number ===
+          'TT-ABC-260811-01'
+      );
+
+    if(ttLoad){
+      $('calcLoad').value =
+        ttLoad.id;
+
+      syncCalculatorLoadContext(
+        ttLoad.id
+      );
+    }
+  }
+
+  ttSetValue(
+    'cpLinehaul',
+    $('linehaul')?.value ||
+    '6000'
+  );
+
+  ttSetValue(
+    'cpFuelSurcharge',
+    $('fuel')?.value ||
+    '0'
+  );
+
+  ttSetValue(
+    'cpOtherRevenue',
+    '0'
+  );
+
+  ttSetValue(
+    'cpLoadedMiles',
+    $('loadedMiles')?.value ||
+    '137'
+  );
+
+  ttSetValue(
+    'cpDeadheadMiles',
+    '35'
+  );
+
+  ttSetValue(
+    'cpDispatchRate',
+    '7'
+  );
+
+  ttSetValue(
+    'cpDriverPayType',
+    'percent'
+  );
+
+  ttSetValue(
+    'cpDriverPayRate',
+    '25'
+  );
+
+  ttSetValue(
+    'cpDriverExtraPay',
+    '0'
+  );
+
+  ttSetValue(
+    'cpFuelCost',
+    '325'
+  );
+
+  ttSetValue(
+    'cpPermitCost',
+    '180'
+  );
+
+  ttSetValue(
+    'cpEscortCost',
+    '650'
+  );
+
+  ttSetValue(
+    'cpTollCost',
+    '25'
+  );
+
+  ttSetValue(
+    'cpLodgingCost',
+    '0'
+  );
+
+  ttSetValue(
+    'cpMaintenancePerMile',
+    '0.35'
+  );
+
+  ttSetValue(
+    'cpOverheadCost',
+    '150'
+  );
+
+  ttSetValue(
+    'cpOtherCost',
+    '50'
+  );
+
+  updateDriverPayExplain();
+  calculateCarrierProfit();
+}
+
+
+$('cpDriverPayType')
+  ?.addEventListener(
+    'change',
+    updateDriverPayExplain
+  );
+
+
+$('calculateCarrierProfit')
+  ?.addEventListener(
+    'click',
+    calculateCarrierProfit
+  );
+
+
+$('saveCarrierProfitToLoad')
+  ?.addEventListener(
+    'click',
+    async () => {
+
+      const calculation =
+        calculateCarrierProfit();
+
+      if(!calculation){
+        setCalcSaveMessage(
+          'carrierProfitSaveMessage',
+          'Calculate the driver/carrier profit before saving.',
+          'error'
+        );
+        return;
+      }
+
+      await saveCalculationSnapshot(
+        'carrier_profit',
+        calculation.inputs,
+        calculation.results,
+        'carrierProfitSaveMessage'
+      );
+    }
+  );
+
+
+$('resetCarrierProfit')
+  ?.addEventListener(
+    'click',
+    resetCarrierProfit
+  );
+
+
+$('fillCarrierProfitTest')
+  ?.addEventListener(
+    'click',
+    fillCarrierProfitTestData
+  );
+
+
+updateDriverPayExplain();
+
+
 /* ============================================================
    ACCESSORIALS / DETENTION
    ============================================================ */
@@ -886,6 +1453,26 @@ main {
   .check-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+
+.calc-save-message{
+  display:none;
+  margin-top:12px;
+  padding:10px 12px;
+  font-size:12px;
+}
+.calc-save-message.show{display:block}
+.calc-save-message.ok{
+  background:var(--calc-lime-soft);
+  color:#5D6723;
+  border-left:3px solid var(--calc-lime);
+}
+.calc-save-message.error{
+  background:var(--calc-pink-soft);
+  color:#8E3E58;
+  border-left:3px solid var(--calc-pink);
 }
 
 
@@ -986,6 +1573,15 @@ main {
 
     <button
       type="button"
+      id="carrierProfitTab">
+
+      Driver / Carrier Profit
+
+    </button>
+
+
+    <button
+      type="button"
       id="accessorialTab">
 
       Accessorials &amp; Detention
@@ -1034,6 +1630,8 @@ main {
         Refresh Load Data
       </button>
     </div>
+
+    <div class="calc-save-message" id="calcSaveMessage"></div>
   </div>
 
 
@@ -1246,19 +1844,23 @@ main {
 
             <button
               type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillHosTest">
-              Fill test data
-            </button>
-
-            <button
-              type="button"
               class="calc-btn"
               id="calculateHos">
 
               Check Trip
 
             </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="saveHosToLoad">
+
+              Add HOS Check to Load
+
+            </button>
+
 
 
             <button
@@ -1271,6 +1873,8 @@ main {
             </button>
 
           </div>
+
+          <div class="calc-save-message" id="hosSaveMessage"></div>
 
 
         </div>
@@ -1677,19 +2281,23 @@ main {
 
             <button
               type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillProfitTest">
-              Fill test data
-            </button>
-
-            <button
-              type="button"
               class="calc-btn"
               id="calculateProfit">
 
               Calculate Profit
 
             </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="saveProfitToLoad">
+
+              Add Profit Check to Load
+
+            </button>
+
 
 
             <button
@@ -1702,6 +2310,8 @@ main {
             </button>
 
           </div>
+
+          <div class="calc-save-message" id="profitSaveMessage"></div>
 
         </div>
 
@@ -1909,6 +2519,269 @@ main {
 
       </aside>
 
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ========================================================
+       DRIVER / CARRIER PROFIT CALCULATOR
+       ======================================================== -->
+
+  <section
+    class="calc-panel"
+    id="carrierProfitPanel">
+
+    <div class="calc-layout">
+
+      <div>
+
+        <div class="calc-card">
+
+          <h2>Driver / Carrier Revenue</h2>
+
+          <p class="calc-hint">
+            Estimate driver pay and the carrier's remaining profit on this load.
+            Select a load above to pull its saved rate and loaded miles.
+          </p>
+
+          <div class="form-grid">
+
+            <div class="field">
+              <label for="cpLinehaul">Linehaul</label>
+              <input id="cpLinehaul" type="number" min="0" step="0.01">
+            </div>
+
+            <div class="field">
+              <label for="cpFuelSurcharge">Fuel surcharge</label>
+              <input id="cpFuelSurcharge" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpOtherRevenue">Other revenue</label>
+              <input id="cpOtherRevenue" type="number" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpLoadedMiles">Loaded miles</label>
+              <input id="cpLoadedMiles" type="number" min="0" step="1">
+            </div>
+
+            <div class="field">
+              <label for="cpDeadheadMiles">Deadhead miles</label>
+              <input id="cpDeadheadMiles" type="number" min="0" step="1" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpDispatchRate">Dispatch fee %</label>
+              <input id="cpDispatchRate" type="number" min="0" step="0.1" value="7">
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="calc-card">
+
+          <h2>Driver Pay</h2>
+
+          <div class="form-grid">
+
+            <div class="field">
+              <label for="cpDriverPayType">Driver pay method</label>
+              <select id="cpDriverPayType">
+                <option value="percent">Percent of gross revenue</option>
+                <option value="per_mile">Per total mile</option>
+                <option value="flat">Flat amount</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="cpDriverPayRate">Driver pay rate</label>
+              <input id="cpDriverPayRate" type="number" min="0" step="0.01" value="25">
+              <div class="explain" id="cpDriverPayExplain">Enter 25 for 25%.</div>
+            </div>
+
+            <div class="field">
+              <label for="cpDriverExtraPay">Driver extras / reimbursements</label>
+              <input id="cpDriverExtraPay" type="number" min="0" step="0.01" value="0">
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="calc-card">
+
+          <h2>Carrier Operating Costs</h2>
+
+          <div class="form-grid">
+
+            <div class="field">
+              <label for="cpFuelCost">Fuel cost</label>
+              <input id="cpFuelCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpPermitCost">Permit cost</label>
+              <input id="cpPermitCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpEscortCost">Escort / pilot car cost</label>
+              <input id="cpEscortCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpTollCost">Tolls</label>
+              <input id="cpTollCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpLodgingCost">Lodging / layover</label>
+              <input id="cpLodgingCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpMaintenancePerMile">Maintenance reserve / mile</label>
+              <input id="cpMaintenancePerMile" type="number" min="0" step="0.01" value="0.35">
+            </div>
+
+            <div class="field">
+              <label for="cpOverheadCost">Insurance / overhead allocation</label>
+              <input id="cpOverheadCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+            <div class="field">
+              <label for="cpOtherCost">Other carrier costs</label>
+              <input id="cpOtherCost" type="number" min="0" step="0.01" value="0">
+            </div>
+
+          </div>
+
+          <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn secondary tt-fill"
+              id="fillCarrierProfitTest">
+              Fill test data
+            </button>
+
+            <button
+              type="button"
+              class="calc-btn"
+              id="calculateCarrierProfit">
+              Calculate Driver / Carrier Profit
+            </button>
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="saveCarrierProfitToLoad">
+              Add Profit Check to Load
+            </button>
+
+            <button
+              type="button"
+              class="calc-btn secondary"
+              id="resetCarrierProfit">
+              Clear
+            </button>
+
+          </div>
+
+          <div class="calc-save-message" id="carrierProfitSaveMessage"></div>
+
+        </div>
+
+      </div>
+
+
+      <aside class="calc-card result-card">
+
+        <h2>Driver / Carrier Summary</h2>
+
+        <p class="calc-hint">
+          Shows estimated driver compensation and carrier net after the entered load costs.
+        </p>
+
+        <div
+          class="result-status"
+          id="carrierProfitStatus">
+
+          <div class="status-label">Carrier Result</div>
+          <div class="status-main" id="carrierProfitStatusMain">Enter load data</div>
+          <div class="status-detail" id="carrierProfitStatusDetail">
+            Select a load or enter the revenue and operating costs.
+          </div>
+
+        </div>
+
+        <div class="metrics">
+
+          <div class="metric">
+            <div class="metric-label">Gross revenue</div>
+            <div class="metric-value" id="cpGrossRevenue">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">All-in RPM</div>
+            <div class="metric-value" id="cpRevenuePerMile">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Dispatch fee</div>
+            <div class="metric-value" id="cpDispatchFee">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Driver pay</div>
+            <div class="metric-value" id="cpDriverPay">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Operating costs</div>
+            <div class="metric-value" id="cpOperatingCosts">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Carrier net profit</div>
+            <div class="metric-value" id="cpCarrierNet">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Carrier margin</div>
+            <div class="metric-value" id="cpCarrierMargin">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Carrier profit / mile</div>
+            <div class="metric-value" id="cpCarrierProfitMile">—</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Driver pay / mile</div>
+            <div class="metric-value" id="cpDriverPayMile">—</div>
+          </div>
+
+        </div>
+
+        <div class="break-even" id="cpBreakEven">
+          Enter the load information to calculate the carrier break-even revenue.
+        </div>
+
+        <div class="notice">
+          Planning estimate only. Use the carrier's actual compensation agreement,
+          fuel receipts, permit/escort invoices, maintenance assumptions, insurance,
+          equipment payments, payroll taxes and other operating costs for final accounting.
+        </div>
+
+      </aside>
 
     </div>
 
@@ -2321,13 +3194,6 @@ main {
 
             <button
               type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillAccessorialTest">
-              Fill test data
-            </button>
-
-            <button
-              type="button"
               class="calc-btn"
               id="calculateAccessorial">
 
@@ -2572,6 +3438,15 @@ let tenant =
 let lastAccessorialCalculation =
   null;
 
+let lastHosCalculation =
+  null;
+
+let lastProfitCalculation =
+  null;
+
+let lastCarrierProfitCalculation =
+  null;
+
 
 async function startPage() {
 
@@ -2786,6 +3661,10 @@ function showTool(tool) {
       'profitPanel',
       'profitTab'
     ],
+    carrierProfit: [
+      'carrierProfitPanel',
+      'carrierProfitTab'
+    ],
     accessorial: [
       'accessorialPanel',
       'accessorialTab'
@@ -2842,6 +3721,16 @@ $('profitTab')
   );
 
 
+$('carrierProfitTab')
+  .addEventListener(
+    'click',
+    () =>
+      showTool(
+        'carrierProfit'
+      )
+  );
+
+
 $('accessorialTab')
   .addEventListener(
     'click',
@@ -2862,10 +3751,16 @@ function applyRequestedCalculatorTab() {
   if (
     requestedTool === 'accessorial' ||
     requestedTool === 'profit' ||
+    requestedTool === 'carrierProfit' ||
+    requestedTool === 'carrierprofit' ||
     requestedTool === 'hos'
   ) {
 
-    showTool(requestedTool);
+    showTool(
+      requestedTool === 'carrierprofit'
+        ? 'carrierProfit'
+        : requestedTool
+    );
 
   }
 
@@ -2876,11 +3771,168 @@ applyRequestedCalculatorTab();
 
 
 
+
+/* ============================================================
+   SAVE CALCULATOR DATA TO LOAD
+   Requires public.load_calculations (migration supplied with
+   this updated page).
+   ============================================================ */
+
+function selectedCalculatorLoadId(){
+  return (
+    $('calcLoad')?.value ||
+    $('accessorialLoad')?.value ||
+    ''
+  );
+}
+
+
+function setCalcSaveMessage(id,text,type='ok'){
+  const el = $(id);
+  if(!el) return;
+
+  el.textContent = text || '';
+  el.className = 'calc-save-message';
+
+  if(text){
+    el.classList.add(
+      'show',
+      type === 'error'
+        ? 'error'
+        : 'ok'
+    );
+  }
+}
+
+
+async function calculatorTrainingStatus(){
+  try{
+    const result =
+      await db.rpc(
+        'get_training_mode_status'
+      );
+
+    if(result.error){
+      return false;
+    }
+
+    return Boolean(
+      result.data &&
+      result.data.active
+    );
+  }
+  catch(error){
+    return false;
+  }
+}
+
+
+async function saveCalculationSnapshot(
+  calculatorType,
+  inputs,
+  results,
+  messageId,
+  explicitLoadId = null
+){
+  if(!db || !tenant){
+    setCalcSaveMessage(
+      messageId,
+      'Database connection is not ready.',
+      'error'
+    );
+    return null;
+  }
+
+  const loadId =
+    explicitLoadId ||
+    selectedCalculatorLoadId();
+
+  if(!loadId){
+    setCalcSaveMessage(
+      messageId,
+      'Select a load first.',
+      'error'
+    );
+    return null;
+  }
+
+  const load =
+    CALC_LOADS.find(
+      x => x.id === loadId
+    ) ||
+    CALC_LOAD_CONTEXT?.load ||
+    null;
+
+  const trainingActive =
+    await calculatorTrainingStatus();
+
+  const row = {
+    tenant_id:
+      tenant,
+
+    load_id:
+      loadId,
+
+    calculator_type:
+      calculatorType,
+
+    inputs:
+      inputs || {},
+
+    results:
+      results || {},
+
+    is_training:
+      Boolean(
+        load?.is_training ||
+        trainingActive
+      )
+  };
+
+  const result =
+    await db
+      .from('load_calculations')
+      .insert(row)
+      .select(
+        'id,calculator_type,created_at'
+      )
+      .single();
+
+  if(result.error){
+    setCalcSaveMessage(
+      messageId,
+      'Could not add calculation to load: ' +
+      result.error.message,
+      'error'
+    );
+    return null;
+  }
+
+  setCalcSaveMessage(
+    messageId,
+    accessorialPretty(
+      calculatorType
+    ) +
+    ' saved to ' +
+    (
+      load?.load_number ||
+      'selected load'
+    ) +
+    '.',
+    'ok'
+  );
+
+  return result.data;
+}
+
+
 /* ============================================================
    HOS CALCULATOR
    ============================================================ */
 
 function calculateHos() {
+
+  lastHosCalculation = null;
 
 
   const driveRemaining =
@@ -3210,6 +4262,41 @@ function calculateHos() {
 
     ).join('');
 
+
+  lastHosCalculation = {
+    inputs: {
+      driveRemaining,
+      windowRemaining,
+      cycleRemaining,
+      driveSinceBreak,
+      tripDrive,
+      tripDuty,
+      buffer,
+      breakPlanned
+    },
+    results: {
+      feasible,
+      tight,
+      status:
+        !feasible
+          ? 'not_feasible'
+          : (
+              tight
+                ? 'tight'
+                : 'good'
+            ),
+      driveAfter,
+      windowAfter,
+      cycleAfter,
+      totalWindowDemand,
+      totalCycleDemand,
+      breakNeeded,
+      warnings
+    }
+  };
+
+  return lastHosCalculation;
+
 }
 
 
@@ -3218,6 +4305,33 @@ $('calculateHos')
   .addEventListener(
     'click',
     calculateHos
+  );
+
+
+$('saveHosToLoad')
+  .addEventListener(
+    'click',
+    async () => {
+
+      const calculation =
+        calculateHos();
+
+      if(!calculation){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          'Complete a valid HOS check before saving.',
+          'error'
+        );
+        return;
+      }
+
+      await saveCalculationSnapshot(
+        'hos',
+        calculation.inputs,
+        calculation.results,
+        'hosSaveMessage'
+      );
+    }
   );
 
 
@@ -3286,6 +4400,14 @@ $('resetHos')
         .innerHTML =
         '';
 
+      lastHosCalculation =
+        null;
+
+      setCalcSaveMessage(
+        'hosSaveMessage',
+        ''
+      );
+
     }
   );
 
@@ -3296,6 +4418,8 @@ $('resetHos')
    ============================================================ */
 
 function calculateProfit() {
+
+  lastProfitCalculation = null;
 
 
   const linehaul =
@@ -3650,6 +4774,38 @@ function calculateProfit() {
 
   }
 
+
+  lastProfitCalculation = {
+    inputs: {
+      linehaul,
+      fuel,
+      otherRevenue,
+      loadedMiles,
+      deadheadMiles,
+      fuelCost,
+      permitCost,
+      escortCost,
+      tollCost,
+      lodgingCost,
+      otherCost,
+      dispatchRate
+    },
+    results: {
+      grossRevenue,
+      totalMiles,
+      totalCosts,
+      grossProfit,
+      margin,
+      dispatchFee,
+      carrierAfterFee,
+      rpm,
+      profitPerMile,
+      breakEvenRevenue
+    }
+  };
+
+  return lastProfitCalculation;
+
 }
 
 
@@ -3658,6 +4814,33 @@ $('calculateProfit')
   .addEventListener(
     'click',
     calculateProfit
+  );
+
+
+$('saveProfitToLoad')
+  .addEventListener(
+    'click',
+    async () => {
+
+      const calculation =
+        calculateProfit();
+
+      if(!calculation){
+        setCalcSaveMessage(
+          'profitSaveMessage',
+          'Calculate the load profit before saving.',
+          'error'
+        );
+        return;
+      }
+
+      await saveCalculationSnapshot(
+        'dispatch_profit',
+        calculation.inputs,
+        calculation.results,
+        'profitSaveMessage'
+      );
+    }
   );
 
 
@@ -3736,6 +4919,14 @@ $('resetProfit')
       $('breakEven')
         .textContent =
         'Enter the load information to calculate the break-even rate.';
+
+      lastProfitCalculation =
+        null;
+
+      setCalcSaveMessage(
+        'profitSaveMessage',
+        ''
+      );
 
     }
   );
@@ -4456,6 +5647,59 @@ async function saveAccessorialToLoad() {
     'ok'
   );
 
+
+  await saveCalculationSnapshot(
+    'accessorial',
+    {
+      accessorialType:
+        calculation.type,
+      rateType:
+        calculation.rateType,
+      rate:
+        calculation.rate,
+      quantity:
+        calculation.quantity,
+      locationType:
+        $('accessorialLocationType').value,
+      facility:
+        $('accessorialFacility').value.trim(),
+      description:
+        $('accessorialDescription').value.trim(),
+      appointment:
+        $('detentionAppointment').value,
+      arrival:
+        $('detentionArrival').value,
+      checkIn:
+        $('detentionCheckIn').value,
+      serviceStart:
+        $('detentionServiceStart').value,
+      released:
+        $('detentionReleased').value,
+      notificationRequired:
+        $('notificationRequired').value,
+      brokerNotifiedAt:
+        $('brokerNotifiedAt').value,
+      notifiedContact:
+        $('notifiedContact').value.trim()
+    },
+    {
+      totalMinutes:
+        calculation.totalMinutes,
+      freeMinutes:
+        calculation.freeMinutes,
+      billableMinutes:
+        calculation.billableMinutes,
+      requestedAmount:
+        calculation.requestedAmount,
+      accessorialId:
+        result.data.id,
+      status:
+        result.data.status
+    },
+    'calcSaveMessage',
+    loadId
+  );
+
 }
 
 
@@ -4717,8 +5961,8 @@ async function loadCalculatorLoads(){
     await db
       .from('loads')
       .select(
-        'id,load_number,commodity,status,carrier_id,driver_id,' +
-        'linehaul_rate,fuel_surcharge,total_miles,created_at,archived_at'
+        'id,load_number,broker_load_number,commodity,status,carrier_id,driver_id,' +
+        'linehaul_rate,fuel_surcharge,total_miles,created_at,archived_at,is_training'
       )
       .eq('tenant_id', tenant)
       .is('archived_at', null)
@@ -5042,6 +6286,27 @@ async function syncCalculatorLoadContext(loadId){
       '';
   }
 
+
+  /* DRIVER / CARRIER PROFIT */
+  if ($('cpLinehaul')){
+    $('cpLinehaul').value =
+      load.linehaul_rate ??
+      '';
+  }
+
+  if ($('cpFuelSurcharge')){
+    $('cpFuelSurcharge').value =
+      load.fuel_surcharge ??
+      0;
+  }
+
+  if ($('cpLoadedMiles')){
+    $('cpLoadedMiles').value =
+      route?.loaded_miles ??
+      load.total_miles ??
+      '';
+  }
+
   /* HOS CALCULATOR
      check_ins stores the latest remaining HOS in minutes. We only
      prefill the clock we truly have; window/cycle remain ELD inputs. */
@@ -5094,6 +6359,10 @@ async function syncCalculatorLoadContext(loadId){
   /* Recalculate only when enough values exist. */
   if (Number($('linehaul')?.value || 0) > 0){
     calculateProfit();
+  }
+
+  if (Number($('cpLinehaul')?.value || 0) > 0){
+    calculateCarrierProfit();
   }
 }
 
@@ -5158,137 +6427,6 @@ $('accessorialType')?.addEventListener(
 
 
 startPage();
-
-/* ============================================================
-   TT TRAINING — CALCULATOR TEST DATA
-   TT-ABC-260811-01 / LD-2009
-   ============================================================ */
-
-function ttSetValue(id, value) {
-  const el = $(id);
-  if (el) el.value = value;
-}
-
-function fillHosTestData() {
-  ttSetValue('driveRemaining', '6.5');
-  ttSetValue('windowRemaining', '8');
-  ttSetValue('cycleRemaining', '18');
-  ttSetValue('driveSinceBreak', '2');
-  ttSetValue('tripDrive', '2.5');
-  ttSetValue('tripDuty', '0.75');
-  ttSetValue('buffer', '0.5');
-  ttSetValue('breakPlanned', 'no');
-
-  calculateHos();
-}
-
-function fillProfitTestData() {
-  if ($('linehaul') && !$('linehaul').value) {
-    $('linehaul').value = '3200';
-  }
-
-  if ($('loadedMiles') && !$('loadedMiles').value) {
-    $('loadedMiles').value = '137';
-  }
-
-  ttSetValue('fuel', $('fuel')?.value || '0');
-  ttSetValue('otherRevenue', '0');
-  ttSetValue('deadheadMiles', '35');
-  ttSetValue('fuelCost', '325');
-  ttSetValue('permitCost', '180');
-  ttSetValue('escortCost', '0');
-  ttSetValue('tollCost', '25');
-  ttSetValue('lodgingCost', '0');
-  ttSetValue('otherCost', '50');
-  ttSetValue('dispatchRate', '7');
-
-  calculateProfit();
-}
-
-function ttLocalDateTime(date) {
-  const pad = value => String(value).padStart(2, '0');
-
-  return (
-    date.getFullYear() + '-' +
-    pad(date.getMonth() + 1) + '-' +
-    pad(date.getDate()) + 'T' +
-    pad(date.getHours()) + ':' +
-    pad(date.getMinutes())
-  );
-}
-
-function fillAccessorialTestData() {
-  const appointment = new Date(2026, 7, 18, 8, 0, 0, 0);
-
-  const arrival = new Date(appointment);
-  arrival.setMinutes(arrival.getMinutes() - 10);
-
-  const checkIn = new Date(appointment);
-  checkIn.setMinutes(checkIn.getMinutes() - 5);
-
-  const serviceStart = new Date(appointment);
-  serviceStart.setHours(10, 15, 0, 0);
-
-  const released = new Date(appointment);
-  released.setHours(12, 30, 0, 0);
-
-  ttSetValue('accessorialType', 'detention');
-  ttSetValue('accessorialLocationType', 'shipper');
-  ttSetValue('accessorialFacility', 'Hugg & Hall Equipment Co.');
-  ttSetValue('accessorialRateType', 'hourly');
-
-  if ($('accessorialRate') && !$('accessorialRate').value) {
-    $('accessorialRate').value = '75';
-  }
-
-  ttSetValue('accessorialQuantity', '1');
-  ttSetValue(
-    'accessorialDescription',
-    'TT TRAINING — Loading delay at Hugg & Hall Equipment Co. beyond agreed free time.'
-  );
-
-  ttSetValue('detentionAppointment', ttLocalDateTime(appointment));
-  ttSetValue('detentionArrival', ttLocalDateTime(arrival));
-  ttSetValue('detentionCheckIn', ttLocalDateTime(checkIn));
-  ttSetValue('detentionServiceStart', ttLocalDateTime(serviceStart));
-  ttSetValue('detentionReleased', ttLocalDateTime(released));
-
-  if ($('detentionFreeMinutes') && !$('detentionFreeMinutes').value) {
-    $('detentionFreeMinutes').value = '120';
-  }
-
-  ttSetValue('notificationRequired', 'yes');
-
-  const notified = new Date(appointment);
-  notified.setHours(10, 5, 0, 0);
-
-  ttSetValue('brokerNotifiedAt', ttLocalDateTime(notified));
-  ttSetValue(
-    'notifiedContact',
-    'TT TRAINING — ABC Logistics notified of detention delay.'
-  );
-
-  if ($('docBol')) $('docBol').checked = true;
-  if ($('docRateCon')) $('docRateCon').checked = true;
-  if ($('docFacilityTimes')) $('docFacilityTimes').checked = true;
-  if ($('docCommunication')) $('docCommunication').checked = true;
-
-  ttSetValue(
-    'accessorialSupportingNotes',
-    'TT TRAINING ONLY — Verify actual BOL/POD timestamps, facility times, broker notification and approval before billing.'
-  );
-
-  if (typeof toggleAccessorialFields === 'function') {
-    toggleAccessorialFields();
-  }
-
-  calculateAccessorial();
-}
-
-$('fillHosTest')?.addEventListener('click', fillHosTestData);
-$('fillProfitTest')?.addEventListener('click', fillProfitTestData);
-$('fillAccessorialTest')?.addEventListener('click', fillAccessorialTestData);
-
 </script>
 
 
