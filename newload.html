@@ -3923,13 +3923,118 @@ function updateSaveLabel() {
   refreshAssemblyStatus();
 }
 
-async function loadDispatchQueue() {
-  const r = await db
-    .from('loads')
-    .select('id,load_number,broker_load_number,commodity,status,pickup_appt_start')
-    .eq('tenant_id', tenant)
-    .eq('status', 'quoted')
-    .order('created_at', { ascending:false });
+  async function loadDispatchQueue() {
+
+  const box =
+    document.getElementById('dispatchQueue');
+
+  if (!box) {
+    console.error('Dispatch Queue container not found.');
+    return;
+  }
+
+  box.textContent =
+    'Loading draft loads…';
+
+
+  const result =
+    await db
+      .from('loads')
+      .select(
+        'id,load_number,broker_load_number,commodity,status,pickup_appt_start'
+      )
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .eq(
+        'status',
+        'quoted'
+      )
+      .order(
+        'created_at',
+        {
+          ascending:false
+        }
+      );
+
+
+  if (result.error) {
+
+    box.textContent =
+      'Could not load Dispatch Queue: ' +
+      result.error.message;
+
+    console.error(
+      'Dispatch Queue:',
+      result.error
+    );
+
+    return;
+  }
+
+
+  const loads =
+    result.data || [];
+
+
+  if (!loads.length) {
+
+    box.textContent =
+      'No draft / quoted loads waiting.';
+
+    return;
+  }
+
+
+  box.innerHTML =
+    loads
+      .map(
+        load => {
+
+          const parts =
+            [
+              load.load_number,
+
+              load.broker_load_number
+                ? 'Broker #' +
+                  load.broker_load_number
+                : '',
+
+              load.commodity || ''
+            ]
+            .filter(Boolean)
+            .join(' · ');
+
+
+          return `
+            <div
+              style="
+                padding:10px 0;
+                border-bottom:1px solid var(--line);
+              "
+            >
+              <a
+                href="newload.html?load=${encodeURIComponent(load.id)}"
+              >
+                ${parts.replace(
+                  /[&<>"]/g,
+                  c => ({
+                    '&':'&amp;',
+                    '<':'&lt;',
+                    '>':'&gt;',
+                    '"':'&quot;'
+                  }[c])
+                )}
+              </a>
+            </div>
+          `;
+
+        }
+      )
+      .join('');
+
+}
 
   if (r.error) {
     $('dispatchQueue').textContent = 'Could not load dispatch queue: ' + r.error.message;
