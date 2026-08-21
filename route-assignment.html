@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route Assignment — Heavy Haul Command</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+  :root{
+    --line:#dddddd;
+    --muted:#6b7280;
+    --ok:#2f6b45;
+    --warn:#9a6700;
+    --bad:#a33a3a;
+    --soft:#f7f7f7;
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    font-family:Inter, Arial, sans-serif;
+    background:#ffffff;
+    color:#222;
+  }
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:26px;
+  }
+
+  .page-header{
+    margin-bottom:22px;
+  }
+
+  .page-header h1{
+    margin:0 0 6px;
+    font-size:26px;
+    letter-spacing:.02em;
+  }
+
+  .page-header p{
+    margin:0;
+    color:var(--muted);
+  }
+
+  .training-banner{
+    display:none;
+    padding:12px 14px;
+    margin-bottom:16px;
+    border:1px solid #e4bfd0;
+    background:#fff6fa;
+    font-weight:700;
+    font-size:13px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+  }
+
+  .card{
+    border:1px solid var(--line);
+    padding:18px;
+    background:#fff;
+  }
+
+  .card.full{
+    grid-column:1/-1;
+  }
+
+  h2{
+    margin:0 0 6px;
+    font-size:17px;
+  }
+
+  .hint{
+    margin:0 0 14px;
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.45;
+  }
+
+  label{
+    display:block;
+    margin-bottom:6px;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  select,input,textarea{
+    width:100%;
+    padding:10px 11px;
+    border:1px solid #cfcfcf;
+    background:#fff;
+    font:inherit;
+  }
+
+  textarea{
+    min-height:100px;
+    resize:vertical;
+  }
+
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:9px;
+    margin-top:14px;
+  }
+
+  button,a.button{
+    appearance:none;
+    border:1px solid #aaa;
+    background:#fff;
+    color:#222;
+    padding:10px 13px;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  button.primary{
+    background:#222;
+    color:#fff;
+    border-color:#222;
+  }
+
+  button.training{
+    display:none;
+    border-color:#d86a8e;
+    color:#7a2947;
+    background:#fff7fa;
+  }
+
+  .summary{
+    border:1px solid var(--line);
+    background:var(--soft);
+    padding:14px;
+    min-height:74px;
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  .pill{
+    display:inline-block;
+    padding:3px 7px;
+    border:1px solid #ccc;
+    font-size:11px;
+    margin-right:5px;
+  }
+
+  .notice{
+    display:none;
+    margin-top:12px;
+    padding:10px 12px;
+    border:1px solid #bfcfd7;
+    background:#f4f8fa;
+    font-size:13px;
+  }
+
+  .notice.show{display:block}
+  .notice.err{
+    border-color:#e6bcbc;
+    background:#fff7f7;
+    color:var(--bad);
+  }
+
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+
+  @media(max-width:760px){
+    .grid,.row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+
+<body>
+<header></header>
+
+<main>
+  <section class="page-header">
+    <h1>Route Assignment</h1>
+    <p>Assign a saved Route Plan or Golden Route to a load. Training Mode also exposes the TT training route.</p>
+  </section>
+
+  <div class="training-banner" id="trainingBanner">
+    TRAINING MODE — TT ROUTE ASSIGNMENT AVAILABLE
+  </div>
+
+  <div class="grid">
+
+    <section class="card">
+      <h2>1. Select Load</h2>
+      <p class="hint">
+        Choose the LD receiving the route assignment. Archived loads are excluded.
+      </p>
+
+      <label for="loadSelect">Load</label>
+      <select id="loadSelect">
+        <option value="">Loading loads…</option>
+      </select>
+
+      <div class="summary" id="loadPreview" style="margin-top:12px">
+        Choose a load.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Select Saved Route</h2>
+      <p class="hint">
+        Saved Route Plans and active Golden Routes appear here.
+      </p>
+
+      <label for="routeSelect">Route</label>
+      <select id="routeSelect">
+        <option value="">Loading routes…</option>
+      </select>
+
+      <div class="summary" id="routePreview" style="margin-top:12px">
+        Choose a route.
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="training"
+          id="ttRouteButton"
+        >
+          Use TT Training Route
+        </button>
+
+        <a
+          class="button"
+          href="route-planning.html"
+          target="_blank"
+          rel="noopener"
+        >
+          Open Route Planning ↗
+        </a>
+      </div>
+    </section>
+
+    <section class="card full">
+      <h2>3. Assignment</h2>
+      <p class="hint">
+        Review the route name, miles, states, and notes before assigning.
+      </p>
+
+      <div class="row">
+        <div>
+          <label for="assignedRouteName">Assigned route name</label>
+          <input id="assignedRouteName">
+        </div>
+
+        <div>
+          <label for="loadedMiles">Loaded miles</label>
+          <input id="loadedMiles" type="number">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div>
+          <label for="origin">Origin</label>
+          <input id="origin">
+        </div>
+
+        <div>
+          <label for="destination">Destination</label>
+          <input id="destination">
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label for="states">States</label>
+        <input id="states" placeholder="AR, TN">
+      </div>
+
+      <div style="margin-top:12px">
+        <label for="routeNotes">Route notes</label>
+        <textarea id="routeNotes"></textarea>
+      </div>
+
+      <div class="actions">
+        <button
+          type="button"
+          class="primary"
+          id="assignButton"
+        >
+          Assign Route to Load
+        </button>
+
+        <button
+          type="button"
+          id="clearButton"
+        >
+          Clear Form
+        </button>
+      </div>
+
+      <div class="notice" id="notice"></div>
+    </section>
+
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+
+<script>
+const SUPABASE_URL =
+  'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const db =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+const $ =
+  id => document.getElementById(id);
+
+let tenant = null;
+let loads = [];
+let routeOptions = [];
+let selectedRouteSourceType = null;
+let selectedRouteSourceId = null;
+let selectedRouteUrl = null;
+let trainingActive = false;
+
+const TT_ROUTE = {
+  route_name:
+    'TT — Little Rock AR → Memphis TN | RGN',
+
+  freight_type:
+    'heavy_haul',
+
+  equipment_type:
+    'RGN / Step deck',
+
+  loaded_miles:
+    137,
+
+  origin:
+    'Little Rock, AR',
+
+  destination:
+    'Memphis, TN',
+
+  states:
+    ['AR','TN'],
+
+  route_notes:
+    'TRAINING ROUTE — Little Rock, AR to Memphis, TN for TT-ABC-260811-01. ' +
+    'Review Arkansas and Tennessee oversize requirements, permits, escorts, ' +
+    'staging, fuel/service stops, weigh stations, bridge/toll restrictions, ' +
+    'and final mobile routing before dispatch.',
+
+  parking_staging:
+    'TRAINING — Confirm legal staging near pickup and delivery before dispatch.',
+
+  fuel_service_notes:
+    'TRAINING — Confirm heavy-haul accessible fuel/service stops along the approved route.'
+};
+
+
+function esc(value){
+  return String(
+    value == null ? '' : value
+  )
+    .replace(
+      /[&<>"]/g,
+      c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;'
+      })[c]
+    );
+}
+
+
+function pretty(value){
+  return String(
+    value || ''
+  )
+    .replace(
+      /_/g,
+      ' '
+    )
+    .replace(
+      /\b\w/g,
+      c => c.toUpperCase()
+    );
+}
+
+
+function setNotice(
+  text,
+  isError = false
+){
+  const el =
+    $('notice');
+
+  if(!text){
+    el.className =
+      'notice';
+
+    el.textContent =
+      '';
+
+    return;
+  }
+
+  el.textContent =
+    text;
+
+  el.className =
+    'notice show' +
+    (
+      isError
+        ? ' err'
+        : ''
+    );
+}
+
+
+function loadLabel(load){
+  const ref =
+    load.broker_load_number
+      ? ' · ' + load.broker_load_number
+      : '';
+
+  return (
+    (load.load_number || 'Load') +
+    ref +
+    (
+      load.commodity
+        ? ' · ' + load.commodity
+        : ''
+    )
+  );
+}
+
+
+function renderLoadPreview(){
+  const id =
+    $('loadSelect').value;
+
+  const load =
+    loads.find(
+      x => x.id === id
+    );
+
+  if(!load){
+    $('loadPreview').textContent =
+      'Choose a load.';
+
+    return;
+  }
+
+  $('loadPreview').innerHTML =
+    '<b>' +
+    esc(
+      load.load_number ||
+      load.id
+    ) +
+    '</b><br>' +
+    (
+      load.broker_load_number
+        ? 'Broker load: ' +
+          esc(load.broker_load_number) +
+          '<br>'
+        : ''
+    ) +
+    'Status: ' +
+    esc(
+      pretty(
+        load.status ||
+        'unknown'
+      )
+    ) +
+    (
+      load.commodity
+        ? '<br>Commodity: ' +
+          esc(load.commodity)
+        : ''
+    );
+}
+
+
+function renderRoutePreview(){
+  const raw =
+    $('routeSelect').value;
+
+  if(raw === ''){
+    $('routePreview').textContent =
+      'Choose a route.';
+
+    return;
+  }
+
+  const item =
+    routeOptions[
+      Number(raw)
+    ];
+
+  if(!item){
+    $('routePreview').textContent =
+      'Choose a route.';
+
+    return;
+  }
+
+  const r =
+    item.record;
+
+  $('routePreview').innerHTML =
+    [
+      '<b>' +
+      esc(
+        r.route_name ||
+        'Saved route'
+      ) +
+      '</b>',
+
+      esc(
+        (r.origin || '') +
+        ' → ' +
+        (r.destination || '')
+      ),
+
+      Array.isArray(
+        r.states
+      ) &&
+      r.states.length
+        ? esc(
+            r.states.join(
+              ' → '
+            )
+          )
+        : '',
+
+      r.loaded_miles != null
+        ? esc(
+            String(
+              r.loaded_miles
+            ) +
+            ' loaded mi'
+          )
+        : '',
+
+      r.workflow_status
+        ? 'Status: ' +
+          esc(
+            pretty(
+              r.workflow_status
+            )
+          )
+        : ''
+    ]
+      .filter(Boolean)
+      .join('<br>');
+}
+
+
+function fillAssignmentFromRoute(
+  item
+){
+  const r =
+    item.record;
+
+  selectedRouteSourceType =
+    item.source_type;
+
+  selectedRouteSourceId =
+    item.source_id;
+
+  selectedRouteUrl =
+    r.google_maps_url ||
+    null;
+
+  $('assignedRouteName').value =
+    r.route_name ||
+    '';
+
+  $('loadedMiles').value =
+    r.loaded_miles != null
+      ? r.loaded_miles
+      : '';
+
+  $('origin').value =
+    r.origin ||
+    '';
+
+  $('destination').value =
+    r.destination ||
+    '';
+
+  $('states').value =
+    Array.isArray(
+      r.states
+    )
+      ? r.states.join(
+          ', '
+        )
+      : '';
+
+  $('routeNotes').value =
+    r.route_notes ||
+    r.general_notes ||
+    '';
+
+  renderRoutePreview();
+}
+
+
+async function getTrainingStatus(){
+  try{
+    const result =
+      await db.rpc(
+        'get_training_mode_status'
+      );
+
+    if(result.error){
+      console.warn(
+        result.error.message
+      );
+
+      return false;
+    }
+
+    return Boolean(
+      result.data &&
+      result.data.active
+    );
+  }
+  catch(error){
+    console.warn(
+      error
+    );
+
+    return false;
+  }
+}
+
+
+async function loadData(){
+
+  const [
+    loadsResult,
+    plansResult,
+    goldenResult
+  ] =
+    await Promise.all([
+      db
+        .from('loads')
+        .select('*')
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .is(
+          'archived_at',
+          null
+        )
+        .order(
+          'updated_at',
+          {
+            ascending:false
+          }
+        ),
+
+      db
+        .from(
+          'route_plans'
+        )
+        .select('*')
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .order(
+          'updated_at',
+          {
+            ascending:false
+          }
+        ),
+
+      db
+        .from(
+          'golden_routes'
+        )
+        .select('*')
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .eq(
+          'active',
+          true
+        )
+        .order(
+          'updated_at',
+          {
+            ascending:false
+          }
+        )
+    ]);
+
+
+  if(loadsResult.error){
+    throw loadsResult.error;
+  }
+
+  loads =
+    loadsResult.data ||
+    [];
+
+
+  routeOptions =
+    [];
+
+
+  if(
+    !plansResult.error
+  ){
+    (
+      plansResult.data ||
+      []
+    )
+      .forEach(
+        x =>
+          routeOptions.push({
+            source_type:
+              'route_plan',
+
+            source_id:
+              x.id,
+
+            record:
+              x
+          })
+      );
+  }
+
+
+  if(
+    !goldenResult.error
+  ){
+    (
+      goldenResult.data ||
+      []
+    )
+      .forEach(
+        x =>
+          routeOptions.push({
+            source_type:
+              'golden_route',
+
+            source_id:
+              x.id,
+
+            record:
+              x
+          })
+      );
+  }
+
+
+  $('loadSelect').innerHTML =
+    '<option value="">— choose load —</option>' +
+    loads
+      .map(
+        x =>
+          '<option value="' +
+          esc(x.id) +
+          '">' +
+          esc(
+            loadLabel(x)
+          ) +
+          '</option>'
+      )
+      .join('');
+
+
+  $('routeSelect').innerHTML =
+    '<option value="">— choose saved route —</option>' +
+    routeOptions
+      .map(
+        (
+          item,
+          index
+        ) => {
+
+          const r =
+            item.record;
+
+          const prefix =
+            item.source_type ===
+            'route_plan'
+              ? 'Route Plan'
+              : 'Golden Route';
+
+          return (
+            '<option value="' +
+            index +
+            '">' +
+            esc(
+              prefix +
+              ' — ' +
+              (
+                r.route_name ||
+                (
+                  (r.origin || '') +
+                  ' → ' +
+                  (r.destination || '')
+                )
+              )
+            ) +
+            '</option>'
+          );
+        }
+      )
+      .join('');
+
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+  const requestedLoad =
+    params.get(
+      'load'
+    ) ||
+    params.get(
+      'load_id'
+    );
+
+  if(
+    requestedLoad &&
+    loads.some(
+      x =>
+        x.id ===
+        requestedLoad
+    )
+  ){
+    $('loadSelect').value =
+      requestedLoad;
+  }
+
+
+  renderLoadPreview();
+  renderRoutePreview();
+}
+
+
+async function ensureTTRoutePlan(
+  loadId
+){
+  const load =
+    loads.find(
+      x =>
+        x.id ===
+        loadId
+    );
+
+  if(!load){
+    throw new Error(
+      'Choose a load first.'
+    );
+  }
+
+
+  let opportunityId =
+    null;
+
+
+  if(
+    load.broker_load_number ===
+    'TT-ABC-260811-01'
+  ){
+    const opp =
+      await db
+        .from(
+          'load_opportunities'
+        )
+        .select(
+          'id,load_id,external_ref'
+        )
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .eq(
+          'external_ref',
+          'TT-ABC-260811-01'
+        )
+        .order(
+          'created_at',
+          {
+            ascending:false
+          }
+        )
+        .limit(1)
+        .maybeSingle();
+
+    if(
+      !opp.error &&
+      opp.data
+    ){
+      opportunityId =
+        opp.data.id;
+    }
+  }
+
+
+  const existing =
+    await db
+      .from(
+        'route_plans'
+      )
+      .select('*')
+      .eq(
+        'tenant_id',
+        tenant
+      )
+      .eq(
+        'load_id',
+        loadId
+      )
+      .eq(
+        'route_name',
+        TT_ROUTE.route_name
+      )
+      .limit(1)
+      .maybeSingle();
+
+
+  if(existing.error){
+    throw existing.error;
+  }
+
+
+  if(existing.data){
+    return existing.data;
+  }
+
+
+  const insertRow = {
+    tenant_id:
+      tenant,
+
+    load_id:
+      loadId,
+
+    opportunity_id:
+      opportunityId,
+
+    route_name:
+      TT_ROUTE.route_name,
+
+    freight_type:
+      TT_ROUTE.freight_type,
+
+    equipment_type:
+      TT_ROUTE.equipment_type,
+
+    loaded_miles:
+      TT_ROUTE.loaded_miles,
+
+    origin:
+      TT_ROUTE.origin,
+
+    destination:
+      TT_ROUTE.destination,
+
+    states:
+      TT_ROUTE.states,
+
+    waypoints:
+      [],
+
+    route_notes:
+      TT_ROUTE.route_notes,
+
+    parking_staging:
+      TT_ROUTE.parking_staging,
+
+    fuel_service_notes:
+      TT_ROUTE.fuel_service_notes,
+
+    workflow_status:
+      'in_progress'
+  };
+
+
+  const inserted =
+    await db
+      .from(
+        'route_plans'
+      )
+      .insert(
+        insertRow
+      )
+      .select('*')
+      .single();
+
+
+  if(inserted.error){
+    throw inserted.error;
+  }
+
+
+  return inserted.data;
+}
+
+
+async function useTTRoute(){
+  if(!trainingActive){
+    setNotice(
+      'Enable Training Mode from testing.html first.',
+      true
+    );
+
+    return;
+  }
+
+
+  const loadId =
+    $('loadSelect').value;
+
+
+  if(!loadId){
+    setNotice(
+      'Choose the TT load first.',
+      true
+    );
+
+    return;
+  }
+
+
+  const load =
+    loads.find(
+      x =>
+        x.id ===
+        loadId
+    );
+
+
+  if(
+    load &&
+    load.broker_load_number !==
+    'TT-ABC-260811-01'
+  ){
+    const confirmed =
+      window.confirm(
+        'This is not TT-ABC-260811-01.\n\n' +
+        'Use the TT training route on this load anyway?'
+      );
+
+    if(!confirmed){
+      return;
+    }
+  }
+
+
+  try{
+    setNotice(
+      'Preparing TT training route…'
+    );
+
+    const plan =
+      await ensureTTRoutePlan(
+        loadId
+      );
+
+
+    routeOptions.unshift({
+      source_type:
+        'route_plan',
+
+      source_id:
+        plan.id,
+
+      record:
+        plan
+    });
+
+
+    $('routeSelect').innerHTML =
+      '<option value="">— choose saved route —</option>' +
+      routeOptions
+        .map(
+          (
+            item,
+            index
+          ) => {
+
+            const r =
+              item.record;
+
+            const prefix =
+              item.source_type ===
+              'route_plan'
+                ? 'Route Plan'
+                : 'Golden Route';
+
+            return (
+              '<option value="' +
+              index +
+              '">' +
+              esc(
+                prefix +
+                ' — ' +
+                (
+                  r.route_name ||
+                  (
+                    (r.origin || '') +
+                    ' → ' +
+                    (r.destination || '')
+                  )
+                )
+              ) +
+              '</option>'
+            );
+          }
+        )
+        .join('');
+
+
+    $('routeSelect').value =
+      '0';
+
+
+    fillAssignmentFromRoute(
+      routeOptions[0]
+    );
+
+
+    setNotice(
+      'TT training route loaded. Review it, then click Assign Route to Load.'
+    );
+  }
+  catch(error){
+    console.error(
+      error
+    );
+
+    setNotice(
+      error.message ||
+      String(error),
+      true
+    );
+  }
+}
+
+
+async function assignRouteToLoad(){
+  const loadId =
+    $('loadSelect').value;
+
+
+  if(!loadId){
+    setNotice(
+      'Choose a load.',
+      true
+    );
+
+    return;
+  }
+
+
+  if(
+    !selectedRouteSourceType ||
+    !selectedRouteSourceId
+  ){
+    setNotice(
+      'Choose a saved route or use the TT Training Route first.',
+      true
+    );
+
+    return;
+  }
+
+
+  const states =
+    $('states').value
+      .split(',')
+      .map(
+        x => x.trim()
+      )
+      .filter(Boolean);
+
+
+  const routeName =
+    $('assignedRouteName').value.trim();
+
+
+  const miles =
+    $('loadedMiles').value !== ''
+      ? Number(
+          $('loadedMiles').value
+        )
+      : null;
+
+
+  const notes =
+    $('routeNotes').value.trim();
+
+
+  try{
+
+    setNotice(
+      'Saving route assignment…'
+    );
+
+
+    const meta = {
+      load_id:
+        loadId,
+
+      tenant_id:
+        tenant,
+
+      route_source_type:
+        selectedRouteSourceType,
+
+      route_source_id:
+        selectedRouteSourceId,
+
+      route_name:
+        routeName ||
+        null,
+
+      route_notes:
+        notes ||
+        null,
+
+      route_url:
+        selectedRouteUrl,
+
+      state_rules_reviewed_at:
+        null,
+
+      state_rules_snapshot:
+        []
+    };
+
+
+    const metaResult =
+      await db
+        .from(
+          'load_assembly_meta'
+        )
+        .upsert(
+          meta,
+          {
+            onConflict:
+              'load_id'
+          }
+        );
+
+
+    if(metaResult.error){
+      throw metaResult.error;
+    }
+
+
+    const loadPatch = {
+      total_miles:
+        miles
+    };
+
+
+    const loadResult =
+      await db
+        .from(
+          'loads'
+        )
+        .update(
+          loadPatch
+        )
+        .eq(
+          'tenant_id',
+          tenant
+        )
+        .eq(
+          'id',
+          loadId
+        );
+
+
+    if(loadResult.error){
+      throw loadResult.error;
+    }
+
+
+    if(
+      selectedRouteSourceType ===
+      'route_plan'
+    ){
+      const rpPatch = {
+        load_id:
+          loadId,
+
+        route_name:
+          routeName ||
+          null,
+
+        loaded_miles:
+          miles,
+
+        origin:
+          $('origin').value.trim() ||
+          null,
+
+        destination:
+          $('destination').value.trim() ||
+          null,
+
+        states:
+          states,
+
+        route_notes:
+          notes ||
+          null
+      };
+
+
+      const routeResult =
+        await db
+          .from(
+            'route_plans'
+          )
+          .update(
+            rpPatch
+          )
+          .eq(
+            'tenant_id',
+            tenant
+          )
+          .eq(
+            'id',
+            selectedRouteSourceId
+          );
+
+
+      if(routeResult.error){
+        throw routeResult.error;
+      }
+    }
+
+
+    setNotice(
+      'Route assigned to the load. State Rules review has been reset because the route changed.'
+    );
+  }
+  catch(error){
+    console.error(
+      error
+    );
+
+    setNotice(
+      error.message ||
+      String(error),
+      true
+    );
+  }
+}
+
+
+function clearForm(){
+  selectedRouteSourceType =
+    null;
+
+  selectedRouteSourceId =
+    null;
+
+  selectedRouteUrl =
+    null;
+
+  $('routeSelect').value =
+    '';
+
+  $('assignedRouteName').value =
+    '';
+
+  $('loadedMiles').value =
+    '';
+
+  $('origin').value =
+    '';
+
+  $('destination').value =
+    '';
+
+  $('states').value =
+    '';
+
+  $('routeNotes').value =
+    '';
+
+  renderRoutePreview();
+  setNotice('');
+}
+
+
+async function start(){
+  const session =
+    await db.auth.getSession();
+
+  if(
+    !session.data ||
+    !session.data.session
+  ){
+    location.href =
+      'index.html';
+
+    return;
+  }
+
+
+  tenant =
+    await buildNav(
+      db,
+      'Route Assignment'
+    );
+
+
+  if(!tenant){
+    alert(
+      'No application profile is linked to this login.'
+    );
+
+    return;
+  }
+
+
+  trainingActive =
+    await getTrainingStatus();
+
+
+  $('trainingBanner').style.display =
+    trainingActive
+      ? 'block'
+      : 'none';
+
+
+  $('ttRouteButton').style.display =
+    trainingActive
+      ? 'inline-flex'
+      : 'none';
+
+
+  await loadData();
+
+
+  $('loadSelect')
+    .addEventListener(
+      'change',
+      renderLoadPreview
+    );
+
+
+  $('routeSelect')
+    .addEventListener(
+      'change',
+      () => {
+        renderRoutePreview();
+
+        const raw =
+          $('routeSelect').value;
+
+        if(raw === ''){
+          return;
+        }
+
+        const item =
+          routeOptions[
+            Number(raw)
+          ];
+
+        if(item){
+          fillAssignmentFromRoute(
+            item
+          );
+        }
+      }
+    );
+
+
+  $('ttRouteButton')
+    .addEventListener(
+      'click',
+      useTTRoute
+    );
+
+
+  $('assignButton')
+    .addEventListener(
+      'click',
+      assignRouteToLoad
+    );
+
+
+  $('clearButton')
+    .addEventListener(
+      'click',
+      clearForm
+    );
+}
+
+
+start();
+</script>
+</body>
+</html>
