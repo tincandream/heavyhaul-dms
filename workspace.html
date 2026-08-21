@@ -219,7 +219,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-operational-summary">
+<body data-workspace-version="2026-08-21-linked-fields">
 
 <header></header>
 
@@ -230,11 +230,6 @@ textarea{min-height:76px;resize:vertical}
   <!-- HERO -->
   <section id="hero" class="card hero">
     <div class="muted">Loading load…</div>
-  </section>
-
-  <!-- OPERATIONAL SUMMARY -->
-  <section id="operationalSummary" class="ops-grid">
-    <div class="ops-card ops-wide"><h3>Current Load</h3><div class="ops-main">Loading…</div></div>
   </section>
 
   <!-- ACTIONS -->
@@ -1337,7 +1332,6 @@ async function refreshAll(){
   ]);
 
   drawHero();
-  drawOperationalSummary();
   drawActions();
   drawCounts();
   drawActiveTab();
@@ -2206,18 +2200,99 @@ function drawActiveTab(){
    OVERVIEW
    ============================================================ */
 function drawOverview(){
-  if (!LOAD){ $('tab-overview').innerHTML = '<div class="empty">No load.</div>'; return; }
+  if (!LOAD){
+    $('tab-overview').innerHTML = '<div class="empty">No load.</div>';
+    return;
+  }
 
-  const permIssued = PERMITS.filter(p => p.status === 'issued').length;
-  const permOpen   = PERMITS.filter(p => !['issued','not_required','cancelled'].includes(p.status)).length;
-  const escOK      = ESCORTS.filter(e => ['confirmed','en_route','completed'].includes(e.status)).length;
-  const escOpen    = ESCORTS.filter(e => ['needed','quoted','booked'].includes(e.status)).length;
-  const clDone     = CHECKLIST.filter(c => !!c.done_at).length;
+  const permIssued = PERMITS.filter(p =>
+    ['issued','approved','active','received','complete'].includes(
+      String(p.status || '').toLowerCase()
+    )
+  ).length;
 
-  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) : 0;
+  const permOpen = PERMITS.filter(p =>
+    !['issued','approved','active','received','complete','not_required','cancelled'].includes(
+      String(p.status || '').toLowerCase()
+    )
+  ).length;
+
+  const escOK = ESCORTS.filter(e =>
+    ['confirmed','assigned','active','en_route','completed','complete'].includes(
+      String(e.status || '').toLowerCase()
+    )
+  ).length;
+
+  const escOpen = ESCORTS.filter(e =>
+    ['needed','quoted','booked','pending'].includes(
+      String(e.status || '').toLowerCase()
+    )
+  ).length;
+
+  const clDone = CHECKLIST.filter(c =>
+    !!(c.done_at || c.completed || c.is_complete || c.done)
+  ).length;
+
+  const rev = MARGIN ? Number(MARGIN.total_revenue || 0) :
+    Number(LOAD.linehaul_rate || 0) + Number(LOAD.fuel_surcharge || 0);
+
   const cst = MARGIN ? Number(MARGIN.total_cost || 0) : 0;
   const mar = rev - cst;
   const pct = rev > 0 ? Math.round((mar / rev) * 100) : null;
+
+  const origin = loadOriginLabel();
+  const destination = loadDestinationLabel();
+
+  const pickup = LOAD.pickup_appt_start || LOAD.pickup_date || LOAD.pickup_at || null;
+  const delivery = LOAD.delivery_appt_start || LOAD.delivery_date || LOAD.delivery_at || null;
+
+  const miles = ROUTE_PLAN?.loaded_miles ?? LOAD.total_miles ?? LOAD.miles ?? null;
+
+  const equipment =
+    entityLabel(TRAILER,'equipment') ||
+    ROUTE_PLAN?.equipment_type ||
+    LOAD.equipment_type ||
+    '—';
+
+  const driverName = entityLabel(DRIVER,'driver') || '—';
+  const driverPhone = DRIVER?.phone || DRIVER?.phone_number || DRIVER?.mobile || '—';
+  const truckName = entityLabel(TRACTOR,'equipment') || '—';
+  const trailerName = entityLabel(TRAILER,'equipment') || '—';
+
+  const length = LOAD.length_in != null ? formatInches(LOAD.length_in) : '—';
+  const width = LOAD.width_in != null ? formatInches(LOAD.width_in) : '—';
+  const height = LOAD.height_in != null ? formatInches(LOAD.height_in) : '—';
+  const weight = LOAD.weight_lb != null
+    ? Number(LOAD.weight_lb).toLocaleString() + ' lb'
+    : '—';
+
+  const oversize =
+    LOAD.is_oversize === true ||
+    Number(LOAD.width_in || 0) > 102 ||
+    Number(LOAD.height_in || 0) > 162 ||
+    Number(LOAD.length_in || 0) > 636;
+
+  const overweight =
+    LOAD.is_overweight === true ||
+    Number(LOAD.weight_lb || 0) > 80000;
+
+  const superload =
+    LOAD.is_superload === true ||
+    LOAD.superload === true;
+
+  const classes = [];
+  if(superload) classes.push('<span class="pill bad">Superload</span>');
+  if(oversize) classes.push('<span class="pill warn">Oversize</span>');
+  if(overweight) classes.push('<span class="pill warn">Overweight</span>');
+
+  const routeSurveyRequired =
+    LOAD.route_survey_required === true ||
+    ROUTE_PLAN?.route_survey_required === true;
+
+  const routeName = ROUTE_PLAN?.route_name || `${origin} → ${destination}`;
+  const routeStates = Array.isArray(ROUTE_PLAN?.states)
+    ? ROUTE_PLAN.states.join(' → ')
+    : '';
 
   $('tab-overview').innerHTML = `
   <div class="grid2">
@@ -2225,47 +2300,49 @@ function drawOverview(){
     <div class="card box">
       <h3>Route &amp; Schedule</h3>
       <dl class="kv">
-        <dt>Origin</dt><dd>${esc(pick(LOAD,F.oCity)||'—')}${pick(LOAD,F.oState)?', '+esc(pick(LOAD,F.oState)):''}</dd>
-        <dt>Destination</dt><dd>${esc(pick(LOAD,F.dCity)||'—')}${pick(LOAD,F.dState)?', '+esc(pick(LOAD,F.dState)):''}</dd>
-        <dt>Pickup</dt><dd>${esc(fmtDate(pick(LOAD,F.pickup)))}</dd>
-        <dt>Delivery</dt><dd>${esc(fmtDate(pick(LOAD,F.delivery)))}</dd>
-        <dt>Miles</dt><dd>${pick(LOAD,F.miles) ? Number(pick(LOAD,F.miles)).toLocaleString() : '—'}</dd>
-        <dt>Commodity</dt><dd>${esc(pick(LOAD,F.commodity)||'—')}</dd>
-        <dt>Equipment</dt><dd>${esc(titleize(pick(LOAD,F.equipment))||'—')}</dd>
+        <dt>Origin</dt><dd>${esc(origin)}</dd>
+        <dt>Destination</dt><dd>${esc(destination)}</dd>
+        <dt>Pickup</dt><dd>${esc(fmtDT(pickup))}</dd>
+        <dt>Delivery</dt><dd>${esc(fmtDT(delivery))}</dd>
+        <dt>Miles</dt><dd>${miles != null ? Number(miles).toLocaleString() : '—'}</dd>
+        <dt>Commodity</dt><dd>${esc(LOAD.commodity || '—')}</dd>
+        <dt>Equipment</dt><dd>${esc(equipment)}</dd>
+        <dt>Saved route</dt><dd>${esc(routeName)}</dd>
+        ${routeStates ? `<dt>States</dt><dd>${esc(routeStates)}</dd>` : ''}
       </dl>
     </div>
 
     <div class="card box">
       <h3>Dimensions</h3>
       <dl class="kv">
-        <dt>Length</dt><dd>${pick(LOAD,F.lengthFt) ? esc(pick(LOAD,F.lengthFt))+" ft" : '—'}</dd>
-        <dt>Width</dt><dd>${pick(LOAD,F.widthFt) ? esc(pick(LOAD,F.widthFt))+" ft" : '—'}</dd>
-        <dt>Height</dt><dd>${pick(LOAD,F.heightFt) ? esc(pick(LOAD,F.heightFt))+" ft" : '—'}</dd>
-        <dt>Weight</dt><dd>${pick(LOAD,F.weightLbs) ? Number(pick(LOAD,F.weightLbs)).toLocaleString()+' lb' : '—'}</dd>
-        <dt>Axles</dt><dd>${esc(pick(LOAD,F.axles)||'—')}</dd>
-        <dt>Classification</dt><dd>
-          ${pick(LOAD,F.superload) ? '<span class="pill bad">Superload</span> ' : ''}
-          ${pick(LOAD,F.oversize) ? '<span class="pill warn">Oversize</span> ' : ''}
-          ${pick(LOAD,F.overweight) ? '<span class="pill warn">Overweight</span> ' : ''}
-          ${(!pick(LOAD,F.superload) && !pick(LOAD,F.oversize) && !pick(LOAD,F.overweight)) ? '—' : ''}
-        </dd>
-        <dt>Route survey</dt><dd>${pick(LOAD,F.routeSurvey) ? 'Required' : 'Not required'}</dd>
+        <dt>Length</dt><dd>${esc(length)}</dd>
+        <dt>Width</dt><dd>${esc(width)}</dd>
+        <dt>Height</dt><dd>${esc(height)}</dd>
+        <dt>Weight</dt><dd>${esc(weight)}</dd>
+        <dt>Axles</dt><dd>${esc(LOAD.axle_count ?? LOAD.axles ?? '—')}</dd>
+        <dt>Classification</dt><dd>${classes.join(' ') || 'Legal / not classified'}</dd>
+        <dt>Route survey</dt><dd>${routeSurveyRequired ? 'Required' : 'Not required'}</dd>
       </dl>
     </div>
 
     <div class="card box">
       <h3>Truck &amp; Driver</h3>
       <dl class="kv">
-        <dt>Driver</dt><dd>${esc(pick(LOAD,F.driver)||'—')}</dd>
-        <dt>Driver phone</dt><dd>${esc(pick(LOAD,F.driverPhone)||'—')}</dd>
-        <dt>Truck</dt><dd>${esc(pick(LOAD,F.truck)||'—')}</dd>
-        <dt>Trailer</dt><dd>${esc(pick(LOAD,F.trailer)||'—')}</dd>
+        <dt>Carrier</dt><dd>${esc(entityLabel(CARRIER,'carrier') || '—')}</dd>
+        <dt>Driver</dt><dd>${esc(driverName)}</dd>
+        <dt>Driver phone</dt><dd>${esc(driverPhone)}</dd>
+        <dt>Truck</dt><dd>${esc(truckName)}</dd>
+        <dt>Trailer</dt><dd>${esc(trailerName)}</dd>
       </dl>
     </div>
 
     <div class="card box">
       <h3>Readiness</h3>
       <dl class="kv">
+        <dt>Fleet</dt><dd>${LOAD.driver_id && LOAD.tractor_id && LOAD.trailer_id ? 'Assigned' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
+        <dt>Route</dt><dd>${ROUTE_PLAN ? 'Saved' : '<span style="color:var(--warn);font-weight:600">Not saved</span>'}</dd>
+        <dt>Schedule</dt><dd>${pickup && delivery ? 'Pickup + delivery set' : '<span style="color:var(--warn);font-weight:600">Missing appointment</span>'}</dd>
+        <dt>Dimensions</dt><dd>${LOAD.width_in != null && LOAD.height_in != null && LOAD.weight_lb != null ? 'Recorded' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
         <dt>Permits</dt><dd>${permIssued} issued${permOpen ? ` · <span style="color:var(--warn);font-weight:600">${permOpen} outstanding</span>` : ''} of ${PERMITS.length}</dd>
         <dt>Escorts</dt><dd>${escOK} confirmed${escOpen ? ` · <span style="color:var(--warn);font-weight:600">${escOpen} outstanding</span>` : ''} of ${ESCORTS.length}</dd>
         <dt>Checklist</dt><dd>${clDone} / ${CHECKLIST.length} complete</dd>
