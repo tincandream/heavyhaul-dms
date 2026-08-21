@@ -1844,6 +1844,13 @@ updateDriverPayExplain();
 
             <button
               type="button"
+              class="calc-btn secondary tt-fill"
+              id="fillHosTest">
+              Fill Test Data
+            </button>
+
+            <button
+              type="button"
               class="calc-btn"
               id="calculateHos">
 
@@ -2278,6 +2285,14 @@ updateDriverPayExplain();
 
 
           <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn secondary tt-fill"
+              id="fillProfitTest">
+              Fill Test Data
+            </button>
+
 
             <button
               type="button"
@@ -3191,6 +3206,14 @@ updateDriverPayExplain();
 
 
           <div class="calc-actions">
+
+            <button
+              type="button"
+              class="calc-btn secondary tt-fill"
+              id="fillAccessorialTest">
+              Fill Test Data
+            </button>
+
 
             <button
               type="button"
@@ -6427,6 +6450,471 @@ $('accessorialType')?.addEventListener(
 
 
 startPage();
+
+/* ============================================================
+   TT TRAINING — CALCULATOR FILL TEST DATA
+   ============================================================ */
+
+function ttSetValue(id, value) {
+  const el = $(id);
+  if (el) el.value = value;
+}
+
+
+function ttLocalDateTime(date) {
+  const pad =
+    value =>
+      String(value).padStart(2, '0');
+
+  return (
+    date.getFullYear() + '-' +
+    pad(date.getMonth() + 1) + '-' +
+    pad(date.getDate()) + 'T' +
+    pad(date.getHours()) + ':' +
+    pad(date.getMinutes())
+  );
+}
+
+
+function fillHosTestData() {
+
+  ttSetValue(
+    'driveRemaining',
+    '6.5'
+  );
+
+  ttSetValue(
+    'windowRemaining',
+    '8'
+  );
+
+  ttSetValue(
+    'cycleRemaining',
+    '18'
+  );
+
+  ttSetValue(
+    'driveSinceBreak',
+    '2'
+  );
+
+  ttSetValue(
+    'tripDrive',
+    '2.5'
+  );
+
+  ttSetValue(
+    'tripDuty',
+    '0.75'
+  );
+
+  ttSetValue(
+    'buffer',
+    '0.5'
+  );
+
+  ttSetValue(
+    'breakPlanned',
+    'no'
+  );
+
+  calculateHos();
+}
+
+
+function fillProfitTestData() {
+
+  ttSetValue(
+    'linehaul',
+    '6000'
+  );
+
+  ttSetValue(
+    'fuel',
+    '0'
+  );
+
+  ttSetValue(
+    'otherRevenue',
+    '0'
+  );
+
+  ttSetValue(
+    'loadedMiles',
+    '137'
+  );
+
+  ttSetValue(
+    'deadheadMiles',
+    '35'
+  );
+
+  ttSetValue(
+    'fuelCost',
+    '325'
+  );
+
+  ttSetValue(
+    'permitCost',
+    '180'
+  );
+
+  ttSetValue(
+    'escortCost',
+    '650'
+  );
+
+  ttSetValue(
+    'tollCost',
+    '25'
+  );
+
+  ttSetValue(
+    'lodgingCost',
+    '0'
+  );
+
+  ttSetValue(
+    'otherCost',
+    '50'
+  );
+
+  ttSetValue(
+    'dispatchRate',
+    '7'
+  );
+
+  calculateProfit();
+}
+
+
+function fillCarrierProfitTestData() {
+
+  ttSetValue(
+    'cpLinehaul',
+    '6000'
+  );
+
+  ttSetValue(
+    'cpFuelSurcharge',
+    '0'
+  );
+
+  ttSetValue(
+    'cpOtherRevenue',
+    '0'
+  );
+
+  ttSetValue(
+    'cpLoadedMiles',
+    '137'
+  );
+
+  ttSetValue(
+    'cpDeadheadMiles',
+    '35'
+  );
+
+  ttSetValue(
+    'cpDispatchRate',
+    '7'
+  );
+
+  ttSetValue(
+    'cpDriverPayType',
+    'percent'
+  );
+
+  ttSetValue(
+    'cpDriverPayRate',
+    '25'
+  );
+
+  ttSetValue(
+    'cpDriverExtraPay',
+    '0'
+  );
+
+  ttSetValue(
+    'cpFuelCost',
+    '325'
+  );
+
+  ttSetValue(
+    'cpPermitCost',
+    '180'
+  );
+
+  ttSetValue(
+    'cpEscortCost',
+    '650'
+  );
+
+  ttSetValue(
+    'cpTollCost',
+    '25'
+  );
+
+  ttSetValue(
+    'cpLodgingCost',
+    '0'
+  );
+
+  ttSetValue(
+    'cpMaintenancePerMile',
+    '0.35'
+  );
+
+  ttSetValue(
+    'cpOverheadCost',
+    '150'
+  );
+
+  ttSetValue(
+    'cpOtherCost',
+    '50'
+  );
+
+  if (
+    typeof updateDriverPayExplain ===
+    'function'
+  ) {
+    updateDriverPayExplain();
+  }
+
+  calculateCarrierProfit();
+}
+
+
+function fillAccessorialTestData() {
+
+  const appointment =
+    new Date(
+      2026,
+      7,
+      18,
+      8,
+      0,
+      0,
+      0
+    );
+
+  const arrival =
+    new Date(
+      appointment
+    );
+
+  arrival.setMinutes(
+    arrival.getMinutes() -
+    10
+  );
+
+  const checkIn =
+    new Date(
+      appointment
+    );
+
+  checkIn.setMinutes(
+    checkIn.getMinutes() -
+    5
+  );
+
+  const serviceStart =
+    new Date(
+      appointment
+    );
+
+  serviceStart.setHours(
+    10,
+    15,
+    0,
+    0
+  );
+
+  const released =
+    new Date(
+      appointment
+    );
+
+  released.setHours(
+    12,
+    30,
+    0,
+    0
+  );
+
+
+  ttSetValue(
+    'accessorialType',
+    'detention'
+  );
+
+  ttSetValue(
+    'accessorialLocationType',
+    'shipper'
+  );
+
+  ttSetValue(
+    'accessorialFacility',
+    'Hugg & Hall Equipment Co.'
+  );
+
+  ttSetValue(
+    'accessorialRateType',
+    'hourly'
+  );
+
+  ttSetValue(
+    'accessorialRate',
+    '75'
+  );
+
+  ttSetValue(
+    'accessorialQuantity',
+    '1'
+  );
+
+  ttSetValue(
+    'accessorialDescription',
+    'TT TRAINING — Loading delay at Hugg & Hall Equipment Co. beyond agreed free time.'
+  );
+
+  ttSetValue(
+    'detentionAppointment',
+    ttLocalDateTime(
+      appointment
+    )
+  );
+
+  ttSetValue(
+    'detentionArrival',
+    ttLocalDateTime(
+      arrival
+    )
+  );
+
+  ttSetValue(
+    'detentionCheckIn',
+    ttLocalDateTime(
+      checkIn
+    )
+  );
+
+  ttSetValue(
+    'detentionServiceStart',
+    ttLocalDateTime(
+      serviceStart
+    )
+  );
+
+  ttSetValue(
+    'detentionReleased',
+    ttLocalDateTime(
+      released
+    )
+  );
+
+  ttSetValue(
+    'detentionFreeMinutes',
+    '120'
+  );
+
+  ttSetValue(
+    'notificationRequired',
+    'yes'
+  );
+
+  const notified =
+    new Date(
+      appointment
+    );
+
+  notified.setHours(
+    10,
+    5,
+    0,
+    0
+  );
+
+  ttSetValue(
+    'brokerNotifiedAt',
+    ttLocalDateTime(
+      notified
+    )
+  );
+
+  ttSetValue(
+    'notifiedContact',
+    'TT TRAINING — ABC Logistics notified of detention delay.'
+  );
+
+
+  if ($('docBol')) {
+    $('docBol').checked =
+      true;
+  }
+
+  if ($('docRateCon')) {
+    $('docRateCon').checked =
+      true;
+  }
+
+  if ($('docFacilityTimes')) {
+    $('docFacilityTimes').checked =
+      true;
+  }
+
+  if ($('docCommunication')) {
+    $('docCommunication').checked =
+      true;
+  }
+
+
+  ttSetValue(
+    'accessorialSupportingNotes',
+    'TT TRAINING ONLY — Verify actual BOL/POD timestamps, facility times, broker notification and approval before billing.'
+  );
+
+
+  if (
+    typeof toggleAccessorialFields ===
+    'function'
+  ) {
+    toggleAccessorialFields();
+  }
+
+  calculateAccessorial();
+}
+
+
+$('fillHosTest')
+  ?.addEventListener(
+    'click',
+    fillHosTestData
+  );
+
+
+$('fillProfitTest')
+  ?.addEventListener(
+    'click',
+    fillProfitTestData
+  );
+
+
+$('fillCarrierProfitTest')
+  ?.addEventListener(
+    'click',
+    fillCarrierProfitTestData
+  );
+
+
+$('fillAccessorialTest')
+  ?.addEventListener(
+    'click',
+    fillAccessorialTestData
+  );
+
+
 </script>
 
 
