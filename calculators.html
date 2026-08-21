@@ -1873,9 +1873,19 @@ updateDriverPayExplain();
             <button
               type="button"
               class="calc-btn secondary"
+              id="saveHosTrackerOnly">
+
+              Save Current HOS to Tracker
+
+            </button>
+
+
+            <button
+              type="button"
+              class="calc-btn secondary"
               id="saveHosToLoad">
 
-              Save HOS + Update Tracker
+              Save Trip Check + Update Tracker
 
             </button>
 
@@ -3982,6 +3992,84 @@ function hosObservedIso() {
 }
 
 
+function currentHosTrackerSnapshot(){
+
+  const observedAt =
+    hosObservedIso();
+
+  if(!observedAt){
+    return {
+      ok:false,
+      message:'Enter the ELD observed time.'
+    };
+  }
+
+  const fields = {
+    driveRemaining:
+      n('driveRemaining'),
+
+    windowRemaining:
+      n('windowRemaining'),
+
+    cycleRemaining:
+      n('cycleRemaining'),
+
+    driveSinceBreak:
+      n('driveSinceBreak')
+  };
+
+  if(
+    fields.driveRemaining < 0 ||
+    fields.windowRemaining < 0 ||
+    fields.cycleRemaining < 0 ||
+    fields.driveSinceBreak < 0
+  ){
+    return {
+      ok:false,
+      message:'HOS values cannot be negative.'
+    };
+  }
+
+  if(
+    !$('driveRemaining').value ||
+    !$('windowRemaining').value ||
+    !$('cycleRemaining').value ||
+    $('driveSinceBreak').value === ''
+  ){
+    return {
+      ok:false,
+      message:'Enter drive remaining, 14-hour window remaining, cycle remaining, and driving since break.'
+    };
+  }
+
+  return {
+    ok:true,
+    calculation: {
+      inputs: {
+        observedAt,
+        driveRemaining:
+          fields.driveRemaining,
+        windowRemaining:
+          fields.windowRemaining,
+        cycleRemaining:
+          fields.cycleRemaining,
+        driveSinceBreak:
+          fields.driveSinceBreak,
+        tripDrive:
+          n('tripDrive'),
+        tripDuty:
+          n('tripDuty'),
+        buffer:
+          n('buffer'),
+        breakPlanned:
+          $('breakPlanned').value === 'yes'
+      },
+      results: {}
+    }
+  };
+}
+
+
 async function saveHosTrackerSnapshot(loadId, calculation) {
 
   if(
@@ -4513,6 +4601,61 @@ $('calculateHos')
   .addEventListener(
     'click',
     calculateHos
+  );
+
+
+$('saveHosTrackerOnly')
+  .addEventListener(
+    'click',
+    async () => {
+
+      const loadId =
+        selectedCalculatorLoadId();
+
+      if(!loadId){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          'Select a load first.',
+          'error'
+        );
+        return;
+      }
+
+      const snapshot =
+        currentHosTrackerSnapshot();
+
+      if(!snapshot.ok){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          snapshot.message,
+          'error'
+        );
+        return;
+      }
+
+      const tracker =
+        await saveHosTrackerSnapshot(
+          loadId,
+          snapshot.calculation
+        );
+
+      if(!tracker.ok){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          tracker.message,
+          'error'
+        );
+        return;
+      }
+
+      setCalcSaveMessage(
+        'hosSaveMessage',
+        tracker.eventType === 'baseline'
+          ? 'Workspace HOS tracker started.'
+          : 'Workspace HOS tracker updated.',
+        'ok'
+      );
+    }
   );
 
 
