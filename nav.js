@@ -16,6 +16,8 @@ const MAIN_NAV = [
   ['fleet.html',    'Fleet Command', 'fleet'],
   ['sourcing.html', 'Sourcing',      'sourcing'],
   ['board.html',    'Dispatch',      'dispatch']
+    ['board.html',    'Dispatch',      'dispatch'],
+  ['business.html', 'Business',      'business']
 ];
 
 
@@ -58,10 +60,13 @@ const HUB_PAGES = {
     'route-planning.html',
     'states.html',
     'calendar.html'
+  ],
+
+  business: [
+    'business.html'
   ]
 
 };
-
 
 // ============================================================
 // SOURCING SUB NAVIGATION
@@ -330,7 +335,7 @@ const brand = setStyles(
 );
 
   brand.href =
-    'welcome.html';
+    'business.html';
 
 
   brand.innerHTML = `
