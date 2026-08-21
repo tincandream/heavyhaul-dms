@@ -191,7 +191,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-source-fallbacks">
+<body data-workspace-version="2026-08-21-profit-overview">
 
 <header></header>
 
@@ -215,6 +215,7 @@ textarea{min-height:76px;resize:vertical}
     <button data-tab="escorts">Escorts <span class="cnt" id="cnt-escorts">0</span></button>
     <button data-tab="checklist">Checklist <span class="cnt" id="cnt-checklist">0</span></button>
     <button data-tab="expenses">Expenses</button>
+    <button data-tab="calculations">Calculations <span class="cnt" id="cnt-calculations">0</span></button>
     <button data-tab="accessorials">Accessorials <span class="cnt" id="cnt-accessorials">0</span></button>
     <button data-tab="documents">
   Documents
@@ -229,6 +230,7 @@ textarea{min-height:76px;resize:vertical}
   <section class="panel"    id="tab-escorts"></section>
   <section class="panel"    id="tab-checklist"></section>
   <section class="panel"    id="tab-expenses"></section>
+  <section class="panel"    id="tab-calculations"></section>
   <section class="panel"    id="tab-accessorials"></section>
   <section class="panel" id="tab-documents"></section>
   <section class="panel"    id="tab-notes"></section>
@@ -805,6 +807,7 @@ let PERMITS = [];
 let ESCORTS = [];
 let EVENTS = [];
 let CHARGES = [];
+let CALCULATIONS = [];
 let ACCESSORIALS = [];
 let MARGIN = null;
 let CHECKLIST = [];
@@ -1301,6 +1304,7 @@ async function refreshAll(){
     fetchEscorts(),
     fetchEvents(),
     fetchCharges(),
+    fetchCalculations(),
     fetchAccessorials(),
     fetchMargin(),
     fetchChecklist(),
@@ -1418,6 +1422,30 @@ async function fetchCharges(){
     .eq('load_id', LOAD_ID).order('incurred_on', { ascending: true });
   if (error){ console.warn('load_charges', error); CHARGES = []; return; }
   CHARGES = data || [];
+}
+
+
+
+async function fetchCalculations(){
+  const { data, error } =
+    await db
+      .from('load_calculations')
+      .select('*')
+      .eq('tenant_id', TENANT_ID)
+      .eq('load_id', LOAD_ID)
+      .order('created_at', { ascending:false });
+
+  if (error){
+    console.warn(
+      'load_calculations',
+      error
+    );
+    CALCULATIONS = [];
+    return;
+  }
+
+  CALCULATIONS =
+    data || [];
 }
 
 
@@ -1863,6 +1891,7 @@ function drawCounts(){
   set('cnt-checklist', CHECKLIST.length);
   set('cnt-notes', PRIVATE_NOTES.length);
   set('cnt-documents', DOCUMENTS.length);
+  set('cnt-calculations', CALCULATIONS.length);
   set('cnt-accessorials', ACCESSORIALS.length);
 }
 
@@ -2202,6 +2231,7 @@ function drawActiveTab(){
     case 'escorts':   drawEscorts();   break;
     case 'checklist': drawChecklist(); break;
     case 'expenses':  drawExpenses();  break;
+    case 'calculations': drawCalculations(); break;
     case 'accessorials': drawAccessorials(); break;
     case 'notes':     drawNotes();     break;
     case 'documents': drawDocuments(); break;
@@ -2288,6 +2318,68 @@ const escortRequiredCount =
       LOAD.escorts_required || 0
     )
   );
+
+  const latestCarrierProfit =
+    CALCULATIONS.find(
+      c =>
+        c.calculator_type ===
+        'carrier_profit'
+    ) ||
+    null;
+
+
+  const carrierProfitResults =
+    latestCarrierProfit?.results ||
+    {};
+
+
+  const dispatcherFee =
+    carrierProfitResults.dispatchFee != null
+      ? Number(
+          carrierProfitResults.dispatchFee
+        )
+      : null;
+
+
+  const driverPay =
+    carrierProfitResults.driverPay != null
+      ? Number(
+          carrierProfitResults.driverPay
+        )
+      : null;
+
+
+  const carrierNet =
+    carrierProfitResults.carrierNet != null
+      ? Number(
+          carrierProfitResults.carrierNet
+        )
+      : null;
+
+
+  const carrierMargin =
+    carrierProfitResults.carrierMargin != null
+      ? Number(
+          carrierProfitResults.carrierMargin
+        )
+      : null;
+
+
+  const carrierGrossRevenue =
+    carrierProfitResults.grossRevenue != null
+      ? Number(
+          carrierProfitResults.grossRevenue
+        )
+      : null;
+
+
+  const carrierOperatingCosts =
+    carrierProfitResults.operatingCosts != null
+      ? Number(
+          carrierProfitResults.operatingCosts
+        )
+      : null;
+
 
   const rev = MARGIN ? Number(MARGIN.total_revenue || 0) :
     Number(LOAD.linehaul_rate || 0) + Number(LOAD.fuel_surcharge || 0);
@@ -2447,6 +2539,97 @@ const escortRequiredCount =
         <dt>Margin</dt><dd style="font-weight:700;color:${mar >= 0 ? 'var(--ok)' : 'var(--bad)'}">
           ${money(mar)}${pct !== null ? ` <span class="small muted">(${pct}%)</span>` : ''}</dd>
       </dl>
+    </div>
+
+    <div class="card box">
+      <h3>Profit Breakdown</h3>
+
+      ${
+        latestCarrierProfit
+          ? `
+            <dl class="kv">
+
+              <dt>Dispatcher</dt>
+              <dd>
+                <b>${money(dispatcherFee)}</b>
+                <div class="small muted">Dispatch fee / revenue</div>
+              </dd>
+
+              <dt>Driver</dt>
+              <dd>
+                <b>${money(driverPay)}</b>
+                <div class="small muted">Driver pay</div>
+              </dd>
+
+              <dt>Carrier</dt>
+              <dd style="font-weight:700;color:${
+                carrierNet != null && carrierNet >= 0
+                  ? 'var(--ok)'
+                  : 'var(--bad)'
+              }">
+                ${money(carrierNet)}
+                <div class="small muted">Net profit after entered costs</div>
+              </dd>
+
+              <dt>Gross revenue</dt>
+              <dd>${money(carrierGrossRevenue)}</dd>
+
+              <dt>Operating costs</dt>
+              <dd>${money(carrierOperatingCosts)}</dd>
+
+              <dt>Carrier margin</dt>
+              <dd>
+                ${
+                  carrierMargin != null
+                    ? Number(carrierMargin).toFixed(1) + '%'
+                    : '—'
+                }
+              </dd>
+
+              <dt>Calculated</dt>
+              <dd class="small muted">
+                ${esc(fmtDT(latestCarrierProfit.created_at))}
+                ${
+                  latestCarrierProfit.is_training
+                    ? ' · TT Training'
+                    : ''
+                }
+              </dd>
+
+            </dl>
+
+            <div style="margin-top:12px">
+              <button
+                class="sm"
+                onclick="
+                  switchTab('calculations')
+                "
+              >
+                View Calculation History
+              </button>
+            </div>
+          `
+          : `
+            <div class="empty" style="padding:8px 0">
+              No Driver / Carrier Profit calculation has been saved to this load yet.
+            </div>
+
+            <div style="margin-top:12px">
+              <button
+                class="primary sm"
+                onclick="
+                  location.href =
+                    'calculators.html?load_id=' +
+                    encodeURIComponent(LOAD_ID) +
+                    '&tab=carrierProfit'
+                "
+              >
+                Open Profit Calculator
+              </button>
+            </div>
+          `
+      }
+
     </div>
 
   </div>`;
@@ -2631,332 +2814,44 @@ function openPermit(id){
 }
 
 /* --- PERMIT FILL TEST DATA — training/demo only, never touches the database --- */
-
-  /* --- PERMIT FILL TEST DATA — training/demo only, never touches the database --- */
 function fillPermitTestData(){
-
-  const today =
-    new Date();
-
-  const appliedAt =
-    new Date(today);
-
-  appliedAt.setDate(
-    appliedAt.getDate() - 3
-  );
-
-
-  const issuedAt =
-    new Date(today);
-
-  issuedAt.setDate(
-    issuedAt.getDate() - 1
-  );
-
-
-  const validFrom =
-    new Date(today);
-
-
-  const validTo =
-    new Date(today);
-
-  validTo.setDate(
-    validTo.getDate() + 5
-  );
-
-
-  /*
-    IMPORTANT:
-    Preserve the permit state already being edited.
-
-    AR permit -> Arkansas TT test data
-    TN permit -> Tennessee TT test data
-
-    Only default to AR when this is a brand-new permit
-    with no state selected yet.
-  */
-  const state =
-    String(
-      $('pm_state').value ||
-      'AR'
-    )
-      .trim()
-      .toUpperCase();
-
-
-  $('pm_state').value =
-    state;
-
-
-  $('pm_status').value =
-    'issued';
-
-
-  $('pm_permit_number').value =
-    'TT-' +
-    state +
-    '-' +
-    Math.floor(
-      1000 +
-      Math.random() *
-      9000
-    );
-
-
-  $('pm_permit_service_id').value =
-    '';
-
-
-  $('pm_applied_at').value =
-    toLocalInput(
-      appliedAt
-    );
-
-
-  $('pm_issued_at').value =
-    toLocalInput(
-      issuedAt
-    );
-
-
-  $('pm_valid_from').value =
-    toDateInput(
-      validFrom
-    );
-
-
-  $('pm_valid_to').value =
-    toDateInput(
-      validTo
-    );
-
-
-  $('pm_driver_has_permit').checked =
-    true;
-
-
-  $('pm_driver_briefed_at').value =
-    toLocalInput(
-      issuedAt
-    );
-
-
-  /* ========================================================
-     ARKANSAS TRAINING PERMIT
-     ======================================================== */
-
-  if (
-    state ===
-    'AR'
-  ) {
-
-    $('pm_issuing_authority').value =
-      'ARDOT';
-
-
-    $('pm_fee').value =
-      '80.00';
-
-
-    $('pm_service_fee').value =
-      '35.00';
-
-
-    $('pm_escort_front').checked =
-      true;
-
-
-    $('pm_escort_rear').checked =
-      false;
-
-
-    $('pm_escort_police').checked =
-      false;
-
-
-    $('pm_escort_high_pole').checked =
-      false;
-
-
-    $('pm_daylight_only').checked =
-      true;
-
-
-    $('pm_weekend_travel_allowed').checked =
-      false;
-
-
-    $('pm_holiday_travel_allowed').checked =
-      false;
-
-
-    $('pm_wind_limit_mph').value =
-      '35';
-
-
-    $('pm_travel_time_restrictions').value =
-      'TT TRAINING — Arkansas oversize movement during permitted daylight travel hours.';
-
-
-    $('pm_curfew_notes').value =
-      'TT TRAINING — Review Little Rock metro travel restrictions before movement.';
-
-
-    $('pm_route_restrictions').value =
-      'TT TRAINING — Follow the approved Arkansas portion of the Little Rock to Memphis route.';
-
-
-    $('pm_notes').value =
-      'TT TRAINING — Arkansas sample permit for TT-ABC-260811-01.';
-
-  }
-
-
-  /* ========================================================
-     TENNESSEE TRAINING PERMIT
-     ======================================================== */
-
-  else if (
-    state ===
-    'TN'
-  ) {
-
-    $('pm_issuing_authority').value =
-      'TDOT';
-
-
-    $('pm_fee').value =
-      '95.00';
-
-
-    $('pm_service_fee').value =
-      '35.00';
-
-
-    $('pm_escort_front').checked =
-      true;
-
-
-    $('pm_escort_rear').checked =
-      true;
-
-
-    $('pm_escort_police').checked =
-      false;
-
-
-    $('pm_escort_high_pole').checked =
-      false;
-
-
-    $('pm_daylight_only').checked =
-      true;
-
-
-    $('pm_weekend_travel_allowed').checked =
-      false;
-
-
-    $('pm_holiday_travel_allowed').checked =
-      false;
-
-
-    $('pm_wind_limit_mph').value =
-      '35';
-
-
-    $('pm_travel_time_restrictions').value =
-      'TT TRAINING — Tennessee oversize movement during approved permit travel hours.';
-
-
-    $('pm_curfew_notes').value =
-      'TT TRAINING — Review Memphis metro curfew restrictions before movement.';
-
-
-    $('pm_route_restrictions').value =
-      'TT TRAINING — Follow the approved Tennessee portion of the route into Memphis.';
-
-
-    $('pm_notes').value =
-      'TT TRAINING — Tennessee sample permit for TT-ABC-260811-01.';
-
-  }
-
-
-  /* ========================================================
-     OTHER STATE
-     Keep state — use generic training values.
-     ======================================================== */
-
-  else {
-
-    $('pm_issuing_authority').value =
-      state +
-      ' DOT';
-
-
-    $('pm_fee').value =
-      '75.00';
-
-
-    $('pm_service_fee').value =
-      '35.00';
-
-
-    $('pm_escort_front').checked =
-      false;
-
-
-    $('pm_escort_rear').checked =
-      false;
-
-
-    $('pm_escort_police').checked =
-      false;
-
-
-    $('pm_escort_high_pole').checked =
-      false;
-
-
-    $('pm_daylight_only').checked =
-      true;
-
-
-    $('pm_weekend_travel_allowed').checked =
-      false;
-
-
-    $('pm_holiday_travel_allowed').checked =
-      false;
-
-
-    $('pm_wind_limit_mph').value =
-      '35';
-
-
-    $('pm_travel_time_restrictions').value =
-      'TT TRAINING — Review the permit travel restrictions for ' +
-      state +
-      '.';
-
-
-    $('pm_curfew_notes').value =
-      'TT TRAINING — Review applicable metro and local curfews.';
-
-
-    $('pm_route_restrictions').value =
-      'TT TRAINING — Follow the approved permit route.';
-
-
-    $('pm_notes').value =
-      'TT TRAINING — Sample ' +
-      state +
-      ' permit.';
-
-  }
-
+  const today = new Date();
+  const appliedAt = new Date(today); appliedAt.setDate(appliedAt.getDate() - 3);
+  const issuedAt  = new Date(today); issuedAt.setDate(issuedAt.getDate() - 1);
+  const validFrom = new Date(today);
+  const validTo   = new Date(today); validTo.setDate(validTo.getDate() + 5);
+
+  $('pm_state').value                    = 'TN';
+  $('pm_status').value                   = 'issued';
+  $('pm_permit_number').value            = 'TT-TRAINING-' + Math.floor(1000 + Math.random()*9000);
+  $('pm_issuing_authority').value        = 'TDOT';
+  $('pm_permit_service_id').value        = '';
+  $('pm_fee').value                      = '95.00';
+  $('pm_service_fee').value              = '35.00';
+
+  $('pm_applied_at').value               = toLocalInput(appliedAt);
+  $('pm_issued_at').value                = toLocalInput(issuedAt);
+  $('pm_valid_from').value                = toDateInput(validFrom);
+  $('pm_valid_to').value                  = toDateInput(validTo);
+
+  $('pm_escort_front').checked           = true;
+  $('pm_escort_rear').checked            = true;
+  $('pm_escort_police').checked          = false;
+  $('pm_escort_high_pole').checked       = false;
+
+  $('pm_daylight_only').checked          = true;
+  $('pm_weekend_travel_allowed').checked = false;
+  $('pm_holiday_travel_allowed').checked = false;
+  $('pm_wind_limit_mph').value           = '35';
+
+  $('pm_travel_time_restrictions').value = 'TT TRAINING — Sunrise to sunset only. No travel 7-9am / 4-6pm in metro areas.';
+  $('pm_curfew_notes').value             = 'TT TRAINING — No movement through Nashville metro during posted curfew hours.';
+  $('pm_route_restrictions').value       = 'TT TRAINING — I-40 E to US-231 S. No SR-96 bridge (weight restricted).';
+
+  $('pm_driver_has_permit').checked      = true;
+  $('pm_driver_briefed_at').value        = toLocalInput(issuedAt);
+
+  $('pm_notes').value = 'TT TRAINING — Sample permit for practicing the Permits tab. Safe to delete.';
 }
 
 /* --- PERMIT SAVE — standalone. Touches only the permits table. --- */
@@ -3425,6 +3320,550 @@ async function deleteChecklistItem(id){
 const CHARGE_CATEGORIES = ['linehaul','fuel','detention','layover','tarp','permit_fee',
   'permit_service_fee','escort','pilot_car','police','driver_pay','fuel_purchase',
   'tolls','lumper','repair','other'];
+
+
+
+/* ============================================================
+   SAVED CALCULATIONS
+   ============================================================ */
+
+function calculationTypeLabel(type){
+  const labels = {
+    hos:
+      'HOS Check',
+
+    dispatch_profit:
+      'Dispatch Profit',
+
+    carrier_profit:
+      'Driver / Carrier Profit',
+
+    accessorial:
+      'Accessorial Calculation'
+  };
+
+  return (
+    labels[type] ||
+    titleize(type || 'calculation')
+  );
+}
+
+
+function calculationHeadline(c){
+  const r =
+    c.results || {};
+
+  if(c.calculator_type === 'hos'){
+    const status =
+      r.status
+        ? titleize(r.status)
+        : 'Saved HOS';
+
+    const drive =
+      r.driveAfter != null
+        ? Number(r.driveAfter).toFixed(2) + ' hr drive left'
+        : '';
+
+    return [
+      status,
+      drive
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+
+  if(c.calculator_type === 'dispatch_profit'){
+    return [
+      r.grossProfit != null
+        ? 'Gross profit ' + money(r.grossProfit)
+        : null,
+
+      r.margin != null
+        ? Number(r.margin).toFixed(1) + '% margin'
+        : null
+    ]
+      .filter(Boolean)
+      .join(' · ') ||
+      'Saved dispatch profit calculation';
+  }
+
+
+  if(c.calculator_type === 'carrier_profit'){
+    return [
+      r.carrierNet != null
+        ? 'Carrier net ' + money(r.carrierNet)
+        : null,
+
+      r.carrierMargin != null
+        ? Number(r.carrierMargin).toFixed(1) + '% margin'
+        : null,
+
+      r.driverPay != null
+        ? 'Driver pay ' + money(r.driverPay)
+        : null
+    ]
+      .filter(Boolean)
+      .join(' · ') ||
+      'Saved driver / carrier profit calculation';
+  }
+
+
+  if(c.calculator_type === 'accessorial'){
+    return [
+      r.requestedAmount != null
+        ? 'Requested ' + money(r.requestedAmount)
+        : null,
+
+      r.status
+        ? titleize(r.status)
+        : null
+    ]
+      .filter(Boolean)
+      .join(' · ') ||
+      'Saved accessorial calculation';
+  }
+
+
+  return 'Saved calculation';
+}
+
+
+function calculationDetails(c){
+  const i =
+    c.inputs || {};
+
+  const r =
+    c.results || {};
+
+  const rows = [];
+
+
+  if(c.calculator_type === 'hos'){
+
+    rows.push(
+      [
+        'Drive remaining',
+        i.driveRemaining != null
+          ? i.driveRemaining + ' hr'
+          : '—'
+      ],
+
+      [
+        '14-hour window',
+        i.windowRemaining != null
+          ? i.windowRemaining + ' hr'
+          : '—'
+      ],
+
+      [
+        'Cycle remaining',
+        i.cycleRemaining != null
+          ? i.cycleRemaining + ' hr'
+          : '—'
+      ],
+
+      [
+        'Planned driving',
+        i.tripDrive != null
+          ? i.tripDrive + ' hr'
+          : '—'
+      ]
+    );
+
+  }
+
+
+  else if(c.calculator_type === 'dispatch_profit'){
+
+    rows.push(
+      [
+        'Gross revenue',
+        money(r.grossRevenue)
+      ],
+
+      [
+        'Total costs',
+        money(r.totalCosts)
+      ],
+
+      [
+        'Gross profit',
+        money(r.grossProfit)
+      ],
+
+      [
+        'Dispatch fee',
+        money(r.dispatchFee)
+      ],
+
+      [
+        'All-in RPM',
+        r.rpm != null
+          ? '$' +
+            Number(r.rpm).toFixed(2)
+          : '—'
+      ]
+    );
+
+  }
+
+
+  else if(c.calculator_type === 'carrier_profit'){
+
+    rows.push(
+      [
+        'Gross revenue',
+        money(r.grossRevenue)
+      ],
+
+      [
+        'Driver pay',
+        money(r.driverPay)
+      ],
+
+      [
+        'Dispatch fee',
+        money(r.dispatchFee)
+      ],
+
+      [
+        'Operating costs',
+        money(r.operatingCosts)
+      ],
+
+      [
+        'Carrier net',
+        money(r.carrierNet)
+      ],
+
+      [
+        'Carrier margin',
+        r.carrierMargin != null
+          ? Number(r.carrierMargin).toFixed(1) + '%'
+          : '—'
+      ],
+
+      [
+        'Carrier profit / mile',
+        r.carrierProfitMile != null
+          ? '$' +
+            Number(r.carrierProfitMile).toFixed(2)
+          : '—'
+      ]
+    );
+
+  }
+
+
+  else if(c.calculator_type === 'accessorial'){
+
+    rows.push(
+      [
+        'Requested amount',
+        money(r.requestedAmount)
+      ],
+
+      [
+        'Total facility time',
+        r.totalMinutes != null
+          ? r.totalMinutes + ' min'
+          : '—'
+      ],
+
+      [
+        'Free time',
+        r.freeMinutes != null
+          ? r.freeMinutes + ' min'
+          : '—'
+      ],
+
+      [
+        'Billable time',
+        r.billableMinutes != null
+          ? r.billableMinutes + ' min'
+          : '—'
+      ]
+    );
+
+  }
+
+
+  return rows;
+}
+
+
+function drawCalculations(){
+
+  const host =
+    $('tab-calculations');
+
+
+  if(!host){
+    return;
+  }
+
+
+  const latestByType =
+    {};
+
+
+  CALCULATIONS
+    .forEach(
+      c => {
+
+        if(
+          !latestByType[
+            c.calculator_type
+          ]
+        ){
+          latestByType[
+            c.calculator_type
+          ] =
+            c;
+        }
+
+      }
+    );
+
+
+  const latestCards =
+    Object.values(
+      latestByType
+    )
+      .map(
+        c => {
+
+          const details =
+            calculationDetails(c)
+              .map(
+                pair =>
+                  '<dt>' +
+                  esc(pair[0]) +
+                  '</dt><dd>' +
+                  esc(pair[1]) +
+                  '</dd>'
+              )
+              .join('');
+
+
+          return `
+            <div class="card box">
+              <h3>
+                ${esc(
+                  calculationTypeLabel(
+                    c.calculator_type
+                  )
+                )}
+              </h3>
+
+              <div style="font-weight:700;margin-bottom:8px">
+                ${esc(
+                  calculationHeadline(c)
+                )}
+              </div>
+
+              <dl class="kv">
+                ${details}
+              </dl>
+
+              <div class="small muted" style="margin-top:10px">
+                Saved ${esc(fmtDT(c.created_at))}
+                ${c.is_training ? ' · TT Training' : ''}
+              </div>
+            </div>
+          `;
+        }
+      )
+      .join('');
+
+
+  const rows =
+    CALCULATIONS
+      .map(
+        c => `
+          <tr>
+            <td>
+              <b>
+                ${esc(
+                  calculationTypeLabel(
+                    c.calculator_type
+                  )
+                )}
+              </b>
+            </td>
+
+            <td>
+              ${esc(
+                calculationHeadline(c)
+              )}
+            </td>
+
+            <td class="small muted">
+              ${esc(
+                fmtDT(
+                  c.created_at
+                )
+              )}
+            </td>
+
+            <td class="small">
+              ${c.is_training
+                ? '<span class="pill warn">TT</span>'
+                : ''
+              }
+            </td>
+          </tr>
+        `
+      )
+      .join('');
+
+
+  host.innerHTML = `
+
+    <div class="grid2" style="margin-bottom:12px">
+
+      <div class="card box">
+
+        <h3>Calculator Workflow</h3>
+
+        <div class="small muted">
+          Calculators save planning snapshots here.
+          They do not automatically create accounting charges,
+          so Expenses remains the source for actual load costs.
+        </div>
+
+        <div style="margin-top:12px">
+
+          <button
+            class="primary sm"
+            onclick="
+              location.href =
+                'calculators.html?load_id=' +
+                encodeURIComponent(LOAD_ID)
+            "
+          >
+            Open Calculators
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="card box">
+
+        <h3>Saved Calculations</h3>
+
+        <dl class="kv">
+          <dt>Total</dt>
+          <dd style="font-weight:700">
+            ${CALCULATIONS.length}
+          </dd>
+
+          <dt>HOS</dt>
+          <dd>
+            ${
+              CALCULATIONS.filter(
+                c =>
+                  c.calculator_type ===
+                  'hos'
+              ).length
+            }
+          </dd>
+
+          <dt>Dispatch profit</dt>
+          <dd>
+            ${
+              CALCULATIONS.filter(
+                c =>
+                  c.calculator_type ===
+                  'dispatch_profit'
+              ).length
+            }
+          </dd>
+
+          <dt>Driver / carrier profit</dt>
+          <dd>
+            ${
+              CALCULATIONS.filter(
+                c =>
+                  c.calculator_type ===
+                  'carrier_profit'
+              ).length
+            }
+          </dd>
+        </dl>
+
+      </div>
+
+    </div>
+
+
+    ${
+      latestCards
+        ? `
+          <div class="sechead">
+            <h2>Latest by Calculator</h2>
+          </div>
+
+          <div class="grid2" style="margin-bottom:16px">
+            ${latestCards}
+          </div>
+        `
+        : ''
+    }
+
+
+    <div class="sechead">
+
+      <h2>Calculation History</h2>
+
+      <span class="spacer"></span>
+
+      <span class="small muted">
+        Newest first
+      </span>
+
+    </div>
+
+
+    ${
+      rows
+        ? `
+          <div class="tablewrap">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>Calculator</th>
+                  <th>Result</th>
+                  <th>Saved</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${rows}
+              </tbody>
+
+            </table>
+
+          </div>
+        `
+        : `
+          <div class="card">
+            <div class="empty">
+              No calculator results have been saved to this load yet.
+              Open Calculators, select this LD, run a calculator,
+              then click Add to Load.
+            </div>
+          </div>
+        `
+    }
+  `;
+}
 
 
 /* ============================================================
