@@ -455,6 +455,7 @@ textarea{min-height:76px;resize:vertical}
   <div class="dlg-foot">
     <button class="primary" id="pm_savebtn">Save Permit</button>
     <button onclick="dlgPermit.close()">Cancel</button>
+    <button class="ghost sm" id="pm_filltest" type="button">Fill Test Data</button>
     <span class="spacer"></span>
     <button class="danger sm hide" id="pm_delbtn">Delete</button>
   </div>
@@ -526,6 +527,7 @@ textarea{min-height:76px;resize:vertical}
   <div class="dlg-foot">
     <button class="primary" id="es_savebtn">Save Escort</button>
     <button onclick="dlgEscort.close()">Cancel</button>
+    <button class="ghost sm" id="es_filltest" type="button">Fill Test Data</button>
     <span class="spacer"></span>
     <button class="danger sm hide" id="es_delbtn">Delete</button>
   </div>
@@ -2628,6 +2630,47 @@ function openPermit(id){
   dlgPermit.showModal();
 }
 
+/* --- PERMIT FILL TEST DATA — training/demo only, never touches the database --- */
+function fillPermitTestData(){
+  const today = new Date();
+  const appliedAt = new Date(today); appliedAt.setDate(appliedAt.getDate() - 3);
+  const issuedAt  = new Date(today); issuedAt.setDate(issuedAt.getDate() - 1);
+  const validFrom = new Date(today);
+  const validTo   = new Date(today); validTo.setDate(validTo.getDate() + 5);
+
+  $('pm_state').value                    = 'TN';
+  $('pm_status').value                   = 'issued';
+  $('pm_permit_number').value            = 'TT-TRAINING-' + Math.floor(1000 + Math.random()*9000);
+  $('pm_issuing_authority').value        = 'TDOT';
+  $('pm_permit_service_id').value        = '';
+  $('pm_fee').value                      = '95.00';
+  $('pm_service_fee').value              = '35.00';
+
+  $('pm_applied_at').value               = toLocalInput(appliedAt);
+  $('pm_issued_at').value                = toLocalInput(issuedAt);
+  $('pm_valid_from').value                = toDateInput(validFrom);
+  $('pm_valid_to').value                  = toDateInput(validTo);
+
+  $('pm_escort_front').checked           = true;
+  $('pm_escort_rear').checked            = true;
+  $('pm_escort_police').checked          = false;
+  $('pm_escort_high_pole').checked       = false;
+
+  $('pm_daylight_only').checked          = true;
+  $('pm_weekend_travel_allowed').checked = false;
+  $('pm_holiday_travel_allowed').checked = false;
+  $('pm_wind_limit_mph').value           = '35';
+
+  $('pm_travel_time_restrictions').value = 'TT TRAINING — Sunrise to sunset only. No travel 7-9am / 4-6pm in metro areas.';
+  $('pm_curfew_notes').value             = 'TT TRAINING — No movement through Nashville metro during posted curfew hours.';
+  $('pm_route_restrictions').value       = 'TT TRAINING — I-40 E to US-231 S. No SR-96 bridge (weight restricted).';
+
+  $('pm_driver_has_permit').checked      = true;
+  $('pm_driver_briefed_at').value        = toLocalInput(issuedAt);
+
+  $('pm_notes').value = 'TT TRAINING — Sample permit for practicing the Permits tab. Safe to delete.';
+}
+
 /* --- PERMIT SAVE — standalone. Touches only the permits table. --- */
 async function pm_save(){
   clearErr('pm_err');
@@ -2815,6 +2858,41 @@ function openEscort(id){
   $('es_notes').value = e ? (e.notes || '') : '';
 
   dlgEscort.showModal();
+}
+
+/* --- ESCORT FILL TEST DATA — training/demo only, never touches the database --- */
+function fillEscortTestData(){
+  const today = new Date();
+  const meet = new Date(today); meet.setDate(meet.getDate() + 1); meet.setHours(6, 30, 0, 0);
+  const start = new Date(meet); start.setMinutes(start.getMinutes() + 15);
+  const end   = new Date(start); end.setHours(end.getHours() + 4);
+
+  const role = $('es_role').value || 'front';
+  const testDrivers = {
+    front: { name: 'Marcus Ellery',  phone: '(615) 555-0148', vehicle: 'White F-150, 18ft pole, TN plates' },
+    rear:  { name: 'Dana Kowalczyk', phone: '(615) 555-0172', vehicle: 'Silver F-250, amber light bar, TN plates' }
+  };
+  const pick = testDrivers[role] || testDrivers.front;
+
+  $('es_status').value             = 'confirmed';
+  $('es_escort_company_id').value  = '';
+  $('es_vehicle_info').value       = pick.vehicle;
+  $('es_driver_name').value        = pick.name;
+  $('es_driver_phone').value       = pick.phone;
+
+  $('es_quoted_rate').value        = '2.10';
+  $('es_confirmed_rate').value     = '2.00';
+  $('es_actual_cost').value        = '';
+
+  $('es_scheduled_start').value    = toLocalInput(start);
+  $('es_scheduled_end').value      = toLocalInput(end);
+  $('es_meeting_time').value       = toLocalInput(meet);
+  $('es_meeting_location').value   = 'TT TRAINING — Pilot #412, Exit 22 I-40, Jackson TN';
+
+  $('es_contacts_exchanged').checked   = true;
+  $('es_confirmed_day_before').checked = true;
+
+  $('es_notes').value = 'TT TRAINING — Sample escort for practicing the Escorts tab. Safe to delete.';
 }
 
 /* --- ESCORT SAVE — standalone. Touches only escort_assignments. --- */
@@ -3512,9 +3590,11 @@ $('st_save').addEventListener('click', saveStatus);
 
 $('pm_savebtn').addEventListener('click', pm_save);
 $('pm_delbtn').addEventListener('click', pm_delete);
+$('pm_filltest').addEventListener('click', fillPermitTestData);
 
 $('es_savebtn').addEventListener('click', es_save);
 $('es_delbtn').addEventListener('click', es_delete);
+$('es_filltest').addEventListener('click', fillEscortTestData);
 
 $('ch_save').addEventListener('click', saveCharge);
 $('ch_delbtn').addEventListener('click', deleteCharge);
