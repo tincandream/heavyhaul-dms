@@ -24,13 +24,6 @@
        HEAVY HAUL COMMAND
        WELCOME / COMMAND CENTER
        ========================================================= */
-@font-face {
-  font-family: "cormorant garamond";
-  src: url("fonts/cormorant garamond.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
 
     :root {
       --welcome-ink: #3C3A4B;
@@ -121,98 +114,107 @@
        ========================================================= */
 
     .welcome-hero {
-      width: 100vw;
-      max-width: none;
-      margin: -10px 0 34px calc(50% - 50vw);
-      padding: 24px max(5vw, calc((100vw - 1180px) / 2));
-      background: linear-gradient(
-        90deg,
-        rgba(250,250,250,.94),
-        rgba(246,246,243,.86),
-        rgba(234,243,246,.80)
-      );
-      border-top: 1px solid rgba(255,255,255,.75);
-      border-bottom: 1px solid rgba(127,165,181,.30);
-      box-shadow: 0 8px 26px rgba(36,44,52,.06);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      max-width: 720px;
+
+      margin-bottom: 30px;
+
+      padding:
+        28px 30px 26px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(36, 26, 42, 0.94),
+          rgba(50, 46, 59, 0.84)
+        );
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.20);
+
+      box-shadow:
+        0 20px 50px
+        rgba(0, 0, 0, 0.22);
+
+      backdrop-filter:
+        blur(6px);
+
+      -webkit-backdrop-filter:
+        blur(6px);
     }
 
 
     .welcome-kicker {
       margin-bottom: 8px;
 
-      color: #7C919A;
+      color: var(--welcome-lime);
 
       font-family:
-        "Inter",
+        "Oswald",
         sans-serif;
 
-      font-size: 10px;
+      font-size: 11px;
 
-      font-weight: 400;
+      font-weight: 500;
 
-      letter-spacing: 2.4px;
+      letter-spacing: 3px;
 
       text-transform: uppercase;
     }
 
 
-   .welcome-greeting {
-  margin: 0;
+    .welcome-greeting {
+      margin: 0;
 
-  color: #3E4B51;
+      color: var(--welcome-white);
 
- font-family:
-    "Cormorant Garamond",
-    Georgia,
-    serif;
+      font-family:
+        "Cinzel",
+        Georgia,
+        serif;
 
-  font-style: italic;
+      font-size:
+        clamp(30px, 5vw, 48px);
 
-  font-size:
-    clamp(34px, 4.5vw, 54px);
+      font-weight: 700;
 
-  font-weight: 400;
+      line-height: 1.08;
 
-  line-height: 1.02;
-
-  letter-spacing: 0.2px;
-}
+      letter-spacing: 1px;
+    }
 
 
     .welcome-subtitle {
       margin:
         10px 0 0;
 
-      color: #718087;
+      color: var(--welcome-blue);
 
       font-family:
-        "Inter",
-        sans-serif;
+        "Cormorant Garamond",
+        Georgia,
+        serif;
 
-      font-size: 13px;
+      font-size: 21px;
 
-      font-weight: 300;
+      font-style: italic;
 
-      font-style: normal;
-
-      letter-spacing: .2px;
-
-      line-height: 1.5;
+      line-height: 1.3;
     }
 
 
     .welcome-line {
-      width: min(360px, 38vw);
-      height: 1px;
+      width: 90px;
+      height: 3px;
+
       margin-top: 18px;
-      background: linear-gradient(
-        90deg,
-        rgba(216,106,142,.70),
-        rgba(127,165,181,.55),
-        rgba(184,195,74,.55)
-      );
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--welcome-pink),
+          var(--welcome-lime)
+        );
     }
 
 
@@ -234,13 +236,13 @@
     .section-heading h2 {
       margin: 0;
 
-      color: #6B92A5;
+      color: var(--welcome-white);
 
       font-family:
-        "Inter",
+        "Oswald",
         sans-serif;
 
-      font-size: 12px;
+      font-size: 13px;
 
       font-weight: 500;
 
@@ -258,34 +260,9 @@
       height: 1px;
 
       background:
-        rgba(127, 165, 181, 0.28);
+        rgba(250, 250, 250, 0.32);
     }
 
-
-
-    .priority-section .section-heading h2 {
-      color: #D86A8E;
-    }
-
-    .week-section .section-heading h2 {
-      color: #8D9A2F;
-    }
-
-    .continue-section .section-heading h2 {
-      color: #8A7358;
-    }
-
-    .sourcing-section .section-heading h2 {
-      color: #D86A8E;
-    }
-
-    .operations-section .section-heading h2 {
-      color: #6B92A5;
-    }
-
-    .section-heading::after {
-      background: rgba(107, 146, 165, 0.30);
-    }
 
     /* =========================================================
        TODAY'S PRIORITIES
@@ -735,136 +712,6 @@
     }
 
 
-
-    .timeline-shell {
-      background: rgba(250, 250, 250, 0.94);
-      border: 1px solid rgba(250, 250, 250, 0.74);
-      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .timeline-panel-title {
-      padding: 13px 18px 11px;
-      color: #6B92A5;
-      background: rgba(255, 255, 255, 0.86);
-      border-bottom: 1px solid #E3E7E8;
-      font-family: "Oswald", sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-    }
-
-    .sourcing-section .timeline-panel-title {
-      color: #D86A8E;
-    }
-
-    .operations-section .timeline-panel-title {
-      color: #6B92A5;
-    }
-
-    .timeline-body {
-      background: transparent;
-    }
-
-
-    /* =========================================================
-       NEXT CALLS
-       ========================================================= */
-
-    .call-queue-section {
-      margin-bottom: 28px;
-    }
-
-    .call-queue-section .section-heading h2 {
-      color: #8A7358;
-    }
-
-    .call-queue-panel {
-      background: rgba(250,250,250,.95);
-      border: 1px solid rgba(250,250,250,.76);
-      box-shadow: 0 12px 30px rgba(28,22,31,.11);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .call-queue-row {
-      display: grid;
-      grid-template-columns: 92px minmax(0,1fr) auto;
-      gap: 14px;
-      align-items: center;
-      padding: 14px 18px;
-      border-bottom: 1px solid #E8EBEC;
-    }
-
-    .call-queue-row:last-child {
-      border-bottom: 0;
-    }
-
-    .call-due {
-      color: #8A7358;
-      font-size: 10.5px;
-      line-height: 1.35;
-    }
-
-    .call-company {
-      color: #3E4B51;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .call-contact {
-      margin-top: 2px;
-      color: #68757B;
-      font-size: 10.5px;
-    }
-
-    .call-phone {
-      margin-top: 4px;
-      color: #6B92A5;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .call-note {
-      margin-top: 5px;
-      color: #7B858A;
-      font-size: 10.5px;
-      line-height: 1.45;
-    }
-
-    .call-badge {
-      display: inline-block;
-      margin-left: 6px;
-      padding: 2px 6px;
-      background: var(--welcome-blue-soft);
-      color: #5C7B89;
-      font-size: 9px;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      vertical-align: middle;
-    }
-
-    .call-open {
-      color: #6B92A5;
-      font-size: 11px;
-      font-weight: 500;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 620px) {
-      .call-queue-row {
-        grid-template-columns: 1fr;
-      }
-
-      .call-open {
-        justify-self: start;
-      }
-    }
-
-
     /* =========================================================
        SOURCING TIMELINE
        ========================================================= */
@@ -920,51 +767,8 @@
     .sourcing-link {
       color: var(--welcome-blue);
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
       text-decoration: none;
-    }
-
-    .sourcing-action-badge {
-      display: inline-block;
-      margin-bottom: 5px;
-      padding: 2px 7px;
-      border: 1px solid rgba(127,165,181,.35);
-      color: #607985;
-      background: #F7FAFB;
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .7px;
-      text-transform: uppercase;
-    }
-
-    .sourcing-action-badge.overdue {
-      color: #9A4961;
-      background: var(--welcome-pink-soft);
-      border-color: rgba(216,106,142,.35);
-    }
-
-    .sourcing-action-badge.today {
-      color: #68731F;
-      background: var(--welcome-lime-soft);
-      border-color: rgba(184,195,74,.45);
-    }
-
-    .sourcing-identifiers {
-      margin-top: 4px;
-      color: #59676D;
-      font-size: 10.5px;
-      line-height: 1.45;
-    }
-
-    .sourcing-identifiers strong {
-      color: #3E4B51;
-      font-weight: 600;
-    }
-
-    .sourcing-followup {
-      margin-top: 5px;
-      color: #7A858A;
-      font-size: 10px;
     }
 
     /* =========================================================
@@ -1206,7 +1010,7 @@
 
           <a
             class="continue-card"
-            href="opportunities.html"
+            href="loads.html"
           >
 
             <div class="continue-number">
@@ -1214,59 +1018,11 @@
             </div>
 
             <div class="continue-card-title">
-              Opportunities
+              Active Loads
             </div>
 
             <div class="continue-card-note">
-              Review and work broker freight before dispatch.
-            </div>
-
-            <div class="continue-arrow">
-              →
-            </div>
-
-          </a>
-
-
-          <a
-            class="continue-card"
-            href="fleet.html"
-          >
-
-            <div class="continue-number">
-              02
-            </div>
-
-            <div class="continue-card-title">
-              Fleet Setup
-            </div>
-
-            <div class="continue-card-note">
-              Manage carriers, drivers, trucks, and trailers.
-            </div>
-
-            <div class="continue-arrow">
-              →
-            </div>
-
-          </a>
-
-
-          <a
-            class="continue-card"
-            href="newload.html"
-          >
-
-            <div class="continue-number">
-              03
-            </div>
-
-            <div class="continue-card-title">
-              New Load
-            </div>
-
-            <div class="continue-card-note">
-              Assemble accepted freight with fleet and route information.
+              Continue managing freight already in motion.
             </div>
 
             <div class="continue-arrow">
@@ -1282,7 +1038,7 @@
           >
 
             <div class="continue-number">
-              04
+              02
             </div>
 
             <div class="continue-card-title">
@@ -1290,7 +1046,55 @@
             </div>
 
             <div class="continue-card-note">
-              Manage completed assignments and active freight.
+              Review fleet availability and assignments.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="calendar.html"
+          >
+
+            <div class="continue-number">
+              03
+            </div>
+
+            <div class="continue-card-title">
+              Calendar
+            </div>
+
+            <div class="continue-card-note">
+              See upcoming loads, deadlines, and appointments.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="call-queue.html"
+          >
+
+            <div class="continue-number">
+              04
+            </div>
+
+            <div class="continue-card-title">
+              Call Queue
+            </div>
+
+            <div class="continue-card-note">
+              Continue sourcing calls and follow-ups.
             </div>
 
             <div class="continue-arrow">
@@ -1307,29 +1111,6 @@
 
 
 
-
-      <!-- =====================================================
-           NEXT CALLS
-           ===================================================== -->
-
-      <section class="call-queue-section">
-
-        <div class="section-heading">
-          <h2>Next Calls</h2>
-        </div>
-
-        <div
-          class="call-queue-panel"
-          id="nextCallsPanel"
-        >
-          <div class="activity-empty">
-            Loading call queue…
-          </div>
-        </div>
-
-      </section>
-
-
       <!-- =====================================================
            SOURCING TIMELINE
            ===================================================== -->
@@ -1340,18 +1121,12 @@
           <h2>Sourcing Timeline</h2>
         </div>
 
-        <div class="timeline-shell">
-          <div class="timeline-panel-title">
-           Pipeline
-          </div>
-
-          <div
-            class="sourcing-panel timeline-body"
-            id="sourcingTimeline"
-          >
-            <div class="activity-empty">
-              Loading sourcing activity…
-            </div>
+        <div
+          class="sourcing-panel"
+          id="sourcingTimeline"
+        >
+          <div class="activity-empty">
+            Loading sourcing activity…
           </div>
         </div>
 
@@ -1362,26 +1137,22 @@
            RECENT ACTIVITY
            ===================================================== -->
 
-      <section class="operations-section">
+      <section>
 
         <div class="section-heading">
-          <h2>Operations Timeline</h2>
+          <h2>Recent Activity</h2>
         </div>
 
 
-        <div class="timeline-shell">
-          <div class="timeline-panel-title">
-            Movement
+        <div
+          class="activity-panel"
+          id="recentActivity"
+        >
+
+          <div class="activity-empty">
+            Loading recent activity…
           </div>
 
-          <div
-            class="activity-panel timeline-body"
-            id="recentActivity"
-          >
-            <div class="activity-empty">
-              Loading recent activity…
-            </div>
-          </div>
         </div>
 
       </section>
@@ -1397,27 +1168,10 @@
        SHARED NAVIGATION
        ======================================================== -->
 
- <script src="nav.js?v=20260810-1"></script>
+  <script src="nav.js"></script>
 
-<script>
-  const navDb =
-    window.supabase.createClient(
-      'https://zyhdatteglxozsgnjhrm.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJ6eWhkYXR0ZWdseG96c2duamhybSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MjgxMzEwLCJleHAiOjIxMDA4NTczMTB9.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y'
-    );
 
-  if (
-    typeof window.buildNav ===
-    'function'
-  ) {
-    window.buildNav(
-      navDb,
-      'Welcome'
-    );
-  }
-</script>
-
-<script>
+  <script>
 
     // =========================================================
     // SUPABASE
@@ -1441,355 +1195,6 @@
     let TENANT_ID =
       null;
 
-
-
-    // =========================================================
-    // NAVIGATION FALLBACK
-    // =========================================================
-
-    async function buildWelcomeFallbackNav(dbClient) {
-
-      const header =
-        document.querySelector('header');
-
-      if (!header) {
-        console.error(
-          'Welcome: no <header> element found.'
-        );
-        return null;
-      }
-
-
-      header.innerHTML = `
-        <div style="
-          display:flex;
-          align-items:center;
-          min-height:54px;
-          padding:0 26px;
-          background:#ffffff;
-          border-bottom:1px solid #eeeeee;
-          box-sizing:border-box;
-        ">
-          <a
-            href="welcome.html"
-            style="
-              color:#222222;
-              font-size:16px;
-              font-weight:700;
-              letter-spacing:1.4px;
-              text-decoration:none;
-            "
-          >
-            HEAVY HAUL COMMAND
-          </a>
-        </div>
-
-        <div style="
-          display:flex;
-          align-items:center;
-          width:100%;
-          min-height:48px;
-          padding:0 26px;
-          gap:0;
-          background:#ffffff;
-          border-bottom:1px solid #dddddd;
-          box-sizing:border-box;
-          overflow-x:auto;
-        ">
-          <nav
-            aria-label="Main navigation"
-            style="
-              display:flex;
-              align-items:center;
-              flex-shrink:0;
-            "
-          >
-            <a class="welcome-fallback-nav active" href="welcome.html">
-              Welcome
-            </a>
-
-            <a class="welcome-fallback-nav" href="board.html">
-              Dispatch
-            </a>
-
-            <a class="welcome-fallback-nav" href="sourcing.html">
-              Sourcing
-            </a>
-
-            <a class="welcome-fallback-nav" href="fleet-command.html">
-              Fleet Command
-            </a>
-          </nav>
-
-          <div
-            style="
-              margin-left:auto;
-              display:flex;
-              align-items:center;
-              gap:9px;
-              white-space:nowrap;
-              padding-left:18px;
-            "
-          >
-            <span
-              id="welcomeFallbackUser"
-              style="
-                color:#666666;
-                font-size:12px;
-              "
-            >
-              …
-            </span>
-
-            <span
-              style="
-                color:#bbbbbb;
-                font-size:12px;
-              "
-            >
-              |
-            </span>
-
-            <button
-              id="welcomeFallbackSignOut"
-              type="button"
-              style="
-                padding:0;
-                margin:0;
-                background:transparent;
-                border:0;
-                color:#555555;
-                font-size:12px;
-                cursor:pointer;
-                font-family:inherit;
-              "
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      `;
-
-
-      header.style.width =
-        '100%';
-
-      header.style.display =
-        'block';
-
-      header.style.visibility =
-        'visible';
-
-      header.style.opacity =
-        '1';
-
-      header.style.position =
-        'relative';
-
-      header.style.zIndex =
-        '1000';
-
-
-      const fallbackStyle =
-        document.createElement(
-          'style'
-        );
-
-      fallbackStyle.textContent = `
-        .welcome-fallback-nav {
-          display:flex;
-          align-items:center;
-          min-height:48px;
-          padding:0 17px;
-          color:#666666;
-          text-decoration:none;
-          font-size:13px;
-          font-weight:600;
-          white-space:nowrap;
-          border-bottom:3px solid transparent;
-        }
-
-        .welcome-fallback-nav:hover {
-          color:#222222;
-        }
-
-        .welcome-fallback-nav.active {
-          color:#111111;
-          border-bottom-color:#6B92A5;
-        }
-      `;
-
-      document.head.appendChild(
-        fallbackStyle
-      );
-
-
-      document
-        .getElementById(
-          'welcomeFallbackSignOut'
-        )
-        .addEventListener(
-          'click',
-          async () => {
-
-            await dbClient.auth.signOut();
-
-            location.href =
-              'index.html';
-
-          }
-        );
-
-
-      const userResult =
-        await dbClient.auth.getUser();
-
-
-      const authId =
-        userResult &&
-        userResult.data &&
-        userResult.data.user
-          ? userResult.data.user.id
-          : null;
-
-
-      if (!authId) {
-
-        document
-          .getElementById(
-            'welcomeFallbackUser'
-          )
-          .textContent =
-            'Not signed in';
-
-        return null;
-
-      }
-
-
-      let profile =
-        await dbClient
-          .from('app_users')
-          .select(
-            'full_name, role, tenant_id'
-          )
-          .eq(
-            'auth_uid',
-            authId
-          )
-          .maybeSingle();
-
-
-      if (
-        !profile.error &&
-        !profile.data
-      ) {
-
-        profile =
-          await dbClient
-            .from('app_users')
-            .select(
-              'full_name, role, tenant_id'
-            )
-            .limit(1)
-            .maybeSingle();
-
-      }
-
-
-      if (
-        profile.error ||
-        !profile.data
-      ) {
-
-        document
-          .getElementById(
-            'welcomeFallbackUser'
-          )
-          .textContent =
-            'Profile unavailable';
-
-        if (profile.error) {
-          console.error(
-            'Welcome fallback profile:',
-            profile.error.message
-          );
-        }
-
-        return null;
-
-      }
-
-
-      const fullName =
-        profile.data.full_name ||
-        'User';
-
-
-      const role =
-        profile.data.role ||
-        'User';
-
-
-      const prettyRole =
-        role.charAt(0).toUpperCase() +
-        role.slice(1);
-
-
-      document
-        .getElementById(
-          'welcomeFallbackUser'
-        )
-        .textContent =
-          `${fullName} (${prettyRole})`;
-
-
-      return profile.data.tenant_id;
-
-    }
-
-
-    async function initializeWelcomeNavigation() {
-
-      if (
-        typeof window.buildNav ===
-        'function'
-      ) {
-
-        try {
-
-          const tenant =
-            await window.buildNav(
-              db,
-              'Welcome'
-            );
-
-          if (tenant) {
-            return tenant;
-          }
-
-        }
-
-        catch (error) {
-
-          console.error(
-            'Shared navigation failed:',
-            error
-          );
-
-        }
-
-      }
-
-      console.warn(
-        'Welcome: shared buildNav unavailable; using fallback navigation.'
-      );
-
-      return await buildWelcomeFallbackNav(
-        db
-      );
-
-    }
 
     // =========================================================
     // GREETING
@@ -1929,42 +1334,38 @@
     // =========================================================
     // PRIORITIES
     // =========================================================
-async function loadPriorities() {
-  
-   const activeLoads =
-  await safeCount(
-    'loads',
-    function (query) {
 
-      return query
-        .is(
-          'archived_at',
-          null
-        )
-        .in(
-          'status',
-          [
-            'booked',
-            'dispatched',
-            'at_pickup',
-            'loaded',
-            'in_transit',
-            'at_delivery'
-          ]
+    async function loadPriorities() {
+
+      const activeLoads =
+        await safeCount(
+          'loads',
+          function (query) {
+
+            return query.in(
+              'status',
+              [
+                'booked',
+                'dispatched',
+                'at_pickup',
+                'loaded',
+                'in_transit',
+                'at_delivery'
+              ]
+            );
+
+          }
         );
 
-    }
-  );
 
-
-document
-  .getElementById(
-    'activeLoads'
-  )
-  .textContent =
-    activeLoads === null
-      ? '—'
-      : activeLoads;
+      document
+        .getElementById(
+          'activeLoads'
+        )
+        .textContent =
+          activeLoads === null
+            ? '—'
+            : activeLoads;
 
 
 
@@ -2077,13 +1478,14 @@ document
           'recentActivity'
         );
 
+
       try {
 
         let query =
           db
             .from('events')
             .select(
-              'created_at,event_type,subject,body,load_id'
+              'created_at, event_type, subject, body'
             )
             .order(
               'created_at',
@@ -2091,18 +1493,23 @@ document
                 ascending: false
               }
             )
-            .limit(4);
+            .limit(6);
+
 
         if (TENANT_ID) {
+
           query =
             query.eq(
               'tenant_id',
               TENANT_ID
             );
+
         }
+
 
         const result =
           await query;
+
 
         if (
           result.error ||
@@ -2112,52 +1519,13 @@ document
 
           panel.innerHTML =
             '<div class="activity-empty">' +
-            'No recent operations activity yet.' +
+            'No recent activity yet.' +
             '</div>';
 
           return;
-        }
-
-        const loadIds =
-          [
-            ...new Set(
-              result.data
-                .map(item => item.load_id)
-                .filter(Boolean)
-            )
-          ];
-
-        let loadMap =
-          {};
-
-        if (loadIds.length) {
-
-          const loadResult =
-            await db
-              .from('loads')
-              .select(
-                'id,load_number,status,origin_city,origin_state,destination_city,destination_state,dest_city,dest_state'
-              )
-              .in(
-                'id',
-                loadIds
-              );
-
-          if (
-            !loadResult.error &&
-            loadResult.data
-          ) {
-
-            loadMap =
-              Object.fromEntries(
-                loadResult.data.map(
-                  item => [item.id, item]
-                )
-              );
-
-          }
 
         }
+
 
         panel.innerHTML =
           result.data
@@ -2169,10 +1537,9 @@ document
                     item.created_at
                   );
 
+
                 const time =
-                  Number.isNaN(
-                    date.getTime()
-                  )
+                  isNaN(date)
                     ? ''
                     : date.toLocaleString(
                         'en-US',
@@ -2184,45 +1551,6 @@ document
                         }
                       );
 
-                const load =
-                  item.load_id
-                    ? loadMap[item.load_id]
-                    : null;
-
-                const loadNumber =
-                  load
-                    ? (
-                        load.load_number ||
-                        ('Load ' + String(load.id).slice(0,8))
-                      )
-                    : '';
-
-                const origin =
-                  load
-                    ? [
-                        load.origin_city,
-                        load.origin_state
-                      ]
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
-
-                const destination =
-                  load
-                    ? [
-                        load.destination_city ||
-                        load.dest_city,
-                        load.destination_state ||
-                        load.dest_state
-                      ]
-                        .filter(Boolean)
-                        .join(', ')
-                    : '';
-
-                const lane =
-                  origin && destination
-                    ? origin + ' → ' + destination
-                    : '';
 
                 const text =
                   item.subject ||
@@ -2230,33 +1558,6 @@ document
                   item.event_type ||
                   'Activity';
 
-                const details =
-                  [
-                    loadNumber
-                      ? '<strong>' + escapeHtml(loadNumber) + '</strong>'
-                      : '',
-                    load && load.status
-                      ? escapeHtml(
-                          String(load.status)
-                            .replaceAll('_',' ')
-                        )
-                      : '',
-                    lane
-                      ? escapeHtml(lane)
-                      : ''
-                  ]
-                    .filter(Boolean)
-                    .join(' · ');
-
-                const target =
-                  item.load_id
-                    ? (
-                        'workspace.html?id=' +
-                        encodeURIComponent(
-                          item.load_id
-                        )
-                      )
-                    : '';
 
                 return (
                   '<div class="activity-row">' +
@@ -2268,31 +1569,7 @@ document
                     '<div class="activity-marker"></div>' +
 
                     '<div class="activity-text">' +
-                      '<div>' +
-                        escapeHtml(text) +
-                      '</div>' +
-                      (
-                        details
-                          ? (
-                              '<div style="margin-top:4px;color:#68757B;font-size:10.5px">' +
-                              details +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-                      (
-                        target
-                          ? (
-                              '<div style="margin-top:4px">' +
-                              '<a href="' +
-                              escapeHtml(target) +
-                              '" style="color:#6B92A5;text-decoration:none;font-size:10.5px">' +
-                              'Open Load →' +
-                              '</a>' +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
+                      escapeHtml(text) +
                     '</div>' +
 
                   '</div>'
@@ -2307,13 +1584,14 @@ document
       catch (error) {
 
         console.warn(
-          'Operations timeline:',
+          'Recent activity:',
           error
         );
 
+
         panel.innerHTML =
           '<div class="activity-empty">' +
-          'Operations activity unavailable.' +
+          'Recent activity unavailable.' +
           '</div>';
 
       }
@@ -2772,335 +2050,158 @@ document
     }
 
 
-
     // =========================================================
-    // NEXT CALLS
+    // SOURCING TIMELINE
     // =========================================================
 
-    async function loadNextCalls() {
+    async function loadSourcingTimeline() {
 
       const panel =
         document.getElementById(
-          'nextCallsPanel'
+          'sourcingTimeline'
         );
+
 
       try {
 
-        const queueResult =
+        const result =
           await db
-            .from('v_call_queue')
-            .select('*')
-            .limit(12);
+            .from('events')
+            .select(
+              'created_at,event_type,subject,body'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .order(
+              'created_at',
+              {
+                ascending: false
+              }
+            )
+            .limit(40);
+
 
         if (
-          queueResult.error ||
-          !queueResult.data ||
-          queueResult.data.length === 0
+          result.error
         ) {
 
           panel.innerHTML =
             '<div class="activity-empty">' +
-            'No broker or carrier calls are currently due.' +
+            'Sourcing activity will appear here as sourcing events are recorded.' +
             '</div>';
 
           return;
+
         }
 
-        const queue =
-          queueResult.data.slice();
 
-        queue.sort(
-          function (a, b) {
-
-            const ad =
-              a.next_touch_date
-                ? new Date(a.next_touch_date).getTime()
-                : 0;
-
-            const bd =
-              b.next_touch_date
-                ? new Date(b.next_touch_date).getTime()
-                : 0;
-
-            return ad - bd;
-
-          }
-        );
-
-        const companyIds =
-          [...new Set(
-            queue
-              .map(item => item.company_id)
-              .filter(Boolean)
-          )];
-
-        let companyTypeMap = {};
-        let noteMap = {};
-
-        if (companyIds.length) {
-
-          const companyResult =
-            await db
-              .from('companies')
-              .select('id,company_type')
-              .in('id', companyIds);
-
-          if (
-            !companyResult.error &&
-            companyResult.data
-          ) {
-
-            companyTypeMap =
-              Object.fromEntries(
-                companyResult.data.map(
-                  item => [
-                    item.id,
-                    item.company_type
-                  ]
-                )
-              );
-
-          }
-
-          const activityResult =
-            await db
-              .from('crm_activities')
-              .select(
-                'company_id,body,created_at,outcome'
-              )
-              .in('company_id', companyIds)
-              .order(
-                'created_at',
-                {
-                  ascending: false
-                }
-              );
-
-          if (
-            !activityResult.error &&
-            activityResult.data
-          ) {
-
-            activityResult.data.forEach(
+        const sourcing =
+          (result.data || [])
+            .filter(
               function (item) {
 
-                if (
-                  !noteMap[item.company_id]
-                ) {
+                const text =
+                  [
+                    item.event_type,
+                    item.subject,
+                    item.body
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
 
-                  noteMap[item.company_id] =
-                    item;
-
-                }
+                return (
+                  text.includes('sourc') ||
+                  text.includes('broker') ||
+                  text.includes('quote') ||
+                  text.includes('opportun') ||
+                  text.includes('call queue') ||
+                  text.includes('lane')
+                );
 
               }
-            );
+            )
+            .slice(0, 8);
 
-          }
+
+        if (
+          sourcing.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No sourcing activity recorded yet.' +
+            '</div>';
+
+          return;
 
         }
 
-        const today =
-          new Date();
-
-        today.setHours(
-          0,
-          0,
-          0,
-          0
-        );
 
         panel.innerHTML =
-          queue
-            .slice(0, 5)
+          sourcing
             .map(
               function (item) {
 
-                const due =
-                  item.next_touch_date
-                    ? new Date(
-                        item.next_touch_date +
-                        'T12:00:00'
-                      )
-                    : null;
-
-                let dueText =
-                  'Call now';
-
-                if (
-                  due &&
-                  !Number.isNaN(
-                    due.getTime()
-                  )
-                ) {
-
-                  const dueDay =
-                    new Date(due);
-
-                  dueDay.setHours(
-                    0,
-                    0,
-                    0,
-                    0
+                const date =
+                  new Date(
+                    item.created_at
                   );
 
-                  const diff =
-                    Math.round(
-                      (
-                        dueDay.getTime() -
-                        today.getTime()
-                      ) /
-                      86400000
-                    );
-
-                  if (diff < 0) {
-                    dueText =
-                      'Overdue · ' +
-                      due.toLocaleDateString(
+                const time =
+                  Number.isNaN(
+                    date.getTime()
+                  )
+                    ? ''
+                    : date.toLocaleString(
                         'en-US',
                         {
-                          month:'short',
-                          day:'numeric'
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
                         }
                       );
-                  }
-                  else if (diff === 0) {
-                    dueText =
-                      'Due today';
-                  }
-                  else if (diff === 1) {
-                    dueText =
-                      'Tomorrow';
-                  }
-                  else {
-                    dueText =
-                      due.toLocaleDateString(
-                        'en-US',
-                        {
-                          month:'short',
-                          day:'numeric'
-                        }
-                      );
-                  }
 
-                }
+                const title =
+                  item.subject ||
+                  item.event_type ||
+                  'Sourcing activity';
 
-                const contact =
-                  [
-                    item.first_name,
-                    item.last_name
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-
-                const phone =
-                  item.dial ||
-                  '';
-
-                const type =
-                  companyTypeMap[
-                    item.company_id
-                  ] ||
-                  '';
-
-                const latest =
-                  noteMap[
-                    item.company_id
-                  ];
-
-                const latestNote =
-                  latest
-                    ? (
-                        latest.body ||
-                        latest.outcome ||
-                        ''
-                      )
-                    : '';
-
-                const bestTime =
-                  item.best_time_to_call
-                    ? (
-                        'Best time: ' +
-                        item.best_time_to_call
-                      )
+                const detail =
+                  item.body &&
+                  item.body !== title
+                    ? item.body
                     : '';
 
                 return (
-                  '<div class="call-queue-row">' +
+                  '<div class="sourcing-row">' +
 
-                    '<div class="call-due">' +
-                      escapeHtml(dueText) +
+                    '<div class="sourcing-time">' +
+                      escapeHtml(time) +
                     '</div>' +
+
+                    '<div class="sourcing-marker"></div>' +
 
                     '<div>' +
-
-                      '<div class="call-company">' +
-                        escapeHtml(
-                          item.legal_name ||
-                          'Company'
-                        ) +
-                        (
-                          type
-                            ? (
-                                '<span class="call-badge">' +
-                                escapeHtml(type) +
-                                '</span>'
-                              )
-                            : ''
-                        ) +
+                      '<div class="sourcing-title">' +
+                        escapeHtml(title) +
                       '</div>' +
-
                       (
-                        contact
+                        detail
                           ? (
-                              '<div class="call-contact">' +
-                              escapeHtml(contact) +
-                              (
-                                bestTime
-                                  ? (
-                                      ' · ' +
-                                      escapeHtml(bestTime)
-                                    )
-                                  : ''
-                              ) +
-                              '</div>'
-                            )
-                          : (
-                              bestTime
-                                ? (
-                                    '<div class="call-contact">' +
-                                    escapeHtml(bestTime) +
-                                    '</div>'
-                                  )
-                                : ''
-                            )
-                      ) +
-
-                      (
-                        phone
-                          ? (
-                              '<div class="call-phone">' +
-                              escapeHtml(phone) +
+                              '<div class="sourcing-detail">' +
+                              escapeHtml(detail) +
                               '</div>'
                             )
                           : ''
                       ) +
-
-                      (
-                        latestNote
-                          ? (
-                              '<div class="call-note">' +
-                              'Last note: ' +
-                              escapeHtml(latestNote) +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-
                     '</div>' +
 
-                    '<a class="call-open" href="call-queue.html">' +
-                      'Open Queue →' +
+                    '<a class="sourcing-link" href="sourcing.html">' +
+                      'Open →' +
                     '</a>' +
 
                   '</div>'
@@ -3115,353 +2216,14 @@ document
       catch (error) {
 
         console.warn(
-          'Welcome next calls:',
-          error
-        );
-
-        panel.innerHTML =
-          '<div class="activity-empty">' +
-          'Call queue unavailable.' +
-          '</div>';
-
-      }
-
-    }
-
-
-    // =========================================================
-    // SOURCING TIMELINE
-    // =========================================================
-
-    async function loadSourcingTimeline() {
-
-      const panel =
-        document.getElementById('sourcingTimeline');
-
-      try {
-
-        const result =
-          await db
-            .from('sourcing_events')
-            .select(
-              'id,created_at,event_type,title,detail,broker_name,carrier_name,contact_name,lane_origin,lane_destination,rate_amount,follow_up_at,opportunity_id,load_id'
-            )
-            .eq('tenant_id', TENANT_ID)
-            .order('created_at', { ascending: false })
-            .limit(4);
-
-        if (result.error) {
-          panel.innerHTML =
-            '<div class="activity-empty">Sourcing timeline unavailable: ' +
-            escapeHtml(result.error.message) +
-            '</div>';
-          return;
-        }
-
-        const sourcing =
-          result.data || [];
-
-        if (!sourcing.length) {
-          panel.innerHTML =
-            '<div class="activity-empty">No sourcing activity recorded yet.</div>';
-          return;
-        }
-
-        const opportunityIds =
-          [...new Set(
-            sourcing
-              .map(item => item.opportunity_id)
-              .filter(Boolean)
-          )];
-
-        let opportunityMap = {};
-
-        if (opportunityIds.length) {
-          const opportunityResult =
-            await db
-              .from('load_opportunities')
-              .select(
-                'id,broker_name,external_ref,origin_city,origin_state,dest_city,dest_state,commodity,equipment_needed,status,posted_rate,quoted_rate,booked_rate,pickup_date'
-              )
-              .in('id', opportunityIds);
-
-          if (!opportunityResult.error && opportunityResult.data) {
-            opportunityMap =
-              Object.fromEntries(
-                opportunityResult.data.map(item => [item.id, item])
-              );
-          }
-        }
-
-        const todayStart = new Date();
-        todayStart.setHours(0,0,0,0);
-
-        const tomorrowStart = new Date(todayStart);
-        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-
-        function priority(item) {
-          if (!item.follow_up_at) return 3;
-          const due = new Date(item.follow_up_at);
-          if (Number.isNaN(due.getTime())) return 3;
-          if (due < todayStart) return 0;
-          if (due < tomorrowStart) return 1;
-          return 2;
-        }
-
-        const ordered =
-          sourcing
-            .slice()
-            .sort((a,b) => {
-              const pa = priority(a);
-              const pb = priority(b);
-              if (pa !== pb) return pa - pb;
-
-              if (pa <= 2) {
-                return new Date(a.follow_up_at) - new Date(b.follow_up_at);
-              }
-
-              return new Date(b.created_at) - new Date(a.created_at);
-            })
-            .slice(0,12);
-
-        panel.innerHTML =
-          ordered.map(item => {
-
-            const opportunity =
-              item.opportunity_id
-                ? opportunityMap[item.opportunity_id]
-                : null;
-
-            const company =
-              item.broker_name ||
-              item.carrier_name ||
-              (opportunity ? opportunity.broker_name : '') ||
-              'Sourcing';
-
-            const contact =
-              item.contact_name || '';
-
-            const origin =
-              item.lane_origin ||
-              (
-                opportunity
-                  ? [opportunity.origin_city, opportunity.origin_state]
-                      .filter(Boolean)
-                      .join(', ')
-                  : ''
-              );
-
-            const destination =
-              item.lane_destination ||
-              (
-                opportunity
-                  ? [opportunity.dest_city, opportunity.dest_state]
-                      .filter(Boolean)
-                      .join(', ')
-                  : ''
-              );
-
-            const lane =
-              origin && destination
-                ? origin + ' → ' + destination
-                : origin || destination || '';
-
-            const freight =
-              opportunity
-                ? [opportunity.commodity, opportunity.equipment_needed]
-                    .filter(Boolean)
-                    .join(' · ')
-                : '';
-
-            const reference =
-              opportunity && opportunity.external_ref
-                ? 'Broker Load #' + opportunity.external_ref
-                : (
-                    item.opportunity_id
-                      ? 'Opportunity ' + String(item.opportunity_id).slice(0,8)
-                      : ''
-                  );
-
-            const rate =
-              item.rate_amount != null
-                ? Number(item.rate_amount)
-                : (
-                    opportunity
-                      ? (
-                          opportunity.booked_rate != null
-                            ? Number(opportunity.booked_rate)
-                            : opportunity.quoted_rate != null
-                              ? Number(opportunity.quoted_rate)
-                              : opportunity.posted_rate != null
-                                ? Number(opportunity.posted_rate)
-                                : null
-                        )
-                      : null
-                  );
-
-            const eventDate =
-              new Date(item.created_at);
-
-            const eventTime =
-              Number.isNaN(eventDate.getTime())
-                ? ''
-                : eventDate.toLocaleString(
-                    'en-US',
-                    {
-                      month:'short',
-                      day:'numeric',
-                      hour:'numeric',
-                      minute:'2-digit'
-                    }
-                  );
-
-            let actionLabel = 'Recent';
-            let actionClass = '';
-
-            if (item.follow_up_at) {
-              const due = new Date(item.follow_up_at);
-
-              if (!Number.isNaN(due.getTime())) {
-                if (due < todayStart) {
-                  actionLabel = 'Overdue';
-                  actionClass = ' overdue';
-                }
-                else if (due < tomorrowStart) {
-                  actionLabel = 'Due Today';
-                  actionClass = ' today';
-                }
-                else {
-                  actionLabel = 'Upcoming';
-                }
-              }
-            }
-
-            const followupText =
-              item.follow_up_at
-                ? 'Follow-up: ' +
-                  new Date(item.follow_up_at).toLocaleString(
-                    'en-US',
-                    {
-                      month:'short',
-                      day:'numeric',
-                      hour:'numeric',
-                      minute:'2-digit'
-                    }
-                  )
-                : '';
-
-            const identifiers =
-              [
-                contact
-                  ? '<strong>' + escapeHtml(contact) + '</strong>'
-                  : '',
-                lane
-                  ? escapeHtml(lane)
-                  : '',
-                reference
-                  ? escapeHtml(reference)
-                  : '',
-                freight
-                  ? escapeHtml(freight)
-                  : '',
-                opportunity && opportunity.status
-                  ? 'Status: ' + escapeHtml(
-                      String(opportunity.status)
-                        .replaceAll('_',' ')
-                    )
-                  : '',
-                rate != null && !Number.isNaN(rate)
-                  ? '<strong>' +
-                    rate.toLocaleString(
-                      'en-US',
-                      {
-                        style:'currency',
-                        currency:'USD',
-                        maximumFractionDigits:0
-                      }
-                    ) +
-                    '</strong>'
-                  : ''
-              ]
-                .filter(Boolean)
-                .join(' · ');
-
-            const title =
-              item.title ||
-              item.event_type ||
-              'Sourcing activity';
-
-            const detail =
-              item.detail || '';
-
-            const target =
-              item.load_id
-                ? 'workspace.html?id=' + encodeURIComponent(item.load_id)
-                : 'opportunities.html';
-
-            return (
-              '<div class="sourcing-row">' +
-                '<div class="sourcing-time">' +
-                  escapeHtml(eventTime) +
-                '</div>' +
-                '<div class="sourcing-marker"></div>' +
-                '<div>' +
-                  '<div class="sourcing-action-badge' +
-                    actionClass +
-                  '">' +
-                    escapeHtml(actionLabel) +
-                  '</div>' +
-                  '<div class="sourcing-title">' +
-                    escapeHtml(title) +
-                    ' — ' +
-                    escapeHtml(company) +
-                  '</div>' +
-                  (
-                    identifiers
-                      ? '<div class="sourcing-identifiers">' +
-                        identifiers +
-                        '</div>'
-                      : ''
-                  ) +
-                  (
-                    detail
-                      ? '<div class="sourcing-detail">' +
-                        escapeHtml(detail) +
-                        '</div>'
-                      : ''
-                  ) +
-                  (
-                    followupText
-                      ? '<div class="sourcing-followup">' +
-                        escapeHtml(followupText) +
-                        '</div>'
-                      : ''
-                  ) +
-                '</div>' +
-                '<a class="sourcing-link" href="' +
-                  escapeHtml(target) +
-                  '">' +
-                  (
-                    item.load_id
-                      ? 'Open Load →'
-                      : 'Open Opportunity →'
-                  ) +
-                '</a>' +
-              '</div>'
-            );
-
-          }).join('');
-
-      }
-      catch (error) {
-
-        console.warn(
           'Sourcing timeline:',
           error
         );
 
         panel.innerHTML =
-          '<div class="activity-empty">Sourcing activity unavailable.</div>';
+          '<div class="activity-empty">' +
+          'Sourcing activity unavailable.' +
+          '</div>';
 
       }
 
@@ -3509,20 +2271,12 @@ document
       }
 
 
-      // Shared navigation with local fallback.
+      // Shared navigation.
       TENANT_ID =
-        await initializeWelcomeNavigation();
-
-
-      if (!TENANT_ID) {
-
-        console.error(
-          'Welcome: no tenant/profile available.'
+        await buildNav(
+          db,
+          'Welcome'
         );
-
-        return;
-
-      }
 
 
       // Get profile for greeting.
@@ -3595,7 +2349,6 @@ document
       await Promise.all([
         loadPriorities(),
         loadThisWeek(),
-        loadNextCalls(),
         loadSourcingTimeline(),
         loadRecentActivity()
       ]);
