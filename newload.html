@@ -3711,12 +3711,16 @@ async function loadDispatchQueue() {
         'tenant_id',
         tenant
       )
-      .eq(
-        'status',
-        'quoted'
-      )
-      .order(
-        'created_at',
+ .eq(
+  'status',
+  'quoted'
+)
+.is(
+  'archived_at',
+  null
+)
+.order(
+  'created_at',
         {
           ascending:false
         }
@@ -3846,17 +3850,24 @@ document
 
 
       const result =
-        await db
-          .from('loads')
-          .delete()
-          .eq(
-            'tenant_id',
-            tenant
-          )
-          .eq(
-            'status',
-            'quoted'
-          );
+  const result =
+  await db
+    .from('loads')
+    .update({
+      archived_at: new Date().toISOString()
+    })
+    .eq(
+      'tenant_id',
+      tenant
+    )
+    .eq(
+      'status',
+      'quoted'
+    )
+    .is(
+      'archived_at',
+      null
+    );
 
 
       if (result.error) {
