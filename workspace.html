@@ -102,6 +102,13 @@ tr.clickable:hover td{background:#f7f9fc}
 
 /* ---------- LIVE HOS TRACKER ---------- */
 .hos-engine{display:grid;gap:12px}
+.hos-mini-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px}
+.hos-mini-tab{border:0;background:transparent;padding:6px 9px;border-radius:6px;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer}
+.hos-mini-tab:hover{background:#f3f5f7;color:var(--text)}
+.hos-mini-tab.active{background:var(--accent-soft);color:var(--accent)}
+.hos-mini-panel{display:none}
+.hos-mini-panel.active{display:block}
+.hos-mini-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:2px}
 .hos-engine-status{padding:12px 14px;border:1px solid var(--line);border-left:5px solid var(--ok);
   border-radius:8px;background:var(--ok-soft)}
 .hos-engine-status.watch{border-left-color:var(--warn);background:var(--warn-soft)}
@@ -211,7 +218,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-hos-running-engine-fixed">
+<body data-workspace-version="2026-08-21-hos-mini-tabs">
 
 <header></header>
 
@@ -2907,6 +2914,28 @@ function buildHosTrackerState(){
   };
 }
 
+function setHosMiniTab(tabName){
+
+  document
+    .querySelectorAll('.hos-mini-tab')
+    .forEach(button => {
+      button.classList.toggle(
+        'active',
+        button.dataset.hosTab === tabName
+      );
+    });
+
+  document
+    .querySelectorAll('.hos-mini-panel')
+    .forEach(panel => {
+      panel.classList.toggle(
+        'active',
+        panel.dataset.hosPanel === tabName
+      );
+    });
+}
+
+
 function refreshHosEngineLive(){
   const host=$('hosEngineLive');
   if(!host) return;
@@ -3468,130 +3497,269 @@ const escortRequiredCount =
           ? `
             <div class="hos-engine">
 
+              <div class="hos-mini-tabs">
+                <button
+                  type="button"
+                  class="hos-mini-tab active"
+                  data-hos-tab="watch"
+                  onclick="setHosMiniTab('watch')"
+                >Watch</button>
+
+                <button
+                  type="button"
+                  class="hos-mini-tab"
+                  data-hos-tab="hours"
+                  onclick="setHosMiniTab('hours')"
+                >Hours</button>
+
+                <button
+                  type="button"
+                  class="hos-mini-tab"
+                  data-hos-tab="rest"
+                  onclick="setHosMiniTab('rest')"
+                >Break / Rest</button>
+
+                <button
+                  type="button"
+                  class="hos-mini-tab"
+                  data-hos-tab="history"
+                  onclick="setHosMiniTab('history')"
+                >History</button>
+              </div>
+
+
               <div
-                class="hos-engine-status ${
-                  hosTrackerState.tone === 'critical' ? 'critical' :
-                  hosTrackerState.tone === 'watch' ? 'watch' :
-                  hosTrackerState.tone === 'offduty' ? 'offduty' : ''
-                }"
-                id="hosEngineLive"
+                class="hos-mini-panel active"
+                data-hos-panel="watch"
               >
-                <div class="hos-engine-label">Dispatcher HOS Watch</div>
-                <div class="hos-engine-main" id="hosEngineStatus">${esc(hosTrackerState.status)}</div>
-                <div class="hos-engine-sub" id="hosEngineDetail">${esc(hosTrackerState.detail)}</div>
-                <div class="small" id="hosEngineNext" style="margin-top:6px;font-weight:700">
+                <div
+                  class="hos-engine-status ${
+                    hosTrackerState.tone === 'critical' ? 'critical' :
+                    hosTrackerState.tone === 'watch' ? 'watch' :
+                    hosTrackerState.tone === 'offduty' ? 'offduty' : ''
+                  }"
+                  id="hosEngineLive"
+                >
+                  <div class="hos-engine-label">
+                    Dispatcher HOS Watch
+                  </div>
+
+                  <div
+                    class="hos-engine-main"
+                    id="hosEngineStatus"
+                  >${esc(hosTrackerState.status)}</div>
+
+                  <div
+                    class="hos-engine-sub"
+                    id="hosEngineDetail"
+                  >${esc(hosTrackerState.detail)}</div>
+
+                  <div
+                    class="small"
+                    id="hosEngineNext"
+                    style="margin-top:6px;font-weight:700"
+                  >
+                    ${
+                      hosTrackerState.nextAt
+                        ? esc(
+                            hosTrackerState.nextLabel +
+                            ' · ' +
+                            hosDeadlineText(hosTrackerState.nextAt)
+                          )
+                        : esc(hosTrackerState.nextLabel)
+                    }
+                  </div>
+                </div>
+              </div>
+
+
+              <div
+                class="hos-mini-panel"
+                data-hos-panel="hours"
+              >
+                <div class="hos-clock-grid">
+
+                  <div class="hos-clock">
+                    <div class="name">14-hour window</div>
+                    <div class="value" id="hosEngineWindow">
+                      ${
+                        hosTrackerState.windowRemaining === null
+                          ? '—'
+                          : esc(
+                              hosHoursLabel(
+                                hosTrackerState.windowRemaining
+                              )
+                            )
+                      }
+                    </div>
+                    <div class="meta">
+                      Live estimate from latest reported ELD window.
+                      ${
+                        hosTrackerState.windowEndsAt
+                          ? '<br>Projected end: ' +
+                            esc(fmtDT(hosTrackerState.windowEndsAt))
+                          : ''
+                      }
+                    </div>
+                  </div>
+
+                  <div class="hos-clock">
+                    <div class="name">Drive remaining</div>
+                    <div class="value">
+                      ${esc(hosHoursLabel(hosTrackerState.driveRemaining))}
+                    </div>
+                    <div class="meta">
+                      Last reported ELD value.
+                    </div>
+                  </div>
+
+                  <div class="hos-clock">
+                    <div class="name">Cycle remaining</div>
+                    <div class="value">
+                      ${esc(hosHoursLabel(hosTrackerState.cycleRemaining))}
+                    </div>
+                    <div class="meta">
+                      Last reported ELD cycle value.
+                    </div>
+                  </div>
+
+                  <div class="hos-clock">
+                    <div class="name">Last reported</div>
+                    <div class="value" style="font-size:14px">
+                      ${
+                        hosTrackerState.report
+                          ? esc(fmtDT(hosTrackerState.report.occurred_at))
+                          : esc(fmtDT(hosObservedAt))
+                      }
+                    </div>
+                    <div class="meta">
+                      ${
+                        hosTrackerState.report
+                          ? esc(titleize(hosTrackerState.report.event_type))
+                          : 'Saved calculator HOS snapshot'
+                      }
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+
+              <div
+                class="hos-mini-panel"
+                data-hos-panel="rest"
+              >
+                <div class="hos-clock-grid">
+
+                  <div class="hos-clock">
+                    <div class="name">Break tracking</div>
+                    <div class="value">
+                      ${
+                        hosTrackerState.breakDrivingRemaining === null
+                          ? '—'
+                          : esc(
+                              hosHoursLabel(
+                                hosTrackerState.breakDrivingRemaining
+                              )
+                            )
+                      }
+                    </div>
+                    <div class="meta">
+                      ${
+                        hosTrackerState.breakSatisfied
+                          ? 'Latest qualifying break recorded.'
+                          : 'Cumulative driving remaining before a qualifying break is required.'
+                      }
+                    </div>
+                  </div>
+
+                  <div class="hos-clock">
+                    <div class="name">Off-duty elapsed</div>
+                    <div class="value" id="hosEngineRest">
+                      ${
+                        hosTrackerState.offDuty
+                          ? esc(
+                              hosDurationLabel(
+                                hosTrackerState.offDutyElapsed
+                              )
+                            )
+                          : '—'
+                      }
+                    </div>
+                    <div class="meta">
+                      ${
+                        hosTrackerState.offDuty
+                          ? 'Planning threshold: ' +
+                            esc(fmtDT(hosTrackerState.restTargetAt)) +
+                            '. Confirm new ELD hours before driving.'
+                          : 'Starts when Off Duty is recorded.'
+                      }
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+
+              <div
+                class="hos-mini-panel"
+                data-hos-panel="history"
+              >
+                <div class="hos-event-strip">
+                  <span class="hos-event-chip">
+                    Trip start:
+                    ${
+                      hosEventBaseline
+                        ? esc(fmtDT(hosEventBaseline.occurred_at))
+                        : esc(fmtDT(latestHos?.created_at))
+                    }
+                  </span>
+
+                  <span class="hos-event-chip">
+                    HOS events: ${HOS_EVENTS.length}
+                  </span>
+
                   ${
-                    hosTrackerState.nextAt
-                      ? esc(hosTrackerState.nextLabel+' · '+hosDeadlineText(hosTrackerState.nextAt))
-                      : esc(hosTrackerState.nextLabel)
+                    hosTrackerState.breakEvent
+                      ? '<span class="hos-event-chip">Last break: ' +
+                        esc(fmtDT(hosTrackerState.breakEvent.occurred_at)) +
+                        '</span>'
+                      : ''
                   }
                 </div>
+
+                <div style="margin-top:10px">
+                  <button
+                    class="sm"
+                    onclick="document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()"
+                  >
+                    View Full HOS History
+                  </button>
+                </div>
               </div>
 
-              <div class="hos-clock-grid">
 
-                <div class="hos-clock">
-                  <div class="name">14-hour window</div>
-                  <div class="value" id="hosEngineWindow">
-                    ${hosTrackerState.windowRemaining === null ? '—' : esc(hosHoursLabel(hosTrackerState.windowRemaining))}
-                  </div>
-                  <div class="meta">
-                    Live clock estimate from the latest reported ELD window.
-                    ${
-                      hosTrackerState.windowEndsAt
-                        ? '<br>Projected end: '+esc(fmtDT(hosTrackerState.windowEndsAt))
-                        : ''
-                    }
-                  </div>
-                </div>
-
-                <div class="hos-clock">
-                  <div class="name">Drive remaining</div>
-                  <div class="value">${esc(hosHoursLabel(hosTrackerState.driveRemaining))}</div>
-                  <div class="meta">Last reported ELD value — not reduced by wall-clock time.</div>
-                </div>
-
-                <div class="hos-clock">
-                  <div class="name">Break tracking</div>
-                  <div class="value">
-                    ${hosTrackerState.breakDrivingRemaining === null ? '—' : esc(hosHoursLabel(hosTrackerState.breakDrivingRemaining))}
-                  </div>
-                  <div class="meta">
-                    ${
-                      hosTrackerState.breakSatisfied
-                        ? 'Latest qualifying break recorded. Up to 8 cumulative driving hours before the next break requirement.'
-                        : 'Cumulative driving remaining before a qualifying 30-minute interruption is required.'
-                    }
-                  </div>
-                </div>
-
-                <div class="hos-clock">
-                  <div class="name">Cycle remaining</div>
-                  <div class="value">${esc(hosHoursLabel(hosTrackerState.cycleRemaining))}</div>
-                  <div class="meta">Last reported ELD cycle value.</div>
-                </div>
-
-                <div class="hos-clock">
-                  <div class="name">Off-duty elapsed</div>
-                  <div class="value" id="hosEngineRest">
-                    ${hosTrackerState.offDuty ? esc(hosDurationLabel(hosTrackerState.offDutyElapsed)) : '—'}
-                  </div>
-                  <div class="meta">
-                    ${
-                      hosTrackerState.offDuty
-                        ? '10-hour property-carrying planning threshold: '+esc(fmtDT(hosTrackerState.restTargetAt))+'. Confirm new hours from the ELD before driving.'
-                        : 'Starts when Off Duty is recorded.'
-                    }
-                  </div>
-                </div>
-
-                <div class="hos-clock">
-                  <div class="name">Last reported</div>
-                  <div class="value" style="font-size:14px">
-                    ${
-                      hosTrackerState.report
-                        ? esc(fmtDT(hosTrackerState.report.occurred_at))
-                        : esc(fmtDT(hosObservedAt))
-                    }
-                  </div>
-                  <div class="meta">
-                    ${
-                      hosTrackerState.report
-                        ? esc(titleize(hosTrackerState.report.event_type))
-                        : 'Saved calculator HOS snapshot'
-                    }
-                  </div>
-                </div>
-
-              </div>
-
-              <div class="hos-event-strip">
-                <span class="hos-event-chip">
-                  Trip start:
-                  ${
-                    hosEventBaseline
-                      ? esc(fmtDT(hosEventBaseline.occurred_at))
-                      : esc(fmtDT(latestHos?.created_at))
-                  }
-                </span>
-                <span class="hos-event-chip">HOS events: ${HOS_EVENTS.length}</span>
-                ${
-                  hosTrackerState.breakEvent
-                    ? '<span class="hos-event-chip">Last break: '+esc(fmtDT(hosTrackerState.breakEvent.occurred_at))+'</span>'
-                    : ''
-                }
-              </div>
-
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div class="hos-mini-actions">
                 ${
                   HOS_EVENTS.length
-                    ? '<button class="primary sm" onclick="openHosTracker(&quot;hours_update&quot;)">Quick HOS Update</button>'
-                    : '<button class="primary sm" onclick="openHosTracker(&quot;baseline&quot;)">Start HOS Tracker</button>'
+                    ? '<button class="primary sm" onclick="openHosTracker(&quot;hours_update&quot;)">Quick Update</button>'
+                    : '<button class="primary sm" onclick="openHosTracker(&quot;baseline&quot;)">Start Tracker</button>'
                 }
 
-                <button class="sm" onclick="openHosTracker('break_completed')">Break Completed</button>
-                <button class="sm" onclick="openHosTracker('off_duty')">Off Duty</button>
-                <button class="sm" onclick="openHosTracker('back_on_duty')">Back On Duty</button>
+                <button
+                  class="sm"
+                  onclick="openHosTracker('break_completed')"
+                >Break Completed</button>
+
+                <button
+                  class="sm"
+                  onclick="openHosTracker('off_duty')"
+                >Off Duty</button>
+
+                <button
+                  class="sm"
+                  onclick="openHosTracker('back_on_duty')"
+                >Back On Duty</button>
 
                 <button
                   class="sm"
@@ -3600,26 +3768,10 @@ const escortRequiredCount =
                     encodeURIComponent(LOAD_ID)+
                     '&tab=hos'
                   "
-                >
-                  Full HOS Calculator
-                </button>
-
-                <button
-                  class="sm"
-                  onclick="document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()"
-                >
-                  HOS History
-                </button>
+                >Calculator</button>
               </div>
 
-              <div class="hos-rule-note">
-                Dispatcher planning tracker only. The 14-hour window is clock-based and can be
-                counted down from the reported ELD snapshot. Drive and cycle hours remain
-                last-reported values. The 30-minute break is based on cumulative driving time,
-                so Workspace tracks driving hours remaining rather than treating wall-clock
-                time as driving time. Confirm actual availability with the driver's ELD.
-              </div>
-
+            </div>
             </div>
           `
           : `
