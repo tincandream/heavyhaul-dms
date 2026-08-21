@@ -1,674 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="utf-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1"
->
-
-<title>Fleet Board — Dispatch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="dashboard.css">
-
-
+<title>Fleet Board — Dispatch</title>
 <style>
+  :root { --bg:#f5f4f0; --card:#fff; --ink:#22221f; --muted:#73726c;
+          --line:#e2e0da; --line2:#cfccc4; --accent:#185fa5;
+          --danger:#a32d2d; --dangerbg:#fcebeb; --warn:#8a5a10; --warnbg:#fdf3e3;
+          --ok:#0f6e56; --okbg:#e4f4ee; --accentbg:#e7f0f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { padding:18px; max-width:1400px; margin:0 auto 40px; }
 
-  /* ==========================================================
-     FLEET BOARD — PAGE-SPECIFIC STYLES
-     Shared application styling lives in:
-     theme.css + dashboard.css
-     ========================================================== */
+  .tiles { display:grid; gap:10px; margin-bottom:18px;
+           grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .tile { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; padding:12px 14px; }
+  .tile .n { font-size:22px; font-weight:600; line-height:1.2; }
+  .tile .l { font-size:12px; color:var(--muted); margin-top:2px; }
+  .tile.alert .n { color:var(--danger); }
 
-  .frac {
-    font-variant-numeric: tabular-nums;
-    font-size: 13px;
-  }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+         margin-bottom:12px; }
+  select, .search { padding:7px 10px; border:1px solid var(--line2);
+                    border-radius:7px; font-size:13px; background:var(--card);
+                    color:var(--ink); font-family:inherit; }
+  .search { min-width:190px; }
+  .count { font-size:12.5px; color:var(--muted); margin-left:auto; }
 
-  .f-ok {
-    color: var(--hh-lime-dark, #687025);
-  }
+  .wrap { background:var(--card); border:1px solid var(--line);
+          border-radius:10px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:1080px; }
+  th { text-align:left; font-size:11.5px; font-weight:500; color:var(--muted);
+       padding:10px 12px; border-bottom:1px solid var(--line);
+       white-space:nowrap; cursor:pointer; user-select:none; }
+  th:hover { color:var(--ink); }
+  td { padding:11px 12px; border-bottom:1px solid var(--line);
+       vertical-align:top; font-size:13px; }
+  tr:last-child td { border-bottom:0; }
+  tr.row { cursor:pointer; }
+  tr.row:hover { background:#faf9f6; }
+  .sub2 { font-size:11.5px; color:var(--muted); }
+  .unit { font-weight:600; }
+  .ldnum { color:var(--accent); font-weight:500; }
 
-  .f-warn {
-    color: #8a5a10;
-  }
+  .pill { display:inline-block; padding:2px 8px; border-radius:11px;
+          font-size:11.5px; white-space:nowrap; }
+  .p-red { background:var(--dangerbg); color:var(--danger); }
+  .p-amb { background:var(--warnbg); color:var(--warn); }
+  .p-blu { background:var(--accentbg); color:var(--accent); }
+  .p-grn { background:var(--okbg); color:var(--ok); }
+  .p-gry { background:#f0efeb; color:var(--muted); border:1px solid var(--line); }
 
-  .f-bad {
-    color: var(--hh-pink-dark, #A14666);
-  }
-
-  .f-non {
-    color: #747B82;
-  }
-
-  .stale {
-    color: #8a5a10;
-    font-size: 11.5px;
-  }
-
-  .verystale {
-    color: var(--hh-pink-dark, #A14666);
-    font-size: 11.5px;
-  }
-
-  .unit {
-    font-weight: 600;
-  }
-
-  .act {
-    font-size: 12.5px;
-  }
-
-  .act.need {
-    color: var(--hh-pink-dark, #A14666);
-  }
-
-  .crit {
-    border-left:
-      3px solid
-      var(--hh-pink, #D86A8E);
-  }
-
-  tr.row {
-    cursor: pointer;
-  }
-
-  .next-load-card {
-    min-width: 175px;
-  }
-
-  .next-load-link {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .next-load-link:hover {
-    text-decoration-thickness: 2px;
-  }
-
-  .next-load-meta {
-    margin-top: 3px;
-    font-size: 11.5px;
-    line-height: 1.35;
-    color: #747B82;
-  }
-
-  .next-load-none {
-    color: #8A9096;
-    font-size: 12px;
-  }
-
-  .hos-line {
-    margin-top: 3px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    font-size: 11.5px;
-  }
-
-  .hos-value {
-    font-variant-numeric: tabular-nums;
-  }
-
-  .hos-value.good {
-    color: var(--hh-lime-dark, #687025);
-  }
-
-  .hos-value.tight {
-    color: #8a5a10;
-  }
-
-  .hos-value.critical {
-    color: var(--hh-pink-dark, #A14666);
-    font-weight: 600;
-  }
-
-  .hos-link {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--hh-blue-dark, #668C9D);
-    font: inherit;
-    font-size: 11px;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    cursor: pointer;
-  }
-
-  .hos-link:hover {
-    text-decoration-thickness: 2px;
-  }
-
+  .frac { font-variant-numeric:tabular-nums; font-size:13px; }
+  .f-ok { color:var(--ok); } .f-warn { color:var(--warn); }
+  .f-bad { color:var(--danger); } .f-non { color:var(--muted); }
+  .stale { color:var(--warn); font-size:11.5px; }
+  .verystale { color:var(--danger); font-size:11.5px; }
+  .act { font-size:12.5px; }
+  .act.need { color:var(--danger); }
+  .crit { border-left:3px solid var(--danger); }
+  .msg { padding:26px; text-align:center; color:var(--muted); font-size:13px; }
+  .msg.bad { color:var(--danger); }
 </style>
-
-
-<script
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
-
 <body>
-
-
-<!-- ==========================================================
-     GLOBAL APPLICATION HEADER
-
-     nav.js owns this element.
-     Do not place navigation links directly inside it.
-     ========================================================== -->
 
 <header></header>
 
-
-
-<!-- ==========================================================
-     DISPATCH WORKSPACE
-     ========================================================== -->
-
 <main>
-
-
-  <!-- ========================================================
-       UNIFORM DISPATCH HEADER
-       Same on Fleet Board, New Load and All Loads
-       ======================================================== -->
-
   <section class="page-header">
-
     <h1>DISPATCH</h1>
-
-    <p>
-      Manage loads and daily dispatch activity.
-    </p>
-
+    <p>Manage loads and daily dispatch activity.</p>
   </section>
 
+  <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
-  <!-- ========================================================
-       SHARED DISPATCH TABS
-
-       dispatch-tabs.js populates this element.
-       ======================================================== -->
-
-
-
-
-
-  <!-- ========================================================
-       FLEET BOARD SUMMARY TILES
-       ======================================================== -->
-
-  <div
-    class="tiles"
-    id="tiles">
-  </div>
-
-
-
-  <!-- ========================================================
-       FILTER BAR
-       ======================================================== -->
+  <div class="tiles" id="tiles"></div>
 
   <div class="bar">
-
-    <input
-      class="search"
-      id="q"
-      placeholder="Search truck, driver, load…"
-    >
-
-
-    <select id="fstatus">
-
-      <option value="">
-        All statuses
-      </option>
-
-    </select>
-
-
-    <select id="fdriver">
-
-      <option value="">
-        All drivers
-      </option>
-
-    </select>
-
-
-    <select id="fbroker">
-
-      <option value="">
-        All brokers
-      </option>
-
-    </select>
-
-
-    <select id="fstate">
-
-      <option value="">
-        All states
-      </option>
-
-    </select>
-
-
-    <span
-      class="count"
-      id="count">
-    </span>
-
+    <input class="search" id="q" placeholder="Search truck, driver, load…">
+    <select id="fstatus"><option value="">All statuses</option></select>
+    <select id="fdriver"><option value="">All drivers</option></select>
+    <select id="fbroker"><option value="">All brokers</option></select>
+    <select id="fstate"><option value="">All states</option></select>
+    <span class="count" id="count"></span>
   </div>
-
-
-
-  <!-- ========================================================
-       FLEET BOARD TABLE
-       ======================================================== -->
 
   <div class="wrap">
-
     <table>
-
-      <thead>
-
-        <tr>
-
-          <th data-k="truck_number">
-            Truck
-          </th>
-
-          <th data-k="driver_name">
-            Driver
-          </th>
-
-          <th data-k="load_number">
-            Current Load
-          </th>
-
-          <th data-k="next_load_number">
-            Next Load
-          </th>
-
-          <th data-k="display_status">
-            Status
-          </th>
-
-          <th data-k="current_location_text">
-            Location
-          </th>
-
-          <th data-k="destination">
-            Destination
-          </th>
-
-          <th data-k="next_event_at">
-            Next event
-          </th>
-
-          <th data-k="permits_open">
-            Prm
-          </th>
-
-          <th data-k="escorts_total">
-            Esc
-          </th>
-
-          <th data-k="next_action">
-            Next action
-          </th>
-
-        </tr>
-
-      </thead>
-
-
-      <tbody id="body">
-
-        <tr>
-
-          <td
-            colspan="11"
-            class="msg">
-
-            Loading…
-
-          </td>
-
-        </tr>
-
-      </tbody>
-
+      <thead><tr>
+        <th data-k="truck_number">Truck</th>
+        <th data-k="driver_name">Driver</th>
+        <th data-k="load_number">Load</th>
+        <th data-k="carrier_net_profit">Profit</th>
+        <th data-k="display_status">Status</th>
+        <th data-k="current_location_text">Location</th>
+        <th data-k="destination">Destination</th>
+        <th data-k="next_event_at">Next event</th>
+        <th data-k="permits_open">Prm</th>
+        <th data-k="escorts_total">Esc</th>
+        <th data-k="next_action">Next action</th>
+      </tr></thead>
+      <tbody id="body"><tr><td colspan="11" class="msg">Loading…</td></tr></tbody>
     </table>
-
   </div>
-
-
 </main>
-
-
-
-<!-- ==========================================================
-     SHARED APPLICATION SCRIPTS
-     ========================================================== -->
-
 <script src="nav.js"></script>
-
-
-
-
+<script src="dispatch-tabs.js"></script>
 <script>
+// ===== FILL IN THESE TWO VALUES =====
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+// ====================================
 
-/* ============================================================
-   SUPABASE
-   ============================================================ */
-
-const SUPABASE_URL =
-  'https://zyhdatteglxozsgnjhrm.supabase.co';
-
-
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
-
-
-
-/* ============================================================
-   GLOBAL VARIABLES
-   ============================================================ */
-
-const $ =
-  id => document.getElementById(id);
-
-
-let db = null;
-
-let rows = [];
-
-let sortKey = null;
-
-let sortDir = 1;
-
-
-
-/* ============================================================
-   ERROR HANDLING
-   ============================================================ */
+const $ = id => document.getElementById(id);
+let db = null, rows = [], sortKey = null, sortDir = 1;
 
 function fail(text) {
-
-  $('body').innerHTML =
-    '<tr>' +
-      '<td colspan="11" class="msg bad">' +
-        text +
-      '</td>' +
-    '</tr>';
-
+  $('body').innerHTML = '<tr><td colspan="11" class="msg bad">' + text + '</td></tr>';
 }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+window.onerror = m => fail('JS error: ' + m);
 
-
-function esc(s) {
-
-  return String(
-    s == null
-      ? ''
-      : s
-  ).replace(
-    /[&<>"]/g,
-
-    c => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;'
-    }[c])
-
-  );
-
-}
-
-
-function hosClass(minutes) {
-
-  if (minutes == null) {
-    return '';
-  }
-
-  if (minutes < 120) {
-    return 'critical';
-  }
-
-  if (minutes < 300) {
-    return 'tight';
-  }
-
-  return 'good';
-}
-
-
-function formatHos(minutes) {
-
-  if (minutes == null) {
-    return 'HOS not reported';
-  }
-
-  const total =
-    Math.max(
-      0,
-      Number(minutes) || 0
-    );
-
-  const hours =
-    Math.floor(
-      total / 60
-    );
-
-  const mins =
-    total % 60;
-
-  return (
-    hours +
-    'h ' +
-    mins +
-    'm HOS'
-  );
-}
-
-
-
-window.onerror = m => {
-
-  fail(
-    'JS error: ' + m
-  );
-
-};
-
-
-
-/* ============================================================
-   START SUPABASE
-   ============================================================ */
-
-if (
-  typeof window.supabase === 'undefined'
-) {
-
-  fail(
-    'Supabase library did not load. Check your connection and reload.'
-  );
-
-}
-
-else {
-
-  db =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-
+if (typeof window.supabase === 'undefined') {
+  fail('Supabase library did not load. Check your connection and reload.');
+} else if (SUPABASE_URL.indexOf('YOUR-PROJECT-ID') !== -1 ||
+           SUPABASE_ANON_KEY.indexOf('PASTE-YOUR') !== -1) {
+  fail('Edit board.html and fill in SUPABASE_URL and SUPABASE_ANON_KEY.');
+} else {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   start();
-
 }
-
-
-
-/* ============================================================
-   START APPLICATION
-   ============================================================ */
 
 async function start() {
+  const s = await db.auth.getSession();
+  if (!s.data.session) { location.href = 'index.html'; return; }
 
+  const t = await buildNav(db, 'Dispatch');
+  if (!t) { fail('No app_users row linked to this login.'); return; }
 
-  /* ----------------------------------------------------------
-     Check login session
-     ---------------------------------------------------------- */
-
-  const s =
-    await db.auth.getSession();
-
-
-  if (!s.data.session) {
-
-    location.href =
-      'index.html';
-
-    return;
-
-  }
-
-
-
-  /* ----------------------------------------------------------
-     Build global navigation
-
-     buildNav returns the user's tenant_id.
-     ---------------------------------------------------------- */
-
-  const t =
-    await buildNav(
-      db,
-      'Dispatch'
-    );
-
-
-  if (!t) {
-
-    fail(
-      'No app_users row linked to this login.'
-    );
-
-    return;
-
-  }
-
-
-
-  /* ----------------------------------------------------------
-     Build Dispatch workspace tabs
-     ---------------------------------------------------------- */
-
-  
-
-
-
-  /* ----------------------------------------------------------
-     Load Fleet Board
-     ---------------------------------------------------------- */
+  buildDispatchTabs('board.html');
 
   load();
-
-
-
-  /* ----------------------------------------------------------
-     Refresh every 60 seconds
-     ---------------------------------------------------------- */
-
-  setInterval(
-    load,
-    60000
-  );
-
+  setInterval(load, 60000);
 }
-
-
-
-/* ============================================================
-   LOAD FLEET BOARD DATA
-   ============================================================ */
 
 async function load() {
 
+  const [
+    fleetResult,
+    profitResult
+  ] =
+    await Promise.all([
 
-  const r =
-    await db
-      .from('v_fleet_board')
-      .select('*')
-      .order('attention_rank')
-      .order(
-        'next_event_at',
-        {
-          nullsFirst: false
-        }
-      );
+      db
+        .from('v_fleet_board')
+        .select('*')
+        .order('attention_rank')
+        .order(
+          'next_event_at',
+          {
+            nullsFirst:false
+          }
+        ),
+
+      db
+        .from('load_calculations')
+        .select(
+          'load_id,results,created_at'
+        )
+        .eq(
+          'calculator_type',
+          'carrier_profit'
+        )
+        .order(
+          'created_at',
+          {
+            ascending:false
+          }
+        )
+
+    ]);
 
 
-  if (r.error) {
+  if (fleetResult.error) {
 
     fail(
       'Fleet board query failed: ' +
-      r.error.message
+      fleetResult.error.message
     );
 
     return;
+  }
+
+
+  PROFIT_BY_LOAD = {};
+
+
+  if (!profitResult.error) {
+
+    (profitResult.data || [])
+      .forEach(
+        item => {
+
+          if (
+            item.load_id &&
+            !PROFIT_BY_LOAD[
+              item.load_id
+            ]
+          ) {
+
+            PROFIT_BY_LOAD[
+              item.load_id
+            ] =
+              item;
+
+          }
+
+        }
+      );
+
+  }
+  else {
+
+    console.warn(
+      'Fleet Board profit data:',
+      profitResult.error.message
+    );
 
   }
 
 
   rows =
-    (r.data || [])
+    (fleetResult.data || [])
       .filter(
+        row =>
+          row.load_status !== 'quoted' &&
+          row.display_status !== 'quoted'
+      )
+      .map(
         row => {
 
-          const status =
-            row.load_status ||
-            row.display_status ||
-            '';
+          const saved =
+            PROFIT_BY_LOAD[
+              row.load_id
+            ] || null;
 
-          return ![
-            'quoted',
-            'delivered',
-            'pod_pending',
-            'paperwork',
-            'invoiced',
-            'paid',
-            'cancelled',
-            'tonu'
-          ].includes(status);
+          const result =
+            saved?.results || {};
+
+          return {
+            ...row,
+
+            carrier_net_profit:
+              result.carrierNet != null
+                ? Number(
+                    result.carrierNet
+                  )
+                : null,
+
+            carrier_margin:
+              result.carrierMargin != null
+                ? Number(
+                    result.carrierMargin
+                  )
+                : null,
+
+            driver_pay:
+              result.driverPay != null
+                ? Number(
+                    result.driverPay
+                  )
+                : null,
+
+            dispatcher_fee:
+              result.dispatchFee != null
+                ? Number(
+                    result.dispatchFee
+                  )
+                : null,
+
+            profit_calculated_at:
+              saved?.created_at ||
+              null
+          };
 
         }
       );
 
-
-
-  /* ----------------------------------------------------------
-     Update timestamp in global navigation
-     ---------------------------------------------------------- */
 
   const st =
     $('stamp');
@@ -682,1386 +310,225 @@ async function load() {
         .toLocaleTimeString(
           [],
           {
-            hour: 'numeric',
-            minute: '2-digit'
+            hour:'numeric',
+            minute:'2-digit'
           }
         );
 
   }
 
 
-
   fillFilters();
-
   tiles();
-
   render();
 
 }
 
-
-
-/* ============================================================
-   FILTER HELPERS
-   ============================================================ */
-
 function uniq(key) {
-
-  return [
-    ...new Set(
-      rows
-        .map(
-          r => r[key]
-        )
-        .filter(Boolean)
-    )
-  ].sort();
-
+  return [...new Set(rows.map(r => r[key]).filter(Boolean))].sort();
 }
-
-
 
 function fillFilters() {
-
-
-  const map = {
-
-    fstatus:
-      'display_status',
-
-    fdriver:
-      'driver_name',
-
-    fbroker:
-      'broker_name',
-
-    fstate:
-      'current_state'
-
-  };
-
-
-  for (
-    const id in map
-  ) {
-
-
-    const sel =
-      $(id);
-
-
-    const keep =
-      sel.value;
-
-
-    const first =
-      sel.options[0].textContent;
-
-
-    sel.innerHTML =
-
-      '<option value="">' +
-        first +
-      '</option>' +
-
-      uniq(
-        map[id]
-      ).map(
-        v =>
-
-          '<option value="' +
-          esc(v) +
-          '">' +
-
-          esc(
-            pretty(v)
-          ) +
-
-          '</option>'
-
-      ).join('');
-
-
-    sel.value =
-      keep;
-
+  const map = { fstatus:'display_status', fdriver:'driver_name',
+                fbroker:'broker_name', fstate:'current_state' };
+  for (const id in map) {
+    const sel = $(id), keep = sel.value, first = sel.options[0].textContent;
+    sel.innerHTML = '<option value="">' + first + '</option>' +
+      uniq(map[id]).map(v =>
+        '<option value="'+esc(v)+'">'+esc(pretty(v))+'</option>').join('');
+    sel.value = keep;
   }
+}
+
+function boardMoney(value) {
+
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isFinite(
+      Number(value)
+    )
+  ) {
+    return '—';
+  }
+
+
+  return new Intl.NumberFormat(
+    'en-US',
+    {
+      style:'currency',
+      currency:'USD',
+      maximumFractionDigits:0
+    }
+  ).format(
+    Number(value)
+  );
 
 }
 
-
-
-/* ============================================================
-   TEXT FORMATTING
-   ============================================================ */
 
 function pretty(s) {
-
-  if (!s) {
-
-    return '';
-
-  }
-
-
-  return String(s)
-
-    .replace(
-      /_/g,
-      ' '
-    )
-
-    .replace(
-      /^./,
-      c => c.toUpperCase()
-    );
-
+  if (!s) return '';
+  return String(s).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
 }
-
-
-
-/* ============================================================
-   SUMMARY TILES
-   ============================================================ */
 
 function tiles() {
-
-
   const t = [
-
-
-    [
-      'Active loads',
-
-      rows.filter(
-        r => r.load_id
-      ).length,
-
-      false
-    ],
-
-
-    [
-      'Available trucks',
-
-      rows.filter(
-        r => !r.load_id
-      ).length,
-
-      false
-    ],
-
-
-    [
-      'On hold',
-
-      rows.filter(
-        r => r.hold_reason
-      ).length,
-
-      rows.some(
-        r => r.hold_reason
-      )
-    ],
-
-
-    [
-      'Waiting on permits',
-
-      rows.filter(
-        r => r.permits_open > 0
-      ).length,
-
-      rows.some(
-        r => r.permits_open > 0
-      )
-    ],
-
-
-    [
-      'Escorts unbooked',
-
-      rows.filter(
-        r =>
-          r.escorts_total >
-          r.escorts_confirmed
-      ).length,
-
-      false
-    ],
-
-
-    [
-      'Stale check-ins',
-
-      rows.filter(
-        r =>
-          r.check_in_age_min >
-          480
-      ).length,
-
-      rows.some(
-        r =>
-          r.check_in_age_min >
-          480
-      )
-    ]
-
+    ['Active loads', rows.filter(r => r.load_id).length, false],
+    ['Available trucks', rows.filter(r => !r.load_id).length, false],
+    ['On hold', rows.filter(r => r.hold_reason).length,
+      rows.some(r => r.hold_reason)],
+    ['Waiting on permits', rows.filter(r => r.permits_open > 0).length,
+      rows.some(r => r.permits_open > 0)],
+    ['Escorts unbooked',
+      rows.filter(r => r.escorts_total > r.escorts_confirmed).length, false],
+    ['Stale check-ins',
+      rows.filter(r => r.check_in_age_min > 480).length,
+      rows.some(r => r.check_in_age_min > 480)]
   ];
-
-
-
-  $('tiles').innerHTML =
-
-    t.map(
-      ([label, n, alert]) =>
-
-        '<div class="tile' +
-
-        (
-          alert && n > 0
-            ? ' alert'
-            : ''
-        ) +
-
-        '">' +
-
-          '<div class="n">' +
-            n +
-          '</div>' +
-
-          '<div class="l">' +
-            label +
-          '</div>' +
-
-        '</div>'
-
-    ).join('');
-
+  $('tiles').innerHTML = t.map(([label, n, alert]) =>
+    '<div class="tile' + (alert && n > 0 ? ' alert' : '') + '">' +
+    '<div class="n">' + n + '</div><div class="l">' + label + '</div></div>'
+  ).join('');
 }
-
-
-
-/* ============================================================
-   STATUS PILL
-   ============================================================ */
 
 function statusPill(r) {
-
-
-  const s =
-    r.display_status || '';
-
-
-  let cls =
-    'p-gry';
-
-
-
-  if (
-    [
-      'breakdown',
-      'accident',
-      'road_closure'
-    ].includes(s)
-  ) {
-
-    cls =
-      'p-red';
-
-  }
-
-
-  else if (
-    r.hold_reason
-  ) {
-
-    cls =
-      'p-amb';
-
-  }
-
-
-  else if (
-    [
-      'in_transit',
-      'loaded',
-      'dispatched',
-      'en_route_to_pickup'
-    ].includes(s)
-  ) {
-
-    cls =
-      'p-blu';
-
-  }
-
-
-  else if (
-    [
-      'delivered',
-      'pod_pending',
-      'unloading'
-    ].includes(s)
-  ) {
-
-    cls =
-      'p-grn';
-
-  }
-
-
-  else if (
-    [
-      'loading',
-      'at_shipper',
-      'at_receiver',
-      'at_weigh_station',
-      'under_inspection'
-    ].includes(s)
-  ) {
-
-    cls =
-      'p-amb';
-
-  }
-
-
-
-  let html =
-
-    '<span class="pill ' +
-    cls +
-    '">' +
-
-    pretty(s) +
-
-    '</span>';
-
-
-
-  if (
-    r.hold_reason &&
-    r.load_status
-  ) {
-
-    html +=
-
-      '<div class="sub2">' +
-
-      'was ' +
-      pretty(
-        r.load_status
-      ) +
-
-      '</div>';
-
-  }
-
-
+  const s = r.display_status || '';
+  let cls = 'p-gry';
+  if (['breakdown','accident','road_closure'].includes(s)) cls = 'p-red';
+  else if (r.hold_reason) cls = 'p-amb';
+  else if (['in_transit','loaded','dispatched','en_route_to_pickup'].includes(s)) cls = 'p-blu';
+  else if (['delivered','pod_pending','unloading'].includes(s)) cls = 'p-grn';
+  else if (['loading','at_shipper','at_receiver','at_weigh_station',
+            'under_inspection'].includes(s)) cls = 'p-amb';
+  let html = '<span class="pill ' + cls + '">' + pretty(s) + '</span>';
+  if (r.hold_reason && r.load_status)
+    html += '<div class="sub2">was ' + pretty(r.load_status) + '</div>';
   return html;
-
 }
 
-
-
-/* ============================================================
-   FRACTION DISPLAY
-   ============================================================ */
-
-function frac(
-  done,
-  total
-) {
-
-
-  if (!total) {
-
-    return (
-      '<span class="frac f-non">' +
-      '—' +
-      '</span>'
-    );
-
-  }
-
-
-  const cls =
-
-    done === total
-      ? 'f-ok'
-
-      : (
-          done === 0
-            ? 'f-bad'
-            : 'f-warn'
-        );
-
-
-  return (
-
-    '<span class="frac ' +
-    cls +
-    '">' +
-
-    done +
-    '/' +
-    total +
-
-    '</span>'
-
-  );
-
+function frac(done, total) {
+  if (!total) return '<span class="frac f-non">—</span>';
+  const cls = done === total ? 'f-ok' : (done === 0 ? 'f-bad' : 'f-warn');
+  return '<span class="frac ' + cls + '">' + done + '/' + total + '</span>';
 }
-
-
-
-/* ============================================================
-   DATE / TIME DISPLAY
-   ============================================================ */
 
 function when(iso) {
-
-
-  if (!iso) {
-
-    return (
-      '<span class="sub2">' +
-      '—' +
-      '</span>'
-    );
-
-  }
-
-
-  const d =
-    new Date(iso);
-
-
-  return (
-
-    d.toLocaleDateString(
-      [],
-      {
-        month: 'numeric',
-        day: 'numeric'
-      }
-    )
-
-    +
-
-    ' '
-
-    +
-
-    d.toLocaleTimeString(
-      [],
-      {
-        hour: 'numeric',
-        minute: '2-digit'
-      }
-    )
-
-  );
-
+  if (!iso) return '<span class="sub2">—</span>';
+  const d = new Date(iso);
+  return d.toLocaleDateString([], {month:'numeric', day:'numeric'}) + ' ' +
+         d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
 }
-
-
-
-/* ============================================================
-   CHECK-IN AGE
-   ============================================================ */
 
 function age(min) {
-
-
-  if (
-    min == null
-  ) {
-
-    return '';
-
-  }
-
-
-  const m =
-    Math.round(min);
-
-
-  const txt =
-
-    m < 60
-
-      ? m + 'm ago'
-
-      : Math.round(
-          m / 60
-        ) + 'h ago';
-
-
-
-  const cls =
-
-    m > 480
-
-      ? 'verystale'
-
-      : (
-          m > 240
-            ? 'stale'
-            : 'sub2'
-        );
-
-
-  return (
-
-    '<div class="' +
-    cls +
-    '">' +
-
-    txt +
-
-    '</div>'
-
-  );
-
+  if (min == null) return '';
+  const m = Math.round(min);
+  const txt = m < 60 ? m + 'm ago' : Math.round(m/60) + 'h ago';
+  const cls = m > 480 ? 'verystale' : (m > 240 ? 'stale' : 'sub2');
+  return '<div class="' + cls + '">' + txt + '</div>';
 }
-
-
-
-/* ============================================================
-   RENDER FLEET BOARD
-   ============================================================ */
 
 function render() {
-
-
-  const q =
-
-    $('q')
-      .value
-      .toLowerCase()
-      .trim();
-
-
-
-  let list =
-
-    rows.filter(
-      r => {
-
-
-        if (
-          $('fstatus').value &&
-          r.display_status !==
-          $('fstatus').value
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          $('fdriver').value &&
-          r.driver_name !==
-          $('fdriver').value
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          $('fbroker').value &&
-          r.broker_name !==
-          $('fbroker').value
-        ) {
-
-          return false;
-
-        }
-
-
-        if (
-          $('fstate').value &&
-          r.current_state !==
-          $('fstate').value
-        ) {
-
-          return false;
-
-        }
-
-
-
-        if (q) {
-
-
-          const hay = [
-
-            r.truck_number,
-
-            r.driver_name,
-
-            r.load_number,
-
-            r.next_load_number,
-
-            r.broker_name,
-
-            r.next_broker_name,
-
-            r.current_location_text,
-
-            r.destination,
-
-            r.next_origin,
-
-            r.next_destination
-
-          ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-
-          if (
-            !hay.includes(q)
-          ) {
-
-            return false;
-
-          }
-
-        }
-
-
-        return true;
-
-      }
-    );
-
-
-
-  /* ----------------------------------------------------------
-     Sorting
-     ---------------------------------------------------------- */
+  const q = $('q').value.toLowerCase().trim();
+  let list = rows.filter(r => {
+    if ($('fstatus').value && r.display_status !== $('fstatus').value) return false;
+    if ($('fdriver').value && r.driver_name !== $('fdriver').value) return false;
+    if ($('fbroker').value && r.broker_name !== $('fbroker').value) return false;
+    if ($('fstate').value && r.current_state !== $('fstate').value) return false;
+    if (q) {
+      const hay = [r.truck_number, r.driver_name, r.load_number, r.broker_name,
+                   r.current_location_text, r.destination]
+                  .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 
   if (sortKey) {
-
-
-    list.sort(
-      (a, b) => {
-
-
-        const x =
-          a[sortKey];
-
-
-        const y =
-          b[sortKey];
-
-
-        if (
-          x == null
-        ) {
-
-          return 1;
-
-        }
-
-
-        if (
-          y == null
-        ) {
-
-          return -1;
-
-        }
-
-
-        return (
-
-          (
-            x > y
-              ? 1
-              : x < y
-                ? -1
-                : 0
-          )
-
-          *
-
-          sortDir
-
-        );
-
-      }
-    );
-
+    list.sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (x > y ? 1 : x < y ? -1 : 0) * sortDir;
+    });
   }
 
+  $('count').textContent = list.length + ' of ' + rows.length + ' trucks';
 
-
-  /* ----------------------------------------------------------
-     Count
-     ---------------------------------------------------------- */
-
-  $('count').textContent =
-
-    list.length +
-    ' of ' +
-    rows.length +
-    ' trucks';
-
-
-
-  /* ----------------------------------------------------------
-     Empty result
-     ---------------------------------------------------------- */
-
-  if (
-    !list.length
-  ) {
-
-
-    $('body').innerHTML =
-
-      '<tr>' +
-
-        '<td colspan="11" class="msg">' +
-
-          'No trucks match.' +
-
-        '</td>' +
-
-      '</tr>';
-
-
+  if (!list.length) {
+    $('body').innerHTML = '<tr><td colspan="11" class="msg">No trucks match.</td></tr>';
     return;
-
   }
 
+  $('body').innerHTML = list.map(r => {
+    const needs = r.next_action && r.next_action !== 'On track';
+    return '<tr class="row' + (r.priority === 'critical' ? ' crit' : '') + '"' +
+      (r.load_id ? ' data-load="' + r.load_id + '"' : '') + '>' +
+      '<td><span class="unit">' + esc(r.truck_number || '') + '</span>' +
+        (r.trailer_type ? '<div class="sub2">' + pretty(r.trailer_type) +
+          (r.trailer_number ? ' ' + esc(r.trailer_number) : '') + '</div>' : '') + '</td>' +
+      '<td>' + (r.driver_name ? esc(r.driver_name) : '<span class="sub2">unassigned</span>') +
+        (r.driver_hours_remaining_min != null
+          ? '<div class="sub2">' + Math.floor(r.driver_hours_remaining_min/60) +
+            'h ' + (r.driver_hours_remaining_min%60) + 'm HOS</div>' : '') + '</td>' +
+      '<td>' + (r.load_number
+          ? '<span class="ldnum">' + esc(r.load_number) + '</span>' +
+            (r.broker_name ? '<div class="sub2">' + esc(r.broker_name) + '</div>' : '')
+          : '<span class="sub2">—</span>') + '</td>' +
 
-
-  /* ----------------------------------------------------------
-   Rows
-   ---------------------------------------------------------- */
-
-$('body').innerHTML =
-
-  list.map(
-    r => {
-
-      const displayLoadId =
-        r.load_id ||
-        r.next_load_id;
-
-      const displayLoadNumber =
-        r.load_number ||
-        r.next_load_number;
-
-      const displayStatus =
-        r.load_status ||
-        r.next_load_status ||
-        r.display_status ||
-        '';
-
-      const displayDriver =
-        r.driver_name ||
-        r.next_driver_name;
-
-      const displayTrailerType =
-        r.trailer_type ||
-        r.next_trailer_type;
-
-      const displayTrailerNumber =
-        r.trailer_number ||
-        r.next_trailer_number;
-
-      const displayBroker =
-        r.broker_name ||
-        r.next_broker_name;
-
-      const displayOrigin =
-        r.origin ||
-        r.next_origin;
-
-      const displayDestination =
-        r.destination ||
-        r.next_destination;
-
-      const displayEventAt =
-        r.next_event_at ||
-        r.next_pickup_appt_start ||
-        r.next_delivery_appt_start;
-
-      const displayPermitsIssued =
-        r.load_id
-          ? r.permits_issued
-          : r.next_permits_issued;
-
-      const displayPermitsTotal =
-        r.load_id
-          ? r.permits_total
-          : r.next_permits_total;
-
-      const displayEscortsConfirmed =
-        r.load_id
-          ? r.escorts_confirmed
-          : r.next_escorts_confirmed;
-
-      const displayEscortsTotal =
-        r.load_id
-          ? r.escorts_total
-          : r.next_escorts_total;
-
-
-      const needs =
-        r.next_action &&
-        r.next_action !== 'On track';
-
-
-      return (
-
-        '<tr class="row' +
-
+      '<td>' +
         (
-          r.priority === 'critical'
-            ? ' crit'
-            : ''
-        ) +
-
-        '"' +
-
-        (
-          displayLoadId
-
-            ? ' data-load="' +
-              displayLoadId +
-              '"'
-
-            : ''
-        ) +
-
-        '>' +
-
-
-        /* Truck */
-
-        '<td>' +
-
-          '<span class="unit">' +
-            esc(
-              r.truck_number || ''
-            ) +
-          '</span>' +
-
-          (
-            displayTrailerType
-
-              ? '<div class="sub2">' +
-
-                  pretty(
-                    displayTrailerType
-                  ) +
-
-                  (
-                    displayTrailerNumber
-                      ? ' ' +
-                        esc(
-                          displayTrailerNumber
-                        )
-                      : ''
-                  ) +
-
-                '</div>'
-
-              : ''
-          ) +
-
-        '</td>' +
-
-
-        /* Driver */
-
-        '<td>' +
-
-          (
-            displayDriver
-
-              ? esc(
-                  displayDriver
-                )
-
-              : '<span class="sub2">' +
-                  'unassigned' +
-                '</span>'
-          ) +
-
-          (
-            displayLoadId
-
-              ? '<div class="hos-line">' +
-
-                  '<span class="hos-value ' +
-                    hosClass(
-                      r.driver_hours_remaining_min
-                    ) +
-                  '">' +
-                    esc(
-                      formatHos(
-                        r.driver_hours_remaining_min
-                      )
-                    ) +
-                  '</span>' +
-
-                  '<button ' +
-                    'type="button" ' +
-                    'class="hos-link" ' +
-                    'data-hos-load="' +
-                    esc(displayLoadId) +
-                  '">' +
-                    'HOS calc' +
-                  '</button>' +
-
-                '</div>'
-
-              : (
-                  r.driver_hours_remaining_min != null
-
-                    ? '<div class="hos-line">' +
-                        '<span class="hos-value ' +
-                          hosClass(
-                            r.driver_hours_remaining_min
-                          ) +
-                        '">' +
-                          esc(
-                            formatHos(
-                              r.driver_hours_remaining_min
-                            )
-                          ) +
-                        '</span>' +
-                      '</div>'
-
-                    : ''
-                )
-          ) +
-
-        '</td>' +
-
-
-        /* Current Load */
-
-        '<td>' +
-
-          (
-            r.load_number
-
-              ? '<span class="ldnum">' +
-
-                  esc(
-                    r.load_number
-                  ) +
-
-                '</span>' +
-
-                (
-                  r.broker_name
-
-                    ? '<div class="sub2">' +
-
-                        esc(
-                          r.broker_name
-                        ) +
-
-                      '</div>'
-
-                    : ''
-                )
-
-              : '<span class="sub2">' +
-                  '—' +
-                '</span>'
-          ) +
-
-        '</td>' +
-
-
-        /* Next Load */
-
-        '<td>' +
-
-          (
-            r.next_load_id
-
-              ? '<div class="next-load-card">' +
-
-                  '<button class="next-load-link" type="button" ' +
-                    'data-next-load="' +
-                    esc(
-                      r.next_load_id
-                    ) +
-                  '">' +
-
-                    esc(
-                      r.next_load_number ||
-                      'Open next load'
-                    ) +
-
-                  '</button>' +
-
-                  '<div class="next-load-meta">' +
-
-                    esc(
-                      pretty(
-                        r.next_load_status ||
-                        'booked'
-                      )
-                    ) +
-
-                    (
-                      r.next_origin ||
-                      r.next_destination
-
-                        ? '<br>' +
-
-                          esc(
-                            r.next_origin ||
-                            'Origin TBD'
-                          ) +
-
-                          ' → ' +
-
-                          esc(
-                            r.next_destination ||
-                            'Destination TBD'
-                          )
-
-                        : ''
-                    ) +
-
-                    (
-                      r.next_permits_total != null
-
-                        ? '<br>Permits ' +
-
-                          esc(
-                            r.next_permits_issued ||
-                            0
-                          ) +
-
-                          '/' +
-
-                          esc(
-                            r.next_permits_total ||
-                            0
-                          )
-
-                        : ''
-                    ) +
-
-                  '</div>' +
-
-                '</div>'
-
-              : '<span class="next-load-none">—</span>'
-          ) +
-
-        '</td>' +
-
-
-        /* Status */
-
-        '<td>' +
-
-          '<span class="pill">' +
-
-            esc(
-              pretty(
-                displayStatus
+          r.carrier_net_profit != null
+            ? '<b>' + boardMoney(r.carrier_net_profit) + '</b>' +
+              '<div class="sub2">Carrier net</div>' +
+              (
+                r.driver_pay != null
+                  ? '<div class="sub2">Driver ' + boardMoney(r.driver_pay) + '</div>'
+                  : ''
+              ) +
+              (
+                r.dispatcher_fee != null
+                  ? '<div class="sub2">Dispatch ' + boardMoney(r.dispatcher_fee) + '</div>'
+                  : ''
               )
-            ) +
+            : '<span class="sub2">No saved profit</span>'
+        ) +
+      '</td>' +
 
-          '</span>' +
-
+      '<td>' + statusPill(r) + '</td>' +
+      '<td>' + (r.current_location_text ? esc(r.current_location_text)
+                                        : '<span class="sub2">—</span>') +
+        age(r.check_in_age_min) + '</td>' +
+      '<td>' + (r.destination ? esc(r.destination) : '<span class="sub2">—</span>') + '</td>' +
+      '<td>' + when(r.next_event_at) +
+        (r.next_event_label ? '<div class="sub2">' + r.next_event_label + '</div>' : '') +
         '</td>' +
-
-
-        /* Location */
-
-        '<td>' +
-
-          (
-            r.current_location_text
-
-              ? esc(
-                  r.current_location_text
-                )
-
-              : (
-                  displayOrigin
-
-                    ? esc(
-                        displayOrigin
-                      )
-
-                    : '<span class="sub2">' +
-                        '—' +
-                      '</span>'
-                )
-          ) +
-
-          age(
-            r.check_in_age_min
-          ) +
-
-        '</td>' +
-
-
-        /* Destination */
-
-        '<td>' +
-
-          (
-            displayDestination
-
-              ? esc(
-                  displayDestination
-                )
-
-              : '<span class="sub2">' +
-                  '—' +
-                '</span>'
-          ) +
-
-        '</td>' +
-
-
-        /* Next event */
-
-        '<td>' +
-
-          when(
-            displayEventAt
-          ) +
-
-        '</td>' +
-
-
-        /* Permits */
-
-        '<td>' +
-
-          frac(
-            displayPermitsIssued,
-            displayPermitsTotal
-          ) +
-
-        '</td>' +
-
-
-        /* Escorts */
-
-        '<td>' +
-
-          frac(
-            displayEscortsConfirmed,
-            displayEscortsTotal
-          ) +
-
-        '</td>' +
-
-
-        /* Next action */
-
-        '<td>' +
-
-          '<span class="act' +
-
-          (
-            needs
-              ? ' need'
-              : ''
-          ) +
-
-          '">' +
-
-            esc(
-              r.next_action ||
-              ''
-            ) +
-
-          '</span>' +
-
-        '</td>' +
-
-
-        '</tr>'
-
-      );
-
-    }
-
-  ).join('');
-
+      '<td>' + frac(r.permits_issued, r.permits_total) +
+        (r.has_window_conflict ? '<div class="verystale">window</div>' : '') + '</td>' +
+      '<td>' + frac(r.escorts_confirmed, r.escorts_total) + '</td>' +
+      '<td><span class="act' + (needs ? ' need' : '') + '">' +
+        esc(r.next_action || '') + '</span></td>' +
+      '</tr>';
+  }).join('');
 }
 
+['q','fstatus','fdriver','fbroker','fstate'].forEach(id => {
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
 
-/* ============================================================
-   FILTER EVENTS
-   ============================================================ */
+document.querySelectorAll('th[data-k]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+    render();
+  });
+});
 
-[
-  'q',
-  'fstatus',
-  'fdriver',
-  'fbroker',
-  'fstate'
-]
-.forEach(
-  id => {
-
-
-    $(id).addEventListener(
-      'input',
-      render
-    );
-
-
-    $(id).addEventListener(
-      'change',
-      render
-    );
-
-  }
-);
-
-
-
-/* ============================================================
-   TABLE SORTING
-   ============================================================ */
-
-document
-  .querySelectorAll(
-    'th[data-k]'
-  )
-  .forEach(
-    th => {
-
-
-      th.addEventListener(
-        'click',
-        () => {
-
-
-          const k =
-            th.dataset.k;
-
-
-          if (
-            sortKey === k
-          ) {
-
-            sortDir =
-              -sortDir;
-
-          }
-
-          else {
-
-            sortKey =
-              k;
-
-            sortDir =
-              1;
-
-          }
-
-
-          render();
-
-        }
-      );
-
-    }
-  );
-
-
-
-/* ============================================================
-   OPEN LOAD WORKSPACE
-   ============================================================ */
-
-$('body')
-  .addEventListener(
-    'click',
-    e => {
-
-      const hosButton =
-        e.target.closest(
-          '[data-hos-load]'
-        );
-
-      if (hosButton) {
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        location.href =
-          'calculators.html?tab=hos&load_id=' +
-          encodeURIComponent(
-            hosButton.dataset.hosLoad
-          );
-
-        return;
-      }
-
-
-      const nextButton =
-        e.target.closest(
-          '[data-next-load]'
-        );
-
-      if (nextButton) {
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        location.href =
-          'workspace.html?id=' +
-          nextButton.dataset.nextLoad;
-
-        return;
-      }
-
-
-      const tr =
-        e.target.closest(
-          'tr[data-load]'
-        );
-
-
-      if (tr) {
-
-        location.href =
-
-          'workspace.html?id=' +
-
-          tr.dataset.load;
-
-      }
-
-    }
-  );
-
-
+$('body').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-load]');
+  if (tr) location.href = 'workspace.html?id=' + tr.dataset.load;
+});
 </script>
-
-
 </body>
-
 </html>
