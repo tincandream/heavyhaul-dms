@@ -804,6 +804,572 @@ main {
 
 
 /* ============================================================
+   DRIVER / CARRIER PROFIT CALCULATOR
+   ============================================================ */
+
+function updateDriverPayExplain(){
+  const method =
+    $('cpDriverPayType').value;
+
+  const explain =
+    $('cpDriverPayExplain');
+
+  if(method === 'percent'){
+    explain.textContent =
+      'Enter 25 for 25% of gross load revenue.';
+  }
+  else if(method === 'per_mile'){
+    explain.textContent =
+      'Enter the driver pay rate per total mile.';
+  }
+  else{
+    explain.textContent =
+      'Enter the flat driver pay amount for this load.';
+  }
+}
+
+
+function calculateCarrierProfit(){
+
+  lastCarrierProfitCalculation =
+    null;
+
+  const linehaul =
+    n('cpLinehaul');
+
+  const fuelSurcharge =
+    n('cpFuelSurcharge');
+
+  const otherRevenue =
+    n('cpOtherRevenue');
+
+  const loadedMiles =
+    n('cpLoadedMiles');
+
+  const deadheadMiles =
+    n('cpDeadheadMiles');
+
+  const dispatchRate =
+    n('cpDispatchRate');
+
+  const driverPayType =
+    $('cpDriverPayType').value;
+
+  const driverPayRate =
+    n('cpDriverPayRate');
+
+  const driverExtraPay =
+    n('cpDriverExtraPay');
+
+  const fuelCost =
+    n('cpFuelCost');
+
+  const permitCost =
+    n('cpPermitCost');
+
+  const escortCost =
+    n('cpEscortCost');
+
+  const tollCost =
+    n('cpTollCost');
+
+  const lodgingCost =
+    n('cpLodgingCost');
+
+  const maintenancePerMile =
+    n('cpMaintenancePerMile');
+
+  const overheadCost =
+    n('cpOverheadCost');
+
+  const otherCost =
+    n('cpOtherCost');
+
+
+  const grossRevenue =
+    linehaul +
+    fuelSurcharge +
+    otherRevenue;
+
+  const totalMiles =
+    loadedMiles +
+    deadheadMiles;
+
+  const dispatchFee =
+    grossRevenue *
+    (
+      dispatchRate /
+      100
+    );
+
+  let baseDriverPay = 0;
+
+  if(driverPayType === 'percent'){
+    baseDriverPay =
+      grossRevenue *
+      (
+        driverPayRate /
+        100
+      );
+  }
+  else if(driverPayType === 'per_mile'){
+    baseDriverPay =
+      totalMiles *
+      driverPayRate;
+  }
+  else{
+    baseDriverPay =
+      driverPayRate;
+  }
+
+  const driverPay =
+    baseDriverPay +
+    driverExtraPay;
+
+  const maintenanceReserve =
+    totalMiles *
+    maintenancePerMile;
+
+  const operatingCosts =
+    fuelCost +
+    permitCost +
+    escortCost +
+    tollCost +
+    lodgingCost +
+    maintenanceReserve +
+    overheadCost +
+    otherCost;
+
+  const carrierNet =
+    grossRevenue -
+    dispatchFee -
+    driverPay -
+    operatingCosts;
+
+  const carrierMargin =
+    grossRevenue > 0
+      ? (
+          carrierNet /
+          grossRevenue
+        ) *
+        100
+      : 0;
+
+  const revenuePerMile =
+    totalMiles > 0
+      ? grossRevenue /
+        totalMiles
+      : 0;
+
+  const carrierProfitMile =
+    totalMiles > 0
+      ? carrierNet /
+        totalMiles
+      : 0;
+
+  const driverPayMile =
+    totalMiles > 0
+      ? driverPay /
+        totalMiles
+      : 0;
+
+  const breakEvenRevenue =
+    dispatchFee +
+    driverPay +
+    operatingCosts;
+
+
+  $('cpGrossRevenue').textContent =
+    money(grossRevenue);
+
+  $('cpRevenuePerMile').textContent =
+    totalMiles
+      ? '$' +
+        revenuePerMile.toFixed(2)
+      : '—';
+
+  $('cpDispatchFee').textContent =
+    money(dispatchFee);
+
+  $('cpDriverPay').textContent =
+    money(driverPay);
+
+  $('cpOperatingCosts').textContent =
+    money(operatingCosts);
+
+  $('cpCarrierNet').textContent =
+    money(carrierNet);
+
+  $('cpCarrierNet').className =
+    'metric-value ' +
+    (
+      carrierNet >= 0
+        ? 'money-positive'
+        : 'money-negative'
+    );
+
+  $('cpCarrierMargin').textContent =
+    carrierMargin.toFixed(1) +
+    '%';
+
+  $('cpCarrierProfitMile').textContent =
+    totalMiles
+      ? '$' +
+        carrierProfitMile.toFixed(2)
+      : '—';
+
+  $('cpDriverPayMile').textContent =
+    totalMiles
+      ? '$' +
+        driverPayMile.toFixed(2)
+      : '—';
+
+
+  if(carrierNet < 0){
+    $('carrierProfitStatus').className =
+      'result-status no';
+
+    $('carrierProfitStatusMain').textContent =
+      'Carrier Loss';
+
+    $('carrierProfitStatusDetail').textContent =
+      'Driver pay, dispatch fee and operating costs exceed the entered revenue.';
+  }
+  else if(carrierMargin < 10){
+    $('carrierProfitStatus').className =
+      'result-status tight';
+
+    $('carrierProfitStatusMain').textContent =
+      'Thin Carrier Margin';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The load is positive, but the estimated carrier margin is narrow.';
+  }
+  else{
+    $('carrierProfitStatus').className =
+      'result-status good';
+
+    $('carrierProfitStatusMain').textContent =
+      'Positive Carrier Profit';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The entered revenue covers driver pay, dispatch fee and operating costs.';
+  }
+
+
+  $('cpBreakEven').textContent =
+    'Estimated carrier break-even revenue: ' +
+    money(
+      breakEvenRevenue
+    ) +
+    (
+      totalMiles
+        ? ' · approximately $' +
+          (
+            breakEvenRevenue /
+            totalMiles
+          ).toFixed(2) +
+          ' per total mile.'
+        : '.'
+    );
+
+
+  lastCarrierProfitCalculation = {
+    inputs: {
+      linehaul,
+      fuelSurcharge,
+      otherRevenue,
+      loadedMiles,
+      deadheadMiles,
+      dispatchRate,
+      driverPayType,
+      driverPayRate,
+      driverExtraPay,
+      fuelCost,
+      permitCost,
+      escortCost,
+      tollCost,
+      lodgingCost,
+      maintenancePerMile,
+      overheadCost,
+      otherCost
+    },
+    results: {
+      grossRevenue,
+      totalMiles,
+      revenuePerMile,
+      dispatchFee,
+      baseDriverPay,
+      driverExtraPay,
+      driverPay,
+      maintenanceReserve,
+      operatingCosts,
+      carrierNet,
+      carrierMargin,
+      carrierProfitMile,
+      driverPayMile,
+      breakEvenRevenue
+    }
+  };
+
+  return lastCarrierProfitCalculation;
+}
+
+
+function resetCarrierProfit(){
+
+  [
+    'cpLinehaul',
+    'cpOtherRevenue',
+    'cpLoadedMiles',
+    'cpDeadheadMiles',
+    'cpDriverExtraPay',
+    'cpFuelCost',
+    'cpPermitCost',
+    'cpEscortCost',
+    'cpTollCost',
+    'cpLodgingCost',
+    'cpOverheadCost',
+    'cpOtherCost'
+  ]
+    .forEach(
+      id => {
+        $(id).value = '';
+      }
+    );
+
+  $('cpFuelSurcharge').value =
+    '0';
+
+  $('cpDispatchRate').value =
+    '7';
+
+  $('cpDriverPayType').value =
+    'percent';
+
+  $('cpDriverPayRate').value =
+    '25';
+
+  $('cpMaintenancePerMile').value =
+    '0.35';
+
+  [
+    'cpGrossRevenue',
+    'cpRevenuePerMile',
+    'cpDispatchFee',
+    'cpDriverPay',
+    'cpOperatingCosts',
+    'cpCarrierNet',
+    'cpCarrierMargin',
+    'cpCarrierProfitMile',
+    'cpDriverPayMile'
+  ]
+    .forEach(
+      id => {
+        $(id).textContent = '—';
+        $(id).className = 'metric-value';
+      }
+    );
+
+  $('carrierProfitStatus').className =
+    'result-status';
+
+  $('carrierProfitStatusMain').textContent =
+    'Enter load data';
+
+  $('carrierProfitStatusDetail').textContent =
+    'Select a load or enter the revenue and operating costs.';
+
+  $('cpBreakEven').textContent =
+    'Enter the load information to calculate the carrier break-even revenue.';
+
+  lastCarrierProfitCalculation =
+    null;
+
+  setCalcSaveMessage(
+    'carrierProfitSaveMessage',
+    ''
+  );
+
+  updateDriverPayExplain();
+}
+
+
+function fillCarrierProfitTestData(){
+
+  if(
+    $('calcLoad') &&
+    CALC_LOADS.length
+  ){
+    const ttLoad =
+      CALC_LOADS.find(
+        load =>
+          load.broker_load_number ===
+          'TT-ABC-260811-01'
+      );
+
+    if(ttLoad){
+      $('calcLoad').value =
+        ttLoad.id;
+
+      syncCalculatorLoadContext(
+        ttLoad.id
+      );
+    }
+  }
+
+  ttSetValue(
+    'cpLinehaul',
+    $('linehaul')?.value ||
+    '6000'
+  );
+
+  ttSetValue(
+    'cpFuelSurcharge',
+    $('fuel')?.value ||
+    '0'
+  );
+
+  ttSetValue(
+    'cpOtherRevenue',
+    '0'
+  );
+
+  ttSetValue(
+    'cpLoadedMiles',
+    $('loadedMiles')?.value ||
+    '137'
+  );
+
+  ttSetValue(
+    'cpDeadheadMiles',
+    '35'
+  );
+
+  ttSetValue(
+    'cpDispatchRate',
+    '7'
+  );
+
+  ttSetValue(
+    'cpDriverPayType',
+    'percent'
+  );
+
+  ttSetValue(
+    'cpDriverPayRate',
+    '25'
+  );
+
+  ttSetValue(
+    'cpDriverExtraPay',
+    '0'
+  );
+
+  ttSetValue(
+    'cpFuelCost',
+    '325'
+  );
+
+  ttSetValue(
+    'cpPermitCost',
+    '180'
+  );
+
+  ttSetValue(
+    'cpEscortCost',
+    '650'
+  );
+
+  ttSetValue(
+    'cpTollCost',
+    '25'
+  );
+
+  ttSetValue(
+    'cpLodgingCost',
+    '0'
+  );
+
+  ttSetValue(
+    'cpMaintenancePerMile',
+    '0.35'
+  );
+
+  ttSetValue(
+    'cpOverheadCost',
+    '150'
+  );
+
+  ttSetValue(
+    'cpOtherCost',
+    '50'
+  );
+
+  updateDriverPayExplain();
+  calculateCarrierProfit();
+}
+
+
+$('cpDriverPayType')
+  ?.addEventListener(
+    'change',
+    updateDriverPayExplain
+  );
+
+
+$('calculateCarrierProfit')
+  ?.addEventListener(
+    'click',
+    calculateCarrierProfit
+  );
+
+
+$('saveCarrierProfitToLoad')
+  ?.addEventListener(
+    'click',
+    async () => {
+
+      const calculation =
+        calculateCarrierProfit();
+
+      if(!calculation){
+        setCalcSaveMessage(
+          'carrierProfitSaveMessage',
+          'Calculate the driver/carrier profit before saving.',
+          'error'
+        );
+        return;
+      }
+
+      await saveCalculationSnapshot(
+        'carrier_profit',
+        calculation.inputs,
+        calculation.results,
+        'carrierProfitSaveMessage'
+      );
+    }
+  );
+
+
+$('resetCarrierProfit')
+  ?.addEventListener(
+    'click',
+    resetCarrierProfit
+  );
+
+
+$('fillCarrierProfitTest')
+  ?.addEventListener(
+    'click',
+    fillCarrierProfitTestData
+  );
+
+
+updateDriverPayExplain();
+
+
+/* ============================================================
    ACCESSORIALS / DETENTION
    ============================================================ */
 
@@ -1111,25 +1677,7 @@ main {
               >
 
               <div class="explain">
-                Enter the local date/time when these HOS clocks were read from the driver's ELD.
-              </div>
-
-            </div>
-
-
-            <div class="field">
-
-              <label for="hosPlannedBreakAt">
-                Planned qualifying break
-              </label>
-
-              <input
-                id="hosPlannedBreakAt"
-                type="datetime-local"
-              >
-
-              <div class="explain">
-                Optional planning time for the next qualifying break.
+                Time the driver reported these ELD values.
               </div>
 
             </div>
@@ -1314,13 +1862,6 @@ main {
 
             <button
               type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillHosTest">
-              Fill Test Data
-            </button>
-
-            <button
-              type="button"
               class="calc-btn"
               id="calculateHos">
 
@@ -1334,7 +1875,7 @@ main {
               class="calc-btn secondary"
               id="saveHosToLoad">
 
-              Add HOS Check to Load
+              Save HOS + Update Tracker
 
             </button>
 
@@ -1755,14 +2296,6 @@ main {
 
 
           <div class="calc-actions">
-
-            <button
-              type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillProfitTest">
-              Fill Test Data
-            </button>
-
 
             <button
               type="button"
@@ -2679,14 +3212,6 @@ main {
 
             <button
               type="button"
-              class="calc-btn secondary tt-fill"
-              id="fillAccessorialTest">
-              Fill Test Data
-            </button>
-
-
-            <button
-              type="button"
               class="calc-btn"
               id="calculateAccessorial">
 
@@ -3000,6 +3525,14 @@ async function startPage() {
   if (!tenant) {
     console.warn('Calculators: tenant could not be resolved.');
     return;
+  }
+
+  if(
+    $('hosObservedAt') &&
+    !$('hosObservedAt').value
+  ){
+    $('hosObservedAt').value =
+      localDateTimeValue();
   }
 
   await Promise.all([
@@ -3419,95 +3952,169 @@ async function saveCalculationSnapshot(
 }
 
 
-/* ============================================================
-   HOS CALCULATOR
-   ============================================================ */
-
-function hosLocalToIso(value) {
-
-  if (!value) {
-    return null;
-  }
-
-  const d =
-    new Date(value);
-
-  return Number.isNaN(
-    d.getTime()
-  )
-    ? null
-    : d.toISOString();
-}
-
-
-function hosAddHours(isoValue, hoursValue) {
-
-  if (
-    !isoValue ||
-    !Number.isFinite(
-      Number(hoursValue)
-    )
-  ) {
-    return null;
-  }
-
-  const start =
-    new Date(isoValue);
-
-  if (
-    Number.isNaN(
-      start.getTime()
-    )
-  ) {
-    return null;
-  }
-
-  return new Date(
-    start.getTime() +
-    Number(hoursValue) *
-    60 *
-    60 *
-    1000
-  ).toISOString();
-}
-
-
-function hosEarliestDeadline(items) {
-
-  const valid =
-    items
-      .filter(
-        item =>
-          item &&
-          item.at
-      )
-      .map(
-        item => ({
-          ...item,
-          ms:
-            new Date(
-              item.at
-            ).getTime()
-        })
-      )
-      .filter(
-        item =>
-          Number.isFinite(
-            item.ms
-          )
-      )
-      .sort(
-        (a, b) =>
-          a.ms -
-          b.ms
-      );
+function localDateTimeValue(date = new Date()) {
+  const pad = value =>
+    String(value).padStart(2,'0');
 
   return (
-    valid[0] ||
-    null
+    date.getFullYear() + '-' +
+    pad(date.getMonth()+1) + '-' +
+    pad(date.getDate()) + 'T' +
+    pad(date.getHours()) + ':' +
+    pad(date.getMinutes())
   );
 }
 
+
+function hosObservedIso() {
+  const raw =
+    $('hosObservedAt')?.value ||
+    '';
+
+  if(!raw) return null;
+
+  const date =
+    new Date(raw);
+
+  return Number.isNaN(date.getTime())
+    ? null
+    : date.toISOString();
+}
+
+
+async function saveHosTrackerSnapshot(loadId, calculation) {
+
+  if(
+    !db ||
+    !tenant ||
+    !loadId ||
+    !calculation
+  ){
+    return {
+      ok:false,
+      message:'HOS tracker context is not ready.'
+    };
+  }
+
+  const observedAt =
+    hosObservedIso();
+
+  if(!observedAt){
+    return {
+      ok:false,
+      message:'Enter the ELD observed time before saving.'
+    };
+  }
+
+  const existing =
+    await db
+      .from('hos_events')
+      .select('id')
+      .eq('tenant_id', tenant)
+      .eq('load_id', loadId)
+      .limit(1);
+
+  if(existing.error){
+    return {
+      ok:false,
+      message:'Could not check HOS tracker history: ' + existing.error.message
+    };
+  }
+
+  const eventType =
+    existing.data &&
+    existing.data.length
+      ? 'hours_update'
+      : 'baseline';
+
+  const eventRow = {
+    tenant_id:
+      tenant,
+
+    load_id:
+      loadId,
+
+    event_type:
+      eventType,
+
+    occurred_at:
+      observedAt,
+
+    drive_remaining_hours:
+      calculation.inputs.driveRemaining,
+
+    window_remaining_hours:
+      calculation.inputs.windowRemaining,
+
+    cycle_remaining_hours:
+      calculation.inputs.cycleRemaining,
+
+    driving_since_break_hours:
+      calculation.inputs.driveSinceBreak,
+
+    break_minutes:
+      null,
+
+    off_duty_minutes:
+      null,
+
+    note:
+      eventType === 'baseline'
+        ? 'HOS baseline created from HOS Calculator.'
+        : 'HOS hours updated from HOS Calculator.'
+  };
+
+  const saved =
+    await db
+      .from('hos_events')
+      .insert(eventRow)
+      .select('id,event_type,occurred_at')
+      .single();
+
+  if(saved.error){
+    return {
+      ok:false,
+      message:'HOS calculation saved, but tracker update failed: ' + saved.error.message
+    };
+  }
+
+  const loadPatch =
+    await db
+      .from('loads')
+      .update({
+        driver_hours_remaining_min:
+          Math.round(
+            Number(
+              calculation.inputs.driveRemaining
+            ) * 60
+          ),
+
+        hours_updated_at:
+          observedAt,
+
+        updated_at:
+          new Date().toISOString()
+      })
+      .eq('tenant_id', tenant)
+      .eq('id', loadId);
+
+  if(loadPatch.error){
+    console.warn(
+      'HOS load summary update:',
+      loadPatch.error
+    );
+  }
+
+  return {
+    ok:true,
+    eventType
+  };
+}
+
+
+/* ============================================================
+   HOS CALCULATOR
+   ============================================================ */
 
 function calculateHos() {
 
@@ -3515,15 +4122,24 @@ function calculateHos() {
 
 
   const observedAt =
-    hosLocalToIso(
-      $('hosObservedAt')?.value
-    );
+    hosObservedIso();
 
 
-  const plannedBreakAt =
-    hosLocalToIso(
-      $('hosPlannedBreakAt')?.value
-    );
+  if(!observedAt){
+    $('hosStatus')
+      .className =
+      'result-status tight';
+
+    $('hosStatusMain')
+      .textContent =
+      'ELD time needed';
+
+    $('hosStatusDetail')
+      .textContent =
+      'Enter when the driver reported these ELD values.';
+
+    return null;
+  }
 
 
   const driveRemaining =
@@ -3576,7 +4192,6 @@ function calculateHos() {
 
 
   if (
-    !observedAt ||
     driveRemaining <= 0 ||
     windowRemaining <= 0 ||
     cycleRemaining <= 0 ||
@@ -3595,7 +4210,7 @@ function calculateHos() {
 
     $('hosStatusDetail')
       .textContent =
-      'Enter the ELD observed time, positive remaining clocks, and planned driving time.';
+      'Enter positive remaining ELD clocks and planned driving time.';
 
 
     return;
@@ -3655,67 +4270,6 @@ function calculateHos() {
       driveSinceBreak +
       tripDrive
     ) > 8;
-
-
-  const driveClockEndsAt =
-    hosAddHours(
-      observedAt,
-      driveRemaining
-    );
-
-
-  const windowEndsAt =
-    hosAddHours(
-      observedAt,
-      windowRemaining
-    );
-
-
-  const cycleEndsAt =
-    hosAddHours(
-      observedAt,
-      cycleRemaining
-    );
-
-
-  const breakHoursRemaining =
-    Math.max(
-      0,
-      8 -
-      driveSinceBreak
-    );
-
-
-  const breakDueAt =
-    hosAddHours(
-      observedAt,
-      breakHoursRemaining
-    );
-
-
-  const nextDeadline =
-    hosEarliestDeadline([
-      {
-        kind:'break_due',
-        label:'30-minute break due',
-        at:breakDueAt
-      },
-      {
-        kind:'drive_clock',
-        label:'11-hour drive clock',
-        at:driveClockEndsAt
-      },
-      {
-        kind:'window',
-        label:'14-hour window',
-        at:windowEndsAt
-      },
-      {
-        kind:'cycle',
-        label:'Cycle projection',
-        at:cycleEndsAt
-      }
-    ]);
 
 
 
@@ -3919,7 +4473,6 @@ function calculateHos() {
   lastHosCalculation = {
     inputs: {
       observedAt,
-      plannedBreakAt,
       driveRemaining,
       windowRemaining,
       cycleRemaining,
@@ -3946,20 +4499,6 @@ function calculateHos() {
       totalWindowDemand,
       totalCycleDemand,
       breakNeeded,
-      driveClockEndsAt,
-      windowEndsAt,
-      cycleEndsAt,
-      breakDueAt,
-      nextDeadlineKind:
-        nextDeadline?.kind ||
-        null,
-      nextDeadlineLabel:
-        nextDeadline?.label ||
-        null,
-      nextDeadlineAt:
-        nextDeadline?.at ||
-        null,
-      plannedBreakAt,
       warnings
     }
   };
@@ -3994,11 +4533,54 @@ $('saveHosToLoad')
         return;
       }
 
-      await saveCalculationSnapshot(
-        'hos',
-        calculation.inputs,
-        calculation.results,
-        'hosSaveMessage'
+      const loadId =
+        selectedCalculatorLoadId();
+
+      if(!loadId){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          'Select a load first.',
+          'error'
+        );
+        return;
+      }
+
+      const snapshot =
+        await saveCalculationSnapshot(
+          'hos',
+          calculation.inputs,
+          calculation.results,
+          'hosSaveMessage',
+          loadId
+        );
+
+      if(!snapshot){
+        return;
+      }
+
+      const tracker =
+        await saveHosTrackerSnapshot(
+          loadId,
+          calculation
+        );
+
+      if(!tracker.ok){
+        setCalcSaveMessage(
+          'hosSaveMessage',
+          tracker.message,
+          'error'
+        );
+        return;
+      }
+
+      setCalcSaveMessage(
+        'hosSaveMessage',
+        (
+          tracker.eventType === 'baseline'
+            ? 'HOS saved and Workspace tracker started.'
+            : 'HOS saved and Workspace tracker updated.'
+        ),
+        'ok'
       );
     }
   );
@@ -4012,8 +4594,6 @@ $('resetHos')
 
 
       [
-        'hosObservedAt',
-        'hosPlannedBreakAt',
         'driveRemaining',
         'windowRemaining',
         'cycleRemaining',
@@ -4029,6 +4609,10 @@ $('resetHos')
 
       $('driveSinceBreak').value =
         '0';
+
+
+      $('hosObservedAt').value =
+        localDateTimeValue();
 
 
       $('buffer').value =
@@ -4601,483 +5185,6 @@ $('resetProfit')
 
     }
   );
-
-
-/* ============================================================
-   DRIVER / CARRIER PROFIT CALCULATOR
-   ============================================================ */
-
-function updateDriverPayExplain(){
-
-  const methodEl =
-    $('cpDriverPayType');
-
-  const explain =
-    $('cpDriverPayExplain');
-
-  if (
-    !methodEl ||
-    !explain
-  ) {
-    return;
-  }
-
-  const method =
-    methodEl.value;
-
-  if(method === 'percent'){
-    explain.textContent =
-      'Enter 25 for 25% of gross load revenue.';
-  }
-  else if(method === 'per_mile'){
-    explain.textContent =
-      'Enter the driver pay rate per total mile.';
-  }
-  else{
-    explain.textContent =
-      'Enter the flat driver pay amount for this load.';
-  }
-}
-
-
-function calculateCarrierProfit(){
-
-  lastCarrierProfitCalculation =
-    null;
-
-  const linehaul =
-    n('cpLinehaul');
-
-  const fuelSurcharge =
-    n('cpFuelSurcharge');
-
-  const otherRevenue =
-    n('cpOtherRevenue');
-
-  const loadedMiles =
-    n('cpLoadedMiles');
-
-  const deadheadMiles =
-    n('cpDeadheadMiles');
-
-  const dispatchRate =
-    n('cpDispatchRate');
-
-  const driverPayType =
-    $('cpDriverPayType').value;
-
-  const driverPayRate =
-    n('cpDriverPayRate');
-
-  const driverExtraPay =
-    n('cpDriverExtraPay');
-
-  const fuelCost =
-    n('cpFuelCost');
-
-  const permitCost =
-    n('cpPermitCost');
-
-  const escortCost =
-    n('cpEscortCost');
-
-  const tollCost =
-    n('cpTollCost');
-
-  const lodgingCost =
-    n('cpLodgingCost');
-
-  const maintenancePerMile =
-    n('cpMaintenancePerMile');
-
-  const overheadCost =
-    n('cpOverheadCost');
-
-  const otherCost =
-    n('cpOtherCost');
-
-
-  const grossRevenue =
-    linehaul +
-    fuelSurcharge +
-    otherRevenue;
-
-  const totalMiles =
-    loadedMiles +
-    deadheadMiles;
-
-  const dispatchFee =
-    grossRevenue *
-    (
-      dispatchRate /
-      100
-    );
-
-  let baseDriverPay = 0;
-
-  if(driverPayType === 'percent'){
-    baseDriverPay =
-      grossRevenue *
-      (
-        driverPayRate /
-        100
-      );
-  }
-  else if(driverPayType === 'per_mile'){
-    baseDriverPay =
-      totalMiles *
-      driverPayRate;
-  }
-  else{
-    baseDriverPay =
-      driverPayRate;
-  }
-
-  const driverPay =
-    baseDriverPay +
-    driverExtraPay;
-
-  const maintenanceReserve =
-    totalMiles *
-    maintenancePerMile;
-
-  const operatingCosts =
-    fuelCost +
-    permitCost +
-    escortCost +
-    tollCost +
-    lodgingCost +
-    maintenanceReserve +
-    overheadCost +
-    otherCost;
-
-  const carrierNet =
-    grossRevenue -
-    dispatchFee -
-    driverPay -
-    operatingCosts;
-
-  const carrierMargin =
-    grossRevenue > 0
-      ? (
-          carrierNet /
-          grossRevenue
-        ) *
-        100
-      : 0;
-
-  const revenuePerMile =
-    totalMiles > 0
-      ? grossRevenue /
-        totalMiles
-      : 0;
-
-  const carrierProfitMile =
-    totalMiles > 0
-      ? carrierNet /
-        totalMiles
-      : 0;
-
-  const driverPayMile =
-    totalMiles > 0
-      ? driverPay /
-        totalMiles
-      : 0;
-
-  const breakEvenRevenue =
-    dispatchFee +
-    driverPay +
-    operatingCosts;
-
-
-  $('cpGrossRevenue').textContent =
-    money(grossRevenue);
-
-  $('cpRevenuePerMile').textContent =
-    totalMiles
-      ? '$' +
-        revenuePerMile.toFixed(2)
-      : '—';
-
-  $('cpDispatchFee').textContent =
-    money(dispatchFee);
-
-  $('cpDriverPay').textContent =
-    money(driverPay);
-
-  $('cpOperatingCosts').textContent =
-    money(operatingCosts);
-
-  $('cpCarrierNet').textContent =
-    money(carrierNet);
-
-  $('cpCarrierNet').className =
-    'metric-value ' +
-    (
-      carrierNet >= 0
-        ? 'money-positive'
-        : 'money-negative'
-    );
-
-  $('cpCarrierMargin').textContent =
-    carrierMargin.toFixed(1) +
-    '%';
-
-  $('cpCarrierProfitMile').textContent =
-    totalMiles
-      ? '$' +
-        carrierProfitMile.toFixed(2)
-      : '—';
-
-  $('cpDriverPayMile').textContent =
-    totalMiles
-      ? '$' +
-        driverPayMile.toFixed(2)
-      : '—';
-
-
-  if(carrierNet < 0){
-    $('carrierProfitStatus').className =
-      'result-status no';
-
-    $('carrierProfitStatusMain').textContent =
-      'Carrier Loss';
-
-    $('carrierProfitStatusDetail').textContent =
-      'Driver pay, dispatch fee and operating costs exceed the entered revenue.';
-  }
-  else if(carrierMargin < 10){
-    $('carrierProfitStatus').className =
-      'result-status tight';
-
-    $('carrierProfitStatusMain').textContent =
-      'Thin Carrier Margin';
-
-    $('carrierProfitStatusDetail').textContent =
-      'The load is positive, but the estimated carrier margin is narrow.';
-  }
-  else{
-    $('carrierProfitStatus').className =
-      'result-status good';
-
-    $('carrierProfitStatusMain').textContent =
-      'Positive Carrier Profit';
-
-    $('carrierProfitStatusDetail').textContent =
-      'The entered revenue covers driver pay, dispatch fee and operating costs.';
-  }
-
-
-  $('cpBreakEven').textContent =
-    'Estimated carrier break-even revenue: ' +
-    money(
-      breakEvenRevenue
-    ) +
-    (
-      totalMiles
-        ? ' · approximately $' +
-          (
-            breakEvenRevenue /
-            totalMiles
-          ).toFixed(2) +
-          ' per total mile.'
-        : '.'
-    );
-
-
-  lastCarrierProfitCalculation = {
-    inputs: {
-      linehaul,
-      fuelSurcharge,
-      otherRevenue,
-      loadedMiles,
-      deadheadMiles,
-      dispatchRate,
-      driverPayType,
-      driverPayRate,
-      driverExtraPay,
-      fuelCost,
-      permitCost,
-      escortCost,
-      tollCost,
-      lodgingCost,
-      maintenancePerMile,
-      overheadCost,
-      otherCost
-    },
-    results: {
-      grossRevenue,
-      totalMiles,
-      revenuePerMile,
-      dispatchFee,
-      baseDriverPay,
-      driverExtraPay,
-      driverPay,
-      maintenanceReserve,
-      operatingCosts,
-      carrierNet,
-      carrierMargin,
-      carrierProfitMile,
-      driverPayMile,
-      breakEvenRevenue
-    }
-  };
-
-  return lastCarrierProfitCalculation;
-}
-
-
-function resetCarrierProfit(){
-
-  [
-    'cpLinehaul',
-    'cpOtherRevenue',
-    'cpLoadedMiles',
-    'cpDeadheadMiles',
-    'cpDriverExtraPay',
-    'cpFuelCost',
-    'cpPermitCost',
-    'cpEscortCost',
-    'cpTollCost',
-    'cpLodgingCost',
-    'cpOverheadCost',
-    'cpOtherCost'
-  ]
-    .forEach(
-      id => {
-        $(id).value = '';
-      }
-    );
-
-  $('cpFuelSurcharge').value =
-    '0';
-
-  $('cpDispatchRate').value =
-    '7';
-
-  $('cpDriverPayType').value =
-    'percent';
-
-  $('cpDriverPayRate').value =
-    '25';
-
-  $('cpMaintenancePerMile').value =
-    '0.35';
-
-  [
-    'cpGrossRevenue',
-    'cpRevenuePerMile',
-    'cpDispatchFee',
-    'cpDriverPay',
-    'cpOperatingCosts',
-    'cpCarrierNet',
-    'cpCarrierMargin',
-    'cpCarrierProfitMile',
-    'cpDriverPayMile'
-  ]
-    .forEach(
-      id => {
-        $(id).textContent = '—';
-        $(id).className = 'metric-value';
-      }
-    );
-
-  $('carrierProfitStatus').className =
-    'result-status';
-
-  $('carrierProfitStatusMain').textContent =
-    'Enter load data';
-
-  $('carrierProfitStatusDetail').textContent =
-    'Select a load or enter the revenue and operating costs.';
-
-  $('cpBreakEven').textContent =
-    'Enter the load information to calculate the carrier break-even revenue.';
-
-  lastCarrierProfitCalculation =
-    null;
-
-  setCalcSaveMessage(
-    'carrierProfitSaveMessage',
-    ''
-  );
-
-  updateDriverPayExplain();
-}
-
-
-
-$('cpDriverPayType')
-  ?.addEventListener(
-    'change',
-    updateDriverPayExplain
-  );
-
-
-$('calculateCarrierProfit')
-  ?.addEventListener(
-    'click',
-    calculateCarrierProfit
-  );
-
-
-$('saveCarrierProfitToLoad')
-  ?.addEventListener(
-    'click',
-    async () => {
-
-      const loadId =
-        selectedCalculatorLoadId();
-
-      if (!loadId) {
-        setCalcSaveMessage(
-          'carrierProfitSaveMessage',
-          'Select a load at the top of the page before saving.',
-          'error'
-        );
-        return;
-      }
-
-      const calculation =
-        calculateCarrierProfit();
-
-      if(!calculation){
-        setCalcSaveMessage(
-          'carrierProfitSaveMessage',
-          'Calculate the driver/carrier profit before saving.',
-          'error'
-        );
-        return;
-      }
-
-      const saved =
-        await saveCalculationSnapshot(
-          'carrier_profit',
-          calculation.inputs,
-          calculation.results,
-          'carrierProfitSaveMessage',
-          loadId
-        );
-
-      if (saved) {
-        setCalcSaveMessage(
-          'carrierProfitSaveMessage',
-          'Driver / Carrier Profit saved to the selected load.',
-          'ok'
-        );
-      }
-    }
-  );
-
-
-$('resetCarrierProfit')
-  ?.addEventListener(
-    'click',
-    resetCarrierProfit
-  );
-
-
-updateDriverPayExplain();
 
 
 /* ============================================================
@@ -6575,509 +6682,6 @@ $('accessorialType')?.addEventListener(
 
 
 startPage();
-
-/* ============================================================
-   TT TRAINING — CALCULATOR FILL TEST DATA
-   ============================================================ */
-
-function ttSetValue(id, value) {
-  const el = $(id);
-  if (el) el.value = value;
-}
-
-
-function ttLocalDateTime(date) {
-  const pad =
-    value =>
-      String(value).padStart(2, '0');
-
-  return (
-    date.getFullYear() + '-' +
-    pad(date.getMonth() + 1) + '-' +
-    pad(date.getDate()) + 'T' +
-    pad(date.getHours()) + ':' +
-    pad(date.getMinutes())
-  );
-}
-
-
-function fillHosTestData() {
-
-  const now =
-    new Date();
-
-  const observed =
-    new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      8,
-      0,
-      0,
-      0
-    );
-
-  const plannedBreak =
-    new Date(
-      observed.getTime() +
-      6 *
-      60 *
-      60 *
-      1000
-    );
-
-
-  ttSetValue(
-    'hosObservedAt',
-    ttLocalDateTime(
-      observed
-    )
-  );
-
-  ttSetValue(
-    'hosPlannedBreakAt',
-    ttLocalDateTime(
-      plannedBreak
-    )
-  );
-
-  ttSetValue(
-    'driveRemaining',
-    '6.5'
-  );
-
-  ttSetValue(
-    'windowRemaining',
-    '8'
-  );
-
-  ttSetValue(
-    'cycleRemaining',
-    '18'
-  );
-
-  ttSetValue(
-    'driveSinceBreak',
-    '2'
-  );
-
-  ttSetValue(
-    'tripDrive',
-    '2.5'
-  );
-
-  ttSetValue(
-    'tripDuty',
-    '0.75'
-  );
-
-  ttSetValue(
-    'buffer',
-    '0.5'
-  );
-
-  ttSetValue(
-    'breakPlanned',
-    'yes'
-  );
-
-  calculateHos();
-}
-
-
-function fillProfitTestData() {
-
-  ttSetValue(
-    'linehaul',
-    '6000'
-  );
-
-  ttSetValue(
-    'fuel',
-    '0'
-  );
-
-  ttSetValue(
-    'otherRevenue',
-    '0'
-  );
-
-  ttSetValue(
-    'loadedMiles',
-    '137'
-  );
-
-  ttSetValue(
-    'deadheadMiles',
-    '35'
-  );
-
-  ttSetValue(
-    'fuelCost',
-    '325'
-  );
-
-  ttSetValue(
-    'permitCost',
-    '180'
-  );
-
-  ttSetValue(
-    'escortCost',
-    '650'
-  );
-
-  ttSetValue(
-    'tollCost',
-    '25'
-  );
-
-  ttSetValue(
-    'lodgingCost',
-    '0'
-  );
-
-  ttSetValue(
-    'otherCost',
-    '50'
-  );
-
-  ttSetValue(
-    'dispatchRate',
-    '7'
-  );
-
-  calculateProfit();
-}
-
-
-function fillCarrierProfitTestData() {
-
-  ttSetValue(
-    'cpLinehaul',
-    '6000'
-  );
-
-  ttSetValue(
-    'cpFuelSurcharge',
-    '0'
-  );
-
-  ttSetValue(
-    'cpOtherRevenue',
-    '0'
-  );
-
-  ttSetValue(
-    'cpLoadedMiles',
-    '137'
-  );
-
-  ttSetValue(
-    'cpDeadheadMiles',
-    '35'
-  );
-
-  ttSetValue(
-    'cpDispatchRate',
-    '7'
-  );
-
-  ttSetValue(
-    'cpDriverPayType',
-    'percent'
-  );
-
-  ttSetValue(
-    'cpDriverPayRate',
-    '25'
-  );
-
-  ttSetValue(
-    'cpDriverExtraPay',
-    '0'
-  );
-
-  ttSetValue(
-    'cpFuelCost',
-    '325'
-  );
-
-  ttSetValue(
-    'cpPermitCost',
-    '180'
-  );
-
-  ttSetValue(
-    'cpEscortCost',
-    '650'
-  );
-
-  ttSetValue(
-    'cpTollCost',
-    '25'
-  );
-
-  ttSetValue(
-    'cpLodgingCost',
-    '0'
-  );
-
-  ttSetValue(
-    'cpMaintenancePerMile',
-    '0.35'
-  );
-
-  ttSetValue(
-    'cpOverheadCost',
-    '150'
-  );
-
-  ttSetValue(
-    'cpOtherCost',
-    '50'
-  );
-
-  if (
-    typeof updateDriverPayExplain ===
-    'function'
-  ) {
-    updateDriverPayExplain();
-  }
-
-  calculateCarrierProfit();
-}
-
-
-function fillAccessorialTestData() {
-
-  const appointment =
-    new Date(
-      2026,
-      7,
-      18,
-      8,
-      0,
-      0,
-      0
-    );
-
-  const arrival =
-    new Date(
-      appointment
-    );
-
-  arrival.setMinutes(
-    arrival.getMinutes() -
-    10
-  );
-
-  const checkIn =
-    new Date(
-      appointment
-    );
-
-  checkIn.setMinutes(
-    checkIn.getMinutes() -
-    5
-  );
-
-  const serviceStart =
-    new Date(
-      appointment
-    );
-
-  serviceStart.setHours(
-    10,
-    15,
-    0,
-    0
-  );
-
-  const released =
-    new Date(
-      appointment
-    );
-
-  released.setHours(
-    12,
-    30,
-    0,
-    0
-  );
-
-
-  ttSetValue(
-    'accessorialType',
-    'detention'
-  );
-
-  ttSetValue(
-    'accessorialLocationType',
-    'shipper'
-  );
-
-  ttSetValue(
-    'accessorialFacility',
-    'Hugg & Hall Equipment Co.'
-  );
-
-  ttSetValue(
-    'accessorialRateType',
-    'hourly'
-  );
-
-  ttSetValue(
-    'accessorialRate',
-    '75'
-  );
-
-  ttSetValue(
-    'accessorialQuantity',
-    '1'
-  );
-
-  ttSetValue(
-    'accessorialDescription',
-    'TT TRAINING — Loading delay at Hugg & Hall Equipment Co. beyond agreed free time.'
-  );
-
-  ttSetValue(
-    'detentionAppointment',
-    ttLocalDateTime(
-      appointment
-    )
-  );
-
-  ttSetValue(
-    'detentionArrival',
-    ttLocalDateTime(
-      arrival
-    )
-  );
-
-  ttSetValue(
-    'detentionCheckIn',
-    ttLocalDateTime(
-      checkIn
-    )
-  );
-
-  ttSetValue(
-    'detentionServiceStart',
-    ttLocalDateTime(
-      serviceStart
-    )
-  );
-
-  ttSetValue(
-    'detentionReleased',
-    ttLocalDateTime(
-      released
-    )
-  );
-
-  ttSetValue(
-    'detentionFreeMinutes',
-    '120'
-  );
-
-  ttSetValue(
-    'notificationRequired',
-    'yes'
-  );
-
-  const notified =
-    new Date(
-      appointment
-    );
-
-  notified.setHours(
-    10,
-    5,
-    0,
-    0
-  );
-
-  ttSetValue(
-    'brokerNotifiedAt',
-    ttLocalDateTime(
-      notified
-    )
-  );
-
-  ttSetValue(
-    'notifiedContact',
-    'TT TRAINING — ABC Logistics notified of detention delay.'
-  );
-
-
-  if ($('docBol')) {
-    $('docBol').checked =
-      true;
-  }
-
-  if ($('docRateCon')) {
-    $('docRateCon').checked =
-      true;
-  }
-
-  if ($('docFacilityTimes')) {
-    $('docFacilityTimes').checked =
-      true;
-  }
-
-  if ($('docCommunication')) {
-    $('docCommunication').checked =
-      true;
-  }
-
-
-  ttSetValue(
-    'accessorialSupportingNotes',
-    'TT TRAINING ONLY — Verify actual BOL/POD timestamps, facility times, broker notification and approval before billing.'
-  );
-
-
-  if (
-    typeof toggleAccessorialFields ===
-    'function'
-  ) {
-    toggleAccessorialFields();
-  }
-
-  calculateAccessorial();
-}
-
-
-$('fillHosTest')
-  ?.addEventListener(
-    'click',
-    fillHosTestData
-  );
-
-
-$('fillProfitTest')
-  ?.addEventListener(
-    'click',
-    fillProfitTestData
-  );
-
-
-$('fillCarrierProfitTest')
-  ?.addEventListener(
-    'click',
-    fillCarrierProfitTestData
-  );
-
-
-$('fillAccessorialTest')
-  ?.addEventListener(
-    'click',
-    fillAccessorialTestData
-  );
-
-
 </script>
 
 
