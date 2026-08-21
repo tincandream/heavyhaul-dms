@@ -594,6 +594,7 @@ dialog.assign-dialog::backdrop {
    <p>Manage loads and daily dispatch activity.</p>
   </section>
 
+  <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
   <div class="tiles" id="assemblyStatus">
 
@@ -664,17 +665,16 @@ dialog.assign-dialog::backdrop {
     <div id="chgt"></div>
     <div id="cwgt"></div>
     <div id="legal"></div>
-    <div id="dispatchQueue"></div>
   </div>
-<div class="card">
-  <h2>Dispatch Queue</h2>
 
-  <p class="hint">
-    Loads being assembled before release to Fleet Board.
-  </p>
-    Loading draft loads…
+  <div class="card">
+    <h2>Dispatch Queue</h2>
+    <p class="hint">
+      Loads being assembled before release to Fleet Board.
+    </p>
+    <div id="dispatchQueue">Loading draft loads…</div>
   </div>
-</div>
+
 
   <div class="workflow-band assigned-band">
     <span>Assigned to Load</span>
@@ -1302,6 +1302,7 @@ dialog.assign-dialog::backdrop {
 
 
 <div class="bar">
+
   <button id="save">
     Ready for Dispatch
   </button>
@@ -1318,6 +1319,7 @@ dialog.assign-dialog::backdrop {
 
 <script src="nav.js"></script>
 
+<script src="dispatch-tabs.js"></script>
 
 
 <script>
@@ -1622,6 +1624,9 @@ async function start() {
   }
 
 
+  buildDispatchTabs(
+    'newload.html'
+  );
 
 
   $('statepicker').innerHTML =
@@ -1806,278 +1811,7 @@ async function loadOpportunityImport() {
     );
     return;
   }
-// ----------------------------------------------------------
-// AUTO-SAVE BOOKED OPPORTUNITY AS DISPATCH ASSEMBLY DRAFT
-//
-// Once a booked Opportunity reaches New Load, create one
-// persistent quoted/draft load immediately. This keeps it in
-// the Dispatch Queue while fleet, route, state rules,
-// documents, permits and escorts are being assembled.
-// ----------------------------------------------------------
 
-if (
-  String(o.status || '').toLowerCase() === 'booked' &&
-  !o.load_id
-) {
-
-  // First make sure a draft was not already created for
-  // this same broker load number.
-  const existingDraft =
-    await db
-      .from('loads')
-      .select('id,load_number')
-      .eq('tenant_id', tenant)
-      .eq('broker_load_number', o.external_ref)
-      .eq('status', 'quoted')
-      .is('archived_at', null)
-      .order('created_at', {
-        ascending: false
-      })
-      .limit(1)
-      .maybeSingle();
-
-
-  if (
-    !existingDraft.error &&
-    existingDraft.data
-  ) {
-
-    const existingId =
-      existingDraft.data.id;
-
-    const linkExisting =
-      await db
-        .from('load_opportunities')
-        .update({
-          load_id: existingId
-        })
-        .eq('tenant_id', tenant)
-        .eq('id', o.id);
-
-
-    if (!linkExisting.error) {
-
-      location.replace(
-        'newload.html?load=' +
-        encodeURIComponent(existingId)
-      );
-
-      return;
-    }
-
-  }
-
-
-  // Create the next internal Heavy Haul Command load number.
-  const countResult =
-    await db
-      .from('loads')
-      .select(
-        '*',
-        {
-          count: 'exact',
-          head: true
-        }
-      );
-
-
-  const sequence =
-    2001 +
-    (
-      countResult.count || 0
-    );
-
-
-  const draftLoadNumber =
-    'LD-' + sequence;
-
-
-  // Match the broker already loaded into the New Load picker.
-  let draftBrokerId =
-    null;
-
-
-  if (o.broker_name) {
-
-    const brokerMatch =
-      Array.from(
-        $('broker').options
-      )
-      .find(
-        option =>
-          option.textContent
-            .trim()
-            .toLowerCase() ===
-          String(o.broker_name)
-            .trim()
-            .toLowerCase()
-      );
-
-
-    if (brokerMatch) {
-      draftBrokerId =
-        brokerMatch.value;
-    }
-
-  }
-
-
-  const acceptedDraftRate =
-    o.booked_rate != null
-      ? o.booked_rate
-      : (
-          o.quoted_rate != null
-            ? o.quoted_rate
-            : o.posted_rate
-        );
-
-
-  const draftRecord = {
-
-    tenant_id:
-      tenant,
-
-    load_number:
-      draftLoadNumber,
-
-    broker_load_number:
-      o.external_ref || null,
-
-    broker_id:
-      draftBrokerId,
-
-    commodity:
-      o.commodity || null,
-
-    piece_count:
-      1,
-
-    length_in:
-      o.length_ft != null
-        ? Math.round(
-            Number(o.length_ft) * 12
-          )
-        : null,
-
-    width_in:
-      o.width_ft != null
-        ? Math.round(
-            Number(o.width_ft) * 12
-          )
-        : null,
-
-    height_in:
-      o.height_ft != null
-        ? Math.round(
-            Number(o.height_ft) * 12
-          )
-        : null,
-
-    weight_lb:
-      o.weight_lbs != null
-        ? Number(o.weight_lbs)
-        : null,
-
-    linehaul_rate:
-      acceptedDraftRate != null
-        ? Number(acceptedDraftRate)
-        : null,
-
-    total_miles:
-      o.miles != null
-        ? Number(o.miles)
-        : null,
-
-    pickup_appt_start:
-      o.pickup_date || null,
-
-    delivery_appt_start:
-      o.delivery_date || null,
-
-    status:
-      'quoted',
-
-    priority:
-      'normal',
-
-    route_planning_hidden:
-      false,
-
-    notes:
-      o.notes || null
-
-  };
-
-
-  const draftResult =
-    await db
-      .from('loads')
-      .insert(draftRecord)
-      .select(
-        'id,load_number'
-      )
-      .single();
-
-
-  if (draftResult.error) {
-
-    say(
-      'Could not save this booked load to the Dispatch Queue: ' +
-      draftResult.error.message,
-      'err'
-    );
-
-    return;
-  }
-
-
-  const draftLoadId =
-    draftResult.data.id;
-
-
-  // Permanently connect the Opportunity to this draft.
-  const opportunityLink =
-    await db
-      .from('load_opportunities')
-      .update({
-        load_id:
-          draftLoadId
-      })
-      .eq(
-        'tenant_id',
-        tenant
-      )
-      .eq(
-        'id',
-        o.id
-      );
-
-
-  if (opportunityLink.error) {
-
-    say(
-      'Draft was created, but the Opportunity could not be linked: ' +
-      opportunityLink.error.message,
-      'err'
-    );
-
-    return;
-  }
-
-
-  // Reopen the newly saved draft.
-  // From this point forward, navigating away will not lose it.
-  location.replace(
-    'newload.html?load=' +
-    encodeURIComponent(
-      draftLoadId
-    )
-  );
-
-  return;
-
-}
-  
 
   // Broker load number
   $('brokerload').value =
@@ -3923,7 +3657,7 @@ function updateSaveLabel() {
   refreshAssemblyStatus();
 }
 
-  async function loadDispatchQueue() {
+async function loadDispatchQueue() {
 
   const box =
     document.getElementById('dispatchQueue');
@@ -3935,7 +3669,6 @@ function updateSaveLabel() {
 
   box.textContent =
     'Loading draft loads…';
-
 
   const result =
     await db
@@ -3958,7 +3691,6 @@ function updateSaveLabel() {
         }
       );
 
-
   if (result.error) {
 
     box.textContent =
@@ -3973,10 +3705,8 @@ function updateSaveLabel() {
     return;
   }
 
-
   const loads =
     result.data || [];
-
 
   if (!loads.length) {
 
@@ -3985,7 +3715,6 @@ function updateSaveLabel() {
 
     return;
   }
-
 
   box.innerHTML =
     loads
@@ -4005,7 +3734,6 @@ function updateSaveLabel() {
             ]
             .filter(Boolean)
             .join(' · ');
-
 
           return `
             <div
@@ -4034,30 +3762,6 @@ function updateSaveLabel() {
       )
       .join('');
 
-}
-
-  if (r.error) {
-    $('dispatchQueue').textContent = 'Could not load dispatch queue: ' + r.error.message;
-    return;
-  }
-
-  const list = r.data || [];
-  if (!list.length) {
-    $('dispatchQueue').textContent = 'No draft / quoted loads waiting.';
-    return;
-  }
-
-  $('dispatchQueue').innerHTML = list.map(x => {
-    const bits = [
-      x.load_number,
-      x.broker_load_number ? 'Broker #' + x.broker_load_number : '',
-      x.commodity || ''
-    ].filter(Boolean).join(' · ');
-    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)">' +
-      '<a href="newload.html?load=' + encodeURIComponent(x.id) + '">' +
-      bits.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) +
-      '</a></div>';
-  }).join('');
 }
 
 async function loadExistingDraft() {
