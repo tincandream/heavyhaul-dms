@@ -5082,6 +5082,75 @@ route_planning_hidden:
     }
   );
 
+
+
+document
+  .getElementById(
+    'fillPermitEscortTest'
+  )
+  ?.addEventListener(
+    'click',
+    async () => {
+
+      const statusResult =
+        await db.rpc(
+          'get_training_mode_status'
+        );
+
+      if (
+        statusResult.error ||
+        !statusResult.data?.active
+      ) {
+        say(
+          'Enable Training Mode first.',
+          'err'
+        );
+        return;
+      }
+
+
+      $('permresp').value =
+        'permit_service';
+
+      $('permco').value =
+        'Ozark Heavy Haul Permits';
+
+      $('permname').value =
+        'Megan Carter';
+
+      $('permphone').value =
+        '(501) 555-0148';
+
+      $('permemail').value =
+        'permits@ozarkheavyhaul.test';
+
+
+      $('escresp').value =
+        'escort_company';
+
+      $('escco').value =
+        'Mid-South Pilot Cars';
+
+      $('escname').value =
+        'Daniel Brooks';
+
+      $('escphone').value =
+        '(901) 555-0186';
+
+
+      refreshAssemblyStatus();
+
+
+      say(
+        'Permit & Escort test data filled.',
+        'ok'
+      );
+
+    }
+  );
+
+
+  
 </script>
 
 </body>
