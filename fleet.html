@@ -54,7 +54,6 @@ What I added is a Calculator Source Terms section under the Fleet Profile. It ex
 
 The important distinction is preserved: Fleet Setup owns the carrier baseline, while a specific load can still have negotiated load-specific terms that override that baseline.
 
-I also verified the rebuilt file still contains the main nav.js, Fleet Command navigation, buildFleetCommandTabs('fleet.html'), and your existing profile fields.
 
 Next is route-planning.html, where we can connect the saved loaded miles directly into the Rate / Profit workflow. 
 
@@ -252,15 +251,6 @@ fleet-calculator-links.html
 <body>
 
 <header></header>
-
-<!-- =========================================================
-     FLEET COMMAND WORKSPACE NAV
-     ========================================================= -->
-
-<nav
-  id="fleetCommandTabs"
-  aria-label="Fleet Command navigation">
-</nav>
 
 <main>
 
@@ -541,7 +531,6 @@ fleet-calculator-links.html
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="nav.js"></script>
-<script src="fleet-command-tabs.js"></script>
 
 <script>
 // ===== FILL IN THESE TWO VALUES =====
@@ -607,8 +596,6 @@ async function start() {
     alert('No profile linked to this login.');
     return;
   }
-
-  buildFleetCommandTabs('fleet.html');
 
   await refresh();
 
@@ -1518,6 +1505,21 @@ const TT = {
     r_empty: '17800',
     r_pay:   '55000',
     r_notes: 'Training unit. Detachable gooseneck, 3-axle.'
+  },
+
+  profile: {
+    p_target_rpm:       '4.00',
+    p_min_rpm:          '3.50',
+    p_day_rate:         '1200',
+    p_deadhead:         '100',
+    p_detention_rate:   '75',
+    p_detention_after:  '2',
+    p_tonu:             '500',
+    p_layover:          '500',
+    p_negotiables:      'Rate negotiable above minimum. Detention and TONU required. Fuel advance considered when needed.',
+    p_preferences:      'AR, TN, MS regional lanes. Heavy equipment preferred. RGN freight preferred.',
+    p_requirements:     'Oversize loads accepted. Permits, escorts, route compliance, pickup and delivery requirements confirmed before dispatch.',
+    p_notes:            'Training carrier profile baseline terms.'
   }
 };
 
@@ -1639,7 +1641,8 @@ async function ttInit() {
       ['c_save', 'carrier'],
       ['d_save', 'driver'],
       ['t_save', 'tractor'],
-      ['r_save', 'trailer']
+      ['r_save', 'trailer'],
+      ['p_save', 'profile']
     ].forEach(pair => {
       const saveBtn = document.getElementById(pair[0]);
 
@@ -1660,7 +1663,21 @@ async function ttInit() {
         'cursor:pointer;';
 
       button.addEventListener('click', () => {
+
+        if (
+          pair[1] === 'profile' &&
+          !$('p_carrier').value
+        ) {
+          say(
+            'p_msg',
+            'Create or select the TT carrier first.',
+            'err'
+          );
+          return;
+        }
+
         ttFill(pair[1]);
+
       });
 
       saveBtn.parentNode.insertBefore(button, saveBtn);
