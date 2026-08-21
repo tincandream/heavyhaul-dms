@@ -1573,36 +1573,29 @@ async function fillPermitEscortTestData() {
   }
 
 
-  const testData = {
+ const updateResult =
+  await db.rpc(
+    'fill_tt_permit_escort_data'
+  );
 
-    permit_responsibility:
-      'permit_service',
+button.disabled = false;
 
-    permit_contact_company:
-      'Ozark Heavy Haul Permits',
+if (updateResult.error) {
 
-    permit_contact_name:
-      'Megan Carter',
+  showMessage(
+    'permitEscortMessage',
+    updateResult.error.message,
+    'error'
+  );
 
-    permit_contact_phone:
-      '(501) 555-0148',
+  return;
+}
 
-    permit_contact_email:
-      'permits@ozarkheavyhaul.test',
-
-    escort_responsibility:
-      'escort_company',
-
-    escort_contact_company:
-      'Mid-South Pilot Cars',
-
-    escort_contact_name:
-      'Daniel Brooks',
-
-    escort_contact_phone:
-      '(901) 555-0186'
-
-  };
+showMessage(
+  'permitEscortMessage',
+  'Permit & Escort test data added to the TT load.',
+  'success'
+);
 
 
   const updateResult =
