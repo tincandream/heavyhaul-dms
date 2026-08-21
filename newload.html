@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, itnitial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="dashboard.css">
 
@@ -594,7 +594,6 @@ dialog.assign-dialog::backdrop {
    <p>Manage loads and daily dispatch activity.</p>
   </section>
 
-  <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
   <div class="tiles" id="assemblyStatus">
 
@@ -665,46 +664,7 @@ dialog.assign-dialog::backdrop {
     <div id="chgt"></div>
     <div id="cwgt"></div>
     <div id="legal"></div>
-  </div>
-
-  <div class="card">
-
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:16px;
-      "
-    >
-
-      <div>
-        <h2 style="margin-bottom:4px;">
-          Dispatch Queue
-        </h2>
-
-        <p class="hint" style="margin:0;">
-          Loads being assembled before release to Fleet Board.
-        </p>
-      </div>
-
-      <button
-        type="button"
-        id="clearDispatchQueue"
-        class="secondary"
-      >
-        Clear Queue
-      </button>
-
-    </div>
-
-    <div
-      id="dispatchQueue"
-      style="margin-top:16px;"
-    >
-      Loading draft loads…
-    </div>
-
+    <div id="dispatchQueue"></div>
   </div>
 
 
@@ -1351,7 +1311,6 @@ dialog.assign-dialog::backdrop {
 
 <script src="nav.js"></script>
 
-<script src="dispatch-tabs.js"></script>
 
 
 <script>
@@ -1620,6 +1579,137 @@ function ftin(inches) {
 }
 
 
+
+// ============================================================
+// TRAINING MODE — PERMIT & ESCORT TEST DATA
+// ============================================================
+
+async function getNewLoadTrainingStatus() {
+  try {
+    const result =
+      await db.rpc(
+        'get_training_mode_status'
+      );
+
+    if (result.error) {
+      console.warn(
+        'Training Mode status:',
+        result.error.message
+      );
+
+      return { active:false };
+    }
+
+    return result.data || { active:false };
+  }
+  catch (error) {
+    console.warn(
+      'Training Mode status:',
+      error
+    );
+
+    return { active:false };
+  }
+}
+
+
+async function initNewLoadTrainingTools() {
+  const button =
+    $('fillPermitEscortTest');
+
+  if (!button) {
+    return;
+  }
+
+  const status =
+    await getNewLoadTrainingStatus();
+
+  button.style.display =
+    status.active === true
+      ? 'inline-flex'
+      : 'none';
+}
+
+
+async function fillNewLoadPermitEscortTestData() {
+  const button =
+    $('fillPermitEscortTest');
+
+  if (!button) {
+    return;
+  }
+
+  const status =
+    await getNewLoadTrainingStatus();
+
+  if (status.active !== true) {
+    button.style.display =
+      'none';
+
+    say(
+      'Enable Training Mode first.',
+      'err'
+    );
+
+    return;
+  }
+
+  $('permresp').value =
+    'permit_service';
+
+  $('permco').value =
+    'Ozark Heavy Haul Permits';
+
+  $('permname').value =
+    'Megan Carter';
+
+  $('permphone').value =
+    '(501) 555-0148';
+
+  $('permemail').value =
+    'permits@ozarkheavyhaul.test';
+
+  $('escresp').value =
+    'escort_company';
+
+  $('escco').value =
+    'Mid-South Pilot Cars';
+
+  $('escname').value =
+    'Daniel Brooks';
+
+  $('escphone').value =
+    '(901) 555-0186';
+
+  refreshAssemblyStatus();
+
+  try {
+    const rpcResult =
+      await db.rpc(
+        'fill_tt_permit_escort_data'
+      );
+
+    if (rpcResult.error) {
+      console.warn(
+        'TT permit/escort RPC:',
+        rpcResult.error.message
+      );
+    }
+  }
+  catch (error) {
+    console.warn(
+      'TT permit/escort RPC:',
+      error
+    );
+  }
+
+  say(
+    'Permit & Escort test data filled.',
+    'ok'
+  );
+}
+
+
 async function start() {
 
   const s =
@@ -1654,11 +1744,6 @@ async function start() {
     return;
 
   }
-
-
-  buildDispatchTabs(
-    'newload.html'
-  );
 
 
   $('statepicker').innerHTML =
@@ -1734,6 +1819,8 @@ async function start() {
   updateSaveLabel();
 
   refreshAssemblyStatus();
+
+  await initNewLoadTrainingTools();
 
 }
 
@@ -3060,10 +3147,9 @@ async function refreshFleetAssignChildren() {
 
 
 // ============================================================
-// SAVED ROUTES
-//
-// Route Planning records saved to public.route_plans appear here.
-// Example TT dropdown label:
+// SAVED ROUTE ASSIGNMENT
+// Reads public.route_plans and public.golden_routes.
+// TT example:
 // Route Plan — TT — Little Rock AR → Memphis TN | RGN
 // ============================================================
 
@@ -3698,290 +3784,35 @@ function updateSaveLabel() {
 }
 
 async function loadDispatchQueue() {
+  const r = await db
+    .from('loads')
+    .select('id,load_number,broker_load_number,commodity,status,pickup_appt_start')
+    .eq('tenant_id', tenant)
+    .eq('status', 'quoted')
+    .order('created_at', { ascending:false });
 
-  const box =
-    document.getElementById(
-      'dispatchQueue'
-    );
-
-  if (!box) {
-
-    console.error(
-      'Dispatch Queue container not found.'
-    );
-
+  if (r.error) {
+    $('dispatchQueue').textContent = 'Could not load dispatch queue: ' + r.error.message;
     return;
-
   }
 
-  box.textContent =
-    'Loading draft loads…';
-
-  const result =
-    await db
-      .from('loads')
-      .select(
-        'id,load_number,broker_load_number,commodity,status,pickup_appt_start,created_at'
-      )
-      .eq(
-        'tenant_id',
-        tenant
-      )
-      .eq(
-        'status',
-        'quoted'
-      )
-      .is(
-        'archived_at',
-        null
-      )
-      .order(
-        'created_at',
-        {
-          ascending:false
-        }
-      );
-
-  if (result.error) {
-
-    box.textContent =
-      'Could not load Dispatch Queue: ' +
-      result.error.message;
-
-    console.error(
-      'Dispatch Queue:',
-      result.error
-    );
-
+  const list = r.data || [];
+  if (!list.length) {
+    $('dispatchQueue').textContent = 'No draft / quoted loads waiting.';
     return;
-
   }
 
-  const loads =
-    result.data || [];
-
-  if (!loads.length) {
-
-    box.textContent =
-      'No draft loads waiting.';
-
-    return;
-
-  }
-
-  box.innerHTML =
-    loads
-      .map(
-        load => {
-
-          const dateValue =
-            load.pickup_appt_start ||
-            load.created_at;
-
-          const dateText =
-            dateValue
-              ? new Date(
-                  dateValue
-                )
-                .toLocaleDateString(
-                  'en-US',
-                  {
-                    month:'short',
-                    day:'numeric',
-                    year:'numeric'
-                  }
-                )
-              : 'No date';
-
-          const parts =
-            [
-              load.load_number,
-
-              load.broker_load_number
-                ? 'Broker #' +
-                  load.broker_load_number
-                : '',
-
-              load.commodity ||
-              ''
-            ]
-            .filter(Boolean);
-
-          const title =
-            parts.join(
-              ' · '
-            );
-
-          const safeTitle =
-            title.replace(
-              /[&<>"]/g,
-              c => ({
-                '&':'&amp;',
-                '<':'&lt;',
-                '>':'&gt;',
-                '"':'&quot;'
-              }[c])
-            );
-
-          const safeDate =
-            dateText.replace(
-              /[&<>"]/g,
-              c => ({
-                '&':'&amp;',
-                '<':'&lt;',
-                '>':'&gt;',
-                '"':'&quot;'
-              }[c])
-            );
-
-          return `
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                justify-content:space-between;
-                gap:18px;
-                padding:11px 0;
-                border-bottom:1px solid var(--line);
-              "
-            >
-
-              <a
-                href="newload.html?load=${encodeURIComponent(load.id)}"
-                style="
-                  font-weight:600;
-                  text-decoration:none;
-                "
-              >
-                ${safeTitle}
-              </a>
-
-              <span
-                style="
-                  white-space:nowrap;
-                  color:var(--muted);
-                  font-size:12px;
-                "
-              >
-                ${safeDate}
-              </span>
-
-            </div>
-          `;
-
-        }
-      )
-      .join('');
-
-}
-
-
-// ============================================================
-// CLEAR DISPATCH QUEUE
-//
-// Drafts are ARCHIVED, not hard-deleted.
-// This preserves append-only event history.
-// ============================================================
-
-const clearDispatchQueueButton =
-  document.getElementById(
-    'clearDispatchQueue'
-  );
-
-if (
-  clearDispatchQueueButton
-) {
-
-  clearDispatchQueueButton
-    .addEventListener(
-      'click',
-      async () => {
-
-        const confirmed =
-          confirm(
-            'Clear all Draft / Quoted loads from the Dispatch Queue?\n\n' +
-            'The drafts will be archived and removed from the queue. ' +
-            'Historical event records will be preserved.'
-          );
-
-        if (
-          !confirmed
-        ) {
-
-          return;
-
-        }
-
-        clearDispatchQueueButton.disabled =
-          true;
-
-        clearDispatchQueueButton.textContent =
-          'Clearing…';
-
-        const result =
-          await db
-            .from('loads')
-            .update({
-              archived_at:
-                new Date()
-                  .toISOString()
-            })
-            .eq(
-              'tenant_id',
-              tenant
-            )
-            .eq(
-              'status',
-              'quoted'
-            )
-            .is(
-              'archived_at',
-              null
-            )
-            .select(
-              'id'
-            );
-
-        clearDispatchQueueButton.disabled =
-          false;
-
-        clearDispatchQueueButton.textContent =
-          'Clear Queue';
-
-        if (
-          result.error
-        ) {
-
-          alert(
-            'Could not clear Dispatch Queue: ' +
-            result.error.message
-          );
-
-          return;
-
-        }
-
-        const clearedCount =
-          (
-            result.data ||
-            []
-          ).length;
-
-        await loadDispatchQueue();
-
-        say(
-          clearedCount +
-          (
-            clearedCount === 1
-              ? ' draft archived from Dispatch Queue.'
-              : ' drafts archived from Dispatch Queue.'
-          ),
-          'ok'
-        );
-
-      }
-    );
-
+  $('dispatchQueue').innerHTML = list.map(x => {
+    const bits = [
+      x.load_number,
+      x.broker_load_number ? 'Broker #' + x.broker_load_number : '',
+      x.commodity || ''
+    ].filter(Boolean).join(' · ');
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)">' +
+      '<a href="newload.html?load=' + encodeURIComponent(x.id) + '">' +
+      bits.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) +
+      '</a></div>';
+  }).join('');
 }
 
 async function loadExistingDraft() {
@@ -5082,80 +4913,33 @@ route_planning_hidden:
     }
   );
 
-    }
-  );
-
 
 // ============================================================
-// TRAINING MODE — FILL PERMIT & ESCORT TEST DATA
+// TRAINING MODE — PERMIT & ESCORT BUTTON
 // ============================================================
 
-document
-  .getElementById('fillPermitEscortTest')
+$('fillPermitEscortTest')
   ?.addEventListener(
     'click',
-    async () => {
-
-      const statusResult =
-        await db.rpc(
-          'get_training_mode_status'
-        );
-
-      if (
-        statusResult.error ||
-        !statusResult.data?.active
-      ) {
-        say(
-          'Enable Training Mode first.',
-          'err'
-        );
-        return;
-      }
-
-
-      $('permresp').value =
-        'permit_service';
-
-      $('permco').value =
-        'Ozark Heavy Haul Permits';
-
-      $('permname').value =
-        'Megan Carter';
-
-      $('permphone').value =
-        '(501) 555-0148';
-
-      $('permemail').value =
-        'permits@ozarkheavyhaul.test';
-
-
-      $('escresp').value =
-        'escort_company';
-
-      $('escco').value =
-        'Mid-South Pilot Cars';
-
-      $('escname').value =
-        'Daniel Brooks';
-
-      $('escphone').value =
-        '(901) 555-0186';
-
-
-      refreshAssemblyStatus();
-
-
-      say(
-        'Permit & Escort test data filled.',
-        'ok'
-      );
-
-    }
+    fillNewLoadPermitEscortTestData
   );
 
+
+window.addEventListener(
+  'pageshow',
+  async () => {
+
+    if (!db) {
+      return;
+    }
+
+    await initNewLoadTrainingTools();
+
+  }
+);
 
 </script>
 
 </body>
-</html>
 
+</html>
