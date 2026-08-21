@@ -100,6 +100,61 @@ tr.clickable:hover td{background:#f7f9fc}
 .box{padding:14px}
 .box h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
 
+/* HOS dispatcher watch */
+.hos-watch{display:grid;gap:12px}
+.hos-next{
+  border:1px solid var(--line);
+  border-left:5px solid var(--ok);
+  border-radius:8px;
+  background:var(--ok-soft);
+  padding:12px 14px;
+}
+.hos-next.watch{border-left-color:var(--warn);background:var(--warn-soft)}
+.hos-next.critical{border-left-color:var(--bad);background:var(--bad-soft)}
+.hos-next .lbl{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  font-weight:800;
+  color:var(--muted);
+}
+.hos-next .name{margin-top:3px;font-weight:800;font-size:15px}
+.hos-next .count{margin-top:3px;font-size:22px;font-weight:800}
+.hos-mini-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.hos-mini{
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:10px 11px;
+  background:#fbfcfd;
+}
+.hos-mini .ttl{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:var(--muted);
+  font-weight:800;
+  margin-bottom:6px;
+}
+.hos-mini .big{font-size:16px;font-weight:800}
+.hos-mini dl{margin:6px 0 0}
+.hos-mini dt,.hos-mini dd{font-size:11px}
+.hos-mini dt{color:var(--muted)}
+.hos-mini dd{margin:0 0 4px;font-weight:600}
+.hos-disclaimer{
+  font-size:10.5px;
+  color:var(--muted);
+  line-height:1.45;
+  border-top:1px solid var(--line);
+  padding-top:9px;
+}
+@media (max-width:680px){
+  .hos-mini-grid{grid-template-columns:1fr}
+}
+
 /* timeline */
 .tl{position:relative;padding-left:22px}
 .tl:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
@@ -191,7 +246,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-tt-current-time">
+<body data-workspace-version="2026-08-21-hos-dispatcher-watch">
 
 <header></header>
 
@@ -952,6 +1007,50 @@ function hosDeadlineText(v){
 }
 
 
+
+function hosRemainingMinutes(v){
+  if(!v) return null;
+  const target = new Date(v);
+  if(Number.isNaN(target.getTime())) return null;
+  return Math.round((target.getTime() - Date.now()) / 60000);
+}
+
+function hosCountdownText(v){
+  const mins = hosRemainingMinutes(v);
+  if(mins === null) return '—';
+
+  if(mins < 0){
+    const overdue = Math.abs(mins);
+    if(overdue < 60) return overdue + ' min overdue';
+    return Math.floor(overdue / 60) + 'h ' +
+      String(overdue % 60).padStart(2,'0') + 'm overdue';
+  }
+
+  if(mins < 60) return mins + ' min remaining';
+
+  return Math.floor(mins / 60) + 'h ' +
+    String(mins % 60).padStart(2,'0') + 'm remaining';
+}
+
+function hosWatchTone(v){
+  const mins = hosRemainingMinutes(v);
+  if(mins === null) return 'watch';
+  if(mins <= 60) return 'critical';
+  if(mins <= 180) return 'watch';
+  return 'good';
+}
+
+function hosHoursText(v){
+  if(v === null || v === undefined || v === '') return '—';
+
+  const total = Number(v);
+  if(!Number.isFinite(total)) return '—';
+
+  const whole = Math.floor(total);
+  const mins = Math.round((total - whole) * 60);
+
+  return whole + 'h ' + String(mins).padStart(2,'0') + 'm';
+}
 
 function ago(v){
   if (!v) return '';
@@ -2607,13 +2706,25 @@ const escortRequiredCount =
     )
   );
 
-  const latestHos =
-    CALCULATIONS.find(
+  const hosCalculations =
+    CALCULATIONS.filter(
       c =>
         c.calculator_type ===
         'hos'
-    ) ||
+    );
+
+
+  const latestHos =
+    hosCalculations[0] ||
     null;
+
+
+  const tripStartHos =
+    hosCalculations.length
+      ? hosCalculations[
+          hosCalculations.length - 1
+        ]
+      : null;
 
 
   const hosInputs =
@@ -2623,6 +2734,11 @@ const escortRequiredCount =
 
   const hosResults =
     latestHos?.results ||
+    {};
+
+
+  const tripStartHosInputs =
+    tripStartHos?.inputs ||
     {};
 
 
@@ -2665,6 +2781,41 @@ const escortRequiredCount =
   const hosNextDeadlineLabel =
     hosResults.nextDeadlineLabel ||
     'Next HOS deadline';
+
+
+  const hosWatchClass =
+    hosWatchTone(
+      hosNextDeadlineAt
+    );
+
+
+  const tripStartObservedAt =
+    tripStartHosInputs.observedAt ||
+    null;
+
+
+  const tripStartDriveRemaining =
+    tripStartHosInputs.driveRemaining;
+
+
+  const tripStartWindowRemaining =
+    tripStartHosInputs.windowRemaining;
+
+
+  const tripStartCycleRemaining =
+    tripStartHosInputs.cycleRemaining;
+
+
+  const latestDriveRemaining =
+    hosInputs.driveRemaining;
+
+
+  const latestWindowRemaining =
+    hosInputs.windowRemaining;
+
+
+  const latestCycleRemaining =
+    hosInputs.cycleRemaining;
 
 
   const latestCarrierProfit =
@@ -2986,81 +3137,121 @@ const escortRequiredCount =
       ${
         latestHos
           ? `
-            <dl class="kv">
+            <div class="hos-watch">
 
-              <dt>Observed</dt>
-              <dd>
-                ${esc(fmtDT(hosObservedAt))}
-                <div class="small muted">Time these ELD clocks were recorded</div>
-              </dd>
-
-              <dt>Next deadline</dt>
-              <dd style="font-weight:700;color:${
-                hosNextDeadlineAt &&
-                new Date(hosNextDeadlineAt).getTime() < Date.now()
-                  ? 'var(--bad)'
-                  : 'var(--warn)'
-              }">
-                ${esc(hosNextDeadlineLabel)}
-                <div class="small">
-                  ${esc(hosDeadlineText(hosNextDeadlineAt))}
-                </div>
-              </dd>
-
-              <dt>Drive clock</dt>
-              <dd>${esc(hosDeadlineText(hosDriveClockEndsAt))}</dd>
-
-              <dt>14-hour window</dt>
-              <dd>${esc(hosDeadlineText(hosWindowEndsAt))}</dd>
-
-              <dt>Break due</dt>
-              <dd>${esc(hosDeadlineText(hosBreakDueAt))}</dd>
-
-              <dt>Planned break</dt>
-              <dd>${esc(hosDeadlineText(hosPlannedBreakAt))}</dd>
-
-              <dt>Cycle projection</dt>
-              <dd>
-                ${esc(hosDeadlineText(hosCycleEndsAt))}
-                <div class="small muted">
-                  Projection only if on-duty time continues continuously
-                </div>
-              </dd>
-
-              <dt>Saved</dt>
-              <dd class="small muted">
-                ${esc(fmtDT(latestHos.created_at))}
-                ${
-                  latestHos.is_training
-                    ? ' · TT Training'
-                    : ''
-                }
-              </dd>
-
-            </dl>
-
-            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-
-              <button
-                class="primary sm"
-                onclick="
-                  location.href =
-                    'calculators.html?load_id=' +
-                    encodeURIComponent(LOAD_ID) +
-                    '&tab=hos'
-                "
+              <div
+                class="hos-next ${
+                  hosWatchClass === 'critical'
+                    ? 'critical'
+                    : (
+                        hosWatchClass === 'watch'
+                          ? 'watch'
+                          : ''
+                      )
+                }"
+                id="hosNextWatch"
+                data-hos-deadline="${esc(hosNextDeadlineAt || '')}"
               >
-                Update HOS
-              </button>
+                <div class="lbl">Next HOS Deadline</div>
+                <div class="name">${esc(hosNextDeadlineLabel)}</div>
+                <div class="count" id="hosNextCountdown">
+                  ${esc(hosCountdownText(hosNextDeadlineAt))}
+                </div>
+                <div class="small">${esc(fmtDT(hosNextDeadlineAt))}</div>
+              </div>
 
-              <button
-                class="sm"
-                onclick="
-                  document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()
-                "
-              >
-                HOS History
-              </button>
+
+              <div class="hos-mini-grid">
+
+                <div class="hos-mini">
+                  <div class="ttl">Trip Start</div>
+                  <div class="big">${esc(fmtDT(tripStartObservedAt))}</div>
+
+                  <dl>
+                    <dt>Drive available</dt>
+                    <dd>${esc(hosHoursText(tripStartDriveRemaining))}</dd>
+
+                    <dt>14-hour window</dt>
+                    <dd>${esc(hosHoursText(tripStartWindowRemaining))}</dd>
+
+                    <dt>Cycle reported</dt>
+                    <dd>${esc(hosHoursText(tripStartCycleRemaining))}</dd>
+                  </dl>
+                </div>
+
+
+                <div class="hos-mini">
+                  <div class="ttl">Last Reported</div>
+                  <div class="big">${esc(fmtDT(hosObservedAt))}</div>
+
+                  <dl>
+                    <dt>Drive reported</dt>
+                    <dd>${esc(hosHoursText(latestDriveRemaining))}</dd>
+
+                    <dt>Window reported</dt>
+                    <dd>${esc(hosHoursText(latestWindowRemaining))}</dd>
+
+                    <dt>Cycle reported</dt>
+                    <dd>${esc(hosHoursText(latestCycleRemaining))}</dd>
+                  </dl>
+                </div>
+
+              </div>
+
+
+              <div class="hos-mini">
+                <div class="ttl">Dispatcher Watch</div>
+
+                <dl class="kv">
+                  <dt>Drive clock end</dt>
+                  <dd>${esc(hosDeadlineText(hosDriveClockEndsAt))}</dd>
+
+                  <dt>14-hour window</dt>
+                  <dd>${esc(hosDeadlineText(hosWindowEndsAt))}</dd>
+
+                  <dt>Break due</dt>
+                  <dd>${esc(hosDeadlineText(hosBreakDueAt))}</dd>
+
+                  <dt>Planned break</dt>
+                  <dd>${esc(hosDeadlineText(hosPlannedBreakAt))}</dd>
+
+                  <dt>Cycle projection</dt>
+                  <dd>${esc(hosDeadlineText(hosCycleEndsAt))}</dd>
+                </dl>
+              </div>
+
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+
+                <button
+                  class="primary sm"
+                  onclick="
+                    location.href =
+                      'calculators.html?load_id=' +
+                      encodeURIComponent(LOAD_ID) +
+                      '&tab=hos'
+                  "
+                >
+                  Update HOS
+                </button>
+
+                <button
+                  class="sm"
+                  onclick="
+                    document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()
+                  "
+                >
+                  HOS History
+                </button>
+
+              </div>
+
+
+              <div class="hos-disclaimer">
+                Dispatcher planning tracker only. Trip Start preserves the first saved HOS snapshot;
+                Last Reported shows the newest driver/ELD report. Clock countdowns are planning aids
+                and do not replace the driver's actual ELD.
+              </div>
 
             </div>
           `
@@ -3088,7 +3279,51 @@ const escortRequiredCount =
     </div>
 
   </div>`;
+
+  setTimeout(refreshHosWatchCountdown, 0);
+
 }
+
+function refreshHosWatchCountdown(){
+
+  const el = $('hosNextCountdown');
+  const box = $('hosNextWatch');
+
+  if(!el || !box) return;
+
+  const deadline =
+    box.dataset.hosDeadline ||
+    '';
+
+  el.textContent =
+    hosCountdownText(
+      deadline
+    );
+
+  const tone =
+    hosWatchTone(
+      deadline
+    );
+
+  box.classList.remove(
+    'watch',
+    'critical'
+  );
+
+  if(tone === 'watch'){
+    box.classList.add('watch');
+  }
+
+  if(tone === 'critical'){
+    box.classList.add('critical');
+  }
+}
+
+setInterval(
+  refreshHosWatchCountdown,
+  30000
+);
+
 
 /* ============================================================
    TIMELINE
