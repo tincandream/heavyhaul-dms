@@ -211,7 +211,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-hos-running-engine">
+<body data-workspace-version="2026-08-21-hos-running-engine-fixed">
 
 <header></header>
 
@@ -3652,6 +3652,427 @@ const escortRequiredCount =
 }
 
 
+function setHosTrackerMode(){
+
+  const type =
+    $('hos_evt_type').value;
+
+  const showHours =
+    type === 'baseline' ||
+    type === 'hours_update' ||
+    type === 'back_on_duty';
+
+  const showBreak =
+    type === 'break_completed';
+
+  const showOffDuty =
+    type === 'off_duty';
+
+  $('hosHoursFields')
+    .classList
+    .toggle(
+      'hide',
+      !showHours
+    );
+
+  $('hosBreakFields')
+    .classList
+    .toggle(
+      'hide',
+      !showBreak
+    );
+
+  $('hosOffDutyFields')
+    .classList
+    .toggle(
+      'hide',
+      !showOffDuty
+    );
+
+  $('hos_evt_title').textContent =
+    type === 'baseline'
+      ? 'Start HOS Tracker'
+      : type === 'hours_update'
+        ? 'Update HOS'
+        : type === 'break_completed'
+          ? 'Break Completed'
+          : type === 'off_duty'
+            ? 'Driver Off Duty'
+            : 'Driver Back On Duty';
+}
+
+
+function clearHosTracker(){
+
+  [
+    'hos_evt_drive',
+    'hos_evt_window',
+    'hos_evt_cycle',
+    'hos_evt_since_break',
+    'hos_evt_off_minutes',
+    'hos_evt_note'
+  ]
+    .forEach(
+      id =>
+        $(id).value = ''
+    );
+
+  $('hos_evt_break_minutes').value =
+    '30';
+
+  $('hos_evt_when').value =
+    toLocalInput(
+      new Date()
+    );
+
+  clearErr(
+    'hos_evt_err'
+  );
+}
+
+
+function openHosTracker(type){
+
+  clearHosTracker();
+
+  $('hos_evt_type').value =
+    type ||
+    (
+      HOS_EVENTS.length
+        ? 'hours_update'
+        : 'baseline'
+    );
+
+  const current =
+    latestReportedHosEvent();
+
+  if(current){
+
+    if(
+      current.drive_remaining_hours != null
+    ){
+      $('hos_evt_drive').value =
+        current.drive_remaining_hours;
+    }
+
+    if(
+      current.window_remaining_hours != null
+    ){
+      $('hos_evt_window').value =
+        current.window_remaining_hours;
+    }
+
+    if(
+      current.cycle_remaining_hours != null
+    ){
+      $('hos_evt_cycle').value =
+        current.cycle_remaining_hours;
+    }
+
+    if(
+      current.driving_since_break_hours != null
+    ){
+      $('hos_evt_since_break').value =
+        current.driving_since_break_hours;
+    }
+  }
+
+  setHosTrackerMode();
+
+  dlgHosTracker.showModal();
+}
+
+
+async function saveHosTrackerEvent(){
+
+  clearErr(
+    'hos_evt_err'
+  );
+
+  if(
+    !TENANT_ID ||
+    !LOAD_ID
+  ){
+    showErr(
+      'hos_evt_err',
+      {
+        message:'Load context is not ready.'
+      }
+    );
+
+    return;
+  }
+
+  const type =
+    $('hos_evt_type').value;
+
+  const occurredAt =
+    fromLocalInput(
+      $('hos_evt_when').value
+    );
+
+  if(!occurredAt){
+    showErr(
+      'hos_evt_err',
+      {
+        message:'Enter the time this HOS event occurred.'
+      }
+    );
+
+    return;
+  }
+
+  const row = {
+    tenant_id:
+      TENANT_ID,
+
+    load_id:
+      LOAD_ID,
+
+    event_type:
+      type,
+
+    occurred_at:
+      occurredAt,
+
+    drive_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_drive').value
+          )
+        : null,
+
+    window_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_window').value
+          )
+        : null,
+
+    cycle_remaining_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_cycle').value
+          )
+        : null,
+
+    driving_since_break_hours:
+      (
+        type === 'baseline' ||
+        type === 'hours_update' ||
+        type === 'back_on_duty'
+      )
+        ? num(
+            $('hos_evt_since_break').value
+          )
+        : null,
+
+    break_minutes:
+      type === 'break_completed'
+        ? num(
+            $('hos_evt_break_minutes').value
+          )
+        : null,
+
+    off_duty_minutes:
+      type === 'off_duty'
+        ? num(
+            $('hos_evt_off_minutes').value
+          )
+        : null,
+
+    note:
+      txt(
+        $('hos_evt_note').value
+      )
+  };
+
+
+  const result =
+    await db
+      .from('hos_events')
+      .insert(row)
+      .select()
+      .single();
+
+
+  if(result.error){
+    showErr(
+      'hos_evt_err',
+      result.error
+    );
+
+    return;
+  }
+
+
+  if(
+    type === 'baseline' ||
+    type === 'hours_update' ||
+    type === 'back_on_duty'
+  ){
+
+    const minutes =
+      row.drive_remaining_hours != null
+        ? Math.round(
+            Number(
+              row.drive_remaining_hours
+            ) * 60
+          )
+        : null;
+
+    const patch = {
+
+      driver_hours_remaining_min:
+        minutes,
+
+      hours_updated_at:
+        occurredAt,
+
+      updated_at:
+        new Date().toISOString()
+
+    };
+
+    const updateResult =
+      await db
+        .from('loads')
+        .update(patch)
+        .eq(
+          'tenant_id',
+          TENANT_ID
+        )
+        .eq(
+          'id',
+          LOAD_ID
+        );
+
+    if(updateResult.error){
+      console.warn(
+        'HOS live load summary update:',
+        updateResult.error
+      );
+    }
+  }
+
+
+  await logEvent({
+    event_type:
+      'hos',
+
+    subject:
+      type === 'baseline'
+        ? 'HOS baseline'
+        : type === 'hours_update'
+          ? 'HOS hours updated'
+          : type === 'break_completed'
+            ? 'Qualifying break completed'
+            : type === 'off_duty'
+              ? 'Driver off duty'
+              : 'Driver back on duty',
+
+    body:
+      row.note ||
+      (
+        type === 'break_completed'
+          ? (
+              'Completed ' +
+              (
+                row.break_minutes ||
+                30
+              ) +
+              '-minute break.'
+            )
+          : ''
+      ),
+
+    occurred_at:
+      occurredAt,
+
+    is_milestone:
+      false
+  });
+
+
+  dlgHosTracker.close();
+
+  toast(
+    'HOS tracker updated'
+  );
+
+  await refreshAll();
+}
+
+
+function fillHosTrackerTestData(){
+
+  const type =
+    $('hos_evt_type').value;
+
+  $('hos_evt_when').value =
+    toLocalInput(
+      new Date()
+    );
+
+  if(
+    type === 'baseline'
+  ){
+    $('hos_evt_drive').value = '6.5';
+    $('hos_evt_window').value = '8';
+    $('hos_evt_cycle').value = '18';
+    $('hos_evt_since_break').value = '5';
+    $('hos_evt_note').value =
+      'TT TRAINING — Baseline HOS entered from driver ELD.';
+  }
+  else if(
+    type === 'hours_update'
+  ){
+    $('hos_evt_drive').value = '5';
+    $('hos_evt_window').value = '6.5';
+    $('hos_evt_cycle').value = '16.5';
+    $('hos_evt_since_break').value = '6.5';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver reported updated HOS during trip.';
+  }
+  else if(
+    type === 'break_completed'
+  ){
+    $('hos_evt_break_minutes').value = '30';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver completed qualifying 30-minute break.';
+  }
+  else if(
+    type === 'off_duty'
+  ){
+    $('hos_evt_off_minutes').value = '0';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver began off-duty rest period.';
+  }
+  else if(
+    type === 'back_on_duty'
+  ){
+    $('hos_evt_drive').value = '11';
+    $('hos_evt_window').value = '14';
+    $('hos_evt_cycle').value = '17';
+    $('hos_evt_since_break').value = '0';
+    $('hos_evt_note').value =
+      'TT TRAINING — Driver returned to duty; values confirmed from ELD.';
+  }
+}
+
+
 $('hos_evt_type')
   ?.addEventListener(
     'change',
@@ -3671,7 +4092,6 @@ $('hos_evt_filltest')
     'click',
     fillHosTrackerTestData
   );
-
 
 /* ============================================================
    TIMELINE
