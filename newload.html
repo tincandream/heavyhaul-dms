@@ -3059,6 +3059,14 @@ async function refreshFleetAssignChildren() {
 }
 
 
+// ============================================================
+// SAVED ROUTES
+//
+// Route Planning records saved to public.route_plans appear here.
+// Example TT dropdown label:
+// Route Plan — TT — Little Rock AR → Memphis TN | RGN
+// ============================================================
+
 async function loadAssignableRoutes() {
   const [plansResult, goldenResult] =
     await Promise.all([
