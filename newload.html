@@ -594,7 +594,6 @@ dialog.assign-dialog::backdrop {
    <p>Manage loads and daily dispatch activity.</p>
   </section>
 
-  <nav class="dispatch-tabs" id="dispatchTabs"></nav>
 
   <div class="tiles" id="assemblyStatus">
 
@@ -1295,7 +1294,6 @@ dialog.assign-dialog::backdrop {
 
 
 <div class="bar">
-
   <button id="save">
     Ready for Dispatch
   </button>
@@ -1312,7 +1310,6 @@ dialog.assign-dialog::backdrop {
 
 <script src="nav.js"></script>
 
-<script src="dispatch-tabs.js"></script>
 
 
 <script>
@@ -1617,9 +1614,6 @@ async function start() {
   }
 
 
-  buildDispatchTabs(
-    'newload.html'
-  );
 
 
   $('statepicker').innerHTML =
