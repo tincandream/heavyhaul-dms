@@ -158,7 +158,8 @@ async function load() {
 
   const [
     fleetResult,
-    profitResult
+    profitResult,
+    routeResult
   ] =
     await Promise.all([
 
@@ -187,6 +188,23 @@ async function load() {
           {
             ascending:false
           }
+        ),
+
+      db
+        .from('route_plans')
+        .select(
+          'load_id,origin,destination,updated_at'
+        )
+        .not(
+          'load_id',
+          'is',
+          null
+        )
+        .order(
+          'updated_at',
+          {
+            ascending:false
+          }
         )
 
     ]);
@@ -204,6 +222,7 @@ async function load() {
 
 
   PROFIT_BY_LOAD = {};
+  ROUTE_BY_LOAD = {};
 
 
   if (!profitResult.error) {
@@ -240,6 +259,40 @@ async function load() {
   }
 
 
+  if (!routeResult.error) {
+
+    (routeResult.data || [])
+      .forEach(
+        item => {
+
+          if (
+            item.load_id &&
+            !ROUTE_BY_LOAD[
+              item.load_id
+            ]
+          ) {
+
+            ROUTE_BY_LOAD[
+              item.load_id
+            ] =
+              item;
+
+          }
+
+        }
+      );
+
+  }
+  else {
+
+    console.warn(
+      'Fleet Board route fallback:',
+      routeResult.error.message
+    );
+
+  }
+
+
   rows =
     (fleetResult.data || [])
       .filter(
@@ -258,8 +311,41 @@ async function load() {
           const result =
             saved?.results || {};
 
+          const route =
+            ROUTE_BY_LOAD[
+              row.load_id
+            ] || null;
+
+          const resolvedOrigin =
+            row.origin ||
+            route?.origin ||
+            null;
+
+          const resolvedDestination =
+            row.destination ||
+            route?.destination ||
+            null;
+
+          const resolvedLocation =
+            row.current_location_text ||
+            (
+              row.actual_pickup_at
+                ? null
+                : resolvedOrigin
+            ) ||
+            null;
+
           return {
             ...row,
+
+            origin:
+              resolvedOrigin,
+
+            destination:
+              resolvedDestination,
+
+            current_location_text:
+              resolvedLocation,
 
             carrier_net_profit:
               result.carrierNet != null
@@ -496,9 +582,21 @@ function render() {
       '</td>' +
 
       '<td>' + statusPill(r) + '</td>' +
-      '<td>' + (r.current_location_text ? esc(r.current_location_text)
-                                        : '<span class="sub2">—</span>') +
-        age(r.check_in_age_min) + '</td>' +
+      '<td>' +
+        (
+          r.current_location_text
+            ? esc(r.current_location_text)
+            : '<span class="sub2">—</span>'
+        ) +
+        (
+          !r.last_check_in_at &&
+          r.origin &&
+          r.current_location_text === r.origin
+            ? '<div class="sub2">Origin / pre-pickup</div>'
+            : ''
+        ) +
+        age(r.check_in_age_min) +
+      '</td>' +
       '<td>' + (r.destination ? esc(r.destination) : '<span class="sub2">—</span>') + '</td>' +
       '<td>' + when(r.next_event_at) +
         (r.next_event_label ? '<div class="sub2">' + r.next_event_label + '</div>' : '') +
