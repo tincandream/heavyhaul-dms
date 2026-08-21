@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="utf-8">
@@ -634,143 +635,7 @@
 
 <body>
 
-<header
-  style="
-    width:100%;
-    background:#ffffff;
-    border-bottom:1px solid #dddddd;
-    box-sizing:border-box;
-  "
->
-
-  <!-- TOP BRAND ROW -->
-
-  <div
-    style="
-      display:flex;
-      align-items:center;
-      min-height:54px;
-      padding:0 26px;
-      border-bottom:1px solid #eeeeee;
-      box-sizing:border-box;
-    "
-  >
-
-    <a
-      href="welcome.html"
-      style="
-        color:#222222;
-        font-size:16px;
-        font-weight:700;
-        letter-spacing:1.4px;
-        text-decoration:none;
-        white-space:nowrap;
-      "
-    >
-      HEAVY HAUL COMMAND
-    </a>
-
-  </div>
-
-
-  <!-- MAIN NAV ROW -->
-
-  <div
-    style="
-      display:flex;
-      align-items:center;
-      width:100%;
-      min-height:48px;
-      padding:0 26px;
-      box-sizing:border-box;
-      overflow-x:auto;
-    "
-  >
-
-    <nav
-      style="
-        display:flex;
-        align-items:center;
-        flex-shrink:0;
-      "
-    >
-
-      <a
-        href="welcome.html"
-        style="
-          display:flex;
-          align-items:center;
-          min-height:48px;
-          padding:0 17px;
-          color:#666666;
-          text-decoration:none;
-          font-size:13px;
-          font-weight:600;
-          border-bottom:3px solid transparent;
-        "
-      >
-        Welcome
-      </a>
-
-
-      <a
-        href="board.html"
-        style="
-          display:flex;
-          align-items:center;
-          min-height:48px;
-          padding:0 17px;
-          color:#666666;
-          text-decoration:none;
-          font-size:13px;
-          font-weight:600;
-          border-bottom:3px solid transparent;
-        "
-      >
-        Dispatch
-      </a>
-
-
-      <a
-        href="sourcing.html"
-        style="
-          display:flex;
-          align-items:center;
-          min-height:48px;
-          padding:0 17px;
-          color:#111111;
-          text-decoration:none;
-          font-size:13px;
-          font-weight:600;
-          border-bottom:3px solid #6B92A5;
-        "
-      >
-        Sourcing
-      </a>
-
-
-      <a
-        href="fleet-command.html"
-        style="
-          display:flex;
-          align-items:center;
-          min-height:48px;
-          padding:0 17px;
-          color:#666666;
-          text-decoration:none;
-          font-size:13px;
-          font-weight:600;
-          border-bottom:3px solid transparent;
-        "
-      >
-        Fleet Command
-      </a>
-
-    </nav>
-
-  </div>
-
-</header>
+<header></header>
 
 
 <main>
@@ -854,7 +719,13 @@
 
       <div class="button-row">
 
-
+       <button
+  class="primary"
+  type="button"
+  id="fillPermitEscortTest"
+>
+  Fill Permit & Escort Test Data
+</button>
 
 <button
   class="secondary hidden"
@@ -892,7 +763,7 @@
 
 
       <label for="enablePassword">
-        TestTraining
+        Training password
       </label>
 
 
@@ -1449,9 +1320,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
+
 <script src="nav.js"></script>
-
-
 <script>
 
 const SUPABASE_URL =
@@ -1501,111 +1372,26 @@ async function fillPermitEscortTestData() {
     );
 
 
-  button.disabled = true;
+  button.disabled =
+    true;
 
 
   showMessage(
     'permitEscortMessage',
-    'Finding TT load…'
+    'Adding Permit & Escort test data…'
   );
 
 
-  const opportunityResult =
-    await db
-      .from('load_opportunities')
-      .select(
-        'id, external_ref, load_id'
-      )
-      .eq(
-        'tenant_id',
-        TENANT_ID
-      )
-      .eq(
-        'external_ref',
-        'TT-ABC-260811-01'
-      )
-      .maybeSingle();
-
-
-  if (opportunityResult.error) {
-
-    button.disabled = false;
-
-    showMessage(
-      'permitEscortMessage',
-      opportunityResult.error.message,
-      'error'
+  const updateResult =
+    await db.rpc(
+      'fill_tt_permit_escort_data'
     );
 
-    return;
-  }
+
+  button.disabled =
+    false;
 
 
-  if (!opportunityResult.data) {
-
-    button.disabled = false;
-
-    showMessage(
-      'permitEscortMessage',
-      'TT-ABC-260811-01 was not found. Populate the Broker Load first.',
-      'error'
-    );
-
-    return;
-  }
-
-
-  const loadId =
-    opportunityResult.data.load_id;
-
-
-  if (!loadId) {
-
-    button.disabled = false;
-
-    showMessage(
-      'permitEscortMessage',
-      'The TT broker load has not been converted to New Load yet.',
-      'error'
-    );
-
-    return;
-  }
-
-
- const updateResult =
-  await db.rpc(
-    'fill_tt_permit_escort_data'
-  );
-
-button.disabled = false;
-
-if (updateResult.error) {
-
-  showMessage(
-    'permitEscortMessage',
-    updateResult.error.message,
-    'error'
-  );
-
-  return;
-}
-
-showMessage(
-  'permitEscortMessage',
-  'Permit & Escort test data added to the TT load.',
-  'success'
-);
-
-
-const updateResult =
-  await db.rpc(
-    'fill_tt_permit_escort_data'
-  );
-
-button.disabled = false;
-  
-  
   if (updateResult.error) {
 
     showMessage(
@@ -1618,14 +1404,26 @@ button.disabled = false;
   }
 
 
+  const data =
+    updateResult.data || {};
+
+
   showMessage(
     'permitEscortMessage',
+    (
+      data.load_number
+        ? data.load_number + ' — '
+        : ''
+    ) +
     'Permit & Escort test data added to the TT load.',
     'success'
   );
 
+
+  await loadCounts();
+
 }
-  
+
 
 function showMessage(
   id,
@@ -1693,6 +1491,21 @@ async function loadTrainingStatus() {
     Boolean(
       status.active
     );
+
+
+  const permitEscortButton =
+    document.getElementById(
+      'fillPermitEscortTest'
+    );
+
+  if (permitEscortButton) {
+
+    permitEscortButton.classList.toggle(
+      'hidden',
+      !trainingActive
+    );
+
+  }
 
 
   const pill =
@@ -2546,232 +2359,6 @@ async function resetTrainingData() {
 }
 
 
-async function buildTestingFallbackNav(
-  dbClient
-) {
-
-  const header =
-    document.querySelector(
-      'header'
-    );
-
-
-  if (!header) {
-    return null;
-  }
-
-
-  header.innerHTML = `
-    <div style="
-      display:flex;
-      align-items:center;
-      min-height:54px;
-      padding:0 26px;
-      background:#ffffff;
-      border-bottom:1px solid #eeeeee;
-      box-sizing:border-box;
-    ">
-
-      <a
-        href="welcome.html"
-        style="
-          color:#222222;
-          font-size:16px;
-          font-weight:700;
-          letter-spacing:1.4px;
-          text-decoration:none;
-        "
-      >
-        HEAVY HAUL COMMAND
-      </a>
-
-    </div>
-
-
-    <div style="
-      display:flex;
-      align-items:center;
-      width:100%;
-      min-height:48px;
-      padding:0 26px;
-      background:#ffffff;
-      border-bottom:1px solid #dddddd;
-      box-sizing:border-box;
-      overflow-x:auto;
-    ">
-
-      <nav style="
-        display:flex;
-        align-items:center;
-      ">
-
-        <a
-          href="welcome.html"
-          style="
-            padding:15px 17px;
-            color:#666666;
-            text-decoration:none;
-            font-size:13px;
-            font-weight:600;
-          "
-        >
-          Welcome
-        </a>
-
-        <a
-          href="board.html"
-          style="
-            padding:15px 17px;
-            color:#666666;
-            text-decoration:none;
-            font-size:13px;
-            font-weight:600;
-          "
-        >
-          Dispatch
-        </a>
-
-        <a
-          href="sourcing.html"
-          style="
-            padding:15px 17px;
-            color:#111111;
-            text-decoration:none;
-            font-size:13px;
-            font-weight:600;
-            border-bottom:3px solid #6B92A5;
-          "
-        >
-          Sourcing
-        </a>
-
-        <a
-          href="fleet-command.html"
-          style="
-            padding:15px 17px;
-            color:#666666;
-            text-decoration:none;
-            font-size:13px;
-            font-weight:600;
-          "
-        >
-          Fleet Command
-        </a>
-
-      </nav>
-
-      <div
-        id="testingNavUserArea"
-        style="
-          margin-left:auto;
-          display:flex;
-          align-items:center;
-          gap:9px;
-          padding-left:18px;
-          white-space:nowrap;
-          font-size:12px;
-          color:#666666;
-        "
-      >
-        <span id="testingNavUser">…</span>
-
-        <span>|</span>
-
-
-        <button
-          id="testingNavSignOut"
-          type="button"
-          style="
-            border:0;
-            background:transparent;
-            color:#555555;
-            font:inherit;
-            cursor:pointer;
-          "
-        >
-          Sign Out
-        </button>
-      </div>
-
-    </div>
-  `;
-
-
-  const userResult =
-    await dbClient.auth.getUser();
-
-
-  const user =
-    userResult.data
-      ? userResult.data.user
-      : null;
-
-
-  if (!user) {
-    return null;
-  }
-
-
-  const profile =
-    await dbClient
-      .from('app_users')
-      .select(
-        'full_name, role, tenant_id'
-      )
-      .eq(
-        'auth_uid',
-        user.id
-      )
-      .maybeSingle();
-
-
-  if (
-    !profile.error &&
-    profile.data
-  ) {
-
-    const role =
-      profile.data.role
-        ? profile.data.role
-            .charAt(0)
-            .toUpperCase() +
-          profile.data.role.slice(1)
-        : 'User';
-
-
-    document
-      .getElementById(
-        'testingNavUser'
-      )
-      .textContent =
-        `${profile.data.full_name || 'User'} (${role})`;
-
-  }
-
-
-  document
-    .getElementById(
-      'testingNavSignOut'
-    )
-    .addEventListener(
-      'click',
-      async function () {
-
-        await dbClient.auth.signOut();
-
-        location.href =
-          'index.html';
-
-      }
-    );
-
-
-  return profile.data
-    ? profile.data.tenant_id
-    : null;
-}
-
-
 // =========================================================
 // START
 // =========================================================
@@ -2791,67 +2378,27 @@ async function start() {
       'index.html';
 
     return;
-
   }
 
 
   if (
-    typeof window.buildNav ===
+    typeof window.buildNav !==
     'function'
   ) {
 
-    TENANT_ID =
-      await window.buildNav(
-        db,
-        'Testing'
-      );
+    alert(
+      'Shared navigation could not load.'
+    );
 
+    return;
   }
 
 
-  if (!TENANT_ID) {
-
-    const userResult =
-      await db.auth.getUser();
-
-
-    const authId =
-      userResult.data &&
-      userResult.data.user
-        ? userResult.data.user.id
-        : null;
-
-
-    if (authId) {
-
-      const profile =
-        await db
-          .from(
-            'app_users'
-          )
-          .select(
-            'tenant_id'
-          )
-          .eq(
-            'auth_uid',
-            authId
-          )
-          .maybeSingle();
-
-
-      if (
-        !profile.error &&
-        profile.data
-      ) {
-
-        TENANT_ID =
-          profile.data.tenant_id;
-
-      }
-
-    }
-
-  }
+  TENANT_ID =
+    await window.buildNav(
+      db,
+      'Testing'
+    );
 
 
   if (!TENANT_ID) {
@@ -2861,7 +2408,6 @@ async function start() {
     );
 
     return;
-
   }
 
 
@@ -2869,7 +2415,7 @@ async function start() {
     .getElementById(
       'exitButton'
     )
-    .addEventListener(
+    ?.addEventListener(
       'click',
       exitTrainingMode
     );
@@ -2879,7 +2425,7 @@ async function start() {
     .getElementById(
       'resetButton'
     )
-    .addEventListener(
+    ?.addEventListener(
       'click',
       resetTrainingData
     );
@@ -2889,30 +2435,31 @@ async function start() {
     .getElementById(
       'refreshButton'
     )
-    .addEventListener(
+    ?.addEventListener(
       'click',
       loadCounts
     );
 
 
- document
-  .getElementById(
-    'populateBrokerLoad'
-  )
-  .addEventListener(
-    'click',
-    populateBrokerLoad
-  );
+  document
+    .getElementById(
+      'populateBrokerLoad'
+    )
+    ?.addEventListener(
+      'click',
+      populateBrokerLoad
+    );
 
-document
-  .getElementById(
-    'fillPermitEscortTest'
-  )
-  .addEventListener(
-    'click',
-    fillPermitEscortTestData
-  ); 
-  
+
+  document
+    .getElementById(
+      'fillPermitEscortTest'
+    )
+    ?.addEventListener(
+      'click',
+      fillPermitEscortTestData
+    );
+
 
   await loadTrainingStatus();
 
@@ -2922,60 +2469,6 @@ document
 
 
 start();
-
-
-window.addEventListener(
-  'pageshow',
-  async function () {
-
-    const sessionResult =
-      await db.auth.getSession();
-
-    if (
-      !sessionResult.data ||
-      !sessionResult.data.session
-    ) {
-      return;
-    }
-
-    await loadTrainingStatus();
-
-    if (TENANT_ID) {
-      await loadCounts();
-    }
-
-  }
-);
-
-
-document.addEventListener(
-  'visibilitychange',
-  async function () {
-
-    if (
-      document.visibilityState !==
-      'visible'
-    ) {
-      return;
-    }
-
-    const sessionResult =
-      await db.auth.getSession();
-
-    if (
-      !sessionResult.data ||
-      !sessionResult.data.session
-    ) {
-      return;
-    }
-
-    await loadTrainingStatus();
-
-  }
-);
-</script> 
-
-  <script>
   /* ============================================================
    TRAINING MODE — FILL TEST DATA (BROKER LOAD)
    Button appears only while protected Training Mode is active.
