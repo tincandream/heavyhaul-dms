@@ -667,41 +667,45 @@ dialog.assign-dialog::backdrop {
     <div id="legal"></div>
   </div>
 
- <div class="card">
+  <div class="card">
 
-  <div style="
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-  ">
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:16px;
+      "
+    >
 
-    <div>
-      <h2 style="margin-bottom:4px;">
-        Dispatch Queue
-      </h2>
+      <div>
+        <h2 style="margin-bottom:4px;">
+          Dispatch Queue
+        </h2>
 
-      <p class="hint" style="margin:0;">
-        Loads being assembled before release to Fleet Board.
-      </p>
+        <p class="hint" style="margin:0;">
+          Loads being assembled before release to Fleet Board.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="clearDispatchQueue"
+        class="secondary"
+      >
+        Clear Queue
+      </button>
+
     </div>
 
-    <button
-      type="button"
-      id="clearDispatchQueue"
-      class="secondary">
-      Clear Queue
-    </button>
+    <div
+      id="dispatchQueue"
+      style="margin-top:16px;"
+    >
+      Loading draft loads…
+    </div>
 
   </div>
-
-  <div
-    id="dispatchQueue"
-    style="margin-top:16px;">
-    Loading draft loads…
-  </div>
-
-</div>
 
 
   <div class="workflow-band assigned-band">
@@ -3693,13 +3697,17 @@ async function loadDispatchQueue() {
     );
 
   if (!box) {
-    return;
-  }
 
+    console.error(
+      'Dispatch Queue container not found.'
+    );
+
+    return;
+
+  }
 
   box.textContent =
     'Loading draft loads…';
-
 
   const result =
     await db
@@ -3711,21 +3719,20 @@ async function loadDispatchQueue() {
         'tenant_id',
         tenant
       )
- .eq(
-  'status',
-  'quoted'
-)
-.is(
-  'archived_at',
-  null
-)
-.order(
-  'created_at',
+      .eq(
+        'status',
+        'quoted'
+      )
+      .is(
+        'archived_at',
+        null
+      )
+      .order(
+        'created_at',
         {
           ascending:false
         }
       );
-
 
   if (result.error) {
 
@@ -3733,13 +3740,17 @@ async function loadDispatchQueue() {
       'Could not load Dispatch Queue: ' +
       result.error.message;
 
-    return;
-  }
+    console.error(
+      'Dispatch Queue:',
+      result.error
+    );
 
+    return;
+
+  }
 
   const loads =
     result.data || [];
-
 
   if (!loads.length) {
 
@@ -3747,8 +3758,8 @@ async function loadDispatchQueue() {
       'No draft loads waiting.';
 
     return;
-  }
 
+  }
 
   box.innerHTML =
     loads
@@ -3759,12 +3770,12 @@ async function loadDispatchQueue() {
             load.pickup_appt_start ||
             load.created_at;
 
-
           const dateText =
             dateValue
               ? new Date(
                   dateValue
-                ).toLocaleDateString(
+                )
+                .toLocaleDateString(
                   'en-US',
                   {
                     month:'short',
@@ -3774,8 +3785,7 @@ async function loadDispatchQueue() {
                 )
               : 'No date';
 
-
-          const title =
+          const parts =
             [
               load.load_number,
 
@@ -3787,9 +3797,34 @@ async function loadDispatchQueue() {
               load.commodity ||
               ''
             ]
-            .filter(Boolean)
-            .join(' · ');
+            .filter(Boolean);
 
+          const title =
+            parts.join(
+              ' · '
+            );
+
+          const safeTitle =
+            title.replace(
+              /[&<>"]/g,
+              c => ({
+                '&':'&amp;',
+                '<':'&lt;',
+                '>':'&gt;',
+                '"':'&quot;'
+              }[c])
+            );
+
+          const safeDate =
+            dateText.replace(
+              /[&<>"]/g,
+              c => ({
+                '&':'&amp;',
+                '<':'&lt;',
+                '>':'&gt;',
+                '"':'&quot;'
+              }[c])
+            );
 
           return `
             <div
@@ -3805,9 +3840,12 @@ async function loadDispatchQueue() {
 
               <a
                 href="newload.html?load=${encodeURIComponent(load.id)}"
-                style="font-weight:600;"
+                style="
+                  font-weight:600;
+                  text-decoration:none;
+                "
               >
-                ${escapeHtml(title)}
+                ${safeTitle}
               </a>
 
               <span
@@ -3817,7 +3855,7 @@ async function loadDispatchQueue() {
                   font-size:12px;
                 "
               >
-                ${escapeHtml(dateText)}
+                ${safeDate}
               </span>
 
             </div>
@@ -3830,68 +3868,114 @@ async function loadDispatchQueue() {
 }
 
 
-document
-  .getElementById(
-    'clearDispatchQueue'
-  )
-  ?.addEventListener(
-    'click',
-    async () => {
+// ============================================================
+// CLEAR DISPATCH QUEUE
+//
+// Drafts are ARCHIVED, not hard-deleted.
+// This preserves append-only event history.
+// ============================================================
 
-      const confirmed =
-        confirm(
-          'Clear all Draft / Quoted loads from the Dispatch Queue?\n\nThis cannot be undone.'
+const clearDispatchQueueButton =
+  document.getElementById(
+    'clearDispatchQueue'
+  );
+
+if (
+  clearDispatchQueueButton
+) {
+
+  clearDispatchQueueButton
+    .addEventListener(
+      'click',
+      async () => {
+
+        const confirmed =
+          confirm(
+            'Clear all Draft / Quoted loads from the Dispatch Queue?\n\n' +
+            'The drafts will be archived and removed from the queue. ' +
+            'Historical event records will be preserved.'
+          );
+
+        if (
+          !confirmed
+        ) {
+
+          return;
+
+        }
+
+        clearDispatchQueueButton.disabled =
+          true;
+
+        clearDispatchQueueButton.textContent =
+          'Clearing…';
+
+        const result =
+          await db
+            .from('loads')
+            .update({
+              archived_at:
+                new Date()
+                  .toISOString()
+            })
+            .eq(
+              'tenant_id',
+              tenant
+            )
+            .eq(
+              'status',
+              'quoted'
+            )
+            .is(
+              'archived_at',
+              null
+            )
+            .select(
+              'id'
+            );
+
+        clearDispatchQueueButton.disabled =
+          false;
+
+        clearDispatchQueueButton.textContent =
+          'Clear Queue';
+
+        if (
+          result.error
+        ) {
+
+          alert(
+            'Could not clear Dispatch Queue: ' +
+            result.error.message
+          );
+
+          return;
+
+        }
+
+        const clearedCount =
+          (
+            result.data ||
+            []
+          ).length;
+
+        await loadDispatchQueue();
+
+        say(
+          clearedCount +
+          (
+            clearedCount === 1
+              ? ' draft archived from Dispatch Queue.'
+              : ' drafts archived from Dispatch Queue.'
+          ),
+          'ok'
         );
 
-
-      if (!confirmed) {
-        return;
       }
-
-
-      const result =
-  const result =
-  await db
-    .from('loads')
-    .update({
-      archived_at: new Date().toISOString()
-    })
-    .eq(
-      'tenant_id',
-      tenant
-    )
-    .eq(
-      'status',
-      'quoted'
-    )
-    .is(
-      'archived_at',
-      null
     );
 
+}
 
-      if (result.error) {
-
-        alert(
-          'Could not clear Dispatch Queue: ' +
-          result.error.message
-        );
-
-        return;
-      }
-
-
-      await loadDispatchQueue();
-
-
-      say(
-        'Dispatch Queue cleared.',
-        'ok'
-      );
-
-    }
-  );
-  
 async function loadExistingDraft() {
   const params = new URLSearchParams(window.location.search);
   EDIT_LOAD_ID = params.get('load');
