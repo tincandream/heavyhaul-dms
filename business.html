@@ -1,1 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+<title>Business — Heavy Haul Command</title>
 
+<style>
+
+:root{
+  --bg:#f5f4f0;
+  --card:#fff;
+  --ink:#22221f;
+  --muted:#73726c;
+  --line:#e2e0da;
+  --line2:#cfccc4;
+  --accent:#185fa5;
+  --danger:#a32d2d;
+  --dangerbg:#fcebeb;
+  --warn:#8a5a10;
+  --warnbg:#fdf3e3;
+  --ok:#0f6e56;
+  --okbg:#e4f4ee;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+main{
+  max-width:1400px;
+  width:100%;
+  margin:0 auto 60px;
+  padding:18px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:18px;
+  margin-bottom:14px;
+}
+
+.card h2{
+  font-size:14px;
+  font-weight:600;
+  margin:0 0 3px;
+}
+
+.card .hint{
+  font-size:12px;
+  color:var(--muted);
+  margin:0 0 14px;
+}
+
+.grid{
+  display:grid;
+  gap:12px;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+}
+
+.full{grid-column:1/-1}
+
+label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+
+.req label::after{
+  content:' *';
+  color:var(--danger);
+}
+
+input,select,textarea{
+  width:100%;
+  padding:8px 10px;
+  border:1px solid var(--line2);
+  border-radius:7px;
+  font-size:14px;
+  background:#fff;
+  color:var(--ink);
+  font-family:inherit;
+}
+
+textarea{min-height:56px;resize:vertical}
+
+button{
+  padding:9px 16px;
+  border:1px solid var(--line2);
+  border-radius:7px;
+  background:var(--card);
+  color:var(--accent);
+  font-size:13px;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+button.primary{
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+}
+
+button.danger{
+  background:#fff;
+  border-color:#e3bcbc;
+  color:var(--danger);
+}
+
+button.ghost{
+  background:transparent;
+  border-color:transparent;
+}
+
+button.sm{padding:5px 10px;font-size:12px}
+
+button:hover{border-color:var(--accent)}
+
+button:disabled{opacity:.5;cursor:default}
+
+.spacer{flex:1}
+
+/* KPI tiles */
+.tiles{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin:0 0 16px;
+}
+
+.tile{
+  padding:14px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+
+.tile .n{
+  font-size:20px;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.tile .l{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+
+.tile.ok .n{color:var(--ok)}
+.tile.warn .n{color:var(--warn)}
+.tile.danger .n{color:var(--danger)}
+
+@media (max-width:900px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Tabs */
+.tabs{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  border-bottom:1px solid var(--line);
+  margin-bottom:16px;
+}
+
+.tabs button{
+  border:none;
+  border-radius:0;
+  background:none;
+  padding:10px 14px;
+  color:var(--muted);
+  border-bottom:3px solid transparent;
+  font-weight:600;
+}
+
+.tabs button:hover{background:transparent;color:var(--ink)}
+
+.tabs button.on{
+  color:var(--accent);
+  border-bottom-color:var(--accent);
+}
+
+.tabs .cnt{
+  display:inline-block;
+  margin-left:6px;
+  font-size:11px;
+  background:#eef0f3;
+  color:var(--muted);
+  border-radius:999px;
+  padding:1px 6px;
+  font-weight:700;
+}
+
+.panel{display:none}
+.panel.on{display:block}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;background:#fff}
+
+th{
+  text-align:left;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:var(--muted);
+  padding:9px 10px;
+  border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+
+td{
+  padding:9px 10px;
+  border-bottom:1px solid #f0f2f4;
+  vertical-align:top;
+}
+
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#f7f9fc}
+
+.tablewrap{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+}
+
+.sechead{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 10px;
+}
+
+.sechead h2{font-size:15px}
+
+.empty{padding:26px;text-align:center;color:var(--muted)}
+
+.pill{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  background:#eef0f3;
+  color:var(--muted);
+}
+
+.pill.ok{background:var(--okbg);color:var(--ok)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}
+.pill.danger{background:var(--dangerbg);color:var(--danger)}
+.pill.accent{background:#e7f0f9;color:var(--accent)}
+
+.small{font-size:12px}
+.muted{color:var(--muted)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+/* Dialogs */
+dialog{
+  border:none;
+  border-radius:12px;
+  padding:0;
+  box-shadow:0 12px 40px rgba(10,14,25,.28);
+  width:min(720px,94vw);
+  color:var(--ink);
+}
+
+dialog::backdrop{background:rgba(25,25,25,.35)}
+
+.dlg-head{
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.dlg-head h3{margin:0;font-size:15px}
+
+.dlg-body{padding:18px;max-height:66vh;overflow:auto}
+
+.dlg-foot{
+  padding:12px 18px;
+  border-top:1px solid var(--line);
+  display:flex;
+  gap:8px;
+  align-items:center;
+  background:#fbfcfd;
+}
+
+.fs{
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px;
+  margin-top:14px;
+}
+
+.fs legend{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  color:var(--muted);
+  font-weight:700;
+  padding:0 6px;
+}
+
+.err{color:var(--danger);font-size:12px;font-weight:600;min-height:15px}
+
+.linerow{
+  display:grid;
+  grid-template-columns:2fr 1.2fr 1fr 1fr auto;
+  gap:8px;
+  align-items:end;
+  padding:8px 0;
+  border-bottom:1px solid #f0f2f4;
+}
+
+.linerow:last-child{border-bottom:none}
+
+.linetotal{
+  display:flex;
+  justify-content:flex-end;
+  gap:20px;
+  padding-top:10px;
+  margin-top:6px;
+  border-top:1px solid var(--line);
+  font-size:14px;
+}
+
+.linetotal b{font-size:16px}
+
+/* Toast */
+#toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%) translateY(80px);
+  background:#16181d;
+  color:#fff;
+  padding:11px 18px;
+  border-radius:9px;
+  font-weight:600;
+  font-size:13px;
+  opacity:0;
+  transition:.22s;
+  z-index:9999;
+  pointer-events:none;
+  max-width:90vw;
+}
+
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.bad{background:var(--danger)}
+
+.report-year select{width:auto;display:inline-block}
+
+</style>
+</head>
+
+<body>
+
+<header></header>
+
+<main>
+
+  <section class="page-header">
+    <h1>BUSINESS</h1>
+    <p>Bookkeeping, invoicing, and financial reporting — accrual basis.</p>
+  </section>
+
+  <div class="tiles" id="kpiTiles">
+    <div class="tile" id="kpiIncome"><div class="n">—</div><div class="l">Income (this month)</div></div>
+    <div class="tile" id="kpiExpenses"><div class="n">—</div><div class="l">Expenses (this month)</div></div>
+    <div class="tile" id="kpiNet"><div class="n">—</div><div class="l">Net (this month)</div></div>
+    <div class="tile" id="kpiAR"><div class="n">—</div><div class="l">Outstanding A/R</div></div>
+  </div>
+
+  <nav class="tabs" id="tabstrip">
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="invoices">Invoices <span class="cnt" id="cnt-invoices">0</span></button>
+    <button data-tab="expenses">Expenses <span class="cnt" id="cnt-expenses">0</span></button>
+    <button data-tab="accounts">Chart of Accounts <span class="cnt" id="cnt-accounts">0</span></button>
+    <button data-tab="reports">Reports</button>
+  </nav>
+
+  <section class="panel on" id="tab-overview"></section>
+  <section class="panel"    id="tab-invoices"></section>
+  <section class="panel"    id="tab-expenses"></section>
+  <section class="panel"    id="tab-accounts"></section>
+  <section class="panel"    id="tab-reports"></section>
+
+</main>
+
+<!-- ============ INVOICE DIALOG ============ -->
+<dialog id="dlgInvoice">
+  <div class="dlg-head"><h3 id="inv_title">New Invoice</h3><span class="spacer"></span>
+    <span class="small muted mono" id="inv_idlabel"></span></div>
+  <div class="dlg-body">
+    <input type="hidden" id="inv_id">
+    <div class="grid">
+      <div class="req"><label>Carrier</label>
+        <select id="inv_carrier"></select></div>
+      <div><label>Invoice number</label>
+        <input id="inv_number" placeholder="Auto-generated if left blank"></div>
+      <div><label>Status</label>
+        <select id="inv_status">
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Overdue</option>
+          <option value="void">Void</option>
+        </select></div>
+      <div><label>Issue date</label>
+        <input type="date" id="inv_issue_date"></div>
+      <div><label>Due date</label>
+        <input type="date" id="inv_due_date"></div>
+      <div class="full"><label>Notes</label>
+        <textarea id="inv_notes"></textarea></div>
+    </div>
+
+    <fieldset class="fs">
+      <legend>Line items</legend>
+
+      <div class="grid" style="margin-bottom:10px">
+        <div><label>Unbilled load for this carrier</label>
+          <select id="inv_loadpicker"><option value="">— choose a load to bill —</option></select></div>
+        <div style="align-self:end">
+          <button type="button" class="sm" id="inv_addfromload">+ Add Load as Line</button>
+        </div>
+        <div style="align-self:end">
+          <button type="button" class="sm ghost" id="inv_addblank">+ Add Blank Line</button>
+        </div>
+      </div>
+
+      <div id="inv_lines"></div>
+
+      <div class="linetotal">
+        <span>Total: <b id="inv_totaldisplay">$0.00</b></span>
+      </div>
+    </fieldset>
+
+    <div id="inv_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="inv_savebtn">Save Invoice</button>
+    <button onclick="dlgInvoice.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="sm hide" id="inv_paybtn">Record Payment / Mark Paid</button>
+    <button class="danger sm hide" id="inv_delbtn">Delete</button>
+  </div>
+</dialog>
+
+<!-- ============ EXPENSE DIALOG ============ -->
+<dialog id="dlgExpense">
+  <div class="dlg-head"><h3 id="exp_title">Add Expense</h3></div>
+  <div class="dlg-body">
+    <input type="hidden" id="exp_id">
+    <div class="grid">
+      <div class="req"><label>Category</label>
+        <select id="exp_account"></select></div>
+      <div><label>Vendor</label>
+        <input id="exp_vendor" placeholder="e.g. Verizon, Supabase"></div>
+      <div class="req"><label>Amount ($)</label>
+        <input type="number" step="0.01" id="exp_amount"></div>
+      <div><label>Incurred on</label>
+        <input type="date" id="exp_incurred_on"></div>
+      <div><label>Payment status</label>
+        <select id="exp_payment_status">
+          <option value="unpaid">Unpaid</option>
+          <option value="paid">Paid</option>
+        </select></div>
+      <div class="full"><label>Description</label>
+        <textarea id="exp_description"></textarea></div>
+    </div>
+    <div id="exp_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="exp_savebtn">Save Expense</button>
+    <button onclick="dlgExpense.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="sm hide" id="exp_paybtn">Record Payment / Mark Paid</button>
+    <button class="danger sm hide" id="exp_delbtn">Delete</button>
+  </div>
+</dialog>
+
+<!-- ============ CHART OF ACCOUNTS DIALOG ============ -->
+<dialog id="dlgAccount">
+  <div class="dlg-head"><h3 id="acct_title">Add Account</h3></div>
+  <div class="dlg-body">
+    <input type="hidden" id="acct_id">
+    <div class="grid">
+      <div><label>Account code</label>
+        <input id="acct_code" placeholder="6010"></div>
+      <div class="req"><label>Account name</label>
+        <input id="acct_name" placeholder="Software & Subscriptions"></div>
+      <div class="req"><label>Type</label>
+        <select id="acct_type">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+          <option value="asset">Asset</option>
+          <option value="liability">Liability</option>
+          <option value="equity">Equity</option>
+        </select></div>
+      <div><label>Tax category</label>
+        <input id="acct_tax_category" placeholder="e.g. Line 27a — Other expenses"></div>
+      <div class="full">
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px">
+          <input type="checkbox" id="acct_active" style="width:auto" checked> Active
+        </label>
+      </div>
+    </div>
+    <div id="acct_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="acct_savebtn">Save Account</button>
+    <button onclick="dlgAccount.close()">Cancel</button>
+    <span class="spacer"></span>
+    <button class="danger sm hide" id="acct_delbtn">Deactivate</button>
+  </div>
+</dialog>
+
+<!-- ============ PAYMENT DIALOG (shared: invoice or expense) ============ -->
+<dialog id="dlgPayment">
+  <div class="dlg-head"><h3 id="pay_title">Record Payment</h3></div>
+  <div class="dlg-body">
+    <input type="hidden" id="pay_context">
+    <input type="hidden" id="pay_ref_id">
+    <div class="grid">
+      <div class="req"><label>Amount ($)</label>
+        <input type="number" step="0.01" id="pay_amount"></div>
+      <div><label>Paid on</label>
+        <input type="date" id="pay_paid_on"></div>
+      <div><label>Method</label>
+        <select id="pay_method">
+          <option value="ach">ACH</option>
+          <option value="check">Check</option>
+          <option value="card">Card</option>
+          <option value="cash">Cash</option>
+          <option value="other">Other</option>
+        </select></div>
+      <div class="full"><label>Notes</label>
+        <textarea id="pay_notes"></textarea></div>
+    </div>
+    <div id="pay_err" class="err"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="primary" id="pay_savebtn">Record Payment</button>
+    <button onclick="dlgPayment.close()">Cancel</button>
+  </div>
+</dialog>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+
+<script>
+
+/* ============================================================
+   CREDENTIALS
+   ============================================================ */
+const SUPABASE_URL      = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $  = id => document.getElementById(id);
+const $$ = (sel, root) => Array.from((root||document).querySelectorAll(sel));
+
+function esc(s){
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function money(n){
+  if (n === null || n === undefined || n === '') return '—';
+  const v = Number(n);
+  if (isNaN(v)) return '—';
+  return v.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
+}
+function num(v){
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+function txt(v){
+  const s = (v === null || v === undefined) ? '' : String(v).trim();
+  return s === '' ? null : s;
+}
+function titleize(s){
+  if (!s) return '';
+  return String(s).replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function todayISO(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function monthLabel(dateStr){
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+}
+function fmtDate(v){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+let toastTimer = null;
+function toast(msg, bad){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show' + (bad ? ' bad' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3400);
+}
+function showErr(elId, error){
+  const el = $(elId);
+  if (el) el.textContent = (error && (error.message || error.details || error.hint)) || String(error);
+}
+function clearErr(elId){ const el = $(elId); if (el) el.textContent = ''; }
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let TENANT_ID = null;
+let CARRIERS = [];
+let CARRIER_MAP = {};
+let ACCOUNTS = [];
+let INVOICES = [];
+let EXPENSES = [];
+let AR_AGING = [];
+let PL_ROWS = [];
+let CASH_FLOW_ROWS = [];
+let SCHEDULE_C_ROWS = [];
+let BILLED_LOAD_IDS = new Set();
+
+let ACTIVE_TAB = 'overview';
+let INV_LINES = [];          // working line items for the open invoice dialog
+let PENDING_LOADS_FOR_CARRIER = [];
+let CURRENT_BILLING_TERMS = null;
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+async function boot(){
+  try {
+    const session = await db.auth.getSession();
+    if (session.error || !session.data || !session.data.session){
+      location.href = 'index.html';
+      return;
+    }
+
+    TENANT_ID = await buildNav(db, 'Business');
+    if (!TENANT_ID){
+      toast('No tenant profile linked to this login.', true);
+      return;
+    }
+
+    $$('#tabstrip button').forEach(b =>
+      b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+    await Promise.all([
+      fetchCarriers(),
+      fetchAccounts(),
+      fetchInvoices(),
+      fetchExpenses(),
+      fetchBilledLoadIds()
+    ]);
+
+    await fetchReports();
+
+    drawCounts();
+    drawKPIs();
+    drawActiveTab();
+  }
+  catch (err){
+    console.error('Business boot failed:', err);
+    toast('Business page failed to load: ' + (err.message||err), true);
+  }
+}
+
+function switchTab(name){
+  ACTIVE_TAB = name;
+  $$('#tabstrip button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
+  drawActiveTab();
+}
+
+function drawActiveTab(){
+  switch(ACTIVE_TAB){
+    case 'overview': drawOverview(); break;
+    case 'invoices': drawInvoices(); break;
+    case 'expenses': drawExpenses(); break;
+    case 'accounts': drawAccounts(); break;
+    case 'reports':  drawReports();  break;
+  }
+}
+
+function drawCounts(){
+  const set = (id,n) => { const el = $(id); if (el) el.textContent = n; };
+  set('cnt-invoices', INVOICES.length);
+  set('cnt-expenses', EXPENSES.length);
+  set('cnt-accounts', ACCOUNTS.length);
+}
+
+/* ============================================================
+   FETCHERS
+   ============================================================ */
+async function fetchCarriers(){
+  const r = await db.from('carriers').select('id,legal_name').is('archived_at', null).order('legal_name');
+  CARRIERS = r.data || [];
+  CARRIER_MAP = Object.fromEntries(CARRIERS.map(c => [c.id, c.legal_name]));
+}
+
+async function fetchAccounts(){
+  const r = await db.from('chart_of_accounts').select('*')
+    .eq('tenant_id', TENANT_ID)
+    .order('account_type').order('account_code');
+  if (r.error){ toast('Chart of accounts: ' + r.error.message, true); ACCOUNTS = []; return; }
+  ACCOUNTS = r.data || [];
+}
+
+async function fetchInvoices(){
+  const r = await db.from('invoices').select('*')
+    .eq('tenant_id', TENANT_ID)
+    .order('created_at', { ascending:false });
+  if (r.error){ toast('Invoices: ' + r.error.message, true); INVOICES = []; return; }
+  INVOICES = r.data || [];
+}
+
+async function fetchInvoiceLineItems(invoiceId){
+  const r = await db.from('invoice_line_items').select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at');
+  if (r.error){ toast('Line items: ' + r.error.message, true); return []; }
+  return r.data || [];
+}
+
+async function fetchExpenses(){
+  const r = await db.from('expenses').select('*')
+    .eq('tenant_id', TENANT_ID)
+    .order('incurred_on', { ascending:false });
+  if (r.error){ toast('Expenses: ' + r.error.message, true); EXPENSES = []; return; }
+  EXPENSES = r.data || [];
+}
+
+async function fetchBilledLoadIds(){
+  const r = await db.from('invoice_line_items').select('load_id').not('load_id','is',null);
+  BILLED_LOAD_IDS = new Set((r.data||[]).map(x => x.load_id));
+}
+
+async function fetchLoadsForCarrier(carrierId){
+  if (!carrierId) return [];
+  const r = await db.from('loads')
+    .select('id,load_number,linehaul_rate,status')
+    .eq('carrier_id', carrierId)
+    .order('created_at', { ascending:false });
+  if (r.error) return [];
+  return (r.data || []).filter(l => !BILLED_LOAD_IDS.has(l.id));
+}
+
+async function fetchBillingTerms(carrierId){
+  if (!carrierId) return null;
+  const r = await db.from('carrier_billing_terms').select('*')
+    .eq('carrier_id', carrierId)
+    .order('effective_date', { ascending:false })
+    .limit(1)
+    .maybeSingle();
+  return r.error ? null : r.data;
+}
+
+async function fetchReports(){
+  const [pl, ar, cf, sc] = await Promise.all([
+    db.from('v_profit_and_loss').select('*').eq('tenant_id', TENANT_ID),
+    db.from('v_ar_aging').select('*').eq('tenant_id', TENANT_ID),
+    db.from('v_cash_flow').select('*').eq('tenant_id', TENANT_ID),
+    db.from('v_schedule_c_summary').select('*').eq('tenant_id', TENANT_ID)
+  ]);
+
+  PL_ROWS = pl.error ? [] : (pl.data || []);
+  AR_AGING = ar.error ? [] : (ar.data || []);
+  CASH_FLOW_ROWS = cf.error ? [] : (cf.data || []);
+  SCHEDULE_C_ROWS = sc.error ? [] : (sc.data || []);
+}
+
+/* ============================================================
+   KPI TILES (current month, from already-fetched report rows)
+   ============================================================ */
+function currentMonthKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function monthKeyOf(dateStr){
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function drawKPIs(){
+  const thisMonth = currentMonthKey();
+
+  const incomeMTD = PL_ROWS
+    .filter(r => r.account_type === 'income' && monthKeyOf(r.period_month) === thisMonth)
+    .reduce((s,r) => s + Number(r.total_amount||0), 0);
+
+  const expenseMTD = PL_ROWS
+    .filter(r => r.account_type === 'expense' && monthKeyOf(r.period_month) === thisMonth)
+    .reduce((s,r) => s + Number(r.total_amount||0), 0);
+
+  const net = incomeMTD - expenseMTD;
+
+  const arOutstanding = AR_AGING.reduce((s,r) => s + Number(r.total||0), 0);
+
+  $('kpiIncome').querySelector('.n').textContent = money(incomeMTD);
+  $('kpiExpenses').querySelector('.n').textContent = money(expenseMTD);
+
+  const netTile = $('kpiNet');
+  netTile.querySelector('.n').textContent = money(net);
+  netTile.className = 'tile ' + (net >= 0 ? 'ok' : 'danger');
+
+  $('kpiAR').querySelector('.n').textContent = money(arOutstanding);
+  $('kpiAR').className = 'tile' + (arOutstanding > 0 ? ' warn' : '');
+}
+
+/* ============================================================
+   OVERVIEW TAB
+   ============================================================ */
+function drawOverview(){
+  const thisMonth = currentMonthKey();
+
+  const incomeMTD = PL_ROWS
+    .filter(r => r.account_type === 'income' && monthKeyOf(r.period_month) === thisMonth)
+    .reduce((s,r) => s + Number(r.total_amount||0), 0);
+
+  const expenseMTD = PL_ROWS
+    .filter(r => r.account_type === 'expense' && monthKeyOf(r.period_month) === thisMonth)
+    .reduce((s,r) => s + Number(r.total_amount||0), 0);
+
+  const unpaidInvoices = INVOICES.filter(i => i.status === 'sent' || i.status === 'overdue');
+  const unpaidExpenses = EXPENSES.filter(e => e.payment_status === 'unpaid');
+
+  const recentInvoices = INVOICES.slice(0,5);
+  const recentExpenses = EXPENSES.slice(0,5);
+
+  $('tab-overview').innerHTML = `
+    <div class="grid">
+      <div class="card">
+        <h3 style="font-size:13px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">This Month</h3>
+        <div style="font-size:13px;line-height:1.9">
+          <div>Income: <b>${money(incomeMTD)}</b></div>
+          <div>Expenses: <b>${money(expenseMTD)}</b></div>
+          <div>Net: <b style="color:${(incomeMTD-expenseMTD)>=0?'var(--ok)':'var(--danger)'}">${money(incomeMTD-expenseMTD)}</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:13px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Outstanding</h3>
+        <div style="font-size:13px;line-height:1.9">
+          <div>${unpaidInvoices.length} invoice${unpaidInvoices.length===1?'':'s'} awaiting payment</div>
+          <div>${unpaidExpenses.length} expense${unpaidExpenses.length===1?'':'s'} unpaid</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:4px">
+      <div class="card">
+        <div class="sechead"><h2>Recent Invoices</h2><span class="spacer"></span>
+          <button class="sm" onclick="switchTab('invoices')">View all</button></div>
+        ${recentInvoices.length ? `
+        <div class="tablewrap"><table>
+          <thead><tr><th>Invoice</th><th>Carrier</th><th>Status</th><th style="text-align:right">Total</th></tr></thead>
+          <tbody>${recentInvoices.map(i => `
+            <tr>
+              <td>${esc(i.invoice_number || '(draft)')}</td>
+              <td>${esc(CARRIER_MAP[i.carrier_id] || '—')}</td>
+              <td>${invoiceStatusPill(i.status)}</td>
+              <td style="text-align:right">${money(i.total)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>` : '<div class="empty">No invoices yet.</div>'}
+      </div>
+
+      <div class="card">
+        <div class="sechead"><h2>Recent Expenses</h2><span class="spacer"></span>
+          <button class="sm" onclick="switchTab('expenses')">View all</button></div>
+        ${recentExpenses.length ? `
+        <div class="tablewrap"><table>
+          <thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${recentExpenses.map(e => `
+            <tr>
+              <td>${fmtDate(e.incurred_on)}</td>
+              <td>${esc(e.vendor || '—')}</td>
+              <td>${esc(accountName(e.account_id))}</td>
+              <td style="text-align:right">${money(e.amount)}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>` : '<div class="empty">No expenses yet.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function accountName(accountId){
+  const a = ACCOUNTS.find(x => x.id === accountId);
+  return a ? a.account_name : '—';
+}
+
+function invoiceStatusPill(status){
+  const tone = { draft:'', sent:'accent', paid:'ok', overdue:'danger', void:'' }[status] || '';
+  return `<span class="pill ${tone}">${esc(titleize(status))}</span>`;
+}
+
+/* ============================================================
+   INVOICES TAB
+   ============================================================ */
+function drawInvoices(){
+  const rows = INVOICES.map(i => `
+    <tr class="clickable" data-invoice="${esc(i.id)}">
+      <td><b>${esc(i.invoice_number || '(draft)')}</b></td>
+      <td>${esc(CARRIER_MAP[i.carrier_id] || '—')}</td>
+      <td>${invoiceStatusPill(i.status)}</td>
+      <td>${fmtDate(i.issue_date)}</td>
+      <td>${fmtDate(i.due_date)}</td>
+      <td style="text-align:right">${money(i.total)}</td>
+    </tr>`).join('');
+
+  $('tab-invoices').innerHTML = `
+    <div class="sechead"><h2>Invoices</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openInvoice(null)">+ New Invoice</button></div>
+    ${INVOICES.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Invoice #</th><th>Carrier</th><th>Status</th><th>Issued</th><th>Due</th>
+        <th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No invoices yet. Click "+ New Invoice" to bill a carrier.</div></div>'}
+  `;
+
+  $$('#tab-invoices tr[data-invoice]').forEach(tr =>
+    tr.addEventListener('click', () => openInvoice(tr.dataset.invoice)));
+}
+
+async function openInvoice(id){
+  clearErr('inv_err');
+  const inv = id ? INVOICES.find(x => x.id === id) : null;
+
+  $('inv_id').value = inv ? inv.id : '';
+  $('inv_title').textContent = inv ? `Invoice ${inv.invoice_number || ''}` : 'New Invoice';
+  $('inv_idlabel').textContent = inv ? inv.id.slice(0,8) : '';
+  $('inv_delbtn').classList.toggle('hide', !inv);
+  $('inv_paybtn').classList.toggle('hide', !inv || inv.status === 'paid' || inv.status === 'void');
+
+  $('inv_carrier').innerHTML = '<option value="">— choose carrier —</option>' +
+    CARRIERS.map(c => `<option value="${esc(c.id)}">${esc(c.legal_name)}</option>`).join('');
+  $('inv_carrier').value = inv ? (inv.carrier_id || '') : '';
+
+  $('inv_number').value = inv ? (inv.invoice_number || '') : '';
+  $('inv_status').value = inv ? (inv.status || 'draft') : 'draft';
+  $('inv_issue_date').value = inv ? (inv.issue_date || '') : todayISO();
+  $('inv_due_date').value = inv ? (inv.due_date || '') : '';
+  $('inv_notes').value = inv ? (inv.notes || '') : '';
+
+  INV_LINES = inv ? await fetchInvoiceLineItems(inv.id) : [];
+
+  await refreshLoadPickerForInvoice();
+  drawInvoiceLines();
+
+  dlgInvoice.showModal();
+}
+
+async function refreshLoadPickerForInvoice(){
+  const carrierId = $('inv_carrier').value;
+  CURRENT_BILLING_TERMS = await fetchBillingTerms(carrierId);
+  PENDING_LOADS_FOR_CARRIER = await fetchLoadsForCarrier(carrierId);
+
+  $('inv_loadpicker').innerHTML = '<option value="">— choose a load to bill —</option>' +
+    PENDING_LOADS_FOR_CARRIER.map(l =>
+      `<option value="${esc(l.id)}">${esc(l.load_number || l.id.slice(0,8))} — ${money(l.linehaul_rate)} linehaul</option>`
+    ).join('');
+}
+
+$('inv_carrier').addEventListener('change', refreshLoadPickerForInvoice);
+
+function computeLineAmountFromLoad(load){
+  if (!CURRENT_BILLING_TERMS) return { fee_type:'other', basis_amount:load.linehaul_rate, rate:null, amount:0 };
+
+  if (CURRENT_BILLING_TERMS.fee_type === 'flat'){
+    return {
+      fee_type:'flat',
+      basis_amount: load.linehaul_rate,
+      rate: CURRENT_BILLING_TERMS.flat_fee_amount,
+      amount: Number(CURRENT_BILLING_TERMS.flat_fee_amount || 0)
+    };
+  }
+
+  const rate = Number(CURRENT_BILLING_TERMS.percentage_rate || 0);
+  const basis = Number(load.linehaul_rate || 0);
+  return {
+    fee_type:'percentage',
+    basis_amount: basis,
+    rate,
+    amount: Math.round(basis * rate * 100) / 100
+  };
+}
+
+$('inv_addfromload').addEventListener('click', () => {
+  const loadId = $('inv_loadpicker').value;
+  if (!loadId){ toast('Choose a load first.', true); return; }
+
+  const load = PENDING_LOADS_FOR_CARRIER.find(l => l.id === loadId);
+  if (!load) return;
+
+  const calc = computeLineAmountFromLoad(load);
+
+  INV_LINES.push({
+    load_id: load.id,
+    description: 'Dispatch fee — ' + (load.load_number || load.id.slice(0,8)),
+    fee_type: calc.fee_type,
+    basis_amount: calc.basis_amount,
+    rate: calc.rate,
+    amount: calc.amount
+  });
+
+  drawInvoiceLines();
+});
+
+$('inv_addblank').addEventListener('click', () => {
+  INV_LINES.push({
+    load_id: null,
+    description: '',
+    fee_type: 'other',
+    basis_amount: null,
+    rate: null,
+    amount: 0
+  });
+  drawInvoiceLines();
+});
+
+function drawInvoiceLines(){
+  const host = $('inv_lines');
+
+  if (!INV_LINES.length){
+    host.innerHTML = '<div class="empty small">No line items yet.</div>';
+  } else {
+    host.innerHTML = INV_LINES.map((line, i) => `
+      <div class="linerow" data-line="${i}">
+        <div><label>Description</label>
+          <input data-field="description" value="${esc(line.description||'')}"></div>
+        <div><label>Fee type</label>
+          <select data-field="fee_type">
+            <option value="flat" ${line.fee_type==='flat'?'selected':''}>Flat</option>
+            <option value="percentage" ${line.fee_type==='percentage'?'selected':''}>Percentage</option>
+            <option value="other" ${line.fee_type==='other'?'selected':''}>Other</option>
+          </select></div>
+        <div><label>Rate</label>
+          <input type="number" step="0.0001" data-field="rate" value="${line.rate ?? ''}"></div>
+        <div><label>Amount ($)</label>
+          <input type="number" step="0.01" data-field="amount" value="${line.amount ?? 0}"></div>
+        <div><button type="button" class="danger sm" data-remove="${i}">Remove</button></div>
+      </div>
+    `).join('');
+
+    $$('#inv_lines [data-field]').forEach(el => {
+      el.addEventListener('input', () => {
+        const idx = Number(el.closest('[data-line]').dataset.line);
+        const field = el.dataset.field;
+        INV_LINES[idx][field] = field === 'amount' || field === 'rate' ? num(el.value) : el.value;
+        updateInvoiceTotalDisplay();
+      });
+    });
+
+    $$('#inv_lines [data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        INV_LINES.splice(Number(btn.dataset.remove), 1);
+        drawInvoiceLines();
+      });
+    });
+  }
+
+  updateInvoiceTotalDisplay();
+}
+
+function updateInvoiceTotalDisplay(){
+  const total = INV_LINES.reduce((s,l) => s + Number(l.amount || 0), 0);
+  $('inv_totaldisplay').textContent = money(total);
+}
+
+async function saveInvoice(){
+  clearErr('inv_err');
+  const btn = $('inv_savebtn');
+  btn.disabled = true;
+
+  const id = txt($('inv_id').value);
+  const carrierId = $('inv_carrier').value;
+
+  if (!carrierId){
+    showErr('inv_err', { message:'Choose a carrier.' });
+    btn.disabled = false;
+    return;
+  }
+
+  const total = INV_LINES.reduce((s,l) => s + Number(l.amount || 0), 0);
+
+  const row = {
+    tenant_id: TENANT_ID,
+    carrier_id: carrierId,
+    invoice_number: txt($('inv_number').value),
+    status: $('inv_status').value,
+    issue_date: txt($('inv_issue_date').value),
+    due_date: txt($('inv_due_date').value),
+    notes: txt($('inv_notes').value),
+    subtotal: total,
+    total: total,
+    updated_at: new Date().toISOString()
+  };
+
+  let invoiceId = id;
+  let error = null;
+
+  if (id){
+    const r = await db.from('invoices').update(row).eq('id', id);
+    error = r.error;
+  } else {
+    const r = await db.from('invoices').insert(row).select('id').single();
+    error = r.error;
+    if (!error) invoiceId = r.data.id;
+  }
+
+  if (error){ showErr('inv_err', error); btn.disabled = false; return; }
+
+  // Replace line items wholesale — simplest correct approach at this volume
+  await db.from('invoice_line_items').delete().eq('invoice_id', invoiceId);
+
+  if (INV_LINES.length){
+    const lineRows = INV_LINES.map(l => ({
+      tenant_id: TENANT_ID,
+      invoice_id: invoiceId,
+      load_id: l.load_id || null,
+      description: l.description || '(no description)',
+      fee_type: l.fee_type || 'other',
+      basis_amount: l.basis_amount,
+      rate: l.rate,
+      amount: Number(l.amount || 0)
+    }));
+    const li = await db.from('invoice_line_items').insert(lineRows);
+    if (li.error){
+      showErr('inv_err', li.error);
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  btn.disabled = false;
+  dlgInvoice.close();
+  toast(id ? 'Invoice updated' : 'Invoice created');
+
+  await Promise.all([fetchInvoices(), fetchBilledLoadIds(), fetchReports()]);
+  drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+async function deleteInvoice(){
+  const id = txt($('inv_id').value);
+  if (!id) return;
+  if (!confirm('Delete this invoice and its line items? This cannot be undone.')) return;
+
+  await db.from('invoice_line_items').delete().eq('invoice_id', id);
+  const { error } = await db.from('invoices').delete().eq('id', id);
+  if (error){ showErr('inv_err', error); return; }
+
+  dlgInvoice.close();
+  toast('Invoice deleted');
+  await Promise.all([fetchInvoices(), fetchBilledLoadIds(), fetchReports()]);
+  drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+function openInvoicePayment(){
+  const id = txt($('inv_id').value);
+  const inv = INVOICES.find(x => x.id === id);
+  if (!inv) return;
+
+  clearErr('pay_err');
+  $('pay_context').value = 'invoice';
+  $('pay_ref_id').value = id;
+  $('pay_title').textContent = 'Record Payment — Invoice ' + (inv.invoice_number || '');
+  $('pay_amount').value = inv.total;
+  $('pay_paid_on').value = todayISO();
+  $('pay_method').value = 'ach';
+  $('pay_notes').value = '';
+
+  dlgPayment.showModal();
+}
+
+/* ============================================================
+   EXPENSES TAB
+   ============================================================ */
+function drawExpenses(){
+  const rows = EXPENSES.map(e => `
+    <tr class="clickable" data-expense="${esc(e.id)}">
+      <td>${fmtDate(e.incurred_on)}</td>
+      <td>${esc(e.vendor || '—')}</td>
+      <td>${esc(accountName(e.account_id))}</td>
+      <td class="small">${esc(e.description || '—')}</td>
+      <td>${e.payment_status === 'paid'
+        ? '<span class="pill ok">Paid</span>'
+        : '<span class="pill warn">Unpaid</span>'}</td>
+      <td style="text-align:right">${money(e.amount)}</td>
+    </tr>`).join('');
+
+  $('tab-expenses').innerHTML = `
+    <div class="sechead"><h2>Expenses</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openExpense(null)">+ Add Expense</button></div>
+    ${EXPENSES.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Description</th><th>Status</th>
+        <th style="text-align:right">Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No expenses recorded yet.</div></div>'}
+  `;
+
+  $$('#tab-expenses tr[data-expense]').forEach(tr =>
+    tr.addEventListener('click', () => openExpense(tr.dataset.expense)));
+}
+
+function openExpense(id){
+  clearErr('exp_err');
+  const e = id ? EXPENSES.find(x => x.id === id) : null;
+
+  $('exp_id').value = e ? e.id : '';
+  $('exp_title').textContent = e ? 'Edit Expense' : 'Add Expense';
+  $('exp_delbtn').classList.toggle('hide', !e);
+  $('exp_paybtn').classList.toggle('hide', !e || e.payment_status === 'paid');
+
+  const expenseAccounts = ACCOUNTS.filter(a => a.account_type === 'expense' && a.is_active);
+  $('exp_account').innerHTML = expenseAccounts.map(a =>
+    `<option value="${esc(a.id)}">${esc(a.account_name)}</option>`).join('');
+  $('exp_account').value = e ? (e.account_id || '') : (expenseAccounts[0]?.id || '');
+
+  $('exp_vendor').value = e ? (e.vendor || '') : '';
+  $('exp_amount').value = e ? e.amount : '';
+  $('exp_incurred_on').value = e ? (e.incurred_on || '') : todayISO();
+  $('exp_payment_status').value = e ? (e.payment_status || 'unpaid') : 'unpaid';
+  $('exp_description').value = e ? (e.description || '') : '';
+
+  dlgExpense.showModal();
+}
+
+async function saveExpense(){
+  clearErr('exp_err');
+  const btn = $('exp_savebtn');
+  btn.disabled = true;
+
+  const id = txt($('exp_id').value);
+  const accountId = $('exp_account').value;
+  const amount = num($('exp_amount').value);
+
+  if (!accountId){ showErr('exp_err', {message:'Choose a category.'}); btn.disabled = false; return; }
+  if (amount === null){ showErr('exp_err', {message:'Amount is required.'}); btn.disabled = false; return; }
+
+  const row = {
+    account_id: accountId,
+    vendor: txt($('exp_vendor').value),
+    description: txt($('exp_description').value),
+    amount,
+    incurred_on: txt($('exp_incurred_on').value) || todayISO(),
+    payment_status: $('exp_payment_status').value
+  };
+
+  let error = null;
+  if (id){
+    const r = await db.from('expenses').update(row).eq('id', id);
+    error = r.error;
+  } else {
+    row.tenant_id = TENANT_ID;
+    const r = await db.from('expenses').insert(row);
+    error = r.error;
+  }
+
+  btn.disabled = false;
+  if (error){ showErr('exp_err', error); return; }
+
+  dlgExpense.close();
+  toast(id ? 'Expense updated' : 'Expense added');
+  await Promise.all([fetchExpenses(), fetchReports()]);
+  drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+async function deleteExpense(){
+  const id = txt($('exp_id').value);
+  if (!id) return;
+  if (!confirm('Delete this expense?')) return;
+
+  const { error } = await db.from('expenses').delete().eq('id', id);
+  if (error){ showErr('exp_err', error); return; }
+
+  dlgExpense.close();
+  toast('Expense deleted');
+  await Promise.all([fetchExpenses(), fetchReports()]);
+  drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+function openExpensePayment(){
+  const id = txt($('exp_id').value);
+  const e = EXPENSES.find(x => x.id === id);
+  if (!e) return;
+
+  clearErr('pay_err');
+  $('pay_context').value = 'expense';
+  $('pay_ref_id').value = id;
+  $('pay_title').textContent = 'Record Payment — ' + (e.vendor || accountName(e.account_id));
+  $('pay_amount').value = e.amount;
+  $('pay_paid_on').value = todayISO();
+  $('pay_method').value = 'ach';
+  $('pay_notes').value = '';
+
+  dlgPayment.showModal();
+}
+
+/* ============================================================
+   PAYMENT DIALOG (shared)
+   ============================================================ */
+async function savePayment(){
+  clearErr('pay_err');
+  const btn = $('pay_savebtn');
+  btn.disabled = true;
+
+  const context = $('pay_context').value;
+  const refId = $('pay_ref_id').value;
+  const amount = num($('pay_amount').value);
+
+  if (amount === null){ showErr('pay_err', {message:'Amount is required.'}); btn.disabled = false; return; }
+
+  const paymentRow = {
+    tenant_id: TENANT_ID,
+    direction: context === 'invoice' ? 'in' : 'out',
+    invoice_id: context === 'invoice' ? refId : null,
+    expense_id: context === 'expense' ? refId : null,
+    amount,
+    paid_on: txt($('pay_paid_on').value) || todayISO(),
+    method: $('pay_method').value,
+    notes: txt($('pay_notes').value)
+  };
+
+  const p = await db.from('payments').insert(paymentRow);
+  if (p.error){ showErr('pay_err', p.error); btn.disabled = false; return; }
+
+  if (context === 'invoice'){
+    const u = await db.from('invoices').update({ status:'paid', updated_at:new Date().toISOString() }).eq('id', refId);
+    if (u.error){ showErr('pay_err', u.error); btn.disabled = false; return; }
+  } else {
+    const u = await db.from('expenses').update({ payment_status:'paid' }).eq('id', refId);
+    if (u.error){ showErr('pay_err', u.error); btn.disabled = false; return; }
+  }
+
+  btn.disabled = false;
+  dlgPayment.close();
+  if (context === 'invoice') dlgInvoice.close();
+  else dlgExpense.close();
+
+  toast('Payment recorded');
+
+  await Promise.all([fetchInvoices(), fetchExpenses(), fetchReports()]);
+  drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+/* ============================================================
+   CHART OF ACCOUNTS TAB
+   ============================================================ */
+function drawAccounts(){
+  const groups = { income:[], expense:[], asset:[], liability:[], equity:[] };
+  ACCOUNTS.forEach(a => { (groups[a.account_type] = groups[a.account_type] || []).push(a); });
+
+  const order = ['income','expense','asset','liability','equity'];
+
+  const sections = order.filter(t => groups[t] && groups[t].length).map(type => `
+    <tr><td colspan="4" style="background:#f7f8fa;font-size:11px;text-transform:uppercase;
+      letter-spacing:.5px;font-weight:700;color:var(--muted);padding:8px 10px">${esc(titleize(type))}</td></tr>
+    ${groups[type].map(a => `
+      <tr class="clickable" data-account="${esc(a.id)}">
+        <td class="mono small">${esc(a.account_code || '—')}</td>
+        <td>${esc(a.account_name)}${!a.is_active ? ' <span class="pill">Inactive</span>' : ''}</td>
+        <td class="small muted">${esc(a.tax_category || '—')}</td>
+        <td></td>
+      </tr>`).join('')}
+  `).join('');
+
+  $('tab-accounts').innerHTML = `
+    <div class="sechead"><h2>Chart of Accounts</h2><span class="spacer"></span>
+      <button class="primary sm" onclick="openAccount(null)">+ Add Account</button></div>
+    ${ACCOUNTS.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Code</th><th>Name</th><th>Tax Category</th><th></th></tr></thead>
+      <tbody>${sections}</tbody>
+    </table></div>`
+    : '<div class="card"><div class="empty">No accounts yet.</div></div>'}
+  `;
+
+  $$('#tab-accounts tr[data-account]').forEach(tr =>
+    tr.addEventListener('click', () => openAccount(tr.dataset.account)));
+}
+
+function openAccount(id){
+  clearErr('acct_err');
+  const a = id ? ACCOUNTS.find(x => x.id === id) : null;
+
+  $('acct_id').value = a ? a.id : '';
+  $('acct_title').textContent = a ? 'Edit Account' : 'Add Account';
+  $('acct_delbtn').classList.toggle('hide', !a);
+  $('acct_delbtn').textContent = a && a.is_active ? 'Deactivate' : 'Reactivate';
+
+  $('acct_code').value = a ? (a.account_code || '') : '';
+  $('acct_name').value = a ? (a.account_name || '') : '';
+  $('acct_type').value = a ? (a.account_type || 'expense') : 'expense';
+  $('acct_tax_category').value = a ? (a.tax_category || '') : '';
+  $('acct_active').checked = a ? !!a.is_active : true;
+
+  dlgAccount.showModal();
+}
+
+async function saveAccount(){
+  clearErr('acct_err');
+  const btn = $('acct_savebtn');
+  btn.disabled = true;
+
+  const id = txt($('acct_id').value);
+  const name = txt($('acct_name').value);
+
+  if (!name){ showErr('acct_err', {message:'Account name is required.'}); btn.disabled = false; return; }
+
+  const row = {
+    account_code: txt($('acct_code').value),
+    account_name: name,
+    account_type: $('acct_type').value,
+    tax_category: txt($('acct_tax_category').value),
+    is_active: $('acct_active').checked,
+    updated_at: new Date().toISOString()
+  };
+
+  let error = null;
+  if (id){
+    const r = await db.from('chart_of_accounts').update(row).eq('id', id);
+    error = r.error;
+  } else {
+    row.tenant_id = TENANT_ID;
+    const r = await db.from('chart_of_accounts').insert(row);
+    error = r.error;
+  }
+
+  btn.disabled = false;
+  if (error){ showErr('acct_err', error); return; }
+
+  dlgAccount.close();
+  toast(id ? 'Account updated' : 'Account added');
+  await fetchAccounts();
+  drawCounts(); drawActiveTab();
+}
+
+async function toggleAccountActive(){
+  const id = txt($('acct_id').value);
+  const a = ACCOUNTS.find(x => x.id === id);
+  if (!a) return;
+
+  const { error } = await db.from('chart_of_accounts')
+    .update({ is_active: !a.is_active, updated_at:new Date().toISOString() })
+    .eq('id', id);
+
+  if (error){ showErr('acct_err', error); return; }
+
+  dlgAccount.close();
+  toast(a.is_active ? 'Account deactivated' : 'Account reactivated');
+  await fetchAccounts();
+  drawCounts(); drawActiveTab();
+}
+
+/* ============================================================
+   REPORTS TAB
+   ============================================================ */
+function drawReports(){
+  const monthKeys = [...new Set(PL_ROWS.map(r => monthKeyOf(r.period_month)))]
+    .filter(Boolean)
+    .sort((a,b) => b.localeCompare(a));
+
+  const plByMonth = monthKeys.map(mk => {
+    const income = PL_ROWS.filter(r => r.account_type==='income' && monthKeyOf(r.period_month)===mk)
+      .reduce((s,r)=>s+Number(r.total_amount||0),0);
+    const expense = PL_ROWS.filter(r => r.account_type==='expense' && monthKeyOf(r.period_month)===mk)
+      .reduce((s,r)=>s+Number(r.total_amount||0),0);
+    const sample = PL_ROWS.find(r => monthKeyOf(r.period_month)===mk);
+    return { label: monthLabel(sample?.period_month), income, expense, net: income-expense };
+  });
+
+  const cashMonths = [...new Set(CASH_FLOW_ROWS.map(r => monthKeyOf(r.period_month)))]
+    .filter(Boolean).sort((a,b)=>b.localeCompare(a));
+
+  const cashByMonth = cashMonths.map(mk => {
+    const inAmt = CASH_FLOW_ROWS.filter(r=>r.direction==='in' && monthKeyOf(r.period_month)===mk)
+      .reduce((s,r)=>s+Number(r.total_amount||0),0);
+    const outAmt = CASH_FLOW_ROWS.filter(r=>r.direction==='out' && monthKeyOf(r.period_month)===mk)
+      .reduce((s,r)=>s+Number(r.total_amount||0),0);
+    const sample = CASH_FLOW_ROWS.find(r=>monthKeyOf(r.period_month)===mk);
+    return { label: monthLabel(sample?.period_month), inAmt, outAmt, net: inAmt-outAmt };
+  });
+
+  const agingBuckets = ['current','1-30 days','31-60 days','61-90 days','90+ days'];
+  const agingSummary = agingBuckets.map(b => ({
+    bucket: b,
+    count: AR_AGING.filter(r=>r.aging_bucket===b).length,
+    total: AR_AGING.filter(r=>r.aging_bucket===b).reduce((s,r)=>s+Number(r.total||0),0)
+  })).filter(r => r.count > 0);
+
+  const scYears = [...new Set(SCHEDULE_C_ROWS.map(r=>r.tax_year))].sort((a,b)=>b-a);
+  const currentYear = scYears[0] || new Date().getFullYear();
+
+  $('tab-reports').innerHTML = `
+
+    <div class="card">
+      <div class="sechead"><h2>Profit &amp; Loss</h2></div>
+      ${plByMonth.length ? `
+      <div class="tablewrap"><table>
+        <thead><tr><th>Month</th><th style="text-align:right">Income</th>
+          <th style="text-align:right">Expenses</th><th style="text-align:right">Net</th></tr></thead>
+        <tbody>${plByMonth.map(m => `
+          <tr>
+            <td>${esc(m.label)}</td>
+            <td style="text-align:right">${money(m.income)}</td>
+            <td style="text-align:right">${money(m.expense)}</td>
+            <td style="text-align:right;font-weight:700;color:${m.net>=0?'var(--ok)':'var(--danger)'}">${money(m.net)}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty">No income or expense data yet.</div>'}
+    </div>
+
+    <div class="card">
+      <div class="sechead"><h2>Accounts Receivable Aging</h2></div>
+      ${agingSummary.length ? `
+      <div class="tablewrap"><table>
+        <thead><tr><th>Bucket</th><th># Invoices</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>${agingSummary.map(a => `
+          <tr>
+            <td>${esc(titleize(a.bucket))}</td>
+            <td>${a.count}</td>
+            <td style="text-align:right">${money(a.total)}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>`
+      : '<div class="empty">No outstanding invoices.</div>'}
+    </div>
+
+    <div class="card">
+      <div class="sechead"><h2>Cash Flow</h2></div>
+      ${cashByMonth.length ? `
+      <div class="tablewrap"><table>
+        <thead><tr><th>Month</th><th style="text-align:right">Cash In</th>
+          <th style="text-align:right">Cash Out</th><th style="text-align:right">Net</th></tr></thead>
+        <tbody>${cashByMonth.map(m => `
+          <tr>
+            <td>${esc(m.label)}</td>
+            <td style="text-align:right">${money(m.inAmt)}</td>
+            <td style="text-align:right">${money(m.outAmt)}</td>
+            <td style="text-align:right;font-weight:700;color:${m.net>=0?'var(--ok)':'var(--danger)'}">${money(m.net)}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>` : '<div class="empty">No recorded payments yet.</div>'}
+    </div>
+
+    <div class="card">
+      <div class="sechead"><h2>Schedule C Summary</h2><span class="spacer"></span>
+        <span class="report-year">
+          <select id="scYearPicker">
+            ${scYears.map(y => `<option value="${y}" ${y===currentYear?'selected':''}>${y}</option>`).join('')}
+          </select>
+        </span>
+      </div>
+      <div id="scYearTable"></div>
+    </div>
+  `;
+
+  if (scYears.length){
+    $('scYearPicker').addEventListener('change', () => drawScheduleCYear(Number($('scYearPicker').value)));
+    drawScheduleCYear(currentYear);
+  } else {
+    $('scYearTable').innerHTML = '<div class="empty">No categorized expenses yet.</div>';
+  }
+}
+
+function drawScheduleCYear(year){
+  const rows = SCHEDULE_C_ROWS.filter(r => r.tax_year === year);
+  const grandTotal = rows.reduce((s,r)=>s+Number(r.total_amount||0),0);
+
+  $('scYearTable').innerHTML = rows.length ? `
+    <div class="tablewrap"><table>
+      <thead><tr><th>Tax Category</th><th>Account</th><th style="text-align:right">Total</th></tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td class="small">${esc(r.tax_category)}</td>
+          <td>${esc(r.account_name)}</td>
+          <td style="text-align:right">${money(r.total_amount)}</td>
+        </tr>`).join('')}
+        <tr>
+          <td colspan="2" style="font-weight:700">Total</td>
+          <td style="text-align:right;font-weight:700">${money(grandTotal)}</td>
+        </tr>
+      </tbody>
+    </table></div>
+  ` : '<div class="empty">No categorized expenses for this year.</div>';
+}
+
+/* ============================================================
+   WIRE UP + START
+   ============================================================ */
+$('inv_savebtn').addEventListener('click', saveInvoice);
+$('inv_delbtn').addEventListener('click', deleteInvoice);
+$('inv_paybtn').addEventListener('click', openInvoicePayment);
+
+$('exp_savebtn').addEventListener('click', saveExpense);
+$('exp_delbtn').addEventListener('click', deleteExpense);
+$('exp_paybtn').addEventListener('click', openExpensePayment);
+
+$('acct_savebtn').addEventListener('click', saveAccount);
+$('acct_delbtn').addEventListener('click', toggleAccountActive);
+
+$('pay_savebtn').addEventListener('click', savePayment);
+
+boot();
+
+</script>
+
+</body>
+</html>
