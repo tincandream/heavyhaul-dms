@@ -804,572 +804,6 @@ main {
 
 
 /* ============================================================
-   DRIVER / CARRIER PROFIT CALCULATOR
-   ============================================================ */
-
-function updateDriverPayExplain(){
-  const method =
-    $('cpDriverPayType').value;
-
-  const explain =
-    $('cpDriverPayExplain');
-
-  if(method === 'percent'){
-    explain.textContent =
-      'Enter 25 for 25% of gross load revenue.';
-  }
-  else if(method === 'per_mile'){
-    explain.textContent =
-      'Enter the driver pay rate per total mile.';
-  }
-  else{
-    explain.textContent =
-      'Enter the flat driver pay amount for this load.';
-  }
-}
-
-
-function calculateCarrierProfit(){
-
-  lastCarrierProfitCalculation =
-    null;
-
-  const linehaul =
-    n('cpLinehaul');
-
-  const fuelSurcharge =
-    n('cpFuelSurcharge');
-
-  const otherRevenue =
-    n('cpOtherRevenue');
-
-  const loadedMiles =
-    n('cpLoadedMiles');
-
-  const deadheadMiles =
-    n('cpDeadheadMiles');
-
-  const dispatchRate =
-    n('cpDispatchRate');
-
-  const driverPayType =
-    $('cpDriverPayType').value;
-
-  const driverPayRate =
-    n('cpDriverPayRate');
-
-  const driverExtraPay =
-    n('cpDriverExtraPay');
-
-  const fuelCost =
-    n('cpFuelCost');
-
-  const permitCost =
-    n('cpPermitCost');
-
-  const escortCost =
-    n('cpEscortCost');
-
-  const tollCost =
-    n('cpTollCost');
-
-  const lodgingCost =
-    n('cpLodgingCost');
-
-  const maintenancePerMile =
-    n('cpMaintenancePerMile');
-
-  const overheadCost =
-    n('cpOverheadCost');
-
-  const otherCost =
-    n('cpOtherCost');
-
-
-  const grossRevenue =
-    linehaul +
-    fuelSurcharge +
-    otherRevenue;
-
-  const totalMiles =
-    loadedMiles +
-    deadheadMiles;
-
-  const dispatchFee =
-    grossRevenue *
-    (
-      dispatchRate /
-      100
-    );
-
-  let baseDriverPay = 0;
-
-  if(driverPayType === 'percent'){
-    baseDriverPay =
-      grossRevenue *
-      (
-        driverPayRate /
-        100
-      );
-  }
-  else if(driverPayType === 'per_mile'){
-    baseDriverPay =
-      totalMiles *
-      driverPayRate;
-  }
-  else{
-    baseDriverPay =
-      driverPayRate;
-  }
-
-  const driverPay =
-    baseDriverPay +
-    driverExtraPay;
-
-  const maintenanceReserve =
-    totalMiles *
-    maintenancePerMile;
-
-  const operatingCosts =
-    fuelCost +
-    permitCost +
-    escortCost +
-    tollCost +
-    lodgingCost +
-    maintenanceReserve +
-    overheadCost +
-    otherCost;
-
-  const carrierNet =
-    grossRevenue -
-    dispatchFee -
-    driverPay -
-    operatingCosts;
-
-  const carrierMargin =
-    grossRevenue > 0
-      ? (
-          carrierNet /
-          grossRevenue
-        ) *
-        100
-      : 0;
-
-  const revenuePerMile =
-    totalMiles > 0
-      ? grossRevenue /
-        totalMiles
-      : 0;
-
-  const carrierProfitMile =
-    totalMiles > 0
-      ? carrierNet /
-        totalMiles
-      : 0;
-
-  const driverPayMile =
-    totalMiles > 0
-      ? driverPay /
-        totalMiles
-      : 0;
-
-  const breakEvenRevenue =
-    dispatchFee +
-    driverPay +
-    operatingCosts;
-
-
-  $('cpGrossRevenue').textContent =
-    money(grossRevenue);
-
-  $('cpRevenuePerMile').textContent =
-    totalMiles
-      ? '$' +
-        revenuePerMile.toFixed(2)
-      : '—';
-
-  $('cpDispatchFee').textContent =
-    money(dispatchFee);
-
-  $('cpDriverPay').textContent =
-    money(driverPay);
-
-  $('cpOperatingCosts').textContent =
-    money(operatingCosts);
-
-  $('cpCarrierNet').textContent =
-    money(carrierNet);
-
-  $('cpCarrierNet').className =
-    'metric-value ' +
-    (
-      carrierNet >= 0
-        ? 'money-positive'
-        : 'money-negative'
-    );
-
-  $('cpCarrierMargin').textContent =
-    carrierMargin.toFixed(1) +
-    '%';
-
-  $('cpCarrierProfitMile').textContent =
-    totalMiles
-      ? '$' +
-        carrierProfitMile.toFixed(2)
-      : '—';
-
-  $('cpDriverPayMile').textContent =
-    totalMiles
-      ? '$' +
-        driverPayMile.toFixed(2)
-      : '—';
-
-
-  if(carrierNet < 0){
-    $('carrierProfitStatus').className =
-      'result-status no';
-
-    $('carrierProfitStatusMain').textContent =
-      'Carrier Loss';
-
-    $('carrierProfitStatusDetail').textContent =
-      'Driver pay, dispatch fee and operating costs exceed the entered revenue.';
-  }
-  else if(carrierMargin < 10){
-    $('carrierProfitStatus').className =
-      'result-status tight';
-
-    $('carrierProfitStatusMain').textContent =
-      'Thin Carrier Margin';
-
-    $('carrierProfitStatusDetail').textContent =
-      'The load is positive, but the estimated carrier margin is narrow.';
-  }
-  else{
-    $('carrierProfitStatus').className =
-      'result-status good';
-
-    $('carrierProfitStatusMain').textContent =
-      'Positive Carrier Profit';
-
-    $('carrierProfitStatusDetail').textContent =
-      'The entered revenue covers driver pay, dispatch fee and operating costs.';
-  }
-
-
-  $('cpBreakEven').textContent =
-    'Estimated carrier break-even revenue: ' +
-    money(
-      breakEvenRevenue
-    ) +
-    (
-      totalMiles
-        ? ' · approximately $' +
-          (
-            breakEvenRevenue /
-            totalMiles
-          ).toFixed(2) +
-          ' per total mile.'
-        : '.'
-    );
-
-
-  lastCarrierProfitCalculation = {
-    inputs: {
-      linehaul,
-      fuelSurcharge,
-      otherRevenue,
-      loadedMiles,
-      deadheadMiles,
-      dispatchRate,
-      driverPayType,
-      driverPayRate,
-      driverExtraPay,
-      fuelCost,
-      permitCost,
-      escortCost,
-      tollCost,
-      lodgingCost,
-      maintenancePerMile,
-      overheadCost,
-      otherCost
-    },
-    results: {
-      grossRevenue,
-      totalMiles,
-      revenuePerMile,
-      dispatchFee,
-      baseDriverPay,
-      driverExtraPay,
-      driverPay,
-      maintenanceReserve,
-      operatingCosts,
-      carrierNet,
-      carrierMargin,
-      carrierProfitMile,
-      driverPayMile,
-      breakEvenRevenue
-    }
-  };
-
-  return lastCarrierProfitCalculation;
-}
-
-
-function resetCarrierProfit(){
-
-  [
-    'cpLinehaul',
-    'cpOtherRevenue',
-    'cpLoadedMiles',
-    'cpDeadheadMiles',
-    'cpDriverExtraPay',
-    'cpFuelCost',
-    'cpPermitCost',
-    'cpEscortCost',
-    'cpTollCost',
-    'cpLodgingCost',
-    'cpOverheadCost',
-    'cpOtherCost'
-  ]
-    .forEach(
-      id => {
-        $(id).value = '';
-      }
-    );
-
-  $('cpFuelSurcharge').value =
-    '0';
-
-  $('cpDispatchRate').value =
-    '7';
-
-  $('cpDriverPayType').value =
-    'percent';
-
-  $('cpDriverPayRate').value =
-    '25';
-
-  $('cpMaintenancePerMile').value =
-    '0.35';
-
-  [
-    'cpGrossRevenue',
-    'cpRevenuePerMile',
-    'cpDispatchFee',
-    'cpDriverPay',
-    'cpOperatingCosts',
-    'cpCarrierNet',
-    'cpCarrierMargin',
-    'cpCarrierProfitMile',
-    'cpDriverPayMile'
-  ]
-    .forEach(
-      id => {
-        $(id).textContent = '—';
-        $(id).className = 'metric-value';
-      }
-    );
-
-  $('carrierProfitStatus').className =
-    'result-status';
-
-  $('carrierProfitStatusMain').textContent =
-    'Enter load data';
-
-  $('carrierProfitStatusDetail').textContent =
-    'Select a load or enter the revenue and operating costs.';
-
-  $('cpBreakEven').textContent =
-    'Enter the load information to calculate the carrier break-even revenue.';
-
-  lastCarrierProfitCalculation =
-    null;
-
-  setCalcSaveMessage(
-    'carrierProfitSaveMessage',
-    ''
-  );
-
-  updateDriverPayExplain();
-}
-
-
-function fillCarrierProfitTestData(){
-
-  if(
-    $('calcLoad') &&
-    CALC_LOADS.length
-  ){
-    const ttLoad =
-      CALC_LOADS.find(
-        load =>
-          load.broker_load_number ===
-          'TT-ABC-260811-01'
-      );
-
-    if(ttLoad){
-      $('calcLoad').value =
-        ttLoad.id;
-
-      syncCalculatorLoadContext(
-        ttLoad.id
-      );
-    }
-  }
-
-  ttSetValue(
-    'cpLinehaul',
-    $('linehaul')?.value ||
-    '6000'
-  );
-
-  ttSetValue(
-    'cpFuelSurcharge',
-    $('fuel')?.value ||
-    '0'
-  );
-
-  ttSetValue(
-    'cpOtherRevenue',
-    '0'
-  );
-
-  ttSetValue(
-    'cpLoadedMiles',
-    $('loadedMiles')?.value ||
-    '137'
-  );
-
-  ttSetValue(
-    'cpDeadheadMiles',
-    '35'
-  );
-
-  ttSetValue(
-    'cpDispatchRate',
-    '7'
-  );
-
-  ttSetValue(
-    'cpDriverPayType',
-    'percent'
-  );
-
-  ttSetValue(
-    'cpDriverPayRate',
-    '25'
-  );
-
-  ttSetValue(
-    'cpDriverExtraPay',
-    '0'
-  );
-
-  ttSetValue(
-    'cpFuelCost',
-    '325'
-  );
-
-  ttSetValue(
-    'cpPermitCost',
-    '180'
-  );
-
-  ttSetValue(
-    'cpEscortCost',
-    '650'
-  );
-
-  ttSetValue(
-    'cpTollCost',
-    '25'
-  );
-
-  ttSetValue(
-    'cpLodgingCost',
-    '0'
-  );
-
-  ttSetValue(
-    'cpMaintenancePerMile',
-    '0.35'
-  );
-
-  ttSetValue(
-    'cpOverheadCost',
-    '150'
-  );
-
-  ttSetValue(
-    'cpOtherCost',
-    '50'
-  );
-
-  updateDriverPayExplain();
-  calculateCarrierProfit();
-}
-
-
-$('cpDriverPayType')
-  ?.addEventListener(
-    'change',
-    updateDriverPayExplain
-  );
-
-
-$('calculateCarrierProfit')
-  ?.addEventListener(
-    'click',
-    calculateCarrierProfit
-  );
-
-
-$('saveCarrierProfitToLoad')
-  ?.addEventListener(
-    'click',
-    async () => {
-
-      const calculation =
-        calculateCarrierProfit();
-
-      if(!calculation){
-        setCalcSaveMessage(
-          'carrierProfitSaveMessage',
-          'Calculate the driver/carrier profit before saving.',
-          'error'
-        );
-        return;
-      }
-
-      await saveCalculationSnapshot(
-        'carrier_profit',
-        calculation.inputs,
-        calculation.results,
-        'carrierProfitSaveMessage'
-      );
-    }
-  );
-
-
-$('resetCarrierProfit')
-  ?.addEventListener(
-    'click',
-    resetCarrierProfit
-  );
-
-
-$('fillCarrierProfitTest')
-  ?.addEventListener(
-    'click',
-    fillCarrierProfitTestData
-  );
-
-
-updateDriverPayExplain();
-
-
-/* ============================================================
    ACCESSORIALS / DETENTION
    ============================================================ */
 
@@ -4953,6 +4387,483 @@ $('resetProfit')
 
     }
   );
+
+
+/* ============================================================
+   DRIVER / CARRIER PROFIT CALCULATOR
+   ============================================================ */
+
+function updateDriverPayExplain(){
+
+  const methodEl =
+    $('cpDriverPayType');
+
+  const explain =
+    $('cpDriverPayExplain');
+
+  if (
+    !methodEl ||
+    !explain
+  ) {
+    return;
+  }
+
+  const method =
+    methodEl.value;
+
+  if(method === 'percent'){
+    explain.textContent =
+      'Enter 25 for 25% of gross load revenue.';
+  }
+  else if(method === 'per_mile'){
+    explain.textContent =
+      'Enter the driver pay rate per total mile.';
+  }
+  else{
+    explain.textContent =
+      'Enter the flat driver pay amount for this load.';
+  }
+}
+
+
+function calculateCarrierProfit(){
+
+  lastCarrierProfitCalculation =
+    null;
+
+  const linehaul =
+    n('cpLinehaul');
+
+  const fuelSurcharge =
+    n('cpFuelSurcharge');
+
+  const otherRevenue =
+    n('cpOtherRevenue');
+
+  const loadedMiles =
+    n('cpLoadedMiles');
+
+  const deadheadMiles =
+    n('cpDeadheadMiles');
+
+  const dispatchRate =
+    n('cpDispatchRate');
+
+  const driverPayType =
+    $('cpDriverPayType').value;
+
+  const driverPayRate =
+    n('cpDriverPayRate');
+
+  const driverExtraPay =
+    n('cpDriverExtraPay');
+
+  const fuelCost =
+    n('cpFuelCost');
+
+  const permitCost =
+    n('cpPermitCost');
+
+  const escortCost =
+    n('cpEscortCost');
+
+  const tollCost =
+    n('cpTollCost');
+
+  const lodgingCost =
+    n('cpLodgingCost');
+
+  const maintenancePerMile =
+    n('cpMaintenancePerMile');
+
+  const overheadCost =
+    n('cpOverheadCost');
+
+  const otherCost =
+    n('cpOtherCost');
+
+
+  const grossRevenue =
+    linehaul +
+    fuelSurcharge +
+    otherRevenue;
+
+  const totalMiles =
+    loadedMiles +
+    deadheadMiles;
+
+  const dispatchFee =
+    grossRevenue *
+    (
+      dispatchRate /
+      100
+    );
+
+  let baseDriverPay = 0;
+
+  if(driverPayType === 'percent'){
+    baseDriverPay =
+      grossRevenue *
+      (
+        driverPayRate /
+        100
+      );
+  }
+  else if(driverPayType === 'per_mile'){
+    baseDriverPay =
+      totalMiles *
+      driverPayRate;
+  }
+  else{
+    baseDriverPay =
+      driverPayRate;
+  }
+
+  const driverPay =
+    baseDriverPay +
+    driverExtraPay;
+
+  const maintenanceReserve =
+    totalMiles *
+    maintenancePerMile;
+
+  const operatingCosts =
+    fuelCost +
+    permitCost +
+    escortCost +
+    tollCost +
+    lodgingCost +
+    maintenanceReserve +
+    overheadCost +
+    otherCost;
+
+  const carrierNet =
+    grossRevenue -
+    dispatchFee -
+    driverPay -
+    operatingCosts;
+
+  const carrierMargin =
+    grossRevenue > 0
+      ? (
+          carrierNet /
+          grossRevenue
+        ) *
+        100
+      : 0;
+
+  const revenuePerMile =
+    totalMiles > 0
+      ? grossRevenue /
+        totalMiles
+      : 0;
+
+  const carrierProfitMile =
+    totalMiles > 0
+      ? carrierNet /
+        totalMiles
+      : 0;
+
+  const driverPayMile =
+    totalMiles > 0
+      ? driverPay /
+        totalMiles
+      : 0;
+
+  const breakEvenRevenue =
+    dispatchFee +
+    driverPay +
+    operatingCosts;
+
+
+  $('cpGrossRevenue').textContent =
+    money(grossRevenue);
+
+  $('cpRevenuePerMile').textContent =
+    totalMiles
+      ? '$' +
+        revenuePerMile.toFixed(2)
+      : '—';
+
+  $('cpDispatchFee').textContent =
+    money(dispatchFee);
+
+  $('cpDriverPay').textContent =
+    money(driverPay);
+
+  $('cpOperatingCosts').textContent =
+    money(operatingCosts);
+
+  $('cpCarrierNet').textContent =
+    money(carrierNet);
+
+  $('cpCarrierNet').className =
+    'metric-value ' +
+    (
+      carrierNet >= 0
+        ? 'money-positive'
+        : 'money-negative'
+    );
+
+  $('cpCarrierMargin').textContent =
+    carrierMargin.toFixed(1) +
+    '%';
+
+  $('cpCarrierProfitMile').textContent =
+    totalMiles
+      ? '$' +
+        carrierProfitMile.toFixed(2)
+      : '—';
+
+  $('cpDriverPayMile').textContent =
+    totalMiles
+      ? '$' +
+        driverPayMile.toFixed(2)
+      : '—';
+
+
+  if(carrierNet < 0){
+    $('carrierProfitStatus').className =
+      'result-status no';
+
+    $('carrierProfitStatusMain').textContent =
+      'Carrier Loss';
+
+    $('carrierProfitStatusDetail').textContent =
+      'Driver pay, dispatch fee and operating costs exceed the entered revenue.';
+  }
+  else if(carrierMargin < 10){
+    $('carrierProfitStatus').className =
+      'result-status tight';
+
+    $('carrierProfitStatusMain').textContent =
+      'Thin Carrier Margin';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The load is positive, but the estimated carrier margin is narrow.';
+  }
+  else{
+    $('carrierProfitStatus').className =
+      'result-status good';
+
+    $('carrierProfitStatusMain').textContent =
+      'Positive Carrier Profit';
+
+    $('carrierProfitStatusDetail').textContent =
+      'The entered revenue covers driver pay, dispatch fee and operating costs.';
+  }
+
+
+  $('cpBreakEven').textContent =
+    'Estimated carrier break-even revenue: ' +
+    money(
+      breakEvenRevenue
+    ) +
+    (
+      totalMiles
+        ? ' · approximately $' +
+          (
+            breakEvenRevenue /
+            totalMiles
+          ).toFixed(2) +
+          ' per total mile.'
+        : '.'
+    );
+
+
+  lastCarrierProfitCalculation = {
+    inputs: {
+      linehaul,
+      fuelSurcharge,
+      otherRevenue,
+      loadedMiles,
+      deadheadMiles,
+      dispatchRate,
+      driverPayType,
+      driverPayRate,
+      driverExtraPay,
+      fuelCost,
+      permitCost,
+      escortCost,
+      tollCost,
+      lodgingCost,
+      maintenancePerMile,
+      overheadCost,
+      otherCost
+    },
+    results: {
+      grossRevenue,
+      totalMiles,
+      revenuePerMile,
+      dispatchFee,
+      baseDriverPay,
+      driverExtraPay,
+      driverPay,
+      maintenanceReserve,
+      operatingCosts,
+      carrierNet,
+      carrierMargin,
+      carrierProfitMile,
+      driverPayMile,
+      breakEvenRevenue
+    }
+  };
+
+  return lastCarrierProfitCalculation;
+}
+
+
+function resetCarrierProfit(){
+
+  [
+    'cpLinehaul',
+    'cpOtherRevenue',
+    'cpLoadedMiles',
+    'cpDeadheadMiles',
+    'cpDriverExtraPay',
+    'cpFuelCost',
+    'cpPermitCost',
+    'cpEscortCost',
+    'cpTollCost',
+    'cpLodgingCost',
+    'cpOverheadCost',
+    'cpOtherCost'
+  ]
+    .forEach(
+      id => {
+        $(id).value = '';
+      }
+    );
+
+  $('cpFuelSurcharge').value =
+    '0';
+
+  $('cpDispatchRate').value =
+    '7';
+
+  $('cpDriverPayType').value =
+    'percent';
+
+  $('cpDriverPayRate').value =
+    '25';
+
+  $('cpMaintenancePerMile').value =
+    '0.35';
+
+  [
+    'cpGrossRevenue',
+    'cpRevenuePerMile',
+    'cpDispatchFee',
+    'cpDriverPay',
+    'cpOperatingCosts',
+    'cpCarrierNet',
+    'cpCarrierMargin',
+    'cpCarrierProfitMile',
+    'cpDriverPayMile'
+  ]
+    .forEach(
+      id => {
+        $(id).textContent = '—';
+        $(id).className = 'metric-value';
+      }
+    );
+
+  $('carrierProfitStatus').className =
+    'result-status';
+
+  $('carrierProfitStatusMain').textContent =
+    'Enter load data';
+
+  $('carrierProfitStatusDetail').textContent =
+    'Select a load or enter the revenue and operating costs.';
+
+  $('cpBreakEven').textContent =
+    'Enter the load information to calculate the carrier break-even revenue.';
+
+  lastCarrierProfitCalculation =
+    null;
+
+  setCalcSaveMessage(
+    'carrierProfitSaveMessage',
+    ''
+  );
+
+  updateDriverPayExplain();
+}
+
+
+
+$('cpDriverPayType')
+  ?.addEventListener(
+    'change',
+    updateDriverPayExplain
+  );
+
+
+$('calculateCarrierProfit')
+  ?.addEventListener(
+    'click',
+    calculateCarrierProfit
+  );
+
+
+$('saveCarrierProfitToLoad')
+  ?.addEventListener(
+    'click',
+    async () => {
+
+      const loadId =
+        selectedCalculatorLoadId();
+
+      if (!loadId) {
+        setCalcSaveMessage(
+          'carrierProfitSaveMessage',
+          'Select a load at the top of the page before saving.',
+          'error'
+        );
+        return;
+      }
+
+      const calculation =
+        calculateCarrierProfit();
+
+      if(!calculation){
+        setCalcSaveMessage(
+          'carrierProfitSaveMessage',
+          'Calculate the driver/carrier profit before saving.',
+          'error'
+        );
+        return;
+      }
+
+      const saved =
+        await saveCalculationSnapshot(
+          'carrier_profit',
+          calculation.inputs,
+          calculation.results,
+          'carrierProfitSaveMessage',
+          loadId
+        );
+
+      if (saved) {
+        setCalcSaveMessage(
+          'carrierProfitSaveMessage',
+          'Driver / Carrier Profit saved to the selected load.',
+          'ok'
+        );
+      }
+    }
+  );
+
+
+$('resetCarrierProfit')
+  ?.addEventListener(
+    'click',
+    resetCarrierProfit
+  );
+
+
+updateDriverPayExplain();
 
 
 /* ============================================================
