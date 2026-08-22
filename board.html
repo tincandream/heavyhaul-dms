@@ -79,10 +79,7 @@
     <h1>DISPATCH</h1>
     <p>Manage loads and daily dispatch activity.</p>
   </section>
-
-  <nav class="dispatch-tabs" id="dispatchTabs"></nav>
-
-  <div class="tiles" id="tiles"></div>
+<div class="tiles" id="tiles"></div>
 
   <div class="bar">
     <input class="search" id="q" placeholder="Search truck, driver, load…">
@@ -112,7 +109,7 @@
     </table>
   </div>
 </main>
-
+<script src="nav.js"></script>
 <script>
 // ===== FILL IN THESE TWO VALUES =====
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
@@ -146,10 +143,7 @@ async function start() {
 
   const t = await buildNav(db, 'Dispatch');
   if (!t) { fail('No app_users row linked to this login.'); return; }
-
-  buildDispatchTabs('board.html');
-
-  load();
+load();
   setInterval(load, 60000);
 }
 
