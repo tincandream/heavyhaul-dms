@@ -478,9 +478,6 @@ button:disabled{
 <body>
 
 <header></header>
-
-<nav id="fleetCommandTabs" aria-label="Fleet Command navigation"></nav>
-
 <main>
   <section class="page-intro">
     <div>
@@ -998,9 +995,8 @@ function readinessMissing(item){
   return missing;
 }
 
-function buildFleetCommandTabs(activePage){
-  const target = $('fleetCommandTabs');
-  if(!target) return;
+function
+if(!target) return;
 
   const tabs = [
     ['fleet.html','Fleet Setup'],
@@ -1809,10 +1805,7 @@ async function start(){
     $('queueList').innerHTML = '<div class="empty">Could not resolve tenant.</div>';
     return;
   }
-
-  buildFleetCommandTabs('route-planning.html');
-
-  await loadData();
+await loadData();
   openRequestedWorkspace();
 }
 
