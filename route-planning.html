@@ -1735,26 +1735,141 @@ async function loadData(){
   renderGolden();
 }
 
-function openRequestedWorkspace(){
+async function openRequestedWorkspace(){
   const params = new URLSearchParams(location.search);
   const requestedOpportunity = params.get('opportunity');
   const requestedLoad = params.get('load');
 
   if(requestedOpportunity){
-    const o = opportunities.find(x => x.id === requestedOpportunity);
+    let o =
+      opportunities.find(
+        x => x.id === requestedOpportunity
+      );
+
+    /*
+      Direct-link fallback:
+      If the Opportunity was not included in the initial queue query,
+      fetch the exact record by ID so the Route Planning handoff still works.
+    */
+    if(!o){
+      const result =
+        await db
+          .from('load_opportunities')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedOpportunity)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning opportunity lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        o = result.data;
+
+        if(
+          !opportunities.some(
+            x => x.id === o.id
+          )
+        ){
+          opportunities.unshift(o);
+        }
+
+        renderQueue();
+      }
+    }
+
     if(o){
-      openWorkspace({...o,_kind:'opportunity'});
-      requestAnimationFrame(() => $('workspace').scrollIntoView({block:'start'}));
+      /*
+        A direct Opportunity link must be visible in the active queue
+        even if an older record was accidentally marked hidden.
+        We do not alter the database here; this is only the local page view.
+      */
+      o.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...o,
+        _kind:'opportunity'
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
+
       return;
     }
+
+    $('queueList').insertAdjacentHTML(
+      'afterbegin',
+      '<div class="empty">The requested broker opportunity could not be loaded.</div>'
+    );
+
+    return;
   }
 
   if(requestedLoad){
-    const l = loads.find(x => x.id === requestedLoad);
+    let l =
+      loads.find(
+        x => x.id === requestedLoad
+      );
+
+    if(!l){
+      const result =
+        await db
+          .from('loads')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedLoad)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning load lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        l = result.data;
+
+        if(
+          !loads.some(
+            x => x.id === l.id
+          )
+        ){
+          loads.unshift(l);
+        }
+
+        renderQueue();
+      }
+    }
+
     if(l){
-      openWorkspace({...l,_kind:'load',_sourceOpportunity:linkedOpportunityForLoad(l)});
-      requestAnimationFrame(() => $('workspace').scrollIntoView({block:'start'}));
-      return;
+      l.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...l,
+        _kind:'load',
+        _sourceOpportunity:
+          linkedOpportunityForLoad(l)
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
     }
   }
 }
@@ -1806,7 +1921,7 @@ async function start(){
     return;
   }
 await loadData();
-  openRequestedWorkspace();
+  await openRequestedWorkspace();
 }
 
 /* Page tabs */
@@ -1827,7 +1942,7 @@ $('showRemoved').addEventListener('change',renderQueue);
 
 $('refreshQueue').addEventListener('click',async () => {
   await loadData();
-  openRequestedWorkspace();
+  await openRequestedWorkspace();
 });
 
 /* Queue management — Plan Route itself is an <a> link, not handled here. */
