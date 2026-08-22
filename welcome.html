@@ -24,6 +24,13 @@
        HEAVY HAUL COMMAND
        WELCOME / COMMAND CENTER
        ========================================================= */
+    @font-face {
+  font-family: "Sugarcoat";
+  src: url("fonts/Sugarcoat.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
     :root {
       --welcome-ink: #3C3A4B;
@@ -114,107 +121,95 @@
        ========================================================= */
 
     .welcome-hero {
-      max-width: 720px;
-
-      margin-bottom: 30px;
-
-      padding:
-        28px 30px 26px;
-
-      background:
-        linear-gradient(
-          135deg,
-          rgba(36, 26, 42, 0.94),
-          rgba(50, 46, 59, 0.84)
-        );
-
-      border:
-        1px solid
-        rgba(250, 250, 250, 0.20);
-
-      box-shadow:
-        0 20px 50px
-        rgba(0, 0, 0, 0.22);
-
-      backdrop-filter:
-        blur(6px);
-
-      -webkit-backdrop-filter:
-        blur(6px);
+      width: 100vw;
+      max-width: none;
+      margin: -10px 0 34px calc(50% - 50vw);
+      padding: 24px max(5vw, calc((100vw - 1180px) / 2));
+      background: linear-gradient(
+        90deg,
+        rgba(250,250,250,.94),
+        rgba(246,246,243,.86),
+        rgba(234,243,246,.80)
+      );
+      border-top: 1px solid rgba(255,255,255,.75);
+      border-bottom: 1px solid rgba(127,165,181,.30);
+      box-shadow: 0 8px 26px rgba(36,44,52,.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
 
     .welcome-kicker {
       margin-bottom: 8px;
 
-      color: var(--welcome-lime);
+      color: #7C919A;
 
       font-family:
-        "Oswald",
+        "Inter",
         sans-serif;
 
-      font-size: 11px;
+      font-size: 10px;
 
-      font-weight: 500;
+      font-weight: 400;
 
-      letter-spacing: 3px;
+      letter-spacing: 2.4px;
 
       text-transform: uppercase;
     }
 
 
-    .welcome-greeting {
-      margin: 0;
+   .welcome-greeting {
+  margin: 0;
 
-      color: var(--welcome-white);
+  color: #3E4B51;
 
-      font-family:
-        "Cinzel",
-        Georgia,
-        serif;
+  font-family:
+    "Sugarcoat",
+    cursive;
 
-      font-size:
-        clamp(30px, 5vw, 48px);
+  font-size:
+    clamp(34px, 4.5vw, 54px);
 
-      font-weight: 700;
+  font-weight: 400;
 
-      line-height: 1.08;
+  line-height: 1.02;
 
-      letter-spacing: 1px;
-    }
+  letter-spacing: 0.2px;
+}
 
 
     .welcome-subtitle {
       margin:
         10px 0 0;
 
-      color: var(--welcome-blue);
+      color: #718087;
 
       font-family:
-        "Cormorant Garamond",
-        Georgia,
-        serif;
+        "Inter",
+        sans-serif;
 
-      font-size: 21px;
+      font-size: 13px;
 
-      font-style: italic;
+      font-weight: 300;
 
-      line-height: 1.3;
+      font-style: normal;
+
+      letter-spacing: .2px;
+
+      line-height: 1.5;
     }
 
 
     .welcome-line {
-      width: 90px;
-      height: 3px;
-
+      width: min(360px, 38vw);
+      height: 1px;
       margin-top: 18px;
-
-      background:
-        linear-gradient(
-          90deg,
-          var(--welcome-pink),
-          var(--welcome-lime)
-        );
+      background: linear-gradient(
+        90deg,
+        rgba(216,106,142,.70),
+        rgba(127,165,181,.55),
+        rgba(184,195,74,.55)
+      );
     }
 
 
@@ -236,13 +231,13 @@
     .section-heading h2 {
       margin: 0;
 
-      color: var(--welcome-white);
+      color: #6B92A5;
 
       font-family:
-        "Oswald",
+        "Inter",
         sans-serif;
 
-      font-size: 13px;
+      font-size: 12px;
 
       font-weight: 500;
 
@@ -260,9 +255,34 @@
       height: 1px;
 
       background:
-        rgba(250, 250, 250, 0.32);
+        rgba(127, 165, 181, 0.28);
     }
 
+
+
+    .priority-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .week-section .section-heading h2 {
+      color: #8D9A2F;
+    }
+
+    .continue-section .section-heading h2 {
+      color: #8A7358;
+    }
+
+    .sourcing-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .operations-section .section-heading h2 {
+      color: #6B92A5;
+    }
+
+    .section-heading::after {
+      background: rgba(107, 146, 165, 0.30);
+    }
 
     /* =========================================================
        TODAY'S PRIORITIES
@@ -626,6 +646,38 @@
       font-size: 12px;
     }
 
+    .operations-primary {
+      color: #3E4B51;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .operations-identifiers {
+      margin-top: 4px;
+      color: #68757B;
+      font-size: 10.5px;
+      line-height: 1.5;
+    }
+
+    .operations-identifiers strong {
+      color: #3E4B51;
+      font-weight: 600;
+    }
+
+    .operations-location {
+      margin-top: 3px;
+      color: #6B92A5;
+      font-size: 10.5px;
+    }
+
+    .operations-link {
+      display: inline-block;
+      margin-top: 5px;
+      color: #6B92A5;
+      font-size: 10.5px;
+      text-decoration: none;
+    }
+
 
 
     /* =========================================================
@@ -712,6 +764,39 @@
     }
 
 
+
+    .timeline-shell {
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .timeline-panel-title {
+      padding: 13px 18px 11px;
+      color: #6B92A5;
+      background: rgba(255, 255, 255, 0.86);
+      border-bottom: 1px solid #E3E7E8;
+      font-family: "Oswald", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .sourcing-section .timeline-panel-title {
+      color: #D86A8E;
+    }
+
+    .operations-section .timeline-panel-title {
+      color: #6B92A5;
+    }
+
+    .timeline-body {
+      background: transparent;
+    }
+
     /* =========================================================
        SOURCING TIMELINE
        ========================================================= */
@@ -767,8 +852,51 @@
     .sourcing-link {
       color: var(--welcome-blue);
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
       text-decoration: none;
+    }
+
+    .sourcing-action-badge {
+      display: inline-block;
+      margin-bottom: 5px;
+      padding: 2px 7px;
+      border: 1px solid rgba(127,165,181,.35);
+      color: #607985;
+      background: #F7FAFB;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .sourcing-action-badge.overdue {
+      color: #9A4961;
+      background: var(--welcome-pink-soft);
+      border-color: rgba(216,106,142,.35);
+    }
+
+    .sourcing-action-badge.today {
+      color: #68731F;
+      background: var(--welcome-lime-soft);
+      border-color: rgba(184,195,74,.45);
+    }
+
+    .sourcing-identifiers {
+      margin-top: 4px;
+      color: #59676D;
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .sourcing-identifiers strong {
+      color: #3E4B51;
+      font-weight: 600;
+    }
+
+    .sourcing-followup {
+      margin-top: 5px;
+      color: #7A858A;
+      font-size: 10px;
     }
 
     /* =========================================================
@@ -1121,12 +1249,18 @@
           <h2>Sourcing Timeline</h2>
         </div>
 
-        <div
-          class="sourcing-panel"
-          id="sourcingTimeline"
-        >
-          <div class="activity-empty">
-            Loading sourcing activity…
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+            Sourcing Timeline
+          </div>
+
+          <div
+            class="sourcing-panel timeline-body"
+            id="sourcingTimeline"
+          >
+            <div class="activity-empty">
+              Loading sourcing activity…
+            </div>
           </div>
         </div>
 
@@ -1137,22 +1271,26 @@
            RECENT ACTIVITY
            ===================================================== -->
 
-      <section>
+      <section class="operations-section">
 
         <div class="section-heading">
-          <h2>Recent Activity</h2>
+          <h2>Operations Timeline</h2>
         </div>
 
 
-        <div
-          class="activity-panel"
-          id="recentActivity"
-        >
-
-          <div class="activity-empty">
-            Loading recent activity…
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+            Operations Timeline
           </div>
 
+          <div
+            class="activity-panel timeline-body"
+            id="recentActivity"
+          >
+            <div class="activity-empty">
+              Loading recent activity…
+            </div>
+          </div>
         </div>
 
       </section>
@@ -1474,109 +1612,532 @@
     async function loadRecentActivity() {
 
       const panel =
-        document.getElementById(
-          'recentActivity'
-        );
-
+        document.getElementById('recentActivity');
 
       try {
 
         let query =
           db
             .from('events')
-            .select(
-              'created_at, event_type, subject, body'
-            )
-            .order(
-              'created_at',
-              {
-                ascending: false
-              }
-            )
-            .limit(6);
-
+            .select('created_at,event_type,subject,body,load_id')
+            .order('created_at', { ascending: false })
+            .limit(12);
 
         if (TENANT_ID) {
-
-          query =
-            query.eq(
-              'tenant_id',
-              TENANT_ID
-            );
-
+          query = query.eq('tenant_id', TENANT_ID);
         }
 
-
-        const result =
-          await query;
-
+        const result = await query;
 
         if (
           result.error ||
           !result.data ||
           result.data.length === 0
         ) {
-
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'No recent activity yet.' +
-            '</div>';
-
+            '<div class="activity-empty">No recent operations activity yet.</div>';
           return;
-
         }
 
+        const loadIds =
+          [...new Set(
+            result.data
+              .map(item => item.load_id)
+              .filter(Boolean)
+          )];
+
+        let loadMap = {};
+        let checkinMap = {};
+
+        if (loadIds.length) {
+
+          /*
+           * Loads are intentionally fetched with select('*') here.
+           * That lets the Welcome page use the driver/truck foreign-key
+           * names already present in your live schema without assuming
+           * extra display columns on the loads table.
+           */
+          const loadResult =
+            await db
+              .from('loads')
+              .select('*')
+              .in('id', loadIds);
+
+          if (!loadResult.error && loadResult.data) {
+            loadMap =
+              Object.fromEntries(
+                loadResult.data.map(item => [item.id, item])
+              );
+          }
+
+          /*
+           * Latest known check-in per load.
+           * Your confirmed check_ins schema includes:
+           * load_id, driver_id, occurred_at, location_text, state,
+           * eta, hos_remaining_min and note.
+           */
+          const checkinResult =
+            await db
+              .from('check_ins')
+              .select(
+                'load_id,driver_id,occurred_at,location_text,state,eta,hos_remaining_min,note'
+              )
+              .in('load_id', loadIds)
+              .order('occurred_at', { ascending: false });
+
+          if (!checkinResult.error && checkinResult.data) {
+            checkinResult.data.forEach(item => {
+              if (!checkinMap[item.load_id]) {
+                checkinMap[item.load_id] = item;
+              }
+            });
+          }
+        }
+
+        /*
+         * Collect driver IDs from both the load and the latest check-in.
+         * Different pages in the system have evolved over time, so we
+         * accept the common load driver-key variants while keeping the
+         * confirmed check_ins.driver_id as the strongest source.
+         */
+        const driverIds =
+          [...new Set(
+            loadIds
+              .map(loadId => {
+                const load = loadMap[loadId] || {};
+                const checkin = checkinMap[loadId] || {};
+
+                return (
+                  checkin.driver_id ||
+                  load.driver_id ||
+                  load.assigned_driver_id ||
+                  null
+                );
+              })
+              .filter(Boolean)
+          )];
+
+        let driverMap = {};
+
+        if (driverIds.length) {
+          const driverResult =
+            await db
+              .from('drivers')
+              .select('*')
+              .in('id', driverIds);
+
+          if (!driverResult.error && driverResult.data) {
+            driverMap =
+              Object.fromEntries(
+                driverResult.data.map(item => [item.id, item])
+              );
+          }
+        }
+
+        /*
+         * Collect truck IDs from the load. We try the truck and vehicle
+         * tables separately so a missing table never breaks the timeline.
+         */
+        const truckIds =
+          [...new Set(
+            loadIds
+              .map(loadId => {
+                const load = loadMap[loadId] || {};
+
+                return (
+                  load.truck_id ||
+                  load.vehicle_id ||
+                  load.assigned_truck_id ||
+                  null
+                );
+              })
+              .filter(Boolean)
+          )];
+
+        let truckMap = {};
+
+        if (truckIds.length) {
+
+          try {
+            const truckResult =
+              await db
+                .from('trucks')
+                .select('*')
+                .in('id', truckIds);
+
+            if (!truckResult.error && truckResult.data) {
+              truckMap =
+                Object.fromEntries(
+                  truckResult.data.map(item => [item.id, item])
+                );
+            }
+          }
+          catch (error) {
+            console.warn('Welcome operations trucks:', error);
+          }
+
+          if (!Object.keys(truckMap).length) {
+            try {
+              const vehicleResult =
+                await db
+                  .from('vehicles')
+                  .select('*')
+                  .in('id', truckIds);
+
+              if (!vehicleResult.error && vehicleResult.data) {
+                truckMap =
+                  Object.fromEntries(
+                    vehicleResult.data.map(item => [item.id, item])
+                  );
+              }
+            }
+            catch (error) {
+              console.warn('Welcome operations vehicles:', error);
+            }
+          }
+        }
+
+        function firstValue(object, keys) {
+          if (!object) return '';
+
+          for (const key of keys) {
+            if (
+              object[key] !== null &&
+              object[key] !== undefined &&
+              String(object[key]).trim() !== ''
+            ) {
+              return object[key];
+            }
+          }
+
+          return '';
+        }
+
+        function driverName(driver) {
+          if (!driver) return '';
+
+          const full =
+            firstValue(
+              driver,
+              ['full_name','driver_name','name','display_name']
+            );
+
+          if (full) return String(full);
+
+          return [
+            firstValue(driver, ['first_name','first']),
+            firstValue(driver, ['last_name','last'])
+          ]
+            .filter(Boolean)
+            .join(' ');
+        }
+
+        function truckLabel(truck, load) {
+
+          const direct =
+            firstValue(
+              truck,
+              [
+                'unit_number',
+                'truck_number',
+                'unit',
+                'number',
+                'vehicle_number',
+                'name'
+              ]
+            );
+
+          if (direct) return 'Truck ' + direct;
+
+          const loadDirect =
+            firstValue(
+              load,
+              [
+                'truck_number',
+                'unit_number',
+                'truck_unit',
+                'vehicle_number'
+              ]
+            );
+
+          return loadDirect
+            ? 'Truck ' + loadDirect
+            : '';
+        }
+
+        function formatEta(value) {
+          if (!value) return '';
+
+          const date = new Date(value);
+
+          if (Number.isNaN(date.getTime())) {
+            return String(value);
+          }
+
+          return date.toLocaleString(
+            'en-US',
+            {
+              month:'short',
+              day:'numeric',
+              hour:'numeric',
+              minute:'2-digit'
+            }
+          );
+        }
 
         panel.innerHTML =
           result.data
-            .map(
-              function (item) {
+            .map(item => {
 
-                const date =
-                  new Date(
-                    item.created_at
-                  );
+              const date =
+                new Date(item.created_at);
 
+              const time =
+                Number.isNaN(date.getTime())
+                  ? ''
+                  : date.toLocaleString(
+                      'en-US',
+                      {
+                        month:'short',
+                        day:'numeric',
+                        hour:'numeric',
+                        minute:'2-digit'
+                      }
+                    );
 
-                const time =
-                  isNaN(date)
-                    ? ''
-                    : date.toLocaleString(
-                        'en-US',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        }
-                      );
+              const load =
+                item.load_id
+                  ? loadMap[item.load_id]
+                  : null;
 
+              const checkin =
+                item.load_id
+                  ? checkinMap[item.load_id]
+                  : null;
 
-                const text =
-                  item.subject ||
-                  item.body ||
-                  item.event_type ||
-                  'Activity';
+              const driverId =
+                checkin?.driver_id ||
+                load?.driver_id ||
+                load?.assigned_driver_id ||
+                '';
 
+              const driver =
+                driverId
+                  ? driverMap[driverId]
+                  : null;
 
-                return (
-                  '<div class="activity-row">' +
+              const truckId =
+                load?.truck_id ||
+                load?.vehicle_id ||
+                load?.assigned_truck_id ||
+                '';
 
-                    '<div class="activity-time">' +
-                      escapeHtml(time) +
+              const truck =
+                truckId
+                  ? truckMap[truckId]
+                  : null;
+
+              const loadNumber =
+                load
+                  ? (
+                      firstValue(
+                        load,
+                        [
+                          'load_number',
+                          'load_no',
+                          'reference_number',
+                          'broker_load_number'
+                        ]
+                      ) ||
+                      ('Load ' + String(load.id).slice(0,8))
+                    )
+                  : '';
+
+              const driverDisplay =
+                driverName(driver);
+
+              const truckDisplay =
+                truckLabel(truck, load);
+
+              const origin =
+                load
+                  ? [
+                      firstValue(load, ['origin_city','pickup_city']),
+                      firstValue(load, ['origin_state','pickup_state'])
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
+
+              const destination =
+                load
+                  ? [
+                      firstValue(
+                        load,
+                        [
+                          'destination_city',
+                          'dest_city',
+                          'delivery_city'
+                        ]
+                      ),
+                      firstValue(
+                        load,
+                        [
+                          'destination_state',
+                          'dest_state',
+                          'delivery_state'
+                        ]
+                      )
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
+
+              const lane =
+                origin && destination
+                  ? origin + ' → ' + destination
+                  : origin || destination || '';
+
+              const currentLocation =
+                checkin
+                  ? [
+                      checkin.location_text,
+                      (
+                        checkin.state &&
+                        !String(checkin.location_text || '')
+                          .toLowerCase()
+                          .includes(String(checkin.state).toLowerCase())
+                          ? checkin.state
+                          : ''
+                      )
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                  : '';
+
+              const status =
+                load && load.status
+                  ? String(load.status).replaceAll('_',' ')
+                  : '';
+
+              const eta =
+                checkin && checkin.eta
+                  ? formatEta(checkin.eta)
+                  : '';
+
+              const hos =
+                checkin &&
+                checkin.hos_remaining_min !== null &&
+                checkin.hos_remaining_min !== undefined
+                  ? (
+                      Math.floor(
+                        Number(checkin.hos_remaining_min) / 60
+                      ) +
+                      'h ' +
+                      (
+                        Number(checkin.hos_remaining_min) % 60
+                      ) +
+                      'm HOS'
+                    )
+                  : '';
+
+              const eventText =
+                item.subject ||
+                item.body ||
+                item.event_type ||
+                'Activity';
+
+              const primaryIdentifiers =
+                [
+                  truckDisplay,
+                  driverDisplay,
+                  loadNumber
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+
+              const operationalDetails =
+                [
+                  status,
+                  lane,
+                  eta ? 'ETA ' + eta : '',
+                  hos
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+
+              const target =
+                item.load_id
+                  ? (
+                      'workspace.html?id=' +
+                      encodeURIComponent(item.load_id)
+                    )
+                  : '';
+
+              return (
+                '<div class="activity-row">' +
+
+                  '<div class="activity-time">' +
+                    escapeHtml(time) +
+                  '</div>' +
+
+                  '<div class="activity-marker"></div>' +
+
+                  '<div class="activity-text">' +
+
+                    (
+                      primaryIdentifiers
+                        ? (
+                            '<div class="operations-primary">' +
+                            escapeHtml(primaryIdentifiers) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
+
+                    '<div>' +
+                      escapeHtml(eventText) +
                     '</div>' +
 
-                    '<div class="activity-marker"></div>' +
+                    (
+                      currentLocation
+                        ? (
+                            '<div class="operations-location">' +
+                            'Current: ' +
+                            escapeHtml(currentLocation) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
 
-                    '<div class="activity-text">' +
-                      escapeHtml(text) +
-                    '</div>' +
+                    (
+                      operationalDetails
+                        ? (
+                            '<div class="operations-identifiers">' +
+                            escapeHtml(operationalDetails) +
+                            '</div>'
+                          )
+                        : ''
+                    ) +
 
-                  '</div>'
-                );
+                    (
+                      target
+                        ? (
+                            '<a class="operations-link" href="' +
+                            escapeHtml(target) +
+                            '">' +
+                            'Open Load →' +
+                            '</a>'
+                          )
+                        : ''
+                    ) +
 
-              }
-            )
+                  '</div>' +
+
+                '</div>'
+              );
+
+            })
             .join('');
 
       }
@@ -1584,14 +2145,13 @@
       catch (error) {
 
         console.warn(
-          'Recent activity:',
+          'Operations timeline:',
           error
         );
 
-
         panel.innerHTML =
           '<div class="activity-empty">' +
-          'Recent activity unavailable.' +
+          'Operations activity unavailable.' +
           '</div>';
 
       }
@@ -2057,162 +2617,323 @@
     async function loadSourcingTimeline() {
 
       const panel =
-        document.getElementById(
-          'sourcingTimeline'
-        );
-
+        document.getElementById('sourcingTimeline');
 
       try {
 
         const result =
           await db
-            .from('events')
+            .from('sourcing_events')
             .select(
-              'created_at,event_type,subject,body'
+              'id,created_at,event_type,title,detail,broker_name,carrier_name,contact_name,lane_origin,lane_destination,rate_amount,follow_up_at,opportunity_id,load_id'
             )
-            .eq(
-              'tenant_id',
-              TENANT_ID
-            )
-            .order(
-              'created_at',
-              {
-                ascending: false
-              }
-            )
-            .limit(40);
+            .eq('tenant_id', TENANT_ID)
+            .order('created_at', { ascending: false })
+            .limit(60);
 
-
-        if (
-          result.error
-        ) {
-
+        if (result.error) {
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'Sourcing activity will appear here as sourcing events are recorded.' +
+            '<div class="activity-empty">Sourcing timeline unavailable: ' +
+            escapeHtml(result.error.message) +
             '</div>';
-
           return;
-
         }
-
 
         const sourcing =
-          (result.data || [])
-            .filter(
-              function (item) {
+          result.data || [];
 
-                const text =
-                  [
-                    item.event_type,
-                    item.subject,
-                    item.body
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
-                    .toLowerCase();
-
-                return (
-                  text.includes('sourc') ||
-                  text.includes('broker') ||
-                  text.includes('quote') ||
-                  text.includes('opportun') ||
-                  text.includes('call queue') ||
-                  text.includes('lane')
-                );
-
-              }
-            )
-            .slice(0, 8);
-
-
-        if (
-          sourcing.length === 0
-        ) {
-
+        if (!sourcing.length) {
           panel.innerHTML =
-            '<div class="activity-empty">' +
-            'No sourcing activity recorded yet.' +
-            '</div>';
-
+            '<div class="activity-empty">No sourcing activity recorded yet.</div>';
           return;
-
         }
 
+        const opportunityIds =
+          [...new Set(
+            sourcing
+              .map(item => item.opportunity_id)
+              .filter(Boolean)
+          )];
+
+        let opportunityMap = {};
+
+        if (opportunityIds.length) {
+          const opportunityResult =
+            await db
+              .from('load_opportunities')
+              .select(
+                'id,broker_name,external_ref,origin_city,origin_state,dest_city,dest_state,commodity,equipment_needed,status,posted_rate,quoted_rate,booked_rate,pickup_date'
+              )
+              .in('id', opportunityIds);
+
+          if (!opportunityResult.error && opportunityResult.data) {
+            opportunityMap =
+              Object.fromEntries(
+                opportunityResult.data.map(item => [item.id, item])
+              );
+          }
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0,0,0,0);
+
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+        function priority(item) {
+          if (!item.follow_up_at) return 3;
+          const due = new Date(item.follow_up_at);
+          if (Number.isNaN(due.getTime())) return 3;
+          if (due < todayStart) return 0;
+          if (due < tomorrowStart) return 1;
+          return 2;
+        }
+
+        const ordered =
+          sourcing
+            .slice()
+            .sort((a,b) => {
+              const pa = priority(a);
+              const pb = priority(b);
+              if (pa !== pb) return pa - pb;
+
+              if (pa <= 2) {
+                return new Date(a.follow_up_at) - new Date(b.follow_up_at);
+              }
+
+              return new Date(b.created_at) - new Date(a.created_at);
+            })
+            .slice(0,12);
 
         panel.innerHTML =
-          sourcing
-            .map(
-              function (item) {
+          ordered.map(item => {
 
-                const date =
-                  new Date(
-                    item.created_at
+            const opportunity =
+              item.opportunity_id
+                ? opportunityMap[item.opportunity_id]
+                : null;
+
+            const company =
+              item.broker_name ||
+              item.carrier_name ||
+              (opportunity ? opportunity.broker_name : '') ||
+              'Sourcing';
+
+            const contact =
+              item.contact_name || '';
+
+            const origin =
+              item.lane_origin ||
+              (
+                opportunity
+                  ? [opportunity.origin_city, opportunity.origin_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const destination =
+              item.lane_destination ||
+              (
+                opportunity
+                  ? [opportunity.dest_city, opportunity.dest_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const lane =
+              origin && destination
+                ? origin + ' → ' + destination
+                : origin || destination || '';
+
+            const freight =
+              opportunity
+                ? [opportunity.commodity, opportunity.equipment_needed]
+                    .filter(Boolean)
+                    .join(' · ')
+                : '';
+
+            const reference =
+              opportunity && opportunity.external_ref
+                ? 'Broker Load #' + opportunity.external_ref
+                : (
+                    item.opportunity_id
+                      ? 'Opportunity ' + String(item.opportunity_id).slice(0,8)
+                      : ''
                   );
 
-                const time =
-                  Number.isNaN(
-                    date.getTime()
-                  )
-                    ? ''
-                    : date.toLocaleString(
-                        'en-US',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        }
-                      );
+            const rate =
+              item.rate_amount != null
+                ? Number(item.rate_amount)
+                : (
+                    opportunity
+                      ? (
+                          opportunity.booked_rate != null
+                            ? Number(opportunity.booked_rate)
+                            : opportunity.quoted_rate != null
+                              ? Number(opportunity.quoted_rate)
+                              : opportunity.posted_rate != null
+                                ? Number(opportunity.posted_rate)
+                                : null
+                        )
+                      : null
+                  );
 
-                const title =
-                  item.subject ||
-                  item.event_type ||
-                  'Sourcing activity';
+            const eventDate =
+              new Date(item.created_at);
 
-                const detail =
-                  item.body &&
-                  item.body !== title
-                    ? item.body
-                    : '';
+            const eventTime =
+              Number.isNaN(eventDate.getTime())
+                ? ''
+                : eventDate.toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  );
 
-                return (
-                  '<div class="sourcing-row">' +
+            let actionLabel = 'Recent';
+            let actionClass = '';
 
-                    '<div class="sourcing-time">' +
-                      escapeHtml(time) +
-                    '</div>' +
+            if (item.follow_up_at) {
+              const due = new Date(item.follow_up_at);
 
-                    '<div class="sourcing-marker"></div>' +
-
-                    '<div>' +
-                      '<div class="sourcing-title">' +
-                        escapeHtml(title) +
-                      '</div>' +
-                      (
-                        detail
-                          ? (
-                              '<div class="sourcing-detail">' +
-                              escapeHtml(detail) +
-                              '</div>'
-                            )
-                          : ''
-                      ) +
-                    '</div>' +
-
-                    '<a class="sourcing-link" href="sourcing.html">' +
-                      'Open →' +
-                    '</a>' +
-
-                  '</div>'
-                );
-
+              if (!Number.isNaN(due.getTime())) {
+                if (due < todayStart) {
+                  actionLabel = 'Overdue';
+                  actionClass = ' overdue';
+                }
+                else if (due < tomorrowStart) {
+                  actionLabel = 'Due Today';
+                  actionClass = ' today';
+                }
+                else {
+                  actionLabel = 'Upcoming';
+                }
               }
-            )
-            .join('');
+            }
+
+            const followupText =
+              item.follow_up_at
+                ? 'Follow-up: ' +
+                  new Date(item.follow_up_at).toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  )
+                : '';
+
+            const identifiers =
+              [
+                contact
+                  ? '<strong>' + escapeHtml(contact) + '</strong>'
+                  : '',
+                lane
+                  ? escapeHtml(lane)
+                  : '',
+                reference
+                  ? escapeHtml(reference)
+                  : '',
+                freight
+                  ? escapeHtml(freight)
+                  : '',
+                opportunity && opportunity.status
+                  ? 'Status: ' + escapeHtml(
+                      String(opportunity.status)
+                        .replaceAll('_',' ')
+                    )
+                  : '',
+                rate != null && !Number.isNaN(rate)
+                  ? '<strong>' +
+                    rate.toLocaleString(
+                      'en-US',
+                      {
+                        style:'currency',
+                        currency:'USD',
+                        maximumFractionDigits:0
+                      }
+                    ) +
+                    '</strong>'
+                  : ''
+              ]
+                .filter(Boolean)
+                .join(' · ');
+
+            const title =
+              item.title ||
+              item.event_type ||
+              'Sourcing activity';
+
+            const detail =
+              item.detail || '';
+
+            const target =
+              item.load_id
+                ? 'workspace.html?id=' + encodeURIComponent(item.load_id)
+                : 'opportunities.html';
+
+            return (
+              '<div class="sourcing-row">' +
+                '<div class="sourcing-time">' +
+                  escapeHtml(eventTime) +
+                '</div>' +
+                '<div class="sourcing-marker"></div>' +
+                '<div>' +
+                  '<div class="sourcing-action-badge' +
+                    actionClass +
+                  '">' +
+                    escapeHtml(actionLabel) +
+                  '</div>' +
+                  '<div class="sourcing-title">' +
+                    escapeHtml(title) +
+                    ' — ' +
+                    escapeHtml(company) +
+                  '</div>' +
+                  (
+                    identifiers
+                      ? '<div class="sourcing-identifiers">' +
+                        identifiers +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    detail
+                      ? '<div class="sourcing-detail">' +
+                        escapeHtml(detail) +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    followupText
+                      ? '<div class="sourcing-followup">' +
+                        escapeHtml(followupText) +
+                        '</div>'
+                      : ''
+                  ) +
+                '</div>' +
+                '<a class="sourcing-link" href="' +
+                  escapeHtml(target) +
+                  '">' +
+                  (
+                    item.load_id
+                      ? 'Open Load →'
+                      : 'Open Opportunity →'
+                  ) +
+                '</a>' +
+              '</div>'
+            );
+
+          }).join('');
 
       }
-
       catch (error) {
 
         console.warn(
@@ -2221,9 +2942,7 @@
         );
 
         panel.innerHTML =
-          '<div class="activity-empty">' +
-          'Sourcing activity unavailable.' +
-          '</div>';
+          '<div class="activity-empty">Sourcing activity unavailable.</div>';
 
       }
 
