@@ -945,6 +945,7 @@ let PRIVATE_NOTES = [];
 let ORIGIN_FACILITY = null;
 let DEST_FACILITY = null;
 let CARRIER = null;
+let CARRIER_PROFILE = null;
 let DRIVER = null;
 let TRACTOR = null;
 let TRAILER = null;
@@ -1732,6 +1733,7 @@ async function fetchOperationalRelationships(){
   ORIGIN_FACILITY = null;
   DEST_FACILITY = null;
   CARRIER = null;
+  CARRIER_PROFILE = null;
   DRIVER = null;
   TRACTOR = null;
   TRAILER = null;
@@ -1760,6 +1762,27 @@ async function fetchOperationalRelationships(){
   DEST_FACILITY   = lookups[1].status === 'fulfilled' ? lookups[1].value : null;
   CARRIER         = lookups[2].status === 'fulfilled' ? lookups[2].value : null;
   DRIVER          = lookups[3].status === 'fulfilled' ? lookups[3].value : null;
+
+  if (carrierId) {
+    const profileResult =
+      await db
+        .from('carrier_profiles')
+        .select('*')
+        .eq('tenant_id', TENANT_ID)
+        .eq('carrier_id', carrierId)
+        .maybeSingle();
+
+    if (!profileResult.error) {
+      CARRIER_PROFILE =
+        profileResult.data || null;
+    }
+    else {
+      console.warn(
+        'Workspace carrier profile:',
+        profileResult.error.message
+      );
+    }
+  }
   TRACTOR         = lookups[4].status === 'fulfilled' ? lookups[4].value : null;
   TRAILER         = lookups[5].status === 'fulfilled' ? lookups[5].value : null;
 
@@ -2966,6 +2989,43 @@ function refreshHosEngineLive(){
 setInterval(refreshHosEngineLive,30000);
 
 
+
+function moneyWhole(value){
+  if (value === null || value === undefined || value === '') return '—';
+  const n = Number(value);
+  if (Number.isNaN(n)) return esc(value);
+  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function insuranceStatus(){
+  if (!CARRIER_PROFILE) {
+    return { label:'No profile', tone:'warn', detail:'Carrier insurance has not been saved.' };
+  }
+
+  const expiration = CARRIER_PROFILE.insurance_expiration_date;
+
+  if (!expiration) {
+    return { label:'Expiration missing', tone:'warn', detail:'Insurance expiration date is not recorded.' };
+  }
+
+  const end = new Date(expiration + 'T23:59:59');
+  if (Number.isNaN(end.getTime())) {
+    return { label:'Review', tone:'warn', detail:'Insurance expiration date needs review.' };
+  }
+
+  const days = Math.ceil((end - new Date()) / 86400000);
+
+  if (days < 0) {
+    return { label:'Expired', tone:'bad', detail:'Expired ' + Math.abs(days) + ' day' + (Math.abs(days) === 1 ? '' : 's') + ' ago.' };
+  }
+
+  if (days <= 30) {
+    return { label:'Expiring soon', tone:'warn', detail:'Expires in ' + days + ' day' + (days === 1 ? '' : 's') + '.' };
+  }
+
+  return { label:'Current', tone:'ok', detail:'Coverage expiration is current.' };
+}
+
 function drawOverview(){
   if (!LOAD){
     $('tab-overview').innerHTML = '<div class="empty">No load.</div>';
@@ -3342,9 +3402,54 @@ const escortRequiredCount =
     </div>
 
     <div class="card box">
+      <h3>Carrier Insurance</h3>
+      ${
+        (() => {
+          const ins = insuranceStatus();
+          const tone =
+            ins.tone === 'bad'
+              ? 'var(--bad,#A14666)'
+              : ins.tone === 'ok'
+                ? 'var(--ok,#687025)'
+                : 'var(--warn,#8a5a10)';
+
+          return `
+            <dl class="kv">
+              <dt>Status</dt>
+              <dd><span style="font-weight:700;color:${tone}">${esc(ins.label)}</span></dd>
+              <dt>Insurance company</dt><dd>${esc(CARRIER_PROFILE?.insurance_company || '—')}</dd>
+              <dt>Policy</dt><dd>${esc(CARRIER_PROFILE?.insurance_policy_number || '—')}</dd>
+              <dt>Auto liability</dt><dd>${moneyWhole(CARRIER_PROFILE?.auto_liability_limit)}</dd>
+              <dt>Cargo</dt><dd>${moneyWhole(CARRIER_PROFILE?.cargo_limit)}</dd>
+              <dt>General liability</dt><dd>${moneyWhole(CARRIER_PROFILE?.general_liability_limit)}</dd>
+              <dt>Effective</dt><dd>${esc(CARRIER_PROFILE?.insurance_effective_date || '—')}</dd>
+              <dt>Expires</dt><dd>${esc(CARRIER_PROFILE?.insurance_expiration_date || '—')}</dd>
+              <dt>COI on file</dt>
+              <dd>${
+                CARRIER_PROFILE?.coi_on_file === true
+                  ? 'Yes'
+                  : CARRIER_PROFILE?.coi_on_file === false
+                    ? '<span style="color:var(--warn);font-weight:600">No</span>'
+                    : '—'
+              }</dd>
+              <dt>Notes</dt><dd>${esc(CARRIER_PROFILE?.insurance_notes || '—')}</dd>
+            </dl>
+            <div class="small muted" style="margin-top:8px">${esc(ins.detail)}</div>
+          `;
+        })()
+      }
+    </div>
+
+    <div class="card box">
       <h3>Readiness</h3>
       <dl class="kv">
         <dt>Fleet</dt><dd>${LOAD.driver_id && LOAD.tractor_id && LOAD.trailer_id ? 'Assigned' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
+        <dt>Insurance</dt><dd>${(() => {
+          const ins = insuranceStatus();
+          if (ins.tone === 'ok') return 'Current';
+          if (ins.tone === 'bad') return '<span style="color:var(--bad,#A14666);font-weight:600">Expired</span>';
+          return '<span style="color:var(--warn);font-weight:600">' + esc(ins.label) + '</span>';
+        })()}</dd>
         <dt>Route</dt><dd>${ROUTE_PLAN ? 'Saved' : '<span style="color:var(--warn);font-weight:600">Not saved</span>'}</dd>
         <dt>Schedule</dt><dd>${pickup && delivery ? 'Pickup + delivery set' : '<span style="color:var(--warn);font-weight:600">Missing appointment</span>'}</dd>
         <dt>Dimensions</dt><dd>${((LOAD.width_in != null || SOURCE_OPPORTUNITY?.width_ft != null) && (LOAD.height_in != null || SOURCE_OPPORTUNITY?.height_ft != null) && (LOAD.weight_lb != null || SOURCE_OPPORTUNITY?.weight_lbs != null)) ? 'Recorded' : '<span style="color:var(--warn);font-weight:600">Incomplete</span>'}</dd>
