@@ -1456,6 +1456,18 @@ const TT = {
     c_zip:   '38118',
     c_notes: 'Training test carrier. RGN and step deck. Southeast regional lanes.'
   },
+  profile: {
+    p_deadhead: '100',
+    p_tonu: '500',
+    p_layover: '500',
+    p_requirements: 'Oversize loads accepted; permits, escorts, route compliance, pickup/delivery requirements confirmed before dispatch.',
+    p_negotiables: 'Rate negotiable above minimum; detention and TONU required; fuel advance considered when needed.',
+    p_insurer: 'Progressive Commercial',
+    p_auto_liability: '1000000',
+    p_general_liability: '1000000',
+    p_ins_effective: '2026-01-01',
+    p_ins_expiration: '2027-01-01',
+  },
   driver: {
     d_first: 'Marcus',
     d_last:  'Whitfield',
@@ -1583,6 +1595,47 @@ function ttFill(setName){
     );
 
 
+
+  /*
+    Profile test data uses the first available carrier.
+    Prefer the Delta Ridge training carrier when it exists.
+  */
+  if (setName === 'profile') {
+
+    const carrierSelect =
+      document.getElementById('p_carrier');
+
+    if (carrierSelect) {
+
+      const preferred =
+        Array.from(carrierSelect.options)
+          .find(option =>
+            option.textContent
+              .toLowerCase()
+              .includes('delta ridge')
+          );
+
+      const fallback =
+        Array.from(carrierSelect.options)
+          .find(option => option.value);
+
+      const chosen =
+        preferred || fallback;
+
+      if (chosen) {
+        carrierSelect.value =
+          chosen.value;
+
+        carrierSelect.dispatchEvent(
+          new Event(
+            'change',
+            { bubbles:true }
+          )
+        );
+      }
+    }
+  }
+
   /*
     Driver-specific confirmation.
     These are real values, not placeholders.
@@ -1610,6 +1663,7 @@ async function ttInit() {
 
     [
       ['c_save', 'carrier'],
+      ['p_save', 'profile'],
       ['d_save', 'driver'],
       ['t_save', 'tractor'],
       ['r_save', 'trailer']
