@@ -1,68 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="dashboard.css">
-
-
-<title>New Load — Dispatch</title>
-
-
-<style>
-
-
-  :root {
-    --bg:#f5f4f0;
-    --card:#fff;
-    --ink:#22221f;
-    --muted:#73726c;
-    --line:#e2e0da;
-    --line2:#cfccc4;
-    --accent:#185fa5;
-    --danger:#a32d2d;
-    --dangerbg:#fcebeb;
-    --warn:#8a5a10;
-    --warnbg:#fdf3e3;
-    --ok:#0f6e56;
-    --okbg:#e4f4ee;
-  }
-
-
-  * {
-    box-sizing:border-box;
-  }
-
-
-  body {
-    margin:0;
-    background:var(--bg);
-newload-calculator-links.html
-HTML
-ready for fleet
-
-Ready — I updated fleet.html next.
-
-Download the updated fleet.html
-
-I kept both nav systems intact and did not touch your carrier/driver/truck/trailer save logic. The Fleet profile still stores the real baseline terms such as target RPM, minimum RPM, minimum day rate, detention, TONU, and layover.
-
-What I added is a Calculator Source Terms section under the Fleet Profile. It explains that these carrier terms are the baseline Calculators will use once that carrier is assigned to a load, and it provides quick links to Rate / Profit and Accessorial calculators.
-
-The important distinction is preserved: Fleet Setup owns the carrier baseline, while a specific load can still have negotiated load-specific terms that override that baseline.
-
-
-Next is route-planning.html, where we can connect the saved loaded miles directly into the Rate / Profit workflow. 
-
-fleet-calculator-links.html
-HTML
-
-fleet-calculator-links.html
-<!DOCTYPE html>
-<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -251,6 +188,15 @@ fleet-calculator-links.html
 <body>
 
 <header></header>
+
+<!-- =========================================================
+     FLEET COMMAND WORKSPACE NAV
+     ========================================================= -->
+
+<nav
+  id="fleetCommandTabs"
+  aria-label="Fleet Command navigation">
+</nav>
 
 <main>
 
@@ -482,6 +428,63 @@ fleet-calculator-links.html
           <textarea id="p_notes"></textarea>
         </div>
 
+        <div class="full">
+          <h3 style="margin:8px 0 2px">Insurance</h3>
+          <p class="hint" style="margin:0 0 8px">
+            Permanent carrier insurance information used for dispatch readiness.
+          </p>
+        </div>
+
+        <div>
+          <label>Insurance company</label>
+          <input id="p_insurer">
+        </div>
+
+        <div>
+          <label>Policy number</label>
+          <input id="p_policy_number">
+        </div>
+
+        <div>
+          <label>Auto liability limit ($)</label>
+          <input id="p_auto_liability" type="number" step="1">
+        </div>
+
+        <div>
+          <label>Cargo limit ($)</label>
+          <input id="p_cargo_limit" type="number" step="1">
+        </div>
+
+        <div>
+          <label>General liability limit ($)</label>
+          <input id="p_general_liability" type="number" step="1">
+        </div>
+
+        <div>
+          <label>Effective date</label>
+          <input id="p_ins_effective" type="date">
+        </div>
+
+        <div>
+          <label>Expiration date</label>
+          <input id="p_ins_expiration" type="date">
+        </div>
+
+        <div>
+          <label>COI on file</label>
+          <select id="p_coi_on_file">
+            <option value="">—</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label>Insurance agent / contact notes</label>
+          <textarea id="p_insurance_notes"
+            placeholder="Agent name, phone, email, certificate holder notes, special requirements…"></textarea>
+        </div>
+
       </div>
 
       <button id="p_save">
@@ -531,7 +534,6 @@ fleet-calculator-links.html
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="nav.js"></script>
-
 <script>
 // ===== FILL IN THESE TWO VALUES =====
 const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
@@ -596,63 +598,10 @@ async function start() {
     alert('No profile linked to this login.');
     return;
   }
-
-  await refresh();
+await refresh();
 
   await ttInit();
 
-}
-
-
-
-function clearProfileFields() {
-  [
-    'p_target_rpm',
-    'p_min_rpm',
-    'p_day_rate',
-    'p_deadhead',
-    'p_detention_rate',
-    'p_detention_after',
-    'p_tonu',
-    'p_layover',
-    'p_negotiables',
-    'p_preferences',
-    'p_requirements',
-    'p_notes'
-  ].forEach(id => {
-    const el = $(id);
-    if (el) el.value = '';
-  });
-
-  if ($('p_msg')) {
-    $('p_msg').textContent = '';
-    $('p_msg').className = 'msg';
-  }
-}
-
-
-function clearFleetEntryForms() {
-  [
-    'c_legal','c_dba','c_mc','c_dot','c_phone','c_ah','c_email',
-    'c_addr','c_city','c_state','c_zip','c_notes',
-
-    'd_first','d_last','d_phone','d_email','d_cdl','d_cdlst',
-    'd_end','d_hire','d_notes',
-
-    't_unit','t_make','t_model','t_year','t_vin','t_plate','t_plst',
-    't_axles','t_empty','t_notes',
-
-    'r_unit','r_make','r_year','r_axles','r_dlen','r_dht','r_empty',
-    'r_pay','r_plate','r_notes'
-  ].forEach(id => {
-    const el = $(id);
-    if (el) el.value = '';
-  });
-
-  if ($('d_over')) $('d_over').value = 'false';
-  if ($('t_op')) $('t_op').value = 'available';
-
-  clearProfileFields();
 }
 
 
@@ -664,21 +613,11 @@ async function refresh() {
   $('step1').style.display = carriers.length ? 'none' : 'block';
 
   ['d_carrier','t_carrier','r_carrier','p_carrier'].forEach(id => {
-    const select = $(id);
-    const keep = select.value;
-
-    select.innerHTML = carriers.map(x =>
+    const keep = $(id).value;
+    $(id).innerHTML = carriers.map(x =>
       '<option value="' + x.id + '">' + esc(x.legal_name) + '</option>').join('')
       || '<option value="">— add a carrier first —</option>';
-
-    if (
-      keep &&
-      carriers.some(x => x.id === keep)
-    ) {
-      select.value = keep;
-    } else if (!carriers.length) {
-      select.value = '';
-    }
+    if (keep) $(id).value = keep;
   });
 
   $('c_list').innerHTML = carriers.length
@@ -772,14 +711,7 @@ async function refresh() {
     .eq('tenant_id', tenant)
     .order('updated_at', { ascending:false });
 
-  const activeCarrierIds =
-    new Set(carriers.map(x => x.id));
-
-  const profiles =
-    (pr.data || [])
-      .filter(x =>
-        activeCarrierIds.has(x.carrier_id)
-      );
+  const profiles = pr.data || [];
 
   $('p_list').innerHTML = profiles.length
     ? rowsTable(
@@ -795,8 +727,6 @@ async function refresh() {
 
   if ($('p_carrier').value) {
     await loadProfileForCarrier();
-  } else {
-    clearProfileFields();
   }
 }
 
@@ -878,8 +808,8 @@ $('c_save').addEventListener('click', async () => {
 
 if (!result) {
   result = await db
-    .from('carriers')
-    .insert(carrierData);
+    .from('drivers')
+    .insert(driverData);
 }
 
   $('c_save').disabled = false;
@@ -1213,7 +1143,6 @@ async function loadProfileForCarrier() {
     val('p_carrier');
 
   if (!carrierId) {
-    clearProfileFields();
     return;
   }
 
@@ -1272,6 +1201,34 @@ async function loadProfileForCarrier() {
 
   $('p_notes').value =
     x.notes || '';
+
+  $('p_insurer').value =
+    x.insurance_company || '';
+
+  $('p_policy_number').value =
+    x.insurance_policy_number || '';
+
+  $('p_auto_liability').value =
+    x.auto_liability_limit ?? '';
+
+  $('p_cargo_limit').value =
+    x.cargo_limit ?? '';
+
+  $('p_general_liability').value =
+    x.general_liability_limit ?? '';
+
+  $('p_ins_effective').value =
+    x.insurance_effective_date || '';
+
+  $('p_ins_expiration').value =
+    x.insurance_expiration_date || '';
+
+  $('p_coi_on_file').value =
+    x.coi_on_file === true ? 'true' :
+    x.coi_on_file === false ? 'false' : '';
+
+  $('p_insurance_notes').value =
+    x.insurance_notes || '';
 
 }
 
@@ -1342,7 +1299,36 @@ $('p_save')
           val('p_requirements'),
 
         notes:
-          val('p_notes')
+          val('p_notes'),
+
+        insurance_company:
+          val('p_insurer'),
+
+        insurance_policy_number:
+          val('p_policy_number'),
+
+        auto_liability_limit:
+          num('p_auto_liability'),
+
+        cargo_limit:
+          num('p_cargo_limit'),
+
+        general_liability_limit:
+          num('p_general_liability'),
+
+        insurance_effective_date:
+          val('p_ins_effective'),
+
+        insurance_expiration_date:
+          val('p_ins_expiration'),
+
+        coi_on_file:
+          val('p_coi_on_file') === null
+            ? null
+            : val('p_coi_on_file') === 'true',
+
+        insurance_notes:
+          val('p_insurance_notes')
 
       };
 
@@ -1505,21 +1491,6 @@ const TT = {
     r_empty: '17800',
     r_pay:   '55000',
     r_notes: 'Training unit. Detachable gooseneck, 3-axle.'
-  },
-
-  profile: {
-    p_target_rpm:       '4.00',
-    p_min_rpm:          '3.50',
-    p_day_rate:         '1200',
-    p_deadhead:         '100',
-    p_detention_rate:   '75',
-    p_detention_after:  '2',
-    p_tonu:             '500',
-    p_layover:          '500',
-    p_negotiables:      'Rate negotiable above minimum. Detention and TONU required. Fuel advance considered when needed.',
-    p_preferences:      'AR, TN, MS regional lanes. Heavy equipment preferred. RGN freight preferred.',
-    p_requirements:     'Oversize loads accepted. Permits, escorts, route compliance, pickup and delivery requirements confirmed before dispatch.',
-    p_notes:            'Training carrier profile baseline terms.'
   }
 };
 
@@ -1641,8 +1612,7 @@ async function ttInit() {
       ['c_save', 'carrier'],
       ['d_save', 'driver'],
       ['t_save', 'tractor'],
-      ['r_save', 'trailer'],
-      ['p_save', 'profile']
+      ['r_save', 'trailer']
     ].forEach(pair => {
       const saveBtn = document.getElementById(pair[0]);
 
@@ -1663,21 +1633,7 @@ async function ttInit() {
         'cursor:pointer;';
 
       button.addEventListener('click', () => {
-
-        if (
-          pair[1] === 'profile' &&
-          !$('p_carrier').value
-        ) {
-          say(
-            'p_msg',
-            'Create or select the TT carrier first.',
-            'err'
-          );
-          return;
-        }
-
         ttFill(pair[1]);
-
       });
 
       saveBtn.parentNode.insertBefore(button, saveBtn);
@@ -1687,43 +1643,6 @@ async function ttInit() {
     console.warn('Training Mode initialization failed:', error);
   }
 }
-
-
-// ============================================================
-// RETURN FROM TESTING / TRAINING RESET
-//
-// Browsers can restore fleet.html from memory when using Back.
-// If Training Mode has ended, refresh from Supabase and clear
-// any stale form values that were left on screen by the TT.
-// ============================================================
-
-window.addEventListener(
-  'pageshow',
-  async event => {
-
-    if (!db || !tenant) {
-      return;
-    }
-
-    try {
-      const trainingStatus =
-        await getProtectedTrainingStatus();
-
-      if (trainingStatus.active !== true) {
-        clearFleetEntryForms();
-      }
-
-      await refresh();
-    }
-    catch (error) {
-      console.warn(
-        'Fleet page refresh after Training Mode:',
-        error
-      );
-    }
-  }
-);
-
 </script>
 
 
