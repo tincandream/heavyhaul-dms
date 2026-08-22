@@ -369,6 +369,44 @@ dialog::backdrop{background:rgba(25,25,25,.35)}
 
 .report-year select{width:auto;display:inline-block}
 
+/* ---------- INVOICE PRINT VIEW ---------- */
+#invoicePrintArea{display:none}
+.ip-page{padding:0}
+.ip-header{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:3px solid var(--ink);padding-bottom:10px;margin-bottom:18px}
+.ip-header h1{font-size:22px;margin:0;letter-spacing:.5px}
+.ip-header .ip-sub{color:var(--muted);font-size:12px;margin-top:2px}
+.ip-header .ip-num{text-align:right;font-size:15px}
+.ip-header .ip-num b{font-size:20px;display:block}
+.ip-billto{margin-bottom:20px;font-size:13px}
+.ip-billto .ip-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:3px}
+.ip-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;font-size:12.5px}
+.ip-meta div dt{color:#555;font-size:10.5px;text-transform:uppercase}
+.ip-meta div dd{margin:2px 0 0;font-weight:600}
+.ip-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+.ip-table th,.ip-table td{border:1px solid #999;padding:7px 9px;text-align:left}
+.ip-table th{background:#eee}
+.ip-table td.amt, .ip-table th.amt{text-align:right}
+.ip-total-row{display:flex;justify-content:flex-end;padding:10px 0;font-size:16px;font-weight:800;
+  border-top:2px solid var(--ink);margin-top:4px}
+.ip-notes{margin-top:20px;font-size:12px;color:#333;white-space:pre-wrap}
+.ip-footer{margin-top:24px;font-size:10px;color:#666;text-align:center;border-top:1px solid #ccc;padding-top:6px}
+
+@media print{
+  body.printing-invoice .tiles,
+  body.printing-invoice .tabs,
+  body.printing-invoice .panel,
+  body.printing-invoice header,
+  body.printing-invoice #toast,
+  body.printing-invoice dialog{
+    display:none !important;
+  }
+  body.printing-invoice #invoicePrintArea{
+    display:block !important;
+  }
+  @page{ margin:0.5in; }
+}
+
 </style>
 </head>
 
@@ -450,6 +488,7 @@ dialog::backdrop{background:rgba(25,25,25,.35)}
       <div id="inv_lines"></div>
 
       <div class="linetotal">
+        <span id="inv_paidtodate" class="small muted"></span>
         <span>Total: <b id="inv_totaldisplay">$0.00</b></span>
       </div>
     </fieldset>
@@ -460,6 +499,7 @@ dialog::backdrop{background:rgba(25,25,25,.35)}
     <button class="primary" id="inv_savebtn">Save Invoice</button>
     <button onclick="dlgInvoice.close()">Cancel</button>
     <span class="spacer"></span>
+    <button class="sm hide" id="inv_printbtn">🖨 Print / Send</button>
     <button class="sm hide" id="inv_paybtn">Record Payment / Mark Paid</button>
     <button class="danger sm hide" id="inv_delbtn">Delete</button>
   </div>
@@ -564,7 +604,57 @@ dialog::backdrop{background:rgba(25,25,25,.35)}
   </div>
 </dialog>
 
+<!-- ============ BILLING TERMS DIALOG ============ -->
+<dialog id="dlgBillingTerms" style="width:min(820px,94vw)">
+  <div class="dlg-head"><h3>Carrier Billing Terms</h3></div>
+  <div class="dlg-body">
+
+    <div class="tablewrap" style="margin-bottom:16px">
+      <table>
+        <thead><tr><th>Carrier</th><th>Current Terms</th><th>Effective Since</th></tr></thead>
+        <tbody id="bt_summary_rows"></tbody>
+      </table>
+    </div>
+
+    <fieldset class="fs">
+      <legend>Add a new terms entry</legend>
+      <p class="hint" style="margin:0 0 10px">
+        A new entry becomes the carrier's current terms as of its effective date.
+        Past entries are kept for history — nothing is overwritten.
+      </p>
+
+      <div class="grid">
+        <div class="req"><label>Carrier</label>
+          <select id="bt_carrier"></select></div>
+        <div class="req"><label>Fee type</label>
+          <select id="bt_fee_type">
+            <option value="flat">Flat fee per load</option>
+            <option value="percentage">Percentage of linehaul</option>
+          </select></div>
+        <div id="bt_flat_field"><label>Flat fee amount ($)</label>
+          <input type="number" step="0.01" id="bt_flat_fee_amount"></div>
+        <div id="bt_pct_field" class="hide"><label>Percentage (e.g. 0.08 for 8%)</label>
+          <input type="number" step="0.0001" id="bt_percentage_rate"></div>
+        <div><label>Effective date</label>
+          <input type="date" id="bt_effective_date"></div>
+        <div class="full"><label>Notes</label>
+          <textarea id="bt_notes"></textarea></div>
+      </div>
+
+      <div id="bt_err" class="err" style="margin-top:8px"></div>
+      <div style="margin-top:10px">
+        <button class="primary sm" id="bt_savebtn">Save Terms</button>
+      </div>
+    </fieldset>
+
+  </div>
+  <div class="dlg-foot">
+    <button onclick="dlgBillingTerms.close()">Close</button>
+  </div>
+</dialog>
+
 <div id="toast"></div>
+<div id="invoicePrintArea"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="nav.js"></script>
@@ -791,6 +881,110 @@ async function fetchBillingTerms(carrierId){
   return r.error ? null : r.data;
 }
 
+/* ============================================================
+   BILLING TERMS (per-carrier flat/percentage fee, shown up front
+   so a carrier without terms set is never a silent $0 line item)
+   ============================================================ */
+async function fetchAllBillingTerms(){
+  const r = await db.from('carrier_billing_terms').select('*')
+    .eq('tenant_id', TENANT_ID)
+    .order('effective_date', { ascending:false });
+
+  if (r.error) return {};
+
+  const map = {};
+  (r.data || []).forEach(row => {
+    if (!map[row.carrier_id]) map[row.carrier_id] = row; // first seen = most recent, since sorted desc
+  });
+  return map;
+}
+
+function billingTermsLabel(term){
+  if (!term) return '<span class="pill warn">Not set</span>';
+  if (term.fee_type === 'flat'){
+    return `Flat — ${money(term.flat_fee_amount)} / load`;
+  }
+  const pct = Number(term.percentage_rate || 0) * 100;
+  return `Percentage — ${pct}% of linehaul`;
+}
+
+async function openBillingTerms(){
+  clearErr('bt_err');
+
+  const termsMap = await fetchAllBillingTerms();
+
+  $('bt_summary_rows').innerHTML = CARRIERS.map(c => {
+    const term = termsMap[c.id];
+    return `<tr>
+      <td>${esc(c.legal_name)}</td>
+      <td>${billingTermsLabel(term)}</td>
+      <td class="small muted">${term ? fmtDate(term.effective_date) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  $('bt_carrier').innerHTML = CARRIERS.map(c =>
+    `<option value="${esc(c.id)}">${esc(c.legal_name)}</option>`).join('');
+
+  $('bt_fee_type').value = 'flat';
+  $('bt_flat_fee_amount').value = '';
+  $('bt_percentage_rate').value = '';
+  $('bt_effective_date').value = todayISO();
+  $('bt_notes').value = '';
+  toggleBillingTermsFields();
+
+  dlgBillingTerms.showModal();
+}
+
+function toggleBillingTermsFields(){
+  const isFlat = $('bt_fee_type').value === 'flat';
+  $('bt_flat_field').classList.toggle('hide', !isFlat);
+  $('bt_pct_field').classList.toggle('hide', isFlat);
+}
+
+$('bt_fee_type').addEventListener('change', toggleBillingTermsFields);
+
+async function saveBillingTerm(){
+  clearErr('bt_err');
+  const btn = $('bt_savebtn');
+  btn.disabled = true;
+
+  const carrierId = $('bt_carrier').value;
+  const feeType = $('bt_fee_type').value;
+
+  if (!carrierId){ showErr('bt_err', {message:'Choose a carrier.'}); btn.disabled = false; return; }
+
+  const row = {
+    tenant_id: TENANT_ID,
+    carrier_id: carrierId,
+    fee_type: feeType,
+    flat_fee_amount: feeType === 'flat' ? num($('bt_flat_fee_amount').value) : null,
+    percentage_rate: feeType === 'percentage' ? num($('bt_percentage_rate').value) : null,
+    effective_date: txt($('bt_effective_date').value) || todayISO(),
+    notes: txt($('bt_notes').value)
+  };
+
+  if (feeType === 'flat' && row.flat_fee_amount === null){
+    showErr('bt_err', {message:'Enter a flat fee amount.'});
+    btn.disabled = false;
+    return;
+  }
+  if (feeType === 'percentage' && row.percentage_rate === null){
+    showErr('bt_err', {message:'Enter a percentage rate.'});
+    btn.disabled = false;
+    return;
+  }
+
+  const { error } = await db.from('carrier_billing_terms').insert(row);
+  if (error){ showErr('bt_err', error); btn.disabled = false; return; }
+
+  btn.disabled = false;
+  toast('Billing terms saved for ' + (CARRIER_MAP[carrierId] || 'carrier'));
+
+  // Refresh the summary table in place rather than closing the dialog —
+  // lets her add terms for several carriers back to back.
+  await openBillingTerms();
+}
+
 async function fetchReports(){
   const [pl, ar, cf, sc] = await Promise.all([
     db.from('v_profit_and_loss').select('*').eq('tenant_id', TENANT_ID),
@@ -946,6 +1140,7 @@ function drawInvoices(){
 
   $('tab-invoices').innerHTML = `
     <div class="sechead"><h2>Invoices</h2><span class="spacer"></span>
+      <button class="sm" onclick="openBillingTerms()">Billing Terms</button>
       <button class="primary sm" onclick="openInvoice(null)">+ New Invoice</button></div>
     ${INVOICES.length ? `
     <div class="tablewrap"><table>
@@ -969,6 +1164,7 @@ async function openInvoice(id){
   $('inv_idlabel').textContent = inv ? inv.id.slice(0,8) : '';
   $('inv_delbtn').classList.toggle('hide', !inv);
   $('inv_paybtn').classList.toggle('hide', !inv || inv.status === 'paid' || inv.status === 'void');
+  $('inv_printbtn').classList.toggle('hide', !inv);
 
   $('inv_carrier').innerHTML = '<option value="">— choose carrier —</option>' +
     CARRIERS.map(c => `<option value="${esc(c.id)}">${esc(c.legal_name)}</option>`).join('');
@@ -981,6 +1177,16 @@ async function openInvoice(id){
   $('inv_notes').value = inv ? (inv.notes || '') : '';
 
   INV_LINES = inv ? await fetchInvoiceLineItems(inv.id) : [];
+
+  const paidLabel = $('inv_paidtodate');
+  if (inv){
+    const paidSoFar = await sumPaymentsForInvoice(inv.id);
+    paidLabel.textContent = paidSoFar > 0
+      ? `Paid to date: ${money(paidSoFar)}`
+      : '';
+  } else {
+    paidLabel.textContent = '';
+  }
 
   await refreshLoadPickerForInvoice();
   drawInvoiceLines();
@@ -1105,6 +1311,12 @@ function updateInvoiceTotalDisplay(){
   $('inv_totaldisplay').textContent = money(total);
 }
 
+async function generateInvoiceNumber(){
+  const cnt = await db.from('invoices').select('*', { count:'exact', head:true }).eq('tenant_id', TENANT_ID);
+  const seq = 1001 + (cnt.count || 0);
+  return 'INV-' + seq;
+}
+
 async function saveInvoice(){
   clearErr('inv_err');
   const btn = $('inv_savebtn');
@@ -1121,10 +1333,15 @@ async function saveInvoice(){
 
   const total = INV_LINES.reduce((s,l) => s + Number(l.amount || 0), 0);
 
+  let invoiceNumber = txt($('inv_number').value);
+  if (!invoiceNumber && !id){
+    invoiceNumber = await generateInvoiceNumber();
+  }
+
   const row = {
     tenant_id: TENANT_ID,
     carrier_id: carrierId,
-    invoice_number: txt($('inv_number').value),
+    invoice_number: invoiceNumber,
     status: $('inv_status').value,
     issue_date: txt($('inv_issue_date').value),
     due_date: txt($('inv_due_date').value),
@@ -1192,6 +1409,79 @@ async function deleteInvoice(){
   await Promise.all([fetchInvoices(), fetchBilledLoadIds(), fetchReports()]);
   drawCounts(); drawKPIs(); drawActiveTab();
 }
+
+/* ============================================================
+   PRINTABLE INVOICE — same pattern as the workspace.html trip packet:
+   a hidden section shown only via print CSS, toggled by a body class.
+   ============================================================ */
+function buildInvoicePrintHTML(inv, lines, carrierName){
+  const linesHTML = lines.length
+    ? lines.map(l => `
+        <tr>
+          <td>${esc(l.description || '(no description)')}</td>
+          <td>${esc(titleize(l.fee_type || 'other'))}</td>
+          <td class="amt">${money(l.amount)}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="3">No line items on this invoice.</td></tr>`;
+
+  return `
+    <div class="ip-page">
+      <div class="ip-header">
+        <div>
+          <h1>INVOICE</h1>
+          <div class="ip-sub">Dianna V. Mwaka, Independent Dispatch Services</div>
+        </div>
+        <div class="ip-num">
+          <b>${esc(inv.invoice_number || '(draft)')}</b>
+          ${invoiceStatusPill(inv.status)}
+        </div>
+      </div>
+
+      <div class="ip-billto">
+        <div class="ip-label">Bill To</div>
+        <div style="font-weight:700;font-size:15px">${esc(carrierName)}</div>
+      </div>
+
+      <div class="ip-meta">
+        <div><dt>Issue Date</dt><dd>${fmtDate(inv.issue_date)}</dd></div>
+        <div><dt>Due Date</dt><dd>${fmtDate(inv.due_date)}</dd></div>
+        <div><dt>Invoice #</dt><dd>${esc(inv.invoice_number || '—')}</dd></div>
+      </div>
+
+      <table class="ip-table">
+        <thead><tr><th>Description</th><th>Type</th><th class="amt">Amount</th></tr></thead>
+        <tbody>${linesHTML}</tbody>
+      </table>
+
+      <div class="ip-total-row">Total Due: ${money(inv.total)}</div>
+
+      ${inv.notes ? `<div class="ip-notes"><b>Notes:</b>\n${esc(inv.notes)}</div>` : ''}
+
+      <div class="ip-footer">
+        Dianna V. Mwaka, Independent Dispatch Services · Generated ${fmtDate(new Date().toISOString())}
+      </div>
+    </div>
+  `;
+}
+
+async function printCurrentInvoice(){
+  const id = txt($('inv_id').value);
+  if (!id){ toast('Save the invoice before printing.', true); return; }
+
+  const inv = INVOICES.find(x => x.id === id);
+  if (!inv){ toast('Invoice not found.', true); return; }
+
+  const lines = await fetchInvoiceLineItems(id);
+  const carrierName = CARRIER_MAP[inv.carrier_id] || 'Carrier';
+
+  $('invoicePrintArea').innerHTML = buildInvoicePrintHTML(inv, lines, carrierName);
+  document.body.classList.add('printing-invoice');
+  window.print();
+}
+
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-invoice');
+});
 
 function openInvoicePayment(){
   const id = txt($('inv_id').value);
@@ -1364,9 +1654,23 @@ async function savePayment(){
   const p = await db.from('payments').insert(paymentRow);
   if (p.error){ showErr('pay_err', p.error); btn.disabled = false; return; }
 
+  let statusMessage = 'Payment recorded';
+
   if (context === 'invoice'){
-    const u = await db.from('invoices').update({ status:'paid', updated_at:new Date().toISOString() }).eq('id', refId);
-    if (u.error){ showErr('pay_err', u.error); btn.disabled = false; return; }
+    // Only mark PAID once total payments actually cover the invoice —
+    // a partial payment must not silently mark the whole invoice as settled.
+    const paidSoFar = await sumPaymentsForInvoice(refId);
+    const inv = INVOICES.find(x => x.id === refId);
+    const invoiceTotal = Number(inv?.total || 0);
+
+    if (paidSoFar + 0.005 >= invoiceTotal){
+      const u = await db.from('invoices').update({ status:'paid', updated_at:new Date().toISOString() }).eq('id', refId);
+      if (u.error){ showErr('pay_err', u.error); btn.disabled = false; return; }
+      statusMessage = 'Payment recorded — invoice fully paid.';
+    } else {
+      const remaining = invoiceTotal - paidSoFar;
+      statusMessage = `Partial payment recorded — ${money(remaining)} still outstanding.`;
+    }
   } else {
     const u = await db.from('expenses').update({ payment_status:'paid' }).eq('id', refId);
     if (u.error){ showErr('pay_err', u.error); btn.disabled = false; return; }
@@ -1377,10 +1681,16 @@ async function savePayment(){
   if (context === 'invoice') dlgInvoice.close();
   else dlgExpense.close();
 
-  toast('Payment recorded');
+  toast(statusMessage);
 
   await Promise.all([fetchInvoices(), fetchExpenses(), fetchReports()]);
   drawCounts(); drawKPIs(); drawActiveTab();
+}
+
+async function sumPaymentsForInvoice(invoiceId){
+  const r = await db.from('payments').select('amount').eq('invoice_id', invoiceId);
+  if (r.error) return 0;
+  return (r.data || []).reduce((s,p) => s + Number(p.amount||0), 0);
 }
 
 /* ============================================================
@@ -1628,6 +1938,7 @@ function drawScheduleCYear(year){
 $('inv_savebtn').addEventListener('click', saveInvoice);
 $('inv_delbtn').addEventListener('click', deleteInvoice);
 $('inv_paybtn').addEventListener('click', openInvoicePayment);
+$('inv_printbtn').addEventListener('click', printCurrentInvoice);
 
 $('exp_savebtn').addEventListener('click', saveExpense);
 $('exp_delbtn').addEventListener('click', deleteExpense);
@@ -1637,6 +1948,7 @@ $('acct_savebtn').addEventListener('click', saveAccount);
 $('acct_delbtn').addEventListener('click', toggleAccountActive);
 
 $('pay_savebtn').addEventListener('click', savePayment);
+$('bt_savebtn').addEventListener('click', saveBillingTerm);
 
 boot();
 
