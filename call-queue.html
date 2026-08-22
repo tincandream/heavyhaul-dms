@@ -91,66 +91,6 @@
     font-size:12.5px; font-weight:500; color:var(--ink);
   }
   .checks input { width:auto; padding:0; }
-
-  .row-actions { display:flex; gap:6px; flex-wrap:wrap; }
-  .muted-btn { background:#fff; color:var(--muted); }
-  .muted-btn:hover { color:var(--ink); }
-
-  .section-title {
-    grid-column:1/-1;
-    font-size:11px;
-    font-weight:700;
-    color:var(--muted);
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    margin-top:4px;
-    padding-top:8px;
-    border-top:1px solid var(--line);
-  }
-
-  .history-head {
-    display:flex;
-    gap:12px;
-    align-items:flex-start;
-    justify-content:space-between;
-    margin-bottom:12px;
-  }
-
-  .history-company { font-size:16px; font-weight:700; }
-  .history-meta { font-size:12px; color:var(--muted); margin-top:2px; }
-
-  .history-list { display:flex; flex-direction:column; gap:10px; }
-  .history-item {
-    border:1px solid var(--line);
-    border-radius:9px;
-    padding:11px 12px;
-    background:#fff;
-  }
-  .history-top {
-    display:flex;
-    gap:8px;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .history-type { font-weight:700; font-size:12.5px; }
-  .history-date { color:var(--muted); font-size:11.5px; }
-  .history-body { margin-top:6px; font-size:12.5px; }
-  .history-grid {
-    margin-top:8px;
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-    gap:6px 12px;
-    font-size:12px;
-  }
-  .history-grid b { color:var(--muted); font-weight:600; }
-
-  .profile-box {
-    border:1px solid var(--line);
-    border-radius:9px;
-    background:#fbfaf7;
-    padding:12px;
-    margin-bottom:12px;
-  }
 </style>
 </head>
 <body>
@@ -169,7 +109,7 @@
   <div class="wrap">
     <table>
       <thead><tr>
-        <th>Company</th><th>Contact</th><th>Phone / Email</th>
+        <th>Company</th><th>Contact</th><th>Phone</th>
         <th>Status</th><th>Tier</th><th>Due</th><th></th>
       </tr></thead>
       <tbody id="body"><tr><td colspan="7" class="msg">Loading…</td></tr></tbody>
@@ -177,27 +117,13 @@
   </div>
 </main>
 
-<!-- LOG CONTACT DIALOG -->
+<!-- LOG CALL DIALOG -->
 <dialog id="dlgCall">
-  <div class="dh" id="callTitle">Log Contact</div>
+  <div class="dh" id="callTitle">Log Call</div>
   <div class="db">
     <input type="hidden" id="c_company">
     <input type="hidden" id="c_contact">
     <div class="fg">
-      <div class="fld">
-        <label for="c_activity_type">Contact type</label>
-        <select id="c_activity_type">
-          <option value="email_sent">Email sent</option>
-          <option value="email_received">Email received</option>
-          <option value="call">Phone call</option>
-          <option value="scheduled_call">Scheduled call</option>
-          <option value="voicemail">Voicemail</option>
-          <option value="text">Text</option>
-          <option value="meeting">Meeting</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
       <div class="fld"><label for="c_outcome">Outcome</label>
         <select id="c_outcome">
           <option value="connected">Connected</option>
@@ -205,19 +131,16 @@
           <option value="voicemail">Left voicemail</option>
           <option value="gatekeeper">Gatekeeper</option>
           <option value="callback_requested">Callback requested</option>
-          <option value="follow_up">Follow up</option>
-          <option value="qualified">Qualified — interested</option>
-          <option value="info_sent">Info / packet sent</option>
           <option value="not_interested">Not interested</option>
+          <option value="info_sent">Info / packet sent</option>\n          <option value="follow_up">Follow up</option>\n          <option value="qualified">Qualified — interested</option>
+          <option value="load_offered">Load offered</option>
+          <option value="booked">Booked</option>
           <option value="bad_number">Bad number</option>
-        </select>
-      </div>
-
+        </select></div>
       <div class="fld"><label for="c_followup">Next follow-up</label>
         <input type="date" id="c_followup"></div>
-
-      <div class="fld full"><label for="c_note">Contact note</label>
-        <textarea id="c_note" style="min-height:64px" placeholder="Sent introduction sheet and requested a scheduled call."></textarea></div>
+      <div class="fld full"><label for="c_note">Call note</label>
+        <textarea id="c_note" style="min-height:64px" placeholder="Talked to dispatch, sending packet."></textarea></div>
     </div>
 
     <div class="qual-box hidden" id="carrierQual">
@@ -318,29 +241,20 @@
     <div id="c_err" class="err"></div>
   </div>
   <div class="df">
-    <button class="primary" id="c_save">Log Contact</button>
+    <button class="primary" id="c_save">Log Call</button>
     <button id="c_cancel">Cancel</button>
     <span class="spacer"></span>
-    <span class="sub2">The contact is saved to company history and can schedule the next follow-up.</span>
+    <span class="sub2">Logging advances the follow-up date automatically.</span>
   </div>
 </dialog>
 
-<!-- ADD / EDIT COMPANY DIALOG -->
+<!-- ADD COMPANY DIALOG -->
 <dialog id="dlgCo">
-  <div class="dh" id="coTitle">Add Company</div>
+  <div class="dh">Add Company</div>
   <div class="db">
-    <input type="hidden" id="co_id">
-    <input type="hidden" id="co_contact_id">
-
     <div class="fg">
-      <div class="section-title">Company</div>
-
       <div class="fld full"><label for="co_name">Legal name *</label>
         <input id="co_name" placeholder="ABC Logistics LLC"></div>
-
-      <div class="fld full"><label for="co_dba">DBA name</label>
-        <input id="co_dba" placeholder="optional"></div>
-
       <div class="fld"><label for="co_type">Type</label>
         <select id="co_type">
           <option value="broker">Broker</option>
@@ -348,7 +262,6 @@
           <option value="shipper">Shipper</option>
           <option value="both">Both</option>
         </select></div>
-
       <div class="fld"><label for="co_status">Status</label>
         <select id="co_status">
           <option value="lead">Lead</option>
@@ -357,94 +270,26 @@
           <option value="pending_approval">Pending approval</option>
           <option value="active">Active</option>
         </select></div>
-
       <div class="fld"><label for="co_tier">Tier</label>
         <select id="co_tier">
           <option value="">—</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
+          <option value="A">A</option><option value="B">B</option><option value="C">C</option>
         </select></div>
-
-      <div class="fld"><label for="co_mc">MC number</label><input id="co_mc"></div>
-      <div class="fld"><label for="co_dot">DOT number</label><input id="co_dot"></div>
-
       <div class="fld"><label for="co_phone">Main phone</label><input id="co_phone"></div>
-      <div class="fld"><label for="co_email">Main email</label><input id="co_email" type="email"></div>
-      <div class="fld full"><label for="co_website">Website</label><input id="co_website" placeholder="https://..."></div>
-
-      <div class="fld full"><label for="co_address">Street address</label><input id="co_address"></div>
-      <div class="fld"><label for="co_city">City</label><input id="co_city"></div>
-      <div class="fld"><label for="co_state">State</label><input id="co_state" maxlength="2" placeholder="AR"></div>
-      <div class="fld"><label for="co_zip">ZIP</label><input id="co_zip"></div>
-
-      <div class="section-title">Primary Contact</div>
-
-      <div class="fld"><label for="co_first">First name</label><input id="co_first" placeholder="optional"></div>
+      <div class="fld full"><label for="co_first">Primary contact — first name</label>
+        <input id="co_first" placeholder="optional"></div>
       <div class="fld"><label for="co_last">Last name</label><input id="co_last"></div>
-      <div class="fld"><label for="co_role">Department / role</label>
-        <select id="co_role">
-          <option value="">—</option>
-          <option value="ops">Operations</option>
-          <option value="dispatch">Dispatch</option>
-          <option value="sales">Sales</option>
-          <option value="accounting">Accounting</option>
-          <option value="permits">Permits</option>
-          <option value="safety">Safety</option>
-          <option value="owner">Owner</option>
-          <option value="after_hours">After Hours</option>
-          <option value="other">Other</option>
-        </select></div>
-      <div class="fld"><label for="co_title">Job title</label>
-        <input id="co_title" placeholder="VP of Operations, Fleet Manager, Warehouse & Logistics Manager"></div>
       <div class="fld"><label for="co_direct">Direct phone</label><input id="co_direct"></div>
-      <div class="fld"><label for="co_contact_email">Direct email</label><input id="co_contact_email" type="email"></div>
-
-      <div class="section-title">Prospect Information</div>
-
-      <div class="fld full">
-        <div class="checks">
-          <label><input type="checkbox" id="co_direct_freight"> Sends direct freight</label>
-          <label><input type="checkbox" id="co_load_emails"> Sends load emails</label>
-          <label><input type="checkbox" id="co_portal"> Has portal</label>
-        </div>
-      </div>
-
-      <div class="fld full"><label for="co_notes">Company / prospect notes</label>
-        <textarea id="co_notes" style="min-height:80px"
-          placeholder="Observed freight, customer relationships to verify, outreach notes, or other prospect intelligence."></textarea></div>
+      <div class="fld full"><div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">
+          <input type="checkbox" id="co_direct_freight" style="width:auto"> Sends direct freight</label>
+      </div></div>
     </div>
-
     <div id="co_err" class="err"></div>
   </div>
-
   <div class="df">
     <button class="primary" id="co_save">Add Company</button>
     <button id="co_cancel">Cancel</button>
-  </div>
-</dialog>
-
-
-<!-- COMPANY HISTORY DIALOG -->
-<dialog id="dlgHistory" style="width:min(760px,96vw)">
-  <div class="dh">Company History</div>
-  <div class="db">
-    <div class="history-head">
-      <div>
-        <div class="history-company" id="h_company">Company</div>
-        <div class="history-meta" id="h_meta"></div>
-      </div>
-      <button class="sm" id="h_edit">Edit Company</button>
-    </div>
-
-    <div class="profile-box" id="h_profile"></div>
-
-    <div class="history-list" id="h_list">
-      <div class="msg">Loading history…</div>
-    </div>
-  </div>
-  <div class="df">
-    <button id="h_close">Close</button>
   </div>
 </dialog>
 
@@ -499,31 +344,6 @@ function clearCarrierQualification(){
 
 function isCarrierCompany(row){
   return !!row && (row.company_type === 'carrier' || row.company_type === 'both');
-}
-
-
-function fmtDateTime(v){
-  if(!v) return '—';
-  const d=new Date(v);
-  if(isNaN(d)) return String(v);
-  return d.toLocaleString('en-US',{
-    month:'short',day:'numeric',year:'numeric',
-    hour:'numeric',minute:'2-digit'
-  });
-}
-
-function activityLabel(v){
-  const map={
-    email_sent:'Email sent',
-    email_received:'Email received',
-    call:'Phone call',
-    scheduled_call:'Scheduled call',
-    voicemail:'Voicemail',
-    text:'Text',
-    meeting:'Meeting',
-    other:'Other'
-  };
-  return map[v] || pretty(v);
 }
 
 let toastTimer=null;
@@ -595,27 +415,16 @@ function render(){
       '<td><span class="name">'+esc(r.legal_name)+'</span>'+
         (r.sends_direct_freight?'<div class="direct">Direct freight</div>':'')+'</td>'+
       '<td>'+contact+(r.best_time_to_call?'<div class="sub2">'+esc(r.best_time_to_call)+'</div>':'')+'</td>'+
-      '<td class="dial">'+esc(r.dial||'—')+
-        (r.main_email?'<div class="sub2">'+esc(r.main_email)+'</div>':'')+'</td>'+
+      '<td class="dial">'+esc(r.dial||'—')+'</td>'+
       '<td><span class="pill '+(STATUS_PILL[r.status]||'p-lead')+'">'+esc(pretty(r.status))+'</span></td>'+
       '<td>'+tier+'</td>'+
       '<td>'+due+'</td>'+
-      '<td><div class="row-actions">'+
-        '<button class="primary sm" data-contact="'+esc(r.company_id)+'" data-ct="'+esc(r.contact_id||'')+'">Log contact</button>'+
-        '<button class="sm muted-btn" data-edit="'+esc(r.company_id)+'">Edit</button>'+
-        '<button class="sm muted-btn" data-history="'+esc(r.company_id)+'">History</button>'+
-      '</div></td>'+
+      '<td><button class="primary sm" data-co="'+esc(r.company_id)+'" data-ct="'+esc(r.contact_id||'')+'">Log call</button></td>'+
       '</tr>';
   }).join('');
 
-  document.querySelectorAll('button[data-contact]').forEach(b=>
-    b.addEventListener('click', ()=>openContact(b.dataset.contact, b.dataset.ct)));
-
-  document.querySelectorAll('button[data-edit]').forEach(b=>
-    b.addEventListener('click', ()=>editCompany(b.dataset.edit)));
-
-  document.querySelectorAll('button[data-history]').forEach(b=>
-    b.addEventListener('click', ()=>openHistory(b.dataset.history)));
+  document.querySelectorAll('button[data-co]').forEach(b=>
+    b.addEventListener('click', ()=>openCall(b.dataset.co, b.dataset.ct)));
 }
 
 
@@ -637,16 +446,15 @@ async function logSourcingEvent(eventType,title,detail,company,followUpAt){
 }
 
 // ===== log call =====
-function openContact(companyId, contactId){
+function openCall(companyId, contactId){
   $('c_err').textContent='';
   $('c_company').value = companyId;
   $('c_contact').value = contactId || '';
 
   const r = rows.find(x=>x.company_id===companyId);
 
-  $('callTitle').textContent = 'Log Contact — ' + (r ? r.legal_name : '');
-  $('c_activity_type').value = 'email_sent';
-  $('c_outcome').value = 'follow_up';
+  $('callTitle').textContent = 'Log Call — ' + (r ? r.legal_name : '');
+  $('c_outcome').value = 'connected';
   $('c_note').value = '';
 
   clearCarrierQualification();
@@ -660,7 +468,7 @@ function openContact(companyId, contactId){
   $('dlgCall').showModal();
 }
 
-async function saveContact(){
+async function saveCall(){
   $('c_err').textContent='';
 
   const btn=$('c_save');
@@ -677,8 +485,8 @@ async function saveContact(){
     tenant_id:TENANT_ID,
     company_id:companyId,
     contact_id:txt($('c_contact').value),
-    activity_type:$('c_activity_type').value,
-    direction:$('c_activity_type').value==='email_received' ? 'inbound' : 'outbound',
+    activity_type:'call',
+    direction:'outbound',
     outcome:outcome,
     body:note,
     next_action_due:followup
@@ -771,9 +579,9 @@ async function saveContact(){
   );
 
   await logSourcingEvent(
-    'contact_completed',
-    'Contact completed — '+companyName,
-    activityLabel($('c_activity_type').value)+' · Outcome: '+pretty(outcome),
+    'call_completed',
+    'Call completed — '+companyName,
+    'Outcome: '+pretty(outcome),
     company,
     null
   );
@@ -790,339 +598,78 @@ async function saveContact(){
 
   btn.disabled=false;
   $('dlgCall').close();
-  toast('Contact logged');
+  toast('Call logged');
   loadQueue();
 }
 
-// ===== add / edit company =====
-function clearCompanyForm(){
-  $('co_id').value='';
-  $('co_contact_id').value='';
-
-  [
-    'co_name','co_dba','co_mc','co_dot','co_phone','co_email','co_website',
-    'co_address','co_city','co_state','co_zip',
-    'co_first','co_last','co_title','co_direct','co_contact_email','co_notes'
-  ].forEach(id=>$(id).value='');
-
-  $('co_type').value='broker';
-  $('co_status').value='lead';
-  $('co_tier').value='';
-  $('co_role').value='';
-  $('co_direct_freight').checked=false;
-  $('co_load_emails').checked=false;
-  $('co_portal').checked=false;
-}
-
+// ===== add company =====
 function openCo(){
   $('co_err').textContent='';
-  clearCompanyForm();
-  $('coTitle').textContent='Add Company';
-  $('co_save').textContent='Add Company';
-  $('dlgCo').showModal();
-}
-
-async function editCompany(companyId){
-  $('co_err').textContent='';
-
-  const companyResult = await db
-    .from('companies')
-    .select('*')
-    .eq('tenant_id',TENANT_ID)
-    .eq('id',companyId)
-    .single();
-
-  if(companyResult.error){
-    toast('Could not load company');
-    console.warn(companyResult.error.message);
-    return;
-  }
-
-  const contactResult = await db
-    .from('company_contacts')
-    .select('*')
-    .eq('tenant_id',TENANT_ID)
-    .eq('company_id',companyId)
-    .eq('is_primary',true)
-    .maybeSingle();
-
-  clearCompanyForm();
-
-  const c=companyResult.data;
-  const p=contactResult.data || {};
-
-  $('co_id').value=c.id;
-  $('co_contact_id').value=p.id || '';
-  $('co_name').value=c.legal_name || '';
-  $('co_dba').value=c.dba_name || '';
-  $('co_type').value=c.company_type || 'broker';
-  $('co_status').value=c.status || 'lead';
-  $('co_tier').value=c.tier || '';
-  $('co_mc').value=c.mc_number || '';
-  $('co_dot').value=c.dot_number || '';
-  $('co_phone').value=c.main_phone || '';
-  $('co_email').value=c.main_email || '';
-  $('co_website').value=c.website || '';
-  $('co_address').value=c.address_line1 || '';
-  $('co_city').value=c.city || '';
-  $('co_state').value=c.state || '';
-  $('co_zip').value=c.postal_code || '';
-  $('co_notes').value=c.notes || '';
-  $('co_direct_freight').checked=!!c.sends_direct_freight;
-  $('co_load_emails').checked=!!c.sends_load_emails;
-  $('co_portal').checked=!!c.has_portal;
-
-  $('co_first').value=p.first_name || '';
-  $('co_last').value=p.last_name || '';
-  $('co_role').value=p.role || '';
-  $('co_title').value=p.title || '';
-  $('co_direct').value=p.direct_phone || '';
-  $('co_contact_email').value=p.email || '';
-
-  $('coTitle').textContent='Edit Company — '+c.legal_name;
-  $('co_save').textContent='Save Changes';
-  $('dlgHistory').close();
+  ['co_name','co_phone','co_first','co_last','co_direct'].forEach(id=>$(id).value='');
+  $('co_type').value='broker'; $('co_status').value='lead'; $('co_tier').value='';
+  $('co_direct_freight').checked=false;
   $('dlgCo').showModal();
 }
 
 async function saveCo(){
   $('co_err').textContent='';
+  const name = txt($('co_name').value);
+  if (!name){ $('co_err').textContent='Legal name is required.'; return; }
+  const btn=$('co_save'); btn.disabled=true;
 
-  const name=txt($('co_name').value);
-  if(!name){
-    $('co_err').textContent='Legal name is required.';
-    return;
-  }
+  const ins = await db.from('companies').insert({
+    tenant_id:            TENANT_ID,
+    legal_name:           name,
+    company_type:         $('co_type').value,
+    status:               $('co_status').value,
+    tier:                 txt($('co_tier').value),
+    main_phone:           txt($('co_phone').value),
+    sends_direct_freight: $('co_direct_freight').checked,
+    next_touch_date:      todayISO()   // due immediately so it shows in the queue
+  }).select().single();
 
-  const btn=$('co_save');
-  btn.disabled=true;
+  if (ins.error){ btn.disabled=false; $('co_err').textContent = ins.error.message; return; }
 
-  const companyId=txt($('co_id').value);
-
-  const companyData={
-    legal_name:name,
-    dba_name:txt($('co_dba').value),
-    company_type:$('co_type').value,
-    status:$('co_status').value,
-    tier:txt($('co_tier').value),
-    mc_number:txt($('co_mc').value),
-    dot_number:txt($('co_dot').value),
-    main_phone:txt($('co_phone').value),
-    main_email:txt($('co_email').value),
-    website:txt($('co_website').value),
-    address_line1:txt($('co_address').value),
-    city:txt($('co_city').value),
-    state:txt($('co_state').value),
-    postal_code:txt($('co_zip').value),
-    sends_direct_freight:$('co_direct_freight').checked,
-    sends_load_emails:$('co_load_emails').checked,
-    has_portal:$('co_portal').checked,
-    notes:txt($('co_notes').value),
-    updated_at:new Date().toISOString()
-  };
-
-  let savedCompany;
-
-  if(companyId){
-    const r=await db
-      .from('companies')
-      .update(companyData)
-      .eq('tenant_id',TENANT_ID)
-      .eq('id',companyId)
-      .select()
-      .single();
-
-    if(r.error){
-      btn.disabled=false;
-      $('co_err').textContent=r.error.message;
-      return;
-    }
-    savedCompany=r.data;
-  } else {
-    companyData.tenant_id=TENANT_ID;
-    companyData.next_touch_date=todayISO();
-
-    const r=await db
-      .from('companies')
-      .insert(companyData)
-      .select()
-      .single();
-
-    if(r.error){
-      btn.disabled=false;
-      $('co_err').textContent=r.error.message;
-      return;
-    }
-    savedCompany=r.data;
-  }
-
-  const contactId=txt($('co_contact_id').value);
-  const first=txt($('co_first').value);
-  const last=txt($('co_last').value);
-  const direct=txt($('co_direct').value);
-  const email=txt($('co_contact_email').value);
-  const role=txt($('co_role').value);
-  const title=txt($('co_title').value);
-
-  const hasContact=!!(first||last||direct||email||role||title);
-
-  if(hasContact){
-    const contactData={
-      tenant_id:TENANT_ID,
-      company_id:savedCompany.id,
-      first_name:first,
-      last_name:last,
-      role:role,
-      title:title,
-      direct_phone:direct,
-      email:email,
-      is_primary:true
-    };
-
-    let cr;
-    if(contactId){
-      cr=await db
-        .from('company_contacts')
-        .update(contactData)
-        .eq('tenant_id',TENANT_ID)
-        .eq('id',contactId);
-    } else {
-      cr=await db
-        .from('company_contacts')
-        .insert(contactData);
-    }
-
-    if(cr.error){
-      btn.disabled=false;
-      $('co_err').textContent='Company saved, but contact failed: '+cr.error.message;
-      await loadQueue();
-      return;
-    }
+  // optional primary contact
+  const first = txt($('co_first').value);
+  if (first){
+    const c = await db.from('company_contacts').insert({
+      tenant_id:    TENANT_ID,
+      company_id:   ins.data.id,
+      first_name:   first,
+      last_name:    txt($('co_last').value),
+      direct_phone: txt($('co_direct').value),
+      is_primary:   true
+    });
+    if (c.error){ btn.disabled=false; $('co_err').textContent = 'Company saved, but contact failed: '+c.error.message; loadQueue(); return; }
   }
 
   btn.disabled=false;
 
   await logSourcingEvent(
-    isCarrierCompany(savedCompany) ? 'carrier_contacted' : 'broker_contacted',
-    (companyId ? 'Sourcing company updated — ' : 'Sourcing company added — ')+name,
-    (companyId ? 'Updated company profile' : 'Added to outreach queue as '+pretty($('co_type').value)),
+    $('co_type').value==='carrier' ? 'carrier_contacted' : 'broker_contacted',
+    'Sourcing company added — '+name,
+    'Added to Call Queue as '+pretty($('co_type').value),
     {
       legal_name:name,
       company_type:$('co_type').value,
       first_name:first,
-      last_name:last
+      last_name:txt($('co_last').value)
     },
-    savedCompany.next_touch_date || todayISO()
+    todayISO()
   );
 
   $('dlgCo').close();
-  toast(companyId ? 'Company updated' : 'Company added');
+  toast('Company added');
   loadQueue();
-}
-
-
-// ===== company history =====
-let HISTORY_COMPANY_ID=null;
-
-async function openHistory(companyId){
-  HISTORY_COMPANY_ID=companyId;
-  $('h_list').innerHTML='<div class="msg">Loading history…</div>';
-
-  const companyResult=await db
-    .from('companies')
-    .select('*')
-    .eq('tenant_id',TENANT_ID)
-    .eq('id',companyId)
-    .single();
-
-  if(companyResult.error){
-    $('h_list').innerHTML='<div class="msg bad">'+esc(companyResult.error.message)+'</div>';
-    $('dlgHistory').showModal();
-    return;
-  }
-
-  const contactResult=await db
-    .from('company_contacts')
-    .select('*')
-    .eq('tenant_id',TENANT_ID)
-    .eq('company_id',companyId)
-    .eq('is_primary',true)
-    .maybeSingle();
-
-  const historyResult=await db
-    .from('crm_activities')
-    .select('*')
-    .eq('tenant_id',TENANT_ID)
-    .eq('company_id',companyId)
-    .order('occurred_at',{ascending:false})
-    .limit(100);
-
-  const c=companyResult.data;
-  const p=contactResult.data || {};
-  const history=historyResult.data || [];
-
-  $('h_company').textContent=c.legal_name || 'Company';
-  $('h_meta').textContent=[
-    pretty(c.company_type),
-    c.mc_number ? 'MC '+c.mc_number : null,
-    c.dot_number ? 'DOT '+c.dot_number : null,
-    pretty(c.status)
-  ].filter(Boolean).join(' · ');
-
-  $('h_profile').innerHTML=
-    '<div><b>Primary contact:</b> '+esc([p.first_name,p.last_name].filter(Boolean).join(' ') || '—')+
-      (p.title?' · '+esc(p.title):'')+
-      (p.role?' · '+esc(pretty(p.role)):'')+'</div>'+
-    '<div><b>Phone:</b> '+esc(p.direct_phone || c.main_phone || '—')+'</div>'+
-    '<div><b>Email:</b> '+esc(p.email || c.main_email || '—')+'</div>'+
-    '<div><b>Website:</b> '+esc(c.website || '—')+'</div>'+
-    '<div><b>Location:</b> '+esc([c.address_line1,c.city,c.state,c.postal_code].filter(Boolean).join(', ') || '—')+'</div>'+
-    (c.notes?'<div style="margin-top:6px"><b>Prospect notes:</b> '+esc(c.notes)+'</div>':'');
-
-  if(historyResult.error){
-    $('h_list').innerHTML='<div class="msg bad">'+esc(historyResult.error.message)+'</div>';
-  } else if(!history.length){
-    $('h_list').innerHTML='<div class="msg">No contact history yet.</div>';
-  } else {
-    $('h_list').innerHTML=history.map(a=>{
-      const q=[
-        a.contact_role ? '<div><b>Contact role:</b> '+esc(pretty(a.contact_role))+'</div>' : '',
-        a.equipment ? '<div><b>Equipment:</b> '+esc(a.equipment)+'</div>' : '',
-        a.fleet_size!=null ? '<div><b>Fleet size:</b> '+esc(a.fleet_size)+'</div>' : '',
-        a.trucks_needing_support!=null ? '<div><b>Trucks needing support:</b> '+esc(a.trucks_needing_support)+'</div>' : '',
-        a.preferred_lanes ? '<div><b>Lanes:</b> '+esc(a.preferred_lanes)+'</div>' : '',
-        a.preferred_freight ? '<div><b>Freight:</b> '+esc(a.preferred_freight)+'</div>' : '',
-        a.freight_sources && a.freight_sources.length ? '<div><b>Sources:</b> '+esc(a.freight_sources.map(pretty).join(', '))+'</div>' : '',
-        a.independent_dispatch_use ? '<div><b>Independent dispatch:</b> '+esc(pretty(a.independent_dispatch_use))+'</div>' : '',
-        a.dispatch_need ? '<div><b>Dispatch need:</b> '+esc(a.dispatch_need)+'</div>' : ''
-      ].filter(Boolean).join('');
-
-      return '<div class="history-item">'+
-        '<div class="history-top">'+
-          '<div class="history-type">'+esc(activityLabel(a.activity_type))+
-            (a.outcome?' · '+esc(pretty(a.outcome)):'')+'</div>'+
-          '<div class="history-date">'+esc(fmtDateTime(a.occurred_at || a.created_at))+'</div>'+
-        '</div>'+
-        (a.body?'<div class="history-body">'+esc(a.body)+'</div>':'')+
-        (q?'<div class="history-grid">'+q+'</div>':'')+
-        (a.next_action_due?'<div class="sub2" style="margin-top:7px">Next follow-up: '+esc(fmtDate(a.next_action_due))+'</div>':'')+
-      '</div>';
-    }).join('');
-  }
-
-  $('dlgHistory').showModal();
 }
 
 function wire(){
   $('addCoBtn').addEventListener('click', openCo);
-  $('c_save').addEventListener('click', saveContact);
+  $('c_save').addEventListener('click', saveCall);
   $('c_cancel').addEventListener('click', ()=>$('dlgCall').close());
   $('co_save').addEventListener('click', saveCo);
   $('co_cancel').addEventListener('click', ()=>$('dlgCo').close());
-  $('h_close').addEventListener('click', ()=>$('dlgHistory').close());
-  $('h_edit').addEventListener('click', ()=>{
-    if(HISTORY_COMPANY_ID) editCompany(HISTORY_COMPANY_ID);
-  });
   $('q').addEventListener('input', render);
 }
 </script>
