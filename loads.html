@@ -427,7 +427,7 @@
     </h1>
 
     <p>
-      Completed loads with BOL documentation and delivery history.
+      Manage loads and daily dispatch activity.
     </p>
 
   </section>
@@ -436,6 +436,10 @@
 
   <!-- SAME THREE DISPATCH TABS -->
 
+  <nav
+    class="dispatch-tabs"
+    id="dispatchTabs">
+  </nav>
 
 
 
@@ -616,7 +620,7 @@
 
 <script src="nav.js"></script>
 
-
+<script src="dispatch-tabs.js"></script>
 
 
 
@@ -668,39 +672,6 @@ let group =
 /* ============================================================
    LOAD STATUS GROUPS
    ============================================================ */
-
-const ACTIVE = [
-
-  'quoted',
-
-  'booked',
-
-  'dispatched',
-
-  'en_route_to_pickup',
-
-  'at_shipper',
-
-  'at_pickup',
-
-  'loading',
-
-  'loaded',
-
-  'in_transit',
-
-  'at_weigh_station',
-
-  'under_inspection',
-
-  'at_receiver',
-
-  'at_delivery',
-
-  'unloading'
-
-];
-
 
 const CLOSED = [
 
@@ -940,17 +911,6 @@ async function start() {
 async function load() {
 
 
-  /*
-    ALL LOADS is the completed-load archive.
-
-    A load belongs here only when BOTH are true:
-
-    1. Its operational status is closed/completed.
-    2. A BOL document is linked to the load.
-
-    Active work remains on Fleet Board / Workspace.
-  */
-
   const result =
     await db
       .from('loads')
@@ -998,10 +958,6 @@ async function load() {
 
         ' driver_id,' +
 
-        ' tractor_id,' +
-
-        ' trailer_id,' +
-
         ' origin_facility_id,' +
 
         ' dest_facility_id'
@@ -1013,7 +969,13 @@ async function load() {
       )
       .in(
         'status',
-        CLOSED
+        [
+          'delivered',
+          'pod_pending',
+          'paperwork',
+          'invoiced',
+          'paid'
+        ]
       )
       .order(
         'created_at',
@@ -1042,156 +1004,8 @@ async function load() {
 
 
 
-  const completedLoads =
+  const base =
     result.data || [];
-
-
-  /*
-    Require a linked BOL before a completed load appears here.
-  */
-
-  let base =
-    [];
-
-
-  if (
-    completedLoads.length
-  ) {
-
-    const loadIds =
-      completedLoads.map(
-        item => item.id
-      );
-
-
-    const linksResult =
-      await db
-        .from('document_links')
-        .select(
-          'document_id, entity_id'
-        )
-        .eq(
-          'entity_type',
-          'load'
-        )
-        .in(
-          'entity_id',
-          loadIds
-        );
-
-
-    if (
-      linksResult.error
-    ) {
-
-      fail(
-        'BOL link query failed: ' +
-        linksResult.error.message
-      );
-
-      return;
-
-    }
-
-
-    const links =
-      linksResult.data || [];
-
-
-    const documentIds =
-      [
-        ...new Set(
-          links
-            .map(
-              item =>
-                item.document_id
-            )
-            .filter(Boolean)
-        )
-      ];
-
-
-    let bolDocumentIds =
-      new Set();
-
-
-    if (
-      documentIds.length
-    ) {
-
-      const bolResult =
-        await db
-          .from('documents')
-          .select(
-            'id'
-          )
-          .in(
-            'id',
-            documentIds
-          )
-          .eq(
-            'doc_type',
-            'bol'
-          )
-          .is(
-            'archived_at',
-            null
-          );
-
-
-      if (
-        bolResult.error
-      ) {
-
-        fail(
-          'BOL document query failed: ' +
-          bolResult.error.message
-        );
-
-        return;
-
-      }
-
-
-      bolDocumentIds =
-        new Set(
-          (bolResult.data || [])
-            .map(
-              item =>
-                item.id
-            )
-        );
-
-    }
-
-
-    const eligibleLoadIds =
-      new Set(
-
-        links
-          .filter(
-            item =>
-              bolDocumentIds.has(
-                item.document_id
-              )
-          )
-          .map(
-            item =>
-              item.entity_id
-          )
-
-      );
-
-
-    base =
-      completedLoads.filter(
-        item =>
-          eligibleLoadIds.has(
-            item.id
-          )
-      );
-
-  }
 
 
 
@@ -1204,7 +1018,6 @@ async function load() {
     brokersResult,
     driversResult,
     facilitiesResult,
-    equipmentResult,
     marginsResult
   ] =
 
@@ -1235,14 +1048,7 @@ async function load() {
       db
         .from('facilities')
         .select(
-          'id, name, city, state'
-        ),
-
-
-      db
-        .from('equipment')
-        .select(
-          'id, unit_number, equipment_type'
+          'id, city, state'
         ),
 
 
@@ -1274,10 +1080,6 @@ async function load() {
 
 
   const facility =
-    {};
-
-
-  const equipment =
     {};
 
 
@@ -1322,12 +1124,11 @@ async function load() {
 
       driver[item.id] =
 
-        [
-          item.first_name,
-          item.last_name
-        ]
-        .filter(Boolean)
-        .join(' ');
+        item.first_name +
+
+        ' ' +
+
+        item.last_name;
 
     }
   );
@@ -1340,44 +1141,21 @@ async function load() {
   .forEach(
     item => {
 
-      const place =
-        [
-          item.city,
-          item.state
-        ]
-        .filter(Boolean)
-        .join(', ');
-
-
       facility[item.id] =
 
-        item.name
+        (
+          item.city || ''
+        )
 
-          ? (
-              place
-                ? item.name + ' · ' + place
-                : item.name
-            )
+        +
 
-          : (
-              place || null
-            );
+        ', '
 
-    }
-  );
+        +
 
-
-
-  (
-    equipmentResult.data || []
-  )
-  .forEach(
-    item => {
-
-      equipment[item.id] = {
-        unit_number: item.unit_number || null,
-        equipment_type: item.equipment_type || null
-      };
+        (
+          item.state || ''
+        );
 
     }
   );
@@ -1441,27 +1219,6 @@ async function load() {
           || null,
 
 
-        tractor_number:
-
-          equipment[item.tractor_id]
-            ? equipment[item.tractor_id].unit_number
-            : null,
-
-
-        trailer_number:
-
-          equipment[item.trailer_id]
-            ? equipment[item.trailer_id].unit_number
-            : null,
-
-
-        trailer_type:
-
-          equipment[item.trailer_id]
-            ? equipment[item.trailer_id].equipment_type
-            : null,
-
-
         route:
 
           (
@@ -1512,6 +1269,7 @@ async function load() {
   render();
 
 }
+
 
 
 /* ============================================================
@@ -1742,7 +1500,7 @@ function tiles() {
 
     [
       'all',
-      'Completed loads'
+      'Total loads'
     ],
 
     [
@@ -1838,6 +1596,7 @@ function tiles() {
 }
 
 
+
 /* ============================================================
    RENDER
    ============================================================ */
@@ -1872,6 +1631,7 @@ function render() {
         /* ------------------------------------------------------
            Group filter
            ------------------------------------------------------ */
+
         if (
           group === 'delivered' &&
           row.status !==
@@ -2145,7 +1905,7 @@ function render() {
 
         '<td colspan="11" class="msg">' +
 
-          'No completed loads with a linked BOL match.' +
+          'No loads match.' +
 
         '</td>' +
 
@@ -2284,43 +2044,13 @@ function render() {
 
 
 
-          /* Carrier / Equipment */
+          /* Carrier */
 
           '<td>' +
 
             esc(
               row.carrier_name ||
               '—'
-            ) +
-
-            (
-              row.tractor_number ||
-              row.trailer_number
-
-                ? '<div class="sub2">' +
-
-                    (
-                      row.tractor_number
-                        ? 'Truck ' + esc(row.tractor_number)
-                        : ''
-                    ) +
-
-                    (
-                      row.tractor_number && row.trailer_number
-                        ? ' · '
-                        : ''
-                    ) +
-
-                    (
-                      row.trailer_number
-                        ? esc(pretty(row.trailer_type || 'Trailer')) +
-                          ' ' + esc(row.trailer_number)
-                        : ''
-                    ) +
-
-                  '</div>'
-
-                : ''
             ) +
 
           '</td>' +
@@ -2445,17 +2175,19 @@ function render() {
 
             money(
 
-              row.linehaul_rate == null &&
-              row.fuel_surcharge == null
+              (
+                Number(
+                  row.linehaul_rate
+                ) || 0
+              )
 
-                ? null
+              +
 
-                : (
-                    Number(row.linehaul_rate) || 0
-                  ) +
-                  (
-                    Number(row.fuel_surcharge) || 0
-                  )
+              (
+                Number(
+                  row.fuel_surcharge
+                ) || 0
+              )
 
             ) +
 
