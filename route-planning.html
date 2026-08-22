@@ -995,51 +995,6 @@ function readinessMissing(item){
   return missing;
 }
 
-function
-if(!target) return;
-
-  const tabs = [
-    ['fleet.html','Fleet Setup'],
-    ['route-planning.html','Route Planning'],
-    ['states.html','State Rules'],
-    ['calendar.html','Calendar']
-  ];
-
-  target.innerHTML = '';
-  target.style.cssText = `
-    display:flex;
-    align-items:center;
-    gap:26px;
-    width:min(1450px,100%);
-    min-height:46px;
-    margin:0 auto 6px;
-    padding:0 24px;
-    background:transparent;
-    border:0;
-    border-bottom:1px solid #E2E5DD;
-    overflow-x:auto;
-  `;
-
-  tabs.forEach(([href,label]) => {
-    const a = document.createElement('a');
-    a.href = href;
-    a.textContent = label;
-    a.style.cssText = `
-      display:flex;
-      align-items:center;
-      min-height:44px;
-      padding:0 0 10px;
-      color:${href === activePage ? '#7F9138' : '#737A75'};
-      border:0;
-      text-decoration:none;
-      font-size:13px;
-      font-weight:600;
-      white-space:nowrap;
-    `;
-    target.appendChild(a);
-  });
-}
-
 function routeUrl(){
   const origin = $('origin').value.trim();
   const destination = $('destination').value.trim();
