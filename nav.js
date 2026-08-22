@@ -332,7 +332,7 @@ async function buildNav(
 
 
   brand.href =
-    'welcome.html';
+    'business.html';
 
 
   brand.innerHTML = `
