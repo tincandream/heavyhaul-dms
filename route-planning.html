@@ -479,7 +479,7 @@ button:disabled{
 
 <header></header>
 
-
+<nav id="fleetCommandTabs" aria-label="Fleet Command navigation"></nav>
 
 <main>
   <section class="page-intro">
@@ -671,15 +671,6 @@ button:disabled{
             </div>
 
             <div class="actions">
-              <button
-                class="action secondary"
-                id="fillRouteTestData"
-                type="button"
-                style="display:none;"
-              >
-                Fill test data
-              </button>
-
               <button class="action" id="saveProgress" type="button">Save Progress</button>
               <button class="action" id="readyStateRules" type="button">Save + Ready for State Rules</button>
               <button class="action secondary" id="returnRevision" type="button">Mark Returned for Revision</button>
@@ -1790,199 +1781,6 @@ function openRouteProfitCalculator(){
   location.href = 'calculators.html?' + params.toString();
 }
 
-
-// ============================================================
-// TRAINING MODE — TT ROUTE ASSIGNMENT
-// ============================================================
-
-const TT_ROUTE_ASSIGNMENT = {
-  routeName:
-    'TT — Little Rock AR → Memphis TN | RGN',
-
-  freightType:
-    'heavy_haul',
-
-  equipmentType:
-    'RGN / Step deck',
-
-  loadedMiles:
-    '137',
-
-  origin:
-    'Little Rock, AR',
-
-  destination:
-    'Memphis, TN',
-
-  states:
-    'AR, TN',
-
-  waypoints:
-    '',
-
-  routeNotes:
-    'TRAINING ROUTE — Little Rock, AR to Memphis, TN for TT-ABC-260811-01. ' +
-    'Review Arkansas and Tennessee oversize requirements, permits, escorts, ' +
-    'staging, fuel/service stops, weigh stations, bridge/toll restrictions, ' +
-    'and final mobile routing before dispatch.',
-
-  parkingStaging:
-    'TRAINING — Confirm legal staging near pickup and delivery before dispatch.',
-
-  fuelService:
-    'TRAINING — Confirm heavy-haul accessible fuel/service stops along the approved route.'
-};
-
-
-async function getRouteTrainingStatus(){
-  try{
-    const result =
-      await db.rpc(
-        'get_training_mode_status'
-      );
-
-    if(result.error){
-      console.warn(
-        'Route Planning Training Mode status:',
-        result.error.message
-      );
-
-      return {
-        active:false
-      };
-    }
-
-    return result.data || {
-      active:false
-    };
-  }
-  catch(error){
-    console.warn(
-      'Route Planning Training Mode status:',
-      error
-    );
-
-    return {
-      active:false
-    };
-  }
-}
-
-
-async function initRouteTrainingMode(){
-  const button =
-    $('fillRouteTestData');
-
-  if(!button){
-    return;
-  }
-
-  const status =
-    await getRouteTrainingStatus();
-
-  button.style.display =
-    status.active === true
-      ? 'inline-flex'
-      : 'none';
-}
-
-
-async function fillRouteTestData(){
-  const status =
-    await getRouteTrainingStatus();
-
-  if(status.active !== true){
-    setNotice(
-      'planNotice',
-      'Enable Training Mode from testing.html first.',
-      true
-    );
-
-    $('fillRouteTestData').style.display =
-      'none';
-
-    return;
-  }
-
-  if(!currentItem){
-    setNotice(
-      'planNotice',
-      'Open the TT broker opportunity or TT load from the Route Planning Queue first.',
-      true
-    );
-
-    return;
-  }
-
-  const reference =
-    String(
-      displayReference(currentItem) || ''
-    )
-      .trim()
-      .toUpperCase();
-
-  if(
-    reference !==
-    'TT-ABC-260811-01'
-  ){
-    const confirmed =
-      window.confirm(
-        'This is not TT-ABC-260811-01.\n\n' +
-        'Fill the TT Route Assignment into this open workspace anyway?'
-      );
-
-    if(!confirmed){
-      return;
-    }
-  }
-
-  Object.entries(
-    TT_ROUTE_ASSIGNMENT
-  )
-  .forEach(
-    ([id,value]) => {
-
-      const el =
-        $(id);
-
-      if(!el){
-        return;
-      }
-
-      el.value =
-        value;
-
-      el.dispatchEvent(
-        new Event(
-          'input',
-          {
-            bubbles:true
-          }
-        )
-      );
-
-      el.dispatchEvent(
-        new Event(
-          'change',
-          {
-            bubbles:true
-          }
-        )
-      );
-
-    }
-  );
-
-  drawPreview();
-  updateHandoff();
-
-  setNotice(
-    'planNotice',
-    'TT Route Assignment filled. Review it, then click Save Progress.'
-  );
-}
-
-
 async function start(){
   if(typeof window.supabase === 'undefined'){
     console.error('Route Planning: Supabase library did not load.');
@@ -2016,7 +1814,6 @@ async function start(){
 
   await loadData();
   openRequestedWorkspace();
-  await initRouteTrainingMode();
 }
 
 /* Page tabs */
@@ -2072,11 +1869,6 @@ $('queueList').addEventListener('click',async e => {
 /* Workspace */
 $('fleetCarrier').addEventListener('change',() => refreshFleetOptions());
 $('saveFleet').addEventListener('click',saveFleet);
-
-$('fillRouteTestData').addEventListener(
-  'click',
-  fillRouteTestData
-);
 
 $('saveProgress').addEventListener('click',() => savePlan('in_progress'));
 $('readyStateRules').addEventListener('click',() => savePlan('ready_for_state_review'));
@@ -2146,21 +1938,6 @@ $('goldenList').addEventListener('click',e => {
     window.open('https://www.google.com/maps/dir/?' + params.toString(),'_blank','noopener');
   }
 });
-
-
-window.addEventListener(
-  'pageshow',
-  async () => {
-
-    if(!db){
-      return;
-    }
-
-    await initRouteTrainingMode();
-
-  }
-);
-
 
 start();
 </script>
