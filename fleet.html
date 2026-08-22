@@ -626,7 +626,7 @@ async function refresh() {
          [x.city, x.state].filter(Boolean).join(', ') || '—']))
     : '<div class="empty">None yet.</div>';
 
-  const d = await db.from('drivers').select('*')
+  const d = await db.from('carriers').select('*')
     .is('archived_at', null).order('last_name');
   const drivers = d.data || [];
 
@@ -808,7 +808,7 @@ $('c_save').addEventListener('click', async () => {
 
 if (!result) {
   result = await db
-    .from('drivers')
+    .from('carriers')
     .insert(driverData);
 }
 
@@ -874,7 +874,7 @@ $('d_save').addEventListener('click', async () => {
 if (trainingActive && driverData.cdl_number) {
 
   const existing = await db
-    .from('drivers')
+    .from('carriers')
     .select('id,is_training,archived_at')
     .eq('tenant_id', tenant)
     .eq('cdl_number', driverData.cdl_number)
@@ -905,7 +905,7 @@ if (trainingActive && driverData.cdl_number) {
   ) {
 
     result = await db
-      .from('drivers')
+      .from('carriers')
       .update({
         ...driverData,
         is_training: true,
@@ -920,7 +920,7 @@ if (trainingActive && driverData.cdl_number) {
 }
 
   if (!result) {
-    result = await db.from('drivers').insert(driverData);
+    result = await db.from('carriers').insert(driverData);
   }
 
   $('d_save').disabled = false;
