@@ -3,6 +3,4086 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Route Planning — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+:root{
+  --rp-ink:var(--hh-ink,#3C3A4B);
+  --rp-blue:var(--hh-blue,#7FA5B5);
+  --rp-blue-dark:var(--hh-blue-dark,#668C9D);
+  --rp-blue-soft:var(--hh-blue-soft,#EAF3F6);
+  --rp-pink:var(--hh-pink,#D86A8E);
+  --rp-pink-soft:var(--hh-pink-soft,#F8E5EC);
+  --rp-lime:var(--hh-lime,#B8C34A);
+  --rp-lime-soft:var(--hh-lime-soft,#F1F4D8);
+  --rp-line:#D9DEE1;
+  --rp-muted:#747B82;
+  --rp-bg:#F7F7F5;
+  --rp-card:#FFFFFF;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  color:var(--rp-ink);
+  background:var(--rp-bg);
+}
+
+main{
+  width:min(1450px,100%);
+  margin:0 auto 70px;
+  padding:28px 24px 70px;
+}
+
+.page-intro{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+.page-intro h1{
+  margin:0;
+  font-family:"Cinzel",Georgia,serif;
+  font-size:30px;
+  font-weight:600;
+  letter-spacing:1px;
+}
+
+.page-intro p{
+  margin:5px 0 0;
+  color:var(--rp-blue-dark);
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:19px;
+  font-style:italic;
+}
+
+.route-tabs{
+  display:flex;
+  gap:28px;
+  border-bottom:1px solid var(--rp-line);
+  margin-bottom:22px;
+}
+
+.route-tabs button{
+  padding:0 0 10px;
+  min-height:42px;
+  border:0;
+  border-bottom:3px solid transparent;
+  background:transparent;
+  color:var(--rp-ink);
+  font-family:"Oswald",sans-serif;
+  font-size:13px;
+  letter-spacing:.7px;
+  cursor:pointer;
+}
+
+.route-tabs button.on{
+  color:var(--rp-blue-dark);
+  border-bottom-color:var(--rp-blue);
+}
+
+.panel{ display:none; }
+.panel.on{ display:block; }
+
+.card{
+  position:relative;
+  background:var(--rp-card);
+  border:1px solid var(--rp-line);
+  padding:18px;
+  margin-bottom:15px;
+}
+
+.card h2{
+  margin:0 0 4px;
+  font-family:"Oswald",sans-serif;
+  font-size:17px;
+  font-weight:500;
+}
+
+.hint{
+  margin:0 0 14px;
+  color:var(--rp-muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.queue-toolbar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+
+.queue-toolbar input,
+.queue-toolbar select{
+  width:100%;
+  max-width:270px;
+  padding:9px 10px;
+  border:1px solid #BEC8CD;
+  border-radius:0;
+  background:#fff;
+  color:var(--rp-ink);
+  font:inherit;
+}
+
+.queue-toggle{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  color:var(--rp-muted);
+  white-space:nowrap;
+}
+
+.queue-toggle input{ width:auto; }
+
+.queue-list{
+  display:grid;
+  gap:10px;
+}
+
+.queue-item{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(190px,.7fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+}
+
+.queue-item.removed{
+  opacity:.72;
+  background:#F3F3F1;
+}
+
+.queue-title{
+  font-family:"Oswald",sans-serif;
+  font-size:14px;
+}
+
+.queue-meta{
+  margin-top:4px;
+  color:var(--rp-muted);
+  font-size:11.5px;
+  line-height:1.45;
+}
+
+.queue-actions{
+  position:relative;
+  z-index:5;
+  display:flex;
+  gap:7px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.status{
+  display:inline-flex;
+  padding:4px 7px;
+  font-family:"Oswald",sans-serif;
+  font-size:10px;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  background:var(--rp-blue-soft);
+  color:var(--rp-blue-dark);
+}
+
+.status.ready{
+  background:var(--rp-lime-soft);
+  color:#606B24;
+}
+
+.status.returned{
+  background:var(--rp-pink-soft);
+  color:#8E3E58;
+}
+
+.missing{
+  margin-top:5px;
+  color:#8E3E58;
+  font-size:10.5px;
+}
+
+.empty{
+  padding:22px;
+  border:1px dashed var(--rp-line);
+  color:var(--rp-muted);
+  text-align:center;
+}
+
+.workspace{
+  display:none;
+  scroll-margin-top:20px;
+}
+
+.workspace.show{ display:block; }
+
+.workspace-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.workspace-head h2{
+  margin:0;
+  font-family:"Oswald",sans-serif;
+  font-size:19px;
+}
+
+.crumb{
+  margin-top:3px;
+  color:var(--rp-muted);
+  font-size:11px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);
+  gap:16px;
+  align-items:start;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.full{ grid-column:1/-1; }
+
+.field label{
+  display:block;
+  margin-bottom:4px;
+  color:#626970;
+  font-family:"Oswald",sans-serif;
+  font-size:11px;
+  letter-spacing:.25px;
+}
+
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #BEC8CD;
+  border-radius:0;
+  background:#fff;
+  color:var(--rp-ink);
+  font:inherit;
+}
+
+.field textarea{
+  min-height:82px;
+  resize:vertical;
+}
+
+.small{
+  margin-top:5px;
+  color:var(--rp-muted);
+  font-size:10.5px;
+  line-height:1.45;
+}
+
+.source-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+}
+
+.source-item{
+  padding:10px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+}
+
+.source-label{
+  color:var(--rp-muted);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.source-value{
+  margin-top:3px;
+  font-size:12px;
+  line-height:1.45;
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.action,
+button.action,
+a.action{
+  position:relative;
+  z-index:5;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:8px 12px;
+  border:1px solid var(--rp-blue);
+  border-radius:0;
+  background:var(--rp-blue);
+  color:#fff;
+  font-family:"Oswald",sans-serif;
+  font-size:11.5px;
+  letter-spacing:.35px;
+  text-decoration:none;
+  cursor:pointer;
+  pointer-events:auto;
+}
+
+.action:hover{
+  filter:brightness(.98);
+}
+
+.action.secondary,
+button.secondary,
+a.secondary{
+  background:#fff;
+  color:var(--rp-blue-dark);
+  border-color:var(--rp-line);
+}
+
+.action.danger,
+button.danger{
+  background:#fff;
+  color:#8E3E58;
+  border-color:#E3BBC6;
+}
+
+.action:disabled,
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.notice{
+  display:none;
+  margin-top:10px;
+  padding:10px 12px;
+  font-size:11.5px;
+}
+
+.notice.show{ display:block; }
+.notice.ok{
+  background:var(--rp-lime-soft);
+  color:#5D6723;
+}
+.notice.err{
+  background:var(--rp-pink-soft);
+  color:#8E3E58;
+}
+
+.route-preview{
+  padding:13px;
+  background:var(--rp-blue-soft);
+  border-left:4px solid var(--rp-blue);
+  font-size:12px;
+  line-height:1.55;
+}
+
+.route-preview strong{
+  display:block;
+  margin-bottom:3px;
+  font-family:"Oswald",sans-serif;
+}
+
+.warning{
+  margin-top:10px;
+  padding:10px 12px;
+  background:var(--rp-pink-soft);
+  border-left:4px solid var(--rp-pink);
+  color:#7D4A5B;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.fleet-line{
+  font-size:12px;
+  line-height:1.55;
+}
+
+.fleet-line strong{
+  font-family:"Oswald",sans-serif;
+  font-weight:500;
+}
+
+.divider{
+  height:1px;
+  margin:13px 0;
+  background:var(--rp-line);
+}
+
+.golden-list{
+  display:grid;
+  gap:10px;
+}
+
+.golden{
+  padding:14px;
+  border:1px solid var(--rp-line);
+  border-left:4px solid var(--rp-lime);
+  background:#fff;
+}
+
+.golden h3{
+  margin:0;
+  font-family:"Oswald",sans-serif;
+  font-size:15px;
+}
+
+.golden-meta{
+  margin-top:5px;
+  color:var(--rp-muted);
+  font-size:11px;
+  line-height:1.5;
+}
+
+@media(max-width:900px){
+  .layout,
+  .queue-item,
+  .source-grid,
+  .grid{
+    grid-template-columns:1fr;
+  }
+  .full{ grid-column:auto; }
+  .queue-actions{ justify-content:flex-start; }
+}
+
+@media(max-width:600px){
+  main{ padding:20px 13px 50px; }
+}
+</style>
+</head>
+
+<body>
+
+<header></header>
+<main>
+  <section class="page-intro">
+    <div>
+      <h1>ROUTE PLANNING</h1>
+      <p>Open the broker load, build the route, save progress, and hand the states into State Rules.</p>
+    </div>
+  </section>
+
+  <nav class="route-tabs" aria-label="Route Planning sections">
+    <button type="button" class="on" data-panel="planPanel">Plan Route</button>
+    <button type="button" data-panel="goldenPanel">Golden Routes</button>
+  </nav>
+
+  <section class="panel on" id="planPanel">
+
+    <div class="card">
+      <h2>Route Planning Queue</h2>
+      <p class="hint">
+        Broker opportunities and operational loads can both be planned here.
+        Plan Route is a normal page link so it works reliably with a mouse, keyboard, or touch.
+      </p>
+
+      <div class="queue-toolbar">
+        <input id="queueSearch" type="search" placeholder="Search load, broker, city, carrier...">
+
+        <select id="queueStatus">
+          <option value="">All route statuses</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="ready_for_state_review">Ready for State Review</option>
+          <option value="returned_for_revision">Returned for Revision</option>
+        </select>
+
+        <label class="queue-toggle" for="showRemoved">
+          <input id="showRemoved" type="checkbox">
+          Show removed
+        </label>
+
+        <button class="action secondary" id="refreshQueue" type="button">Refresh Queue</button>
+      </div>
+
+      <div id="queueList" class="queue-list">
+        <div class="empty">Loading route queue…</div>
+      </div>
+    </div>
+
+    <section class="workspace" id="workspace">
+      <div class="card">
+        <div class="workspace-head">
+          <div>
+            <h2 id="workspaceTitle">Route Workspace</h2>
+            <div class="crumb" id="workspaceMeta"></div>
+          </div>
+
+          <div class="actions" style="margin-top:0">
+            <a class="action secondary" href="route-planning.html">Back to Queue</a>
+            <a class="action secondary" id="openLoadRecord" href="newload.html">Open Load Record ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div>
+
+          <div class="card">
+            <h2>Fleet Assignment</h2>
+            <p class="hint">
+              Fleet assignment is saved on an operational load. A broker opportunity can be route-planned before booking.
+            </p>
+
+            <div class="grid">
+              <div class="field">
+                <label for="fleetCarrier">Carrier</label>
+                <select id="fleetCarrier"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetDriver">Driver</label>
+                <select id="fleetDriver"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetTractor">Truck / Tractor</label>
+                <select id="fleetTractor"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetTrailer">Trailer</label>
+                <select id="fleetTrailer"></select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="action" id="saveFleet" type="button">Save Fleet Assignment</button>
+            </div>
+
+            <div class="notice" id="fleetNotice"></div>
+          </div>
+
+          <div class="card">
+            <h2>Broker / Load Source</h2>
+            <p class="hint">
+              Read-only source information from the selected broker opportunity or load.
+              The Route Plan below starts with these values but remains its own planning record.
+            </p>
+            <div class="source-grid" id="sourceGrid"></div>
+          </div>
+
+          <div class="card">
+            <h2>Route Plan</h2>
+
+            <div class="grid">
+              <div class="field">
+                <label for="routeName">Route Name</label>
+                <input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN">
+              </div>
+
+              <div class="field">
+                <label for="freightType">Freight Type</label>
+                <select id="freightType">
+                  <option value="heavy_haul">Heavy Haul / Oversize</option>
+                  <option value="reefer">Reefer</option>
+                  <option value="dry_van">Dry Van</option>
+                  <option value="flatbed">Flatbed</option>
+                  <option value="step_deck">Step Deck</option>
+                  <option value="specialized">Specialized</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="equipmentType">Equipment / Trailer</label>
+                <input id="equipmentType">
+              </div>
+
+              <div class="field">
+                <label for="loadedMiles">Loaded Miles</label>
+                <input id="loadedMiles" type="number" min="0">
+              </div>
+
+              <div class="field">
+                <label for="origin">Origin</label>
+                <input id="origin">
+              </div>
+
+              <div class="field">
+                <label for="destination">Destination</label>
+                <input id="destination">
+              </div>
+
+              <div class="field full">
+                <label for="states">States Traveled</label>
+                <input id="states" placeholder="AR, TN">
+                <div class="small">
+                  Enter states in travel order. These are passed to State Rules when the route is marked ready.
+                </div>
+              </div>
+
+              <div class="field full">
+                <label for="waypoints">Waypoints / Shaping Points</label>
+                <textarea id="waypoints" placeholder="One intermediate point per line"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="pickupAt">Pickup</label>
+                <input id="pickupAt" type="datetime-local">
+              </div>
+
+              <div class="field">
+                <label for="deliveryAt">Delivery</label>
+                <input id="deliveryAt" type="datetime-local">
+              </div>
+
+              <div class="field full">
+                <label for="routeNotes">Route Notes</label>
+                <textarea id="routeNotes" placeholder="Dispatcher route notes..."></textarea>
+              </div>
+
+              <div class="field">
+                <label for="parkingStaging">Parking / Staging</label>
+                <textarea id="parkingStaging"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="fuelService">Fuel / Service</label>
+                <textarea id="fuelService"></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="action" id="saveProgress" type="button">Save Progress</button>
+              <button class="action" id="readyStateRules" type="button">Save + Ready for State Rules</button>
+              <button class="action secondary" id="returnRevision" type="button">Mark Returned for Revision</button>
+            </div>
+
+            <div class="notice" id="planNotice"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h2>Route Preview</h2>
+
+            <div class="route-preview" id="routePreview">
+              <strong>No route yet</strong>
+              Open a load or enter an origin and destination.
+            </div>
+
+            <div class="warning">
+              Heavy haul / oversize: Google Maps is a navigation reference only.
+              State rules, permits and permit-approved routing remain controlling.
+            </div>
+
+            <div class="actions">
+              <button class="action" id="openMaps" type="button">Open in Google Maps</button>
+              <button class="action secondary" id="copyLink" type="button">Copy Link</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Workflow Handoff</h2>
+            <p class="hint">
+              Route Planning owns the proposed route. State Rules enriches it with state-specific requirements.
+            </p>
+
+            <div id="handoffSummary" class="fleet-line">
+              Save the route to see handoff status.
+            </div>
+
+            <div class="actions">
+              <a class="action secondary" id="openStateRules" href="states.html">Open State Rules ↗</a>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2>Calculator Handoff</h2>
+            <p class="hint">Use this route's loaded mileage with the selected operational load.</p>
+
+            <div class="actions">
+              <button class="action secondary" id="openProfitCalc" type="button">Open Rate / Profit Calculator</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </section>
+
+  <section class="panel" id="goldenPanel">
+    <div class="card">
+      <h2>Golden Routes</h2>
+      <p class="hint">
+        Reuse previously useful routes as planning references. Current permits and State Rules always control.
+      </p>
+
+      <div class="queue-toolbar">
+        <input id="goldenSearch" type="search" placeholder="Search route, city, highway...">
+        <button class="action secondary" id="refreshGolden" type="button">Refresh</button>
+      </div>
+    </div>
+
+    <div id="goldenList" class="golden-list"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+
+let db = null;
+let tenant = null;
+
+let currentItem = null;
+let currentPlan = null;
+
+let loads = [];
+let opportunities = [];
+let plans = [];
+let goldenRoutes = [];
+
+let facilities = {};
+let brokers = {};
+let carriers = {};
+let drivers = {};
+let equipment = {};
+
+const TERMINAL_LOAD_STATUSES = [
+  'passed','rejected','expired','cancelled','tonu','paid','invoiced'
+];
+
+function esc(v){
+  return String(v ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[m]));
+}
+
+function pretty(v){
+  return String(v || '')
+    .replace(/_/g,' ')
+    .replace(/\b\w/g,c => c.toUpperCase());
+}
+
+function money(v){
+  if(v == null || v === '') return '—';
+  const n = Number(v);
+  return Number.isFinite(n)
+    ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:2})
+    : '—';
+}
+
+function dateLocal(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s + 'T00:00';
+
+  const d = new Date(s);
+  if(Number.isNaN(d.getTime())) return '';
+
+  const z = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
+function iso(v){
+  return v ? new Date(v).toISOString() : null;
+}
+
+function arrComma(v){
+  return String(v || '')
+    .split(',')
+    .map(x => x.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function arrLines(v){
+  return String(v || '')
+    .split(/\r?\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function setNotice(id,text,error=false){
+  const el = $(id);
+  if(!el) return;
+  el.textContent = text || '';
+  el.className = 'notice' + (text ? ' show ' : '') + (error ? 'err' : 'ok');
+}
+
+function facilityLabel(id){
+  const f = facilities[id];
+  return f
+    ? [f.name,f.address_line1,f.city,f.state,f.zip].filter(Boolean).join(', ')
+    : '';
+}
+
+function brokerName(id){
+  const b = brokers[id];
+  return b ? (b.name || b.legal_name || b.company_name || 'Broker') : '';
+}
+
+function carrierName(id){
+  const c = carriers[id];
+  return c ? (c.dba_name || c.legal_name || c.company_name || 'Carrier') : '';
+}
+
+function driverName(id){
+  const d = drivers[id];
+  return d ? [d.first_name,d.last_name].filter(Boolean).join(' ') : '';
+}
+
+function unitName(id){
+  const e = equipment[id];
+  return e
+    ? `${e.unit_number || 'Unit'}${e.equipment_type ? ' · ' + pretty(e.equipment_type) : ''}`
+    : '';
+}
+
+function opportunityOrigin(o){
+  if(!o) return '';
+  return [
+    o.pickup_facility_name,
+    o.pickup_address,
+    o.origin_city,
+    o.origin_state,
+    o.pickup_zip
+  ].filter(Boolean).join(', ');
+}
+
+function opportunityDestination(o){
+  if(!o) return '';
+  return [
+    o.delivery_facility_name,
+    o.delivery_address,
+    o.dest_city,
+    o.dest_state,
+    o.delivery_zip
+  ].filter(Boolean).join(', ');
+}
+
+function linkedOpportunityForLoad(load){
+  if(!load) return null;
+
+  const direct = opportunities.find(o => o.load_id === load.id);
+  if(direct) return direct;
+
+  const brokerRef = String(load.broker_load_number || '').trim().toLowerCase();
+  if(!brokerRef) return null;
+
+  return opportunities.find(o =>
+    String(o.external_ref || '').trim().toLowerCase() === brokerRef
+  ) || null;
+}
+
+function planForLoad(id){
+  return plans.find(p => p.load_id === id) || null;
+}
+
+function planForOpportunity(id){
+  return plans.find(p => p.opportunity_id === id) || null;
+}
+
+function planForItem(item){
+  return item?._kind === 'opportunity'
+    ? planForOpportunity(item.id)
+    : planForLoad(item?.id);
+}
+
+function itemKey(item){
+  return item._kind === 'opportunity'
+    ? 'opp:' + item.id
+    : 'load:' + item.id;
+}
+
+function displayReference(item){
+  if(item._kind === 'opportunity'){
+    return item.external_ref || item.broker_name || 'Broker Opportunity';
+  }
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return source?.external_ref ||
+    item.broker_load_number ||
+    item.load_number ||
+    'Load';
+}
+
+function displayBrokerName(item){
+  if(item._kind === 'opportunity'){
+    return item.broker_name || 'Broker opportunity';
+  }
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return brokerName(item.broker_id) ||
+    source?.broker_name ||
+    'Broker not assigned';
+}
+
+function displayOrigin(item){
+  if(item._kind === 'opportunity') return opportunityOrigin(item);
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return facilityLabel(item.origin_facility_id) || opportunityOrigin(source);
+}
+
+function displayDestination(item){
+  if(item._kind === 'opportunity') return opportunityDestination(item);
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return facilityLabel(item.dest_facility_id) || opportunityDestination(source);
+}
+
+function queueStatus(item){
+  const p = planForItem(item);
+  return p ? (p.workflow_status || 'in_progress') : 'not_started';
+}
+
+function statusLabel(s){
+  if(s === 'not_started') return 'Not Started';
+  if(s === 'ready_for_state_review') return 'Ready for State Review';
+  if(s === 'returned_for_revision') return 'Returned for Revision';
+  return 'In Progress';
+}
+
+function readinessMissing(item){
+  const missing = [];
+
+  if(!displayOrigin(item)) missing.push('origin');
+  if(!displayDestination(item)) missing.push('destination');
+
+  if(item._kind === 'opportunity'){
+    if(item.width_ft == null || item.height_ft == null || item.weight_lbs == null){
+      missing.push('loaded dimensions/weight');
+    }
+    return missing;
+  }
+
+  if(!item.carrier_id) missing.push('carrier');
+  if(!item.driver_id) missing.push('driver');
+  if(!item.tractor_id) missing.push('truck');
+  if(!item.trailer_id) missing.push('trailer');
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  const hasDims =
+    (item.width_in != null && item.height_in != null && item.weight_lb != null) ||
+    (source?.width_ft != null && source?.height_ft != null && source?.weight_lbs != null);
+
+  if(!hasDims) missing.push('loaded dimensions/weight');
+
+  return missing;
+}
+
+function routeUrl(){
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+  if(!origin || !destination) return '';
+
+  const params = new URLSearchParams({
+    api:'1',
+    origin,
+    destination,
+    travelmode:'driving'
+  });
+
+  const waypoints = arrLines($('waypoints').value);
+  if(waypoints.length){
+    params.set('waypoints',waypoints.join('|'));
+  }
+
+  return 'https://www.google.com/maps/dir/?' + params.toString();
+}
+
+function drawPreview(){
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+  const waypoints = arrLines($('waypoints').value);
+
+  $('routePreview').innerHTML = origin && destination
+    ? `<strong>${esc(origin)} → ${esc(destination)}</strong>` +
+      `${esc(pretty($('freightType').value))}` +
+      (waypoints.length ? `<br>Via: ${waypoints.map(esc).join(' → ')}` : '')
+    : '<strong>No route yet</strong>Open a load or enter an origin and destination.';
+}
+
+function sourceItems(item){
+  const source = item._kind === 'opportunity'
+    ? item
+    : (item._sourceOpportunity || linkedOpportunityForLoad(item));
+
+  const rows = [
+    ['Broker / Reference',`${displayBrokerName(item)} · ${displayReference(item)}`],
+    ['Origin',displayOrigin(item) || '—'],
+    ['Destination',displayDestination(item) || '—'],
+    ['Commodity',item.commodity || source?.commodity || '—'],
+    ['Equipment',item._kind === 'load'
+      ? (unitName(item.trailer_id) || source?.equipment_needed || '—')
+      : (item.equipment_needed || '—')],
+    ['Miles',item._kind === 'load'
+      ? (item.total_miles ?? source?.miles ?? '—')
+      : (item.miles ?? '—')],
+    ['Pickup',item._kind === 'load'
+      ? (item.pickup_appt_start || source?.pickup_date || '—')
+      : (item.pickup_date || '—')],
+    ['Delivery',item._kind === 'load'
+      ? (item.delivery_appt_start || source?.delivery_date || '—')
+      : (item.delivery_date || '—')]
+  ];
+
+  if(source){
+    rows.push(
+      ['Dimensions',
+        `${source.length_ft ?? '—'} ft L × ${source.width_ft ?? '—'} ft W × ${source.height_ft ?? '—'} ft H · ` +
+        `${source.weight_lbs ? Number(source.weight_lbs).toLocaleString() + ' lb' : 'weight missing'}`],
+      ['Broker Rate',
+        `Posted ${money(source.posted_rate)} · Quoted ${money(source.quoted_rate)} · Booked ${money(source.booked_rate)}`]
+    );
+  }
+
+  return rows;
+}
+
+function renderSource(item){
+  $('sourceGrid').innerHTML = sourceItems(item)
+    .map(([label,value]) => `
+      <div class="source-item">
+        <div class="source-label">${esc(label)}</div>
+        <div class="source-value">${esc(value)}</div>
+      </div>
+    `).join('');
+}
+
+function refreshFleetOptions(selected={}){
+  const carrierId = $('fleetCarrier').value || selected.carrier_id || '';
+
+  const driverList = Object.values(drivers).filter(x =>
+    !carrierId || !x.carrier_id || x.carrier_id === carrierId
+  );
+
+  const equipmentList = Object.values(equipment).filter(x =>
+    !carrierId || !x.carrier_id || x.carrier_id === carrierId
+  );
+
+  const isTrailer = x =>
+    ['rgn','lowboy','flatbed','step_deck','step deck','reefer','dry_van','dry van','double_drop','double drop','trailer']
+      .some(k => String(x.equipment_type || '').toLowerCase().includes(k));
+
+  $('fleetDriver').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    driverList.map(x => `<option value="${esc(x.id)}">${esc(driverName(x.id) || 'Driver')}</option>`).join('');
+
+  $('fleetTractor').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    equipmentList
+      .filter(x => !isTrailer(x))
+      .map(x => `<option value="${esc(x.id)}">${esc(unitName(x.id))}</option>`)
+      .join('');
+
+  $('fleetTrailer').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    equipmentList
+      .filter(isTrailer)
+      .map(x => `<option value="${esc(x.id)}">${esc(unitName(x.id))}</option>`)
+      .join('');
+
+  if(selected.driver_id) $('fleetDriver').value = selected.driver_id;
+  if(selected.tractor_id) $('fleetTractor').value = selected.tractor_id;
+  if(selected.trailer_id) $('fleetTrailer').value = selected.trailer_id;
+}
+
+function fillPlan(item,plan){
+  const isOpp = item._kind === 'opportunity';
+  const source = isOpp ? item : (item._sourceOpportunity || linkedOpportunityForLoad(item));
+
+  const origin = displayOrigin(item);
+  const destination = displayDestination(item);
+
+  $('routeName').value = plan?.route_name || '';
+  $('freightType').value = plan?.freight_type || 'heavy_haul';
+
+  $('equipmentType').value =
+    plan?.equipment_type ||
+    (isOpp
+      ? (item.equipment_needed || '')
+      : (unitName(item.trailer_id) || source?.equipment_needed || ''));
+
+  $('loadedMiles').value =
+    plan?.loaded_miles ??
+    (isOpp
+      ? (item.miles ?? '')
+      : (item.total_miles ?? source?.miles ?? ''));
+
+  $('origin').value = plan?.origin || origin;
+  $('destination').value = plan?.destination || destination;
+
+  $('states').value = (plan?.states || []).join(', ');
+  $('waypoints').value = (plan?.waypoints || []).join('\n');
+
+  $('pickupAt').value =
+    dateLocal(plan?.pickup_at) ||
+    (isOpp
+      ? dateLocal(item.pickup_date)
+      : (dateLocal(item.pickup_appt_start) || dateLocal(source?.pickup_date)));
+
+  $('deliveryAt').value =
+    dateLocal(plan?.delivery_at) ||
+    (isOpp
+      ? dateLocal(item.delivery_date)
+      : (dateLocal(item.delivery_appt_start) || dateLocal(source?.delivery_date)));
+
+  $('routeNotes').value = plan?.route_notes || '';
+  $('parkingStaging').value = plan?.parking_staging || '';
+  $('fuelService').value = plan?.fuel_service_notes || '';
+
+  drawPreview();
+  updateHandoff();
+}
+
+function updateHandoff(){
+  if(!currentItem){
+    $('handoffSummary').textContent = 'Save the route to see handoff status.';
+    return;
+  }
+
+  const states = arrComma($('states').value);
+  const status = currentPlan?.workflow_status || 'not_started';
+
+  $('handoffSummary').innerHTML =
+    `<strong>${esc(statusLabel(status))}</strong><br>` +
+    (states.length
+      ? 'States identified: ' + states.map(esc).join(' → ')
+      : 'States not identified yet.') +
+    (status === 'ready_for_state_review'
+      ? '<br>State Rules can now pull this route and its state list.'
+      : '');
+
+  $('openStateRules').href = currentItem._kind === 'opportunity'
+    ? `states.html?opportunity=${encodeURIComponent(currentItem.id)}`
+    : `states.html?load=${encodeURIComponent(currentItem.id)}`;
+}
+
+function openWorkspace(item){
+  currentItem = item;
+  if(!currentItem) return;
+
+  currentPlan = planForItem(item);
+
+  const isOpp = item._kind === 'opportunity';
+  const title = displayReference(item);
+  const origin = displayOrigin(item) || 'Origin';
+  const destination = displayDestination(item) || 'Destination';
+
+  $('workspaceTitle').textContent = `${title} — Route Workspace`;
+  $('workspaceMeta').textContent =
+    `${displayBrokerName(item)} · ${origin} → ${destination} · Status: ${pretty(item.status)}`;
+
+  $('openLoadRecord').href = isOpp
+    ? `sourcing.html?opportunity=${encodeURIComponent(item.id)}`
+    : `newload.html?load=${encodeURIComponent(item.id)}`;
+
+  $('fleetCarrier').disabled = isOpp;
+  $('fleetDriver').disabled = isOpp;
+  $('fleetTractor').disabled = isOpp;
+  $('fleetTrailer').disabled = isOpp;
+  $('saveFleet').disabled = isOpp;
+
+  if(isOpp){
+    $('fleetCarrier').value = '';
+    refreshFleetOptions({});
+    setNotice('fleetNotice','This is still a broker opportunity. Route planning is available now; fleet assignment becomes available after booking.');
+  }else{
+    $('fleetCarrier').disabled = false;
+    $('fleetDriver').disabled = false;
+    $('fleetTractor').disabled = false;
+    $('fleetTrailer').disabled = false;
+    $('saveFleet').disabled = false;
+
+    $('fleetCarrier').value = item.carrier_id || '';
+    refreshFleetOptions(item);
+    setNotice('fleetNotice','');
+  }
+
+  renderSource(item);
+  fillPlan(item,currentPlan);
+
+  $('workspace').classList.add('show');
+}
+
+async function saveFleet(){
+  if(!currentItem || currentItem._kind !== 'load'){
+    setNotice('fleetNotice','Fleet assignment is available after the broker opportunity becomes an operational load.',true);
+    return;
+  }
+
+  const patch = {
+    carrier_id:$('fleetCarrier').value || null,
+    driver_id:$('fleetDriver').value || null,
+    tractor_id:$('fleetTractor').value || null,
+    trailer_id:$('fleetTrailer').value || null
+  };
+
+  const r = await db
+    .from('loads')
+    .update(patch)
+    .eq('tenant_id',tenant)
+    .eq('id',currentItem.id);
+
+  if(r.error){
+    setNotice('fleetNotice',r.error.message,true);
+    return;
+  }
+
+  Object.assign(currentItem,patch);
+  setNotice('fleetNotice','Fleet assignment saved to the shared load record.');
+  renderQueue();
+}
+
+function planRecord(status){
+  const isOpp = currentItem._kind === 'opportunity';
+
+  return {
+    tenant_id:tenant,
+    load_id:isOpp ? (currentItem.load_id || null) : currentItem.id,
+    opportunity_id:isOpp ? currentItem.id : null,
+    route_name:$('routeName').value.trim() || null,
+    freight_type:$('freightType').value,
+    equipment_type:$('equipmentType').value.trim() || null,
+    origin:$('origin').value.trim(),
+    destination:$('destination').value.trim(),
+    states:arrComma($('states').value),
+    waypoints:arrLines($('waypoints').value),
+    loaded_miles:$('loadedMiles').value ? Number($('loadedMiles').value) : null,
+    pickup_at:iso($('pickupAt').value),
+    delivery_at:iso($('deliveryAt').value),
+    parking_staging:$('parkingStaging').value.trim() || null,
+    fuel_service_notes:$('fuelService').value.trim() || null,
+    route_notes:$('routeNotes').value.trim() || null,
+    google_maps_url:routeUrl() || null,
+    workflow_status:status
+  };
+}
+
+async function savePlan(status){
+  if(!currentItem){
+    setNotice('planNotice','Open a load from the queue first.',true);
+    return;
+  }
+
+  if(!$('origin').value.trim() || !$('destination').value.trim()){
+    setNotice('planNotice','Origin and destination are required.',true);
+    return;
+  }
+
+  if(status === 'ready_for_state_review' && !arrComma($('states').value).length){
+    setNotice('planNotice','Identify the states traveled before handing the route to State Rules.',true);
+    return;
+  }
+
+  const rec = planRecord(status);
+  let r;
+
+  if(currentPlan){
+    r = await db
+      .from('route_plans')
+      .update(rec)
+      .eq('tenant_id',tenant)
+      .eq('id',currentPlan.id)
+      .select('*')
+      .maybeSingle();
+  }else{
+    r = await db
+      .from('route_plans')
+      .insert(rec)
+      .select('*')
+      .maybeSingle();
+  }
+
+  if(r.error){
+    setNotice('planNotice',r.error.message,true);
+    return;
+  }
+
+  currentPlan = r.data;
+
+  const existing = plans.find(p => p.id === currentPlan.id);
+  if(existing){
+    Object.assign(existing,currentPlan);
+  }else{
+    plans.push(currentPlan);
+  }
+
+  setNotice(
+    'planNotice',
+    status === 'ready_for_state_review'
+      ? 'Route saved and queued for State Rules.'
+      : status === 'returned_for_revision'
+        ? 'Route saved and marked Returned for Revision.'
+        : 'Route progress saved.'
+  );
+
+  renderQueue();
+  updateHandoff();
+}
+
+async function setQueueHidden(item,hidden){
+  const table = item._kind === 'opportunity' ? 'load_opportunities' : 'loads';
+
+  const r = await db
+    .from(table)
+    .update({route_planning_hidden:hidden})
+    .eq('tenant_id',tenant)
+    .eq('id',item.id);
+
+  if(r.error){
+    alert('Could not update Route Planning queue: ' + r.error.message);
+    return;
+  }
+
+  item.route_planning_hidden = hidden;
+  renderQueue();
+}
+
+async function deleteRoutePlan(item){
+  const plan = planForItem(item);
+  if(!plan) return;
+
+  const label = displayReference(item);
+
+  if(!confirm(`Delete the saved Route Plan for ${label}?\n\nThe broker opportunity/load itself will NOT be deleted.`)){
+    return;
+  }
+
+  const r = await db
+    .from('route_plans')
+    .delete()
+    .eq('tenant_id',tenant)
+    .eq('id',plan.id);
+
+  if(r.error){
+    alert('Could not delete Route Plan: ' + r.error.message);
+    return;
+  }
+
+  plans = plans.filter(p => p.id !== plan.id);
+  renderQueue();
+}
+
+function buildQueueItems(){
+  const linkedLoadIds = new Set(
+    opportunities.map(o => o.load_id).filter(Boolean)
+  );
+
+  const orderedLoads = [...loads]
+    .filter(l =>
+      !TERMINAL_LOAD_STATUSES.includes(String(l.status || '').toLowerCase())
+    )
+    .sort((a,b) =>
+      (linkedLoadIds.has(b.id) ? 1 : 0) -
+      (linkedLoadIds.has(a.id) ? 1 : 0)
+    );
+
+  const seenRefs = new Set();
+  const loadItems = [];
+
+  orderedLoads.forEach(load => {
+    const source = linkedOpportunityForLoad(load);
+
+    const ref = String(
+      source?.external_ref ||
+      load.broker_load_number ||
+      load.id
+    ).trim().toLowerCase();
+
+    if(seenRefs.has(ref)) return;
+    seenRefs.add(ref);
+
+    loadItems.push({
+      ...load,
+      _kind:'load',
+      _sourceOpportunity:source
+    });
+  });
+
+  const opportunityItems = opportunities
+    .filter(o =>
+      !['passed','rejected','expired','lost','declined'].includes(
+        String(o.status || '').toLowerCase()
+      )
+    )
+    .filter(o => !o.load_id)
+    .filter(o => {
+      const ref = String(o.external_ref || '').trim().toLowerCase();
+      return !ref || !seenRefs.has(ref);
+    })
+    .map(o => ({...o,_kind:'opportunity'}));
+
+  return [...opportunityItems,...loadItems];
+}
+
+function renderQueue(){
+  const q = $('queueSearch').value.trim().toLowerCase();
+  const statusFilter = $('queueStatus').value;
+  const showRemoved = $('showRemoved').checked;
+
+  const list = buildQueueItems()
+    .filter(item =>
+      showRemoved
+        ? !!item.route_planning_hidden
+        : !item.route_planning_hidden
+    )
+    .filter(item =>
+      !statusFilter || queueStatus(item) === statusFilter
+    )
+    .filter(item => {
+      if(!q) return true;
+
+      const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+
+      return [
+        displayReference(item),
+        displayBrokerName(item),
+        displayOrigin(item),
+        displayDestination(item),
+        item.load_number,
+        item.broker_load_number,
+        item.commodity,
+        source?.commodity,
+        carrierName(item.carrier_id),
+        driverName(item.driver_id),
+        item.status
+      ].join(' ').toLowerCase().includes(q);
+    });
+
+  if(!list.length){
+    $('queueList').innerHTML =
+      `<div class="empty">${showRemoved ? 'No removed items match this filter.' : 'No active Route Planning items match this queue filter.'}</div>`;
+    return;
+  }
+
+  $('queueList').innerHTML = list.map(item => {
+    const plan = planForItem(item);
+    const status = queueStatus(item);
+    const missing = readinessMissing(item);
+    const removed = !!item.route_planning_hidden;
+    const isOpp = item._kind === 'opportunity';
+
+    const href = isOpp
+      ? `route-planning.html?opportunity=${encodeURIComponent(item.id)}#workspace`
+      : `route-planning.html?load=${encodeURIComponent(item.id)}#workspace`;
+
+    const fleet = isOpp
+      ? 'Fleet assignment after booking'
+      : `${carrierName(item.carrier_id) || 'Carrier unassigned'} · ` +
+        `${driverName(item.driver_id) || 'Driver unassigned'} · ` +
+        `${unitName(item.trailer_id) || 'Trailer unassigned'}`;
+
+    return `
+      <article class="queue-item ${removed ? 'removed' : ''}" data-key="${esc(itemKey(item))}">
+        <div>
+          <div class="queue-title">${esc(displayReference(item))}</div>
+          <div class="queue-meta">
+            ${esc(displayBrokerName(item))}
+            · ${esc(pretty(item.status))}
+            · ${isOpp ? 'Broker opportunity' : (item.load_number ? 'Internal ' + esc(item.load_number) : 'Shared load')}
+            <br>
+            ${esc(displayOrigin(item) || 'Origin missing')}
+            →
+            ${esc(displayDestination(item) || 'Destination missing')}
+          </div>
+          ${missing.length ? `<div class="missing">Needs attention: ${esc(missing.join(', '))}</div>` : ''}
+          ${removed ? `<div class="queue-meta"><strong>Removed from Route Planning queue</strong></div>` : ''}
+        </div>
+
+        <div>
+          <span class="status ${status === 'ready_for_state_review' ? 'ready' : status === 'returned_for_revision' ? 'returned' : ''}">
+            ${esc(statusLabel(status))}
+          </span>
+          <div class="queue-meta">${esc(fleet)}</div>
+        </div>
+
+        <div class="queue-actions">
+          ${removed
+            ? `<button class="action" type="button" data-restore-key="${esc(itemKey(item))}">Restore to Queue</button>`
+            : `
+              <a class="action" href="${href}" data-open-link="${esc(itemKey(item))}">
+                ${plan ? 'Continue Planning' : 'Plan Route'}
+              </a>
+              <button class="action secondary" type="button" data-remove-key="${esc(itemKey(item))}">
+                Remove from Queue
+              </button>
+            `
+          }
+
+          ${plan
+            ? `<button class="action danger" type="button" data-delete-key="${esc(itemKey(item))}">Delete Route Plan</button>`
+            : ''
+          }
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function findQueueItem(key){
+  const [kind,id] = String(key || '').split(':');
+
+  if(kind === 'opp'){
+    const o = opportunities.find(x => x.id === id);
+    return o ? {...o,_kind:'opportunity'} : null;
+  }
+
+  if(kind === 'load'){
+    const l = loads.find(x => x.id === id);
+    return l
+      ? {...l,_kind:'load',_sourceOpportunity:linkedOpportunityForLoad(l)}
+      : null;
+  }
+
+  return null;
+}
+
+function renderGolden(){
+  const q = $('goldenSearch').value.trim().toLowerCase();
+
+  const list = goldenRoutes.filter(g =>
+    !q ||
+    [
+      g.route_name,
+      g.origin,
+      g.destination,
+      g.corridor,
+      g.highways,
+      g.equipment_type,
+      ...(g.states || [])
+    ].join(' ').toLowerCase().includes(q)
+  );
+
+  $('goldenList').innerHTML = list.length
+    ? list.map(g => `
+      <article class="golden">
+        <h3>${esc(g.route_name || 'Golden Route')}</h3>
+
+        <div class="golden-meta">
+          ${esc(g.origin || 'Origin')} → ${esc(g.destination || 'Destination')}
+          <br>
+          ${esc(pretty(g.freight_type || 'heavy_haul'))}
+          ${g.equipment_type ? ' · ' + esc(g.equipment_type) : ''}
+          ${g.states?.length ? ' · ' + g.states.map(esc).join(' → ') : ''}
+          ${g.highways ? '<br>Corridor: ' + esc(g.highways) : ''}
+        </div>
+
+        <div class="actions">
+          <button class="action" type="button" data-use-golden="${esc(g.id)}">Use in Open Workspace</button>
+          <button class="action secondary" type="button" data-map-golden="${esc(g.id)}">Open Maps</button>
+        </div>
+      </article>
+    `).join('')
+    : '<div class="empty">No Golden Routes match.</div>';
+}
+
+function useGolden(id){
+  if(!currentItem){
+    alert('Open a load from the Route Planning Queue first.');
+    return;
+  }
+
+  const g = goldenRoutes.find(x => x.id === id);
+  if(!g) return;
+
+  $('routeName').value = g.route_name || $('routeName').value;
+  $('freightType').value = g.freight_type || $('freightType').value;
+  $('equipmentType').value = g.equipment_type || $('equipmentType').value;
+  $('origin').value = g.origin || $('origin').value;
+  $('destination').value = g.destination || $('destination').value;
+  $('states').value = (g.states || []).join(', ');
+  $('waypoints').value = (g.waypoints || []).join('\n');
+  $('parkingStaging').value = g.parking_staging || '';
+  $('fuelService').value = g.fuel_service_notes || '';
+
+  if(g.general_notes){
+    const current = $('routeNotes').value.trim();
+    $('routeNotes').value = current
+      ? `${current}\n\nGolden Route reference: ${g.general_notes}`
+      : `Golden Route reference: ${g.general_notes}`;
+  }
+
+  document.querySelector('[data-panel="planPanel"]').click();
+  drawPreview();
+  updateHandoff();
+  $('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function loadData(){
+  facilities = {};
+  brokers = {};
+  carriers = {};
+  drivers = {};
+  equipment = {};
+
+  const [
+    loadsR,
+    oppsR,
+    plansR,
+    facR,
+    brokR,
+    carR,
+    drvR,
+    eqR,
+    goldR
+  ] = await Promise.all([
+    db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),
+    db.from('load_opportunities').select('*').eq('tenant_id',tenant).order('first_seen_at',{ascending:false}).limit(300),
+    db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),
+    db.from('facilities').select('*').eq('tenant_id',tenant),
+    db.from('brokers').select('*').eq('tenant_id',tenant),
+    db.from('carriers').select('*').eq('tenant_id',tenant),
+    db.from('drivers').select('*').eq('tenant_id',tenant),
+    db.from('equipment').select('*').eq('tenant_id',tenant),
+    db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})
+  ]);
+
+  const results = [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR];
+  results.forEach(r => {
+    if(r.error) console.warn('Route Planning data:',r.error.message);
+  });
+
+  loads = loadsR.data || [];
+  opportunities = oppsR.data || [];
+  plans = plansR.data || [];
+  goldenRoutes = goldR.data || [];
+
+  (facR.data || []).forEach(x => facilities[x.id] = x);
+  (brokR.data || []).forEach(x => brokers[x.id] = x);
+  (carR.data || []).forEach(x => carriers[x.id] = x);
+  (drvR.data || []).forEach(x => drivers[x.id] = x);
+  (eqR.data || []).forEach(x => equipment[x.id] = x);
+
+  $('fleetCarrier').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    Object.values(carriers)
+      .map(x => `<option value="${esc(x.id)}">${esc(carrierName(x.id))}</option>`)
+      .join('');
+
+  refreshFleetOptions();
+  renderQueue();
+  renderGolden();
+}
+
+async function openRequestedWorkspace(){
+  const params = new URLSearchParams(location.search);
+  const requestedOpportunity = params.get('opportunity');
+  const requestedLoad = params.get('load');
+
+  if(requestedOpportunity){
+    let o =
+      opportunities.find(
+        x => x.id === requestedOpportunity
+      );
+
+    /*
+      Direct-link fallback:
+      If the Opportunity was not included in the initial queue query,
+      fetch the exact record by ID so the Route Planning handoff still works.
+    */
+    if(!o){
+      const result =
+        await db
+          .from('load_opportunities')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedOpportunity)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning opportunity lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        o = result.data;
+
+        if(
+          !opportunities.some(
+            x => x.id === o.id
+          )
+        ){
+          opportunities.unshift(o);
+        }
+
+        renderQueue();
+      }
+    }
+
+    if(o){
+      /*
+        A direct Opportunity link must be visible in the active queue
+        even if an older record was accidentally marked hidden.
+        We do not alter the database here; this is only the local page view.
+      */
+      o.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...o,
+        _kind:'opportunity'
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
+
+      return;
+    }
+
+    $('queueList').insertAdjacentHTML(
+      'afterbegin',
+      '<div class="empty">The requested broker opportunity could not be loaded.</div>'
+    );
+
+    return;
+  }
+
+  if(requestedLoad){
+    let l =
+      loads.find(
+        x => x.id === requestedLoad
+      );
+
+    if(!l){
+      const result =
+        await db
+          .from('loads')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedLoad)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning load lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        l = result.data;
+
+        if(
+          !loads.some(
+            x => x.id === l.id
+          )
+        ){
+          loads.unshift(l);
+        }
+
+        renderQueue();
+      }
+    }
+
+    if(l){
+      l.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...l,
+        _kind:'load',
+        _sourceOpportunity:
+          linkedOpportunityForLoad(l)
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
+    }
+  }
+}
+
+function openRouteProfitCalculator(){
+  if(!currentItem || currentItem._kind !== 'load'){
+    alert('Open an operational load from the Route Planning Queue first.');
+    return;
+  }
+
+  const params = new URLSearchParams();
+  params.set('tab','profit');
+  params.set('load_id',currentItem.id);
+
+  const miles = currentPlan?.loaded_miles ?? $('loadedMiles').value;
+  if(miles !== '' && miles != null){
+    params.set('loaded_miles',miles);
+  }
+
+  location.href = 'calculators.html?' + params.toString();
+}
+
+async function start(){
+  if(typeof window.supabase === 'undefined'){
+    console.error('Route Planning: Supabase library did not load.');
+    $('queueList').innerHTML = '<div class="empty">Supabase could not load.</div>';
+    return;
+  }
+
+  db = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  window.db = db;
+
+  const sessionResult = await db.auth.getSession();
+  if(!sessionResult.data.session){
+    location.href = 'index.html';
+    return;
+  }
+
+  if(typeof window.buildNav !== 'function'){
+    console.error('Route Planning: nav.js did not load.');
+    return;
+  }
+
+  tenant = await window.buildNav(db,'Route Planning');
+
+  if(!tenant){
+    console.error('Route Planning: tenant could not be resolved.');
+    $('queueList').innerHTML = '<div class="empty">Could not resolve tenant.</div>';
+    return;
+  }
+await loadData();
+  await openRequestedWorkspace();
+}
+
+/* Page tabs */
+document.querySelectorAll('.route-tabs button').forEach(btn => {
+  btn.addEventListener('click',() => {
+    document.querySelectorAll('.route-tabs button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
+
+    btn.classList.add('on');
+    $(btn.dataset.panel).classList.add('on');
+  });
+});
+
+/* Queue filters */
+$('queueSearch').addEventListener('input',renderQueue);
+$('queueStatus').addEventListener('change',renderQueue);
+$('showRemoved').addEventListener('change',renderQueue);
+
+$('refreshQueue').addEventListener('click',async () => {
+  await loadData();
+  await openRequestedWorkspace();
+});
+
+/* Queue management — Plan Route itself is an <a> link, not handled here. */
+$('queueList').addEventListener('click',async e => {
+  const remove = e.target.closest('[data-remove-key]');
+  const restore = e.target.closest('[data-restore-key]');
+  const del = e.target.closest('[data-delete-key]');
+
+  if(remove){
+    e.preventDefault();
+    const item = findQueueItem(remove.dataset.removeKey);
+    if(item && confirm(`Remove ${displayReference(item)} from the Route Planning queue?\n\nThe broker/load record and saved Route Plan will remain available.`)){
+      await setQueueHidden(item,true);
+    }
+    return;
+  }
+
+  if(restore){
+    e.preventDefault();
+    const item = findQueueItem(restore.dataset.restoreKey);
+    if(item) await setQueueHidden(item,false);
+    return;
+  }
+
+  if(del){
+    e.preventDefault();
+    const item = findQueueItem(del.dataset.deleteKey);
+    if(item) await deleteRoutePlan(item);
+  }
+});
+
+/* Workspace */
+$('fleetCarrier').addEventListener('change',() => refreshFleetOptions());
+$('saveFleet').addEventListener('click',saveFleet);
+
+$('saveProgress').addEventListener('click',() => savePlan('in_progress'));
+$('readyStateRules').addEventListener('click',() => savePlan('ready_for_state_review'));
+$('returnRevision').addEventListener('click',() => savePlan('returned_for_revision'));
+
+['origin','destination','freightType','waypoints'].forEach(id => {
+  $(id).addEventListener('input',drawPreview);
+  $(id).addEventListener('change',drawPreview);
+});
+
+$('states').addEventListener('input',updateHandoff);
+
+$('openMaps').addEventListener('click',() => {
+  const url = routeUrl();
+  if(!url){
+    alert('Enter an origin and destination first.');
+    return;
+  }
+  window.open(url,'_blank','noopener');
+});
+
+$('copyLink').addEventListener('click',async () => {
+  const url = routeUrl();
+  if(!url){
+    alert('Enter an origin and destination first.');
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(url);
+    alert('Route link copied.');
+  }catch{
+    prompt('Copy this route link:',url);
+  }
+});
+
+$('openProfitCalc').addEventListener('click',openRouteProfitCalculator);
+
+/* Golden Routes */
+$('goldenSearch').addEventListener('input',renderGolden);
+$('refreshGolden').addEventListener('click',renderGolden);
+
+$('goldenList').addEventListener('click',e => {
+  const use = e.target.closest('[data-use-golden]');
+  const map = e.target.closest('[data-map-golden]');
+
+  if(use){
+    useGolden(use.dataset.useGolden);
+    return;
+  }
+
+  if(map){
+    const g = goldenRoutes.find(x => x.id === map.dataset.mapGolden);
+    if(!g) return;
+
+    const params = new URLSearchParams({
+      api:'1',
+      origin:g.origin || '',
+      destination:g.destination || '',
+      travelmode:'driving'
+    });
+
+    if(g.waypoints?.length){
+      params.set('waypoints',g.waypoints.join('|'));
+    }
+
+    window.open('https://www.google.com/maps/dir/?' + params.toString(),'_blank','noopener');
+  }
+});
+
+start();
+</script>
+
+</body>
+</html>
+route-planning-fully-fixed.html
+HTML
+does it have the nav
+
+Yes. The corrected route-planning.html does have the nav setup.
+
+Specifically, it contains:
+
+<header></header>
+
+and then loads:
+
+<script src="nav.js"></script>
+
+Your nav.js explicitly recognizes route-planning.html as part of Fleet Command and defines the Fleet Command subnav as:
+
+Fleet Setup | Route Planning | State Rules | Calendar.
+
+And the Route Planning page itself has the required empty header at line 480 and loads nav.js at line 746.
+
+But: the file you just supplied is actually the broken version. I can see the exact malformed JavaScript at lines 998 onward:
+
+function
+if(!target) return;
+
+followed by remnants of the old manually-created Fleet tabs.
+
+That JavaScript syntax error stops the page before the shared navigation and broker-load/Opportunity initialization can work.
+
+So: yes, the intended fixed file has nav. The copy you currently pasted/uploaded is still the broken copy.
+
+Use the corrected one I generated here:
+
+Download corrected route-planning.html
+
+Replace all of the existing route-planning.html with that file rather than merging pieces into the current one. That should address the nav and the Opportunity/broker-load population together.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Route Planning — Heavy Haul Command</title>
+
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="dashboard.css">
+
+<style>
+:root{
+  --rp-ink:var(--hh-ink,#3C3A4B);
+  --rp-blue:var(--hh-blue,#7FA5B5);
+  --rp-blue-dark:var(--hh-blue-dark,#668C9D);
+  --rp-blue-soft:var(--hh-blue-soft,#EAF3F6);
+  --rp-pink:var(--hh-pink,#D86A8E);
+  --rp-pink-soft:var(--hh-pink-soft,#F8E5EC);
+  --rp-lime:var(--hh-lime,#B8C34A);
+  --rp-lime-soft:var(--hh-lime-soft,#F1F4D8);
+  --rp-line:#D9DEE1;
+  --rp-muted:#747B82;
+  --rp-bg:#F7F7F5;
+  --rp-card:#FFFFFF;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  color:var(--rp-ink);
+  background:var(--rp-bg);
+}
+
+main{
+  width:min(1450px,100%);
+  margin:0 auto 70px;
+  padding:28px 24px 70px;
+}
+
+.page-intro{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+.page-intro h1{
+  margin:0;
+  font-family:"Cinzel",Georgia,serif;
+  font-size:30px;
+  font-weight:600;
+  letter-spacing:1px;
+}
+
+.page-intro p{
+  margin:5px 0 0;
+  color:var(--rp-blue-dark);
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:19px;
+  font-style:italic;
+}
+
+.route-tabs{
+  display:flex;
+  gap:28px;
+  border-bottom:1px solid var(--rp-line);
+  margin-bottom:22px;
+}
+
+.route-tabs button{
+  padding:0 0 10px;
+  min-height:42px;
+  border:0;
+  border-bottom:3px solid transparent;
+  background:transparent;
+  color:var(--rp-ink);
+  font-family:"Oswald",sans-serif;
+  font-size:13px;
+  letter-spacing:.7px;
+  cursor:pointer;
+}
+
+.route-tabs button.on{
+  color:var(--rp-blue-dark);
+  border-bottom-color:var(--rp-blue);
+}
+
+.panel{ display:none; }
+.panel.on{ display:block; }
+
+.card{
+  position:relative;
+  background:var(--rp-card);
+  border:1px solid var(--rp-line);
+  padding:18px;
+  margin-bottom:15px;
+}
+
+.card h2{
+  margin:0 0 4px;
+  font-family:"Oswald",sans-serif;
+  font-size:17px;
+  font-weight:500;
+}
+
+.hint{
+  margin:0 0 14px;
+  color:var(--rp-muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.queue-toolbar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin:12px 0;
+}
+
+.queue-toolbar input,
+.queue-toolbar select{
+  width:100%;
+  max-width:270px;
+  padding:9px 10px;
+  border:1px solid #BEC8CD;
+  border-radius:0;
+  background:#fff;
+  color:var(--rp-ink);
+  font:inherit;
+}
+
+.queue-toggle{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11.5px;
+  color:var(--rp-muted);
+  white-space:nowrap;
+}
+
+.queue-toggle input{ width:auto; }
+
+.queue-list{
+  display:grid;
+  gap:10px;
+}
+
+.queue-item{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(190px,.7fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+}
+
+.queue-item.removed{
+  opacity:.72;
+  background:#F3F3F1;
+}
+
+.queue-title{
+  font-family:"Oswald",sans-serif;
+  font-size:14px;
+}
+
+.queue-meta{
+  margin-top:4px;
+  color:var(--rp-muted);
+  font-size:11.5px;
+  line-height:1.45;
+}
+
+.queue-actions{
+  position:relative;
+  z-index:5;
+  display:flex;
+  gap:7px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+.status{
+  display:inline-flex;
+  padding:4px 7px;
+  font-family:"Oswald",sans-serif;
+  font-size:10px;
+  letter-spacing:.35px;
+  text-transform:uppercase;
+  background:var(--rp-blue-soft);
+  color:var(--rp-blue-dark);
+}
+
+.status.ready{
+  background:var(--rp-lime-soft);
+  color:#606B24;
+}
+
+.status.returned{
+  background:var(--rp-pink-soft);
+  color:#8E3E58;
+}
+
+.missing{
+  margin-top:5px;
+  color:#8E3E58;
+  font-size:10.5px;
+}
+
+.empty{
+  padding:22px;
+  border:1px dashed var(--rp-line);
+  color:var(--rp-muted);
+  text-align:center;
+}
+
+.workspace{
+  display:none;
+  scroll-margin-top:20px;
+}
+
+.workspace.show{ display:block; }
+
+.workspace-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.workspace-head h2{
+  margin:0;
+  font-family:"Oswald",sans-serif;
+  font-size:19px;
+}
+
+.crumb{
+  margin-top:3px;
+  color:var(--rp-muted);
+  font-size:11px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr);
+  gap:16px;
+  align-items:start;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.full{ grid-column:1/-1; }
+
+.field label{
+  display:block;
+  margin-bottom:4px;
+  color:#626970;
+  font-family:"Oswald",sans-serif;
+  font-size:11px;
+  letter-spacing:.25px;
+}
+
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #BEC8CD;
+  border-radius:0;
+  background:#fff;
+  color:var(--rp-ink);
+  font:inherit;
+}
+
+.field textarea{
+  min-height:82px;
+  resize:vertical;
+}
+
+.small{
+  margin-top:5px;
+  color:var(--rp-muted);
+  font-size:10.5px;
+  line-height:1.45;
+}
+
+.source-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+}
+
+.source-item{
+  padding:10px;
+  border:1px solid var(--rp-line);
+  background:#FBFCFC;
+}
+
+.source-label{
+  color:var(--rp-muted);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.source-value{
+  margin-top:3px;
+  font-size:12px;
+  line-height:1.45;
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.action,
+button.action,
+a.action{
+  position:relative;
+  z-index:5;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:8px 12px;
+  border:1px solid var(--rp-blue);
+  border-radius:0;
+  background:var(--rp-blue);
+  color:#fff;
+  font-family:"Oswald",sans-serif;
+  font-size:11.5px;
+  letter-spacing:.35px;
+  text-decoration:none;
+  cursor:pointer;
+  pointer-events:auto;
+}
+
+.action:hover{
+  filter:brightness(.98);
+}
+
+.action.secondary,
+button.secondary,
+a.secondary{
+  background:#fff;
+  color:var(--rp-blue-dark);
+  border-color:var(--rp-line);
+}
+
+.action.danger,
+button.danger{
+  background:#fff;
+  color:#8E3E58;
+  border-color:#E3BBC6;
+}
+
+.action:disabled,
+button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+.notice{
+  display:none;
+  margin-top:10px;
+  padding:10px 12px;
+  font-size:11.5px;
+}
+
+.notice.show{ display:block; }
+.notice.ok{
+  background:var(--rp-lime-soft);
+  color:#5D6723;
+}
+.notice.err{
+  background:var(--rp-pink-soft);
+  color:#8E3E58;
+}
+
+.route-preview{
+  padding:13px;
+  background:var(--rp-blue-soft);
+  border-left:4px solid var(--rp-blue);
+  font-size:12px;
+  line-height:1.55;
+}
+
+.route-preview strong{
+  display:block;
+  margin-bottom:3px;
+  font-family:"Oswald",sans-serif;
+}
+
+.warning{
+  margin-top:10px;
+  padding:10px 12px;
+  background:var(--rp-pink-soft);
+  border-left:4px solid var(--rp-pink);
+  color:#7D4A5B;
+  font-size:11px;
+  line-height:1.45;
+}
+
+.fleet-line{
+  font-size:12px;
+  line-height:1.55;
+}
+
+.fleet-line strong{
+  font-family:"Oswald",sans-serif;
+  font-weight:500;
+}
+
+.divider{
+  height:1px;
+  margin:13px 0;
+  background:var(--rp-line);
+}
+
+.golden-list{
+  display:grid;
+  gap:10px;
+}
+
+.golden{
+  padding:14px;
+  border:1px solid var(--rp-line);
+  border-left:4px solid var(--rp-lime);
+  background:#fff;
+}
+
+.golden h3{
+  margin:0;
+  font-family:"Oswald",sans-serif;
+  font-size:15px;
+}
+
+.golden-meta{
+  margin-top:5px;
+  color:var(--rp-muted);
+  font-size:11px;
+  line-height:1.5;
+}
+
+@media(max-width:900px){
+  .layout,
+  .queue-item,
+  .source-grid,
+  .grid{
+    grid-template-columns:1fr;
+  }
+  .full{ grid-column:auto; }
+  .queue-actions{ justify-content:flex-start; }
+}
+
+@media(max-width:600px){
+  main{ padding:20px 13px 50px; }
+}
+</style>
+</head>
+
+<body>
+
+<header></header>
+<main>
+  <section class="page-intro">
+    <div>
+      <h1>ROUTE PLANNING</h1>
+      <p>Open the broker load, build the route, save progress, and hand the states into State Rules.</p>
+    </div>
+  </section>
+
+  <nav class="route-tabs" aria-label="Route Planning sections">
+    <button type="button" class="on" data-panel="planPanel">Plan Route</button>
+    <button type="button" data-panel="goldenPanel">Golden Routes</button>
+  </nav>
+
+  <section class="panel on" id="planPanel">
+
+    <div class="card">
+      <h2>Route Planning Queue</h2>
+      <p class="hint">
+        Broker opportunities and operational loads can both be planned here.
+        Plan Route is a normal page link so it works reliably with a mouse, keyboard, or touch.
+      </p>
+
+      <div class="queue-toolbar">
+        <input id="queueSearch" type="search" placeholder="Search load, broker, city, carrier...">
+
+        <select id="queueStatus">
+          <option value="">All route statuses</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="ready_for_state_review">Ready for State Review</option>
+          <option value="returned_for_revision">Returned for Revision</option>
+        </select>
+
+        <label class="queue-toggle" for="showRemoved">
+          <input id="showRemoved" type="checkbox">
+          Show removed
+        </label>
+
+        <button class="action secondary" id="refreshQueue" type="button">Refresh Queue</button>
+      </div>
+
+      <div id="queueList" class="queue-list">
+        <div class="empty">Loading route queue…</div>
+      </div>
+    </div>
+
+    <section class="workspace" id="workspace">
+      <div class="card">
+        <div class="workspace-head">
+          <div>
+            <h2 id="workspaceTitle">Route Workspace</h2>
+            <div class="crumb" id="workspaceMeta"></div>
+          </div>
+
+          <div class="actions" style="margin-top:0">
+            <a class="action secondary" href="route-planning.html">Back to Queue</a>
+            <a class="action secondary" id="openLoadRecord" href="newload.html">Open Load Record ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div>
+
+          <div class="card">
+            <h2>Fleet Assignment</h2>
+            <p class="hint">
+              Fleet assignment is saved on an operational load. A broker opportunity can be route-planned before booking.
+            </p>
+
+            <div class="grid">
+              <div class="field">
+                <label for="fleetCarrier">Carrier</label>
+                <select id="fleetCarrier"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetDriver">Driver</label>
+                <select id="fleetDriver"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetTractor">Truck / Tractor</label>
+                <select id="fleetTractor"></select>
+              </div>
+
+              <div class="field">
+                <label for="fleetTrailer">Trailer</label>
+                <select id="fleetTrailer"></select>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="action" id="saveFleet" type="button">Save Fleet Assignment</button>
+            </div>
+
+            <div class="notice" id="fleetNotice"></div>
+          </div>
+
+          <div class="card">
+            <h2>Broker / Load Source</h2>
+            <p class="hint">
+              Read-only source information from the selected broker opportunity or load.
+              The Route Plan below starts with these values but remains its own planning record.
+            </p>
+            <div class="source-grid" id="sourceGrid"></div>
+          </div>
+
+          <div class="card">
+            <h2>Route Plan</h2>
+
+            <div class="grid">
+              <div class="field">
+                <label for="routeName">Route Name</label>
+                <input id="routeName" placeholder="Little Rock AR → Memphis TN | RGN">
+              </div>
+
+              <div class="field">
+                <label for="freightType">Freight Type</label>
+                <select id="freightType">
+                  <option value="heavy_haul">Heavy Haul / Oversize</option>
+                  <option value="reefer">Reefer</option>
+                  <option value="dry_van">Dry Van</option>
+                  <option value="flatbed">Flatbed</option>
+                  <option value="step_deck">Step Deck</option>
+                  <option value="specialized">Specialized</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="equipmentType">Equipment / Trailer</label>
+                <input id="equipmentType">
+              </div>
+
+              <div class="field">
+                <label for="loadedMiles">Loaded Miles</label>
+                <input id="loadedMiles" type="number" min="0">
+              </div>
+
+              <div class="field">
+                <label for="origin">Origin</label>
+                <input id="origin">
+              </div>
+
+              <div class="field">
+                <label for="destination">Destination</label>
+                <input id="destination">
+              </div>
+
+              <div class="field full">
+                <label for="states">States Traveled</label>
+                <input id="states" placeholder="AR, TN">
+                <div class="small">
+                  Enter states in travel order. These are passed to State Rules when the route is marked ready.
+                </div>
+              </div>
+
+              <div class="field full">
+                <label for="waypoints">Waypoints / Shaping Points</label>
+                <textarea id="waypoints" placeholder="One intermediate point per line"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="pickupAt">Pickup</label>
+                <input id="pickupAt" type="datetime-local">
+              </div>
+
+              <div class="field">
+                <label for="deliveryAt">Delivery</label>
+                <input id="deliveryAt" type="datetime-local">
+              </div>
+
+              <div class="field full">
+                <label for="routeNotes">Route Notes</label>
+                <textarea id="routeNotes" placeholder="Dispatcher route notes..."></textarea>
+              </div>
+
+              <div class="field">
+                <label for="parkingStaging">Parking / Staging</label>
+                <textarea id="parkingStaging"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="fuelService">Fuel / Service</label>
+                <textarea id="fuelService"></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="action" id="saveProgress" type="button">Save Progress</button>
+              <button class="action" id="readyStateRules" type="button">Save + Ready for State Rules</button>
+              <button class="action secondary" id="returnRevision" type="button">Mark Returned for Revision</button>
+            </div>
+
+            <div class="notice" id="planNotice"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h2>Route Preview</h2>
+
+            <div class="route-preview" id="routePreview">
+              <strong>No route yet</strong>
+              Open a load or enter an origin and destination.
+            </div>
+
+            <div class="warning">
+              Heavy haul / oversize: Google Maps is a navigation reference only.
+              State rules, permits and permit-approved routing remain controlling.
+            </div>
+
+            <div class="actions">
+              <button class="action" id="openMaps" type="button">Open in Google Maps</button>
+              <button class="action secondary" id="copyLink" type="button">Copy Link</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Workflow Handoff</h2>
+            <p class="hint">
+              Route Planning owns the proposed route. State Rules enriches it with state-specific requirements.
+            </p>
+
+            <div id="handoffSummary" class="fleet-line">
+              Save the route to see handoff status.
+            </div>
+
+            <div class="actions">
+              <a class="action secondary" id="openStateRules" href="states.html">Open State Rules ↗</a>
+            </div>
+
+            <div class="divider"></div>
+
+            <h2>Calculator Handoff</h2>
+            <p class="hint">Use this route's loaded mileage with the selected operational load.</p>
+
+            <div class="actions">
+              <button class="action secondary" id="openProfitCalc" type="button">Open Rate / Profit Calculator</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </section>
+
+  <section class="panel" id="goldenPanel">
+    <div class="card">
+      <h2>Golden Routes</h2>
+      <p class="hint">
+        Reuse previously useful routes as planning references. Current permits and State Rules always control.
+      </p>
+
+      <div class="queue-toolbar">
+        <input id="goldenSearch" type="search" placeholder="Search route, city, highway...">
+        <button class="action secondary" id="refreshGolden" type="button">Refresh</button>
+      </div>
+    </div>
+
+    <div id="goldenList" class="golden-list"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="nav.js"></script>
+
+<script>
+const SUPABASE_URL = 'https://zyhdatteglxozsgnjhrm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+const $ = id => document.getElementById(id);
+
+let db = null;
+let tenant = null;
+
+let currentItem = null;
+let currentPlan = null;
+
+let loads = [];
+let opportunities = [];
+let plans = [];
+let goldenRoutes = [];
+
+let facilities = {};
+let brokers = {};
+let carriers = {};
+let drivers = {};
+let equipment = {};
+
+const TERMINAL_LOAD_STATUSES = [
+  'passed','rejected','expired','cancelled','tonu','paid','invoiced'
+];
+
+function esc(v){
+  return String(v ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[m]));
+}
+
+function pretty(v){
+  return String(v || '')
+    .replace(/_/g,' ')
+    .replace(/\b\w/g,c => c.toUpperCase());
+}
+
+function money(v){
+  if(v == null || v === '') return '—';
+  const n = Number(v);
+  return Number.isFinite(n)
+    ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:2})
+    : '—';
+}
+
+function dateLocal(v){
+  if(!v) return '';
+  const s = String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s + 'T00:00';
+
+  const d = new Date(s);
+  if(Number.isNaN(d.getTime())) return '';
+
+  const z = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
+function iso(v){
+  return v ? new Date(v).toISOString() : null;
+}
+
+function arrComma(v){
+  return String(v || '')
+    .split(',')
+    .map(x => x.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function arrLines(v){
+  return String(v || '')
+    .split(/\r?\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function setNotice(id,text,error=false){
+  const el = $(id);
+  if(!el) return;
+  el.textContent = text || '';
+  el.className = 'notice' + (text ? ' show ' : '') + (error ? 'err' : 'ok');
+}
+
+function facilityLabel(id){
+  const f = facilities[id];
+  return f
+    ? [f.name,f.address_line1,f.city,f.state,f.zip].filter(Boolean).join(', ')
+    : '';
+}
+
+function brokerName(id){
+  const b = brokers[id];
+  return b ? (b.name || b.legal_name || b.company_name || 'Broker') : '';
+}
+
+function carrierName(id){
+  const c = carriers[id];
+  return c ? (c.dba_name || c.legal_name || c.company_name || 'Carrier') : '';
+}
+
+function driverName(id){
+  const d = drivers[id];
+  return d ? [d.first_name,d.last_name].filter(Boolean).join(' ') : '';
+}
+
+function unitName(id){
+  const e = equipment[id];
+  return e
+    ? `${e.unit_number || 'Unit'}${e.equipment_type ? ' · ' + pretty(e.equipment_type) : ''}`
+    : '';
+}
+
+function opportunityOrigin(o){
+  if(!o) return '';
+  return [
+    o.pickup_facility_name,
+    o.pickup_address,
+    o.origin_city,
+    o.origin_state,
+    o.pickup_zip
+  ].filter(Boolean).join(', ');
+}
+
+function opportunityDestination(o){
+  if(!o) return '';
+  return [
+    o.delivery_facility_name,
+    o.delivery_address,
+    o.dest_city,
+    o.dest_state,
+    o.delivery_zip
+  ].filter(Boolean).join(', ');
+}
+
+function linkedOpportunityForLoad(load){
+  if(!load) return null;
+
+  const direct = opportunities.find(o => o.load_id === load.id);
+  if(direct) return direct;
+
+  const brokerRef = String(load.broker_load_number || '').trim().toLowerCase();
+  if(!brokerRef) return null;
+
+  return opportunities.find(o =>
+    String(o.external_ref || '').trim().toLowerCase() === brokerRef
+  ) || null;
+}
+
+function planForLoad(id){
+  return plans.find(p => p.load_id === id) || null;
+}
+
+function planForOpportunity(id){
+  return plans.find(p => p.opportunity_id === id) || null;
+}
+
+function planForItem(item){
+  return item?._kind === 'opportunity'
+    ? planForOpportunity(item.id)
+    : planForLoad(item?.id);
+}
+
+function itemKey(item){
+  return item._kind === 'opportunity'
+    ? 'opp:' + item.id
+    : 'load:' + item.id;
+}
+
+function displayReference(item){
+  if(item._kind === 'opportunity'){
+    return item.external_ref || item.broker_name || 'Broker Opportunity';
+  }
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return source?.external_ref ||
+    item.broker_load_number ||
+    item.load_number ||
+    'Load';
+}
+
+function displayBrokerName(item){
+  if(item._kind === 'opportunity'){
+    return item.broker_name || 'Broker opportunity';
+  }
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return brokerName(item.broker_id) ||
+    source?.broker_name ||
+    'Broker not assigned';
+}
+
+function displayOrigin(item){
+  if(item._kind === 'opportunity') return opportunityOrigin(item);
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return facilityLabel(item.origin_facility_id) || opportunityOrigin(source);
+}
+
+function displayDestination(item){
+  if(item._kind === 'opportunity') return opportunityDestination(item);
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  return facilityLabel(item.dest_facility_id) || opportunityDestination(source);
+}
+
+function queueStatus(item){
+  const p = planForItem(item);
+  return p ? (p.workflow_status || 'in_progress') : 'not_started';
+}
+
+function statusLabel(s){
+  if(s === 'not_started') return 'Not Started';
+  if(s === 'ready_for_state_review') return 'Ready for State Review';
+  if(s === 'returned_for_revision') return 'Returned for Revision';
+  return 'In Progress';
+}
+
+function readinessMissing(item){
+  const missing = [];
+
+  if(!displayOrigin(item)) missing.push('origin');
+  if(!displayDestination(item)) missing.push('destination');
+
+  if(item._kind === 'opportunity'){
+    if(item.width_ft == null || item.height_ft == null || item.weight_lbs == null){
+      missing.push('loaded dimensions/weight');
+    }
+    return missing;
+  }
+
+  if(!item.carrier_id) missing.push('carrier');
+  if(!item.driver_id) missing.push('driver');
+  if(!item.tractor_id) missing.push('truck');
+  if(!item.trailer_id) missing.push('trailer');
+
+  const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+  const hasDims =
+    (item.width_in != null && item.height_in != null && item.weight_lb != null) ||
+    (source?.width_ft != null && source?.height_ft != null && source?.weight_lbs != null);
+
+  if(!hasDims) missing.push('loaded dimensions/weight');
+
+  return missing;
+}
+
+function routeUrl(){
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+  if(!origin || !destination) return '';
+
+  const params = new URLSearchParams({
+    api:'1',
+    origin,
+    destination,
+    travelmode:'driving'
+  });
+
+  const waypoints = arrLines($('waypoints').value);
+  if(waypoints.length){
+    params.set('waypoints',waypoints.join('|'));
+  }
+
+  return 'https://www.google.com/maps/dir/?' + params.toString();
+}
+
+function drawPreview(){
+  const origin = $('origin').value.trim();
+  const destination = $('destination').value.trim();
+  const waypoints = arrLines($('waypoints').value);
+
+  $('routePreview').innerHTML = origin && destination
+    ? `<strong>${esc(origin)} → ${esc(destination)}</strong>` +
+      `${esc(pretty($('freightType').value))}` +
+      (waypoints.length ? `<br>Via: ${waypoints.map(esc).join(' → ')}` : '')
+    : '<strong>No route yet</strong>Open a load or enter an origin and destination.';
+}
+
+function sourceItems(item){
+  const source = item._kind === 'opportunity'
+    ? item
+    : (item._sourceOpportunity || linkedOpportunityForLoad(item));
+
+  const rows = [
+    ['Broker / Reference',`${displayBrokerName(item)} · ${displayReference(item)}`],
+    ['Origin',displayOrigin(item) || '—'],
+    ['Destination',displayDestination(item) || '—'],
+    ['Commodity',item.commodity || source?.commodity || '—'],
+    ['Equipment',item._kind === 'load'
+      ? (unitName(item.trailer_id) || source?.equipment_needed || '—')
+      : (item.equipment_needed || '—')],
+    ['Miles',item._kind === 'load'
+      ? (item.total_miles ?? source?.miles ?? '—')
+      : (item.miles ?? '—')],
+    ['Pickup',item._kind === 'load'
+      ? (item.pickup_appt_start || source?.pickup_date || '—')
+      : (item.pickup_date || '—')],
+    ['Delivery',item._kind === 'load'
+      ? (item.delivery_appt_start || source?.delivery_date || '—')
+      : (item.delivery_date || '—')]
+  ];
+
+  if(source){
+    rows.push(
+      ['Dimensions',
+        `${source.length_ft ?? '—'} ft L × ${source.width_ft ?? '—'} ft W × ${source.height_ft ?? '—'} ft H · ` +
+        `${source.weight_lbs ? Number(source.weight_lbs).toLocaleString() + ' lb' : 'weight missing'}`],
+      ['Broker Rate',
+        `Posted ${money(source.posted_rate)} · Quoted ${money(source.quoted_rate)} · Booked ${money(source.booked_rate)}`]
+    );
+  }
+
+  return rows;
+}
+
+function renderSource(item){
+  $('sourceGrid').innerHTML = sourceItems(item)
+    .map(([label,value]) => `
+      <div class="source-item">
+        <div class="source-label">${esc(label)}</div>
+        <div class="source-value">${esc(value)}</div>
+      </div>
+    `).join('');
+}
+
+function refreshFleetOptions(selected={}){
+  const carrierId = $('fleetCarrier').value || selected.carrier_id || '';
+
+  const driverList = Object.values(drivers).filter(x =>
+    !carrierId || !x.carrier_id || x.carrier_id === carrierId
+  );
+
+  const equipmentList = Object.values(equipment).filter(x =>
+    !carrierId || !x.carrier_id || x.carrier_id === carrierId
+  );
+
+  const isTrailer = x =>
+    ['rgn','lowboy','flatbed','step_deck','step deck','reefer','dry_van','dry van','double_drop','double drop','trailer']
+      .some(k => String(x.equipment_type || '').toLowerCase().includes(k));
+
+  $('fleetDriver').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    driverList.map(x => `<option value="${esc(x.id)}">${esc(driverName(x.id) || 'Driver')}</option>`).join('');
+
+  $('fleetTractor').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    equipmentList
+      .filter(x => !isTrailer(x))
+      .map(x => `<option value="${esc(x.id)}">${esc(unitName(x.id))}</option>`)
+      .join('');
+
+  $('fleetTrailer').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    equipmentList
+      .filter(isTrailer)
+      .map(x => `<option value="${esc(x.id)}">${esc(unitName(x.id))}</option>`)
+      .join('');
+
+  if(selected.driver_id) $('fleetDriver').value = selected.driver_id;
+  if(selected.tractor_id) $('fleetTractor').value = selected.tractor_id;
+  if(selected.trailer_id) $('fleetTrailer').value = selected.trailer_id;
+}
+
+function fillPlan(item,plan){
+  const isOpp = item._kind === 'opportunity';
+  const source = isOpp ? item : (item._sourceOpportunity || linkedOpportunityForLoad(item));
+
+  const origin = displayOrigin(item);
+  const destination = displayDestination(item);
+
+  $('routeName').value = plan?.route_name || '';
+  $('freightType').value = plan?.freight_type || 'heavy_haul';
+
+  $('equipmentType').value =
+    plan?.equipment_type ||
+    (isOpp
+      ? (item.equipment_needed || '')
+      : (unitName(item.trailer_id) || source?.equipment_needed || ''));
+
+  $('loadedMiles').value =
+    plan?.loaded_miles ??
+    (isOpp
+      ? (item.miles ?? '')
+      : (item.total_miles ?? source?.miles ?? ''));
+
+  $('origin').value = plan?.origin || origin;
+  $('destination').value = plan?.destination || destination;
+
+  $('states').value = (plan?.states || []).join(', ');
+  $('waypoints').value = (plan?.waypoints || []).join('\n');
+
+  $('pickupAt').value =
+    dateLocal(plan?.pickup_at) ||
+    (isOpp
+      ? dateLocal(item.pickup_date)
+      : (dateLocal(item.pickup_appt_start) || dateLocal(source?.pickup_date)));
+
+  $('deliveryAt').value =
+    dateLocal(plan?.delivery_at) ||
+    (isOpp
+      ? dateLocal(item.delivery_date)
+      : (dateLocal(item.delivery_appt_start) || dateLocal(source?.delivery_date)));
+
+  $('routeNotes').value = plan?.route_notes || '';
+  $('parkingStaging').value = plan?.parking_staging || '';
+  $('fuelService').value = plan?.fuel_service_notes || '';
+
+  drawPreview();
+  updateHandoff();
+}
+
+function updateHandoff(){
+  if(!currentItem){
+    $('handoffSummary').textContent = 'Save the route to see handoff status.';
+    return;
+  }
+
+  const states = arrComma($('states').value);
+  const status = currentPlan?.workflow_status || 'not_started';
+
+  $('handoffSummary').innerHTML =
+    `<strong>${esc(statusLabel(status))}</strong><br>` +
+    (states.length
+      ? 'States identified: ' + states.map(esc).join(' → ')
+      : 'States not identified yet.') +
+    (status === 'ready_for_state_review'
+      ? '<br>State Rules can now pull this route and its state list.'
+      : '');
+
+  $('openStateRules').href = currentItem._kind === 'opportunity'
+    ? `states.html?opportunity=${encodeURIComponent(currentItem.id)}`
+    : `states.html?load=${encodeURIComponent(currentItem.id)}`;
+}
+
+function openWorkspace(item){
+  currentItem = item;
+  if(!currentItem) return;
+
+  currentPlan = planForItem(item);
+
+  const isOpp = item._kind === 'opportunity';
+  const title = displayReference(item);
+  const origin = displayOrigin(item) || 'Origin';
+  const destination = displayDestination(item) || 'Destination';
+
+  $('workspaceTitle').textContent = `${title} — Route Workspace`;
+  $('workspaceMeta').textContent =
+    `${displayBrokerName(item)} · ${origin} → ${destination} · Status: ${pretty(item.status)}`;
+
+  $('openLoadRecord').href = isOpp
+    ? `sourcing.html?opportunity=${encodeURIComponent(item.id)}`
+    : `newload.html?load=${encodeURIComponent(item.id)}`;
+
+  $('fleetCarrier').disabled = isOpp;
+  $('fleetDriver').disabled = isOpp;
+  $('fleetTractor').disabled = isOpp;
+  $('fleetTrailer').disabled = isOpp;
+  $('saveFleet').disabled = isOpp;
+
+  if(isOpp){
+    $('fleetCarrier').value = '';
+    refreshFleetOptions({});
+    setNotice('fleetNotice','This is still a broker opportunity. Route planning is available now; fleet assignment becomes available after booking.');
+  }else{
+    $('fleetCarrier').disabled = false;
+    $('fleetDriver').disabled = false;
+    $('fleetTractor').disabled = false;
+    $('fleetTrailer').disabled = false;
+    $('saveFleet').disabled = false;
+
+    $('fleetCarrier').value = item.carrier_id || '';
+    refreshFleetOptions(item);
+    setNotice('fleetNotice','');
+  }
+
+  renderSource(item);
+  fillPlan(item,currentPlan);
+
+  $('workspace').classList.add('show');
+}
+
+async function saveFleet(){
+  if(!currentItem || currentItem._kind !== 'load'){
+    setNotice('fleetNotice','Fleet assignment is available after the broker opportunity becomes an operational load.',true);
+    return;
+  }
+
+  const patch = {
+    carrier_id:$('fleetCarrier').value || null,
+    driver_id:$('fleetDriver').value || null,
+    tractor_id:$('fleetTractor').value || null,
+    trailer_id:$('fleetTrailer').value || null
+  };
+
+  const r = await db
+    .from('loads')
+    .update(patch)
+    .eq('tenant_id',tenant)
+    .eq('id',currentItem.id);
+
+  if(r.error){
+    setNotice('fleetNotice',r.error.message,true);
+    return;
+  }
+
+  Object.assign(currentItem,patch);
+  setNotice('fleetNotice','Fleet assignment saved to the shared load record.');
+  renderQueue();
+}
+
+function planRecord(status){
+  const isOpp = currentItem._kind === 'opportunity';
+
+  return {
+    tenant_id:tenant,
+    load_id:isOpp ? (currentItem.load_id || null) : currentItem.id,
+    opportunity_id:isOpp ? currentItem.id : null,
+    route_name:$('routeName').value.trim() || null,
+    freight_type:$('freightType').value,
+    equipment_type:$('equipmentType').value.trim() || null,
+    origin:$('origin').value.trim(),
+    destination:$('destination').value.trim(),
+    states:arrComma($('states').value),
+    waypoints:arrLines($('waypoints').value),
+    loaded_miles:$('loadedMiles').value ? Number($('loadedMiles').value) : null,
+    pickup_at:iso($('pickupAt').value),
+    delivery_at:iso($('deliveryAt').value),
+    parking_staging:$('parkingStaging').value.trim() || null,
+    fuel_service_notes:$('fuelService').value.trim() || null,
+    route_notes:$('routeNotes').value.trim() || null,
+    google_maps_url:routeUrl() || null,
+    workflow_status:status
+  };
+}
+
+async function savePlan(status){
+  if(!currentItem){
+    setNotice('planNotice','Open a load from the queue first.',true);
+    return;
+  }
+
+  if(!$('origin').value.trim() || !$('destination').value.trim()){
+    setNotice('planNotice','Origin and destination are required.',true);
+    return;
+  }
+
+  if(status === 'ready_for_state_review' && !arrComma($('states').value).length){
+    setNotice('planNotice','Identify the states traveled before handing the route to State Rules.',true);
+    return;
+  }
+
+  const rec = planRecord(status);
+  let r;
+
+  if(currentPlan){
+    r = await db
+      .from('route_plans')
+      .update(rec)
+      .eq('tenant_id',tenant)
+      .eq('id',currentPlan.id)
+      .select('*')
+      .maybeSingle();
+  }else{
+    r = await db
+      .from('route_plans')
+      .insert(rec)
+      .select('*')
+      .maybeSingle();
+  }
+
+  if(r.error){
+    setNotice('planNotice',r.error.message,true);
+    return;
+  }
+
+  currentPlan = r.data;
+
+  const existing = plans.find(p => p.id === currentPlan.id);
+  if(existing){
+    Object.assign(existing,currentPlan);
+  }else{
+    plans.push(currentPlan);
+  }
+
+  setNotice(
+    'planNotice',
+    status === 'ready_for_state_review'
+      ? 'Route saved and queued for State Rules.'
+      : status === 'returned_for_revision'
+        ? 'Route saved and marked Returned for Revision.'
+        : 'Route progress saved.'
+  );
+
+  renderQueue();
+  updateHandoff();
+}
+
+async function setQueueHidden(item,hidden){
+  const table = item._kind === 'opportunity' ? 'load_opportunities' : 'loads';
+
+  const r = await db
+    .from(table)
+    .update({route_planning_hidden:hidden})
+    .eq('tenant_id',tenant)
+    .eq('id',item.id);
+
+  if(r.error){
+    alert('Could not update Route Planning queue: ' + r.error.message);
+    return;
+  }
+
+  item.route_planning_hidden = hidden;
+  renderQueue();
+}
+
+async function deleteRoutePlan(item){
+  const plan = planForItem(item);
+  if(!plan) return;
+
+  const label = displayReference(item);
+
+  if(!confirm(`Delete the saved Route Plan for ${label}?\n\nThe broker opportunity/load itself will NOT be deleted.`)){
+    return;
+  }
+
+  const r = await db
+    .from('route_plans')
+    .delete()
+    .eq('tenant_id',tenant)
+    .eq('id',plan.id);
+
+  if(r.error){
+    alert('Could not delete Route Plan: ' + r.error.message);
+    return;
+  }
+
+  plans = plans.filter(p => p.id !== plan.id);
+  renderQueue();
+}
+
+function buildQueueItems(){
+  const linkedLoadIds = new Set(
+    opportunities.map(o => o.load_id).filter(Boolean)
+  );
+
+  const orderedLoads = [...loads]
+    .filter(l =>
+      !TERMINAL_LOAD_STATUSES.includes(String(l.status || '').toLowerCase())
+    )
+    .sort((a,b) =>
+      (linkedLoadIds.has(b.id) ? 1 : 0) -
+      (linkedLoadIds.has(a.id) ? 1 : 0)
+    );
+
+  const seenRefs = new Set();
+  const loadItems = [];
+
+  orderedLoads.forEach(load => {
+    const source = linkedOpportunityForLoad(load);
+
+    const ref = String(
+      source?.external_ref ||
+      load.broker_load_number ||
+      load.id
+    ).trim().toLowerCase();
+
+    if(seenRefs.has(ref)) return;
+    seenRefs.add(ref);
+
+    loadItems.push({
+      ...load,
+      _kind:'load',
+      _sourceOpportunity:source
+    });
+  });
+
+  const opportunityItems = opportunities
+    .filter(o =>
+      !['passed','rejected','expired','lost','declined'].includes(
+        String(o.status || '').toLowerCase()
+      )
+    )
+    .filter(o => !o.load_id)
+    .filter(o => {
+      const ref = String(o.external_ref || '').trim().toLowerCase();
+      return !ref || !seenRefs.has(ref);
+    })
+    .map(o => ({...o,_kind:'opportunity'}));
+
+  return [...opportunityItems,...loadItems];
+}
+
+function renderQueue(){
+  const q = $('queueSearch').value.trim().toLowerCase();
+  const statusFilter = $('queueStatus').value;
+  const showRemoved = $('showRemoved').checked;
+
+  const list = buildQueueItems()
+    .filter(item =>
+      showRemoved
+        ? !!item.route_planning_hidden
+        : !item.route_planning_hidden
+    )
+    .filter(item =>
+      !statusFilter || queueStatus(item) === statusFilter
+    )
+    .filter(item => {
+      if(!q) return true;
+
+      const source = item._sourceOpportunity || linkedOpportunityForLoad(item);
+
+      return [
+        displayReference(item),
+        displayBrokerName(item),
+        displayOrigin(item),
+        displayDestination(item),
+        item.load_number,
+        item.broker_load_number,
+        item.commodity,
+        source?.commodity,
+        carrierName(item.carrier_id),
+        driverName(item.driver_id),
+        item.status
+      ].join(' ').toLowerCase().includes(q);
+    });
+
+  if(!list.length){
+    $('queueList').innerHTML =
+      `<div class="empty">${showRemoved ? 'No removed items match this filter.' : 'No active Route Planning items match this queue filter.'}</div>`;
+    return;
+  }
+
+  $('queueList').innerHTML = list.map(item => {
+    const plan = planForItem(item);
+    const status = queueStatus(item);
+    const missing = readinessMissing(item);
+    const removed = !!item.route_planning_hidden;
+    const isOpp = item._kind === 'opportunity';
+
+    const href = isOpp
+      ? `route-planning.html?opportunity=${encodeURIComponent(item.id)}#workspace`
+      : `route-planning.html?load=${encodeURIComponent(item.id)}#workspace`;
+
+    const fleet = isOpp
+      ? 'Fleet assignment after booking'
+      : `${carrierName(item.carrier_id) || 'Carrier unassigned'} · ` +
+        `${driverName(item.driver_id) || 'Driver unassigned'} · ` +
+        `${unitName(item.trailer_id) || 'Trailer unassigned'}`;
+
+    return `
+      <article class="queue-item ${removed ? 'removed' : ''}" data-key="${esc(itemKey(item))}">
+        <div>
+          <div class="queue-title">${esc(displayReference(item))}</div>
+          <div class="queue-meta">
+            ${esc(displayBrokerName(item))}
+            · ${esc(pretty(item.status))}
+            · ${isOpp ? 'Broker opportunity' : (item.load_number ? 'Internal ' + esc(item.load_number) : 'Shared load')}
+            <br>
+            ${esc(displayOrigin(item) || 'Origin missing')}
+            →
+            ${esc(displayDestination(item) || 'Destination missing')}
+          </div>
+          ${missing.length ? `<div class="missing">Needs attention: ${esc(missing.join(', '))}</div>` : ''}
+          ${removed ? `<div class="queue-meta"><strong>Removed from Route Planning queue</strong></div>` : ''}
+        </div>
+
+        <div>
+          <span class="status ${status === 'ready_for_state_review' ? 'ready' : status === 'returned_for_revision' ? 'returned' : ''}">
+            ${esc(statusLabel(status))}
+          </span>
+          <div class="queue-meta">${esc(fleet)}</div>
+        </div>
+
+        <div class="queue-actions">
+          ${removed
+            ? `<button class="action" type="button" data-restore-key="${esc(itemKey(item))}">Restore to Queue</button>`
+            : `
+              <a class="action" href="${href}" data-open-link="${esc(itemKey(item))}">
+                ${plan ? 'Continue Planning' : 'Plan Route'}
+              </a>
+              <button class="action secondary" type="button" data-remove-key="${esc(itemKey(item))}">
+                Remove from Queue
+              </button>
+            `
+          }
+
+          ${plan
+            ? `<button class="action danger" type="button" data-delete-key="${esc(itemKey(item))}">Delete Route Plan</button>`
+            : ''
+          }
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function findQueueItem(key){
+  const [kind,id] = String(key || '').split(':');
+
+  if(kind === 'opp'){
+    const o = opportunities.find(x => x.id === id);
+    return o ? {...o,_kind:'opportunity'} : null;
+  }
+
+  if(kind === 'load'){
+    const l = loads.find(x => x.id === id);
+    return l
+      ? {...l,_kind:'load',_sourceOpportunity:linkedOpportunityForLoad(l)}
+      : null;
+  }
+
+  return null;
+}
+
+function renderGolden(){
+  const q = $('goldenSearch').value.trim().toLowerCase();
+
+  const list = goldenRoutes.filter(g =>
+    !q ||
+    [
+      g.route_name,
+      g.origin,
+      g.destination,
+      g.corridor,
+      g.highways,
+      g.equipment_type,
+      ...(g.states || [])
+    ].join(' ').toLowerCase().includes(q)
+  );
+
+  $('goldenList').innerHTML = list.length
+    ? list.map(g => `
+      <article class="golden">
+        <h3>${esc(g.route_name || 'Golden Route')}</h3>
+
+        <div class="golden-meta">
+          ${esc(g.origin || 'Origin')} → ${esc(g.destination || 'Destination')}
+          <br>
+          ${esc(pretty(g.freight_type || 'heavy_haul'))}
+          ${g.equipment_type ? ' · ' + esc(g.equipment_type) : ''}
+          ${g.states?.length ? ' · ' + g.states.map(esc).join(' → ') : ''}
+          ${g.highways ? '<br>Corridor: ' + esc(g.highways) : ''}
+        </div>
+
+        <div class="actions">
+          <button class="action" type="button" data-use-golden="${esc(g.id)}">Use in Open Workspace</button>
+          <button class="action secondary" type="button" data-map-golden="${esc(g.id)}">Open Maps</button>
+        </div>
+      </article>
+    `).join('')
+    : '<div class="empty">No Golden Routes match.</div>';
+}
+
+function useGolden(id){
+  if(!currentItem){
+    alert('Open a load from the Route Planning Queue first.');
+    return;
+  }
+
+  const g = goldenRoutes.find(x => x.id === id);
+  if(!g) return;
+
+  $('routeName').value = g.route_name || $('routeName').value;
+  $('freightType').value = g.freight_type || $('freightType').value;
+  $('equipmentType').value = g.equipment_type || $('equipmentType').value;
+  $('origin').value = g.origin || $('origin').value;
+  $('destination').value = g.destination || $('destination').value;
+  $('states').value = (g.states || []).join(', ');
+  $('waypoints').value = (g.waypoints || []).join('\n');
+  $('parkingStaging').value = g.parking_staging || '';
+  $('fuelService').value = g.fuel_service_notes || '';
+
+  if(g.general_notes){
+    const current = $('routeNotes').value.trim();
+    $('routeNotes').value = current
+      ? `${current}\n\nGolden Route reference: ${g.general_notes}`
+      : `Golden Route reference: ${g.general_notes}`;
+  }
+
+  document.querySelector('[data-panel="planPanel"]').click();
+  drawPreview();
+  updateHandoff();
+  $('workspace').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function loadData(){
+  facilities = {};
+  brokers = {};
+  carriers = {};
+  drivers = {};
+  equipment = {};
+
+  const [
+    loadsR,
+    oppsR,
+    plansR,
+    facR,
+    brokR,
+    carR,
+    drvR,
+    eqR,
+    goldR
+  ] = await Promise.all([
+    db.from('loads').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}).limit(300),
+    db.from('load_opportunities').select('*').eq('tenant_id',tenant).order('first_seen_at',{ascending:false}).limit(300),
+    db.from('route_plans').select('*').eq('tenant_id',tenant).order('updated_at',{ascending:false}),
+    db.from('facilities').select('*').eq('tenant_id',tenant),
+    db.from('brokers').select('*').eq('tenant_id',tenant),
+    db.from('carriers').select('*').eq('tenant_id',tenant),
+    db.from('drivers').select('*').eq('tenant_id',tenant),
+    db.from('equipment').select('*').eq('tenant_id',tenant),
+    db.from('golden_routes').select('*').eq('tenant_id',tenant).eq('active',true).order('updated_at',{ascending:false})
+  ]);
+
+  const results = [loadsR,oppsR,plansR,facR,brokR,carR,drvR,eqR,goldR];
+  results.forEach(r => {
+    if(r.error) console.warn('Route Planning data:',r.error.message);
+  });
+
+  loads = loadsR.data || [];
+  opportunities = oppsR.data || [];
+  plans = plansR.data || [];
+  goldenRoutes = goldR.data || [];
+
+  (facR.data || []).forEach(x => facilities[x.id] = x);
+  (brokR.data || []).forEach(x => brokers[x.id] = x);
+  (carR.data || []).forEach(x => carriers[x.id] = x);
+  (drvR.data || []).forEach(x => drivers[x.id] = x);
+  (eqR.data || []).forEach(x => equipment[x.id] = x);
+
+  $('fleetCarrier').innerHTML =
+    '<option value="">— Unassigned —</option>' +
+    Object.values(carriers)
+      .map(x => `<option value="${esc(x.id)}">${esc(carrierName(x.id))}</option>`)
+      .join('');
+
+  refreshFleetOptions();
+  renderQueue();
+  renderGolden();
+}
+
+async function openRequestedWorkspace(){
+  const params = new URLSearchParams(location.search);
+  const requestedOpportunity = params.get('opportunity');
+  const requestedLoad = params.get('load');
+
+  if(requestedOpportunity){
+    let o =
+      opportunities.find(
+        x => x.id === requestedOpportunity
+      );
+
+    /*
+      Direct-link fallback:
+      If the Opportunity was not included in the initial queue query,
+      fetch the exact record by ID so the Route Planning handoff still works.
+    */
+    if(!o){
+      const result =
+        await db
+          .from('load_opportunities')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedOpportunity)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning opportunity lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        o = result.data;
+
+        if(
+          !opportunities.some(
+            x => x.id === o.id
+          )
+        ){
+          opportunities.unshift(o);
+        }
+
+        renderQueue();
+      }
+    }
+
+    if(o){
+      /*
+        A direct Opportunity link must be visible in the active queue
+        even if an older record was accidentally marked hidden.
+        We do not alter the database here; this is only the local page view.
+      */
+      o.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...o,
+        _kind:'opportunity'
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
+
+      return;
+    }
+
+    $('queueList').insertAdjacentHTML(
+      'afterbegin',
+      '<div class="empty">The requested broker opportunity could not be loaded.</div>'
+    );
+
+    return;
+  }
+
+  if(requestedLoad){
+    let l =
+      loads.find(
+        x => x.id === requestedLoad
+      );
+
+    if(!l){
+      const result =
+        await db
+          .from('loads')
+          .select('*')
+          .eq('tenant_id',tenant)
+          .eq('id',requestedLoad)
+          .maybeSingle();
+
+      if(result.error){
+        console.error(
+          'Route Planning load lookup:',
+          result.error.message
+        );
+      }
+      else if(result.data){
+        l = result.data;
+
+        if(
+          !loads.some(
+            x => x.id === l.id
+          )
+        ){
+          loads.unshift(l);
+        }
+
+        renderQueue();
+      }
+    }
+
+    if(l){
+      l.route_planning_hidden = false;
+
+      renderQueue();
+
+      openWorkspace({
+        ...l,
+        _kind:'load',
+        _sourceOpportunity:
+          linkedOpportunityForLoad(l)
+      });
+
+      requestAnimationFrame(
+        () =>
+          $('workspace')
+            .scrollIntoView({
+              block:'start'
+            })
+      );
+    }
+  }
+}
+
+function openRouteProfitCalculator(){
+  if(!currentItem || currentItem._kind !== 'load'){
+    alert('Open an operational load from the Route Planning Queue first.');
+    return;
+  }
+
+  const params = new URLSearchParams();
+  params.set('tab','profit');
+  params.set('load_id',currentItem.id);
+
+  const miles = currentPlan?.loaded_miles ?? $('loadedMiles').value;
+  if(miles !== '' && miles != null){
+    params.set('loaded_miles',miles);
+  }
+
+  location.href = 'calculators.html?' + params.toString();
+}
+
+async function start(){
+  if(typeof window.supabase === 'undefined'){
+    console.error('Route Planning: Supabase library did not load.');
+    $('queueList').innerHTML = '<div class="empty">Supabase could not load.</div>';
+    return;
+  }
+
+  db = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  window.db = db;
+
+  const sessionResult = await db.auth.getSession();
+  if(!sessionResult.data.session){
+    location.href = 'index.html';
+    return;
+  }
+
+  if(typeof window.buildNav !== 'function'){
+    console.error('Route Planning: nav.js did not load.');
+    return;
+  }
+
+  tenant = await window.buildNav(db,'Route Planning');
+
+  if(!tenant){
+    console.error('Route Planning: tenant could not be resolved.');
+    $('queueList').innerHTML = '<div class="empty">Could not resolve tenant.</div>';
+    return;
+  }
+await loadData();
+  await openRequestedWorkspace();
+}
+
+/* Page tabs */
+document.querySelectorAll('.route-tabs button').forEach(btn => {
+  btn.addEventListener('click',() => {
+    document.querySelectorAll('.route-tabs button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('on'));
+
+    btn.classList.add('on');
+    $(btn.dataset.panel).classList.add('on');
+  });
+});
+
+/* Queue filters */
+$('queueSearch').addEventListener('input',renderQueue);
+$('queueStatus').addEventListener('change',renderQueue);
+$('showRemoved').addEventListener('change',renderQueue);
+
+$('refreshQueue').addEventListener('click',async () => {
+  await loadData();
+  await openRequestedWorkspace();
+});
+
+/* Queue management — Plan Route itself is an <a> link, not handled here. */
+$('queueList').addEventListener('click',async e => {
+  const remove = e.target.closest('[data-remove-key]');
+  const restore = e.target.closest('[data-restore-key]');
+  const del = e.target.closest('[data-delete-key]');
+
+  if(remove){
+    e.preventDefault();
+    const item = findQueueItem(remove.dataset.removeKey);
+    if(item && confirm(`Remove ${displayReference(item)} from the Route Planning queue?\n\nThe broker/load record and saved Route Plan will remain available.`)){
+      await setQueueHidden(item,true);
+    }
+    return;
+  }
+
+  if(restore){
+    e.preventDefault();
+    const item = findQueueItem(restore.dataset.restoreKey);
+    if(item) await setQueueHidden(item,false);
+    return;
+  }
+
+  if(del){
+    e.preventDefault();
+    const item = findQueueItem(del.dataset.deleteKey);
+    if(item) await deleteRoutePlan(item);
+  }
+});
+
+/* Workspace */
+$('fleetCarrier').addEventListener('change',() => refreshFleetOptions());
+$('saveFleet').addEventListener('click',saveFleet);
+
+$('saveProgress').addEventListener('click',() => savePlan('in_progress'));
+$('readyStateRules').addEventListener('click',() => savePlan('ready_for_state_review'));
+$('returnRevision').addEventListener('click',() => savePlan('returned_for_revision'));
+
+['origin','destination','freightType','waypoints'].forEach(id => {
+  $(id).addEventListener('input',drawPreview);
+  $(id).addEventListener('change',drawPreview);
+});
+
+$('states').addEventListener('input',updateHandoff);
+
+$('openMaps').addEventListener('click',() => {
+  const url = routeUrl();
+  if(!url){
+    alert('Enter an origin and destination first.');
+    return;
+  }
+  window.open(url,'_blank','noopener');
+});
+
+$('copyLink').addEventListener('click',async () => {
+  const url = routeUrl();
+  if(!url){
+    alert('Enter an origin and destination first.');
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(url);
+    alert('Route link copied.');
+  }catch{
+    prompt('Copy this route link:',url);
+  }
+});
+
+$('openProfitCalc').addEventListener('click',openRouteProfitCalculator);
+
+/* Golden Routes */
+$('goldenSearch').addEventListener('input',renderGolden);
+$('refreshGolden').addEventListener('click',renderGolden);
+
+$('goldenList').addEventListener('click',e => {
+  const use = e.target.closest('[data-use-golden]');
+  const map = e.target.closest('[data-map-golden]');
+
+  if(use){
+    useGolden(use.dataset.useGolden);
+    return;
+  }
+
+  if(map){
+    const g = goldenRoutes.find(x => x.id === map.dataset.mapGolden);
+    if(!g) return;
+
+    const params = new URLSearchParams({
+      api:'1',
+      origin:g.origin || '',
+      destination:g.destination || '',
+      travelmode:'driving'
+    });
+
+    if(g.waypoints?.length){
+      params.set('waypoints',g.waypoints.join('|'));
+    }
+
+    window.open('https://www.google.com/maps/dir/?' + params.toString(),'_blank','noopener');
+  }
+});
+
+start();
+</script>
+
+</body>
+</html>
+route-planning-fully-fixed.html
+HTML
+does fleet.html have the nav
+
+Yes. The latest fleet.html I gave you does have the shared navigation.
+
+It should have:
+
+<header></header>
+
+and:
+
+<script src="nav.js"></script>
+
+Your current nav.js recognizes fleet.html as a Fleet Command page and builds this secondary navigation:
+
+Fleet Setup | Route Planning | State Rules | Calendar.
+
+Also, when I made the Profile Fill Test Data version, I specifically retained nav.js and removed the old duplicate Fleet navigation system.
+
+So both Fleet Setup and Route Planning should now be using the exact same shared nav.js navigation. If Fleet isn't displaying it either, that would point us toward nav.js itself or a JavaScript error on the page rather than missing navigation HTML.
+
+Library
+/
+workspace-tt-current-time.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Load Workspace — Heavy Haul DMS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -100,33 +4180,6 @@ tr.clickable:hover td{background:#f7f9fc}
 .box{padding:14px}
 .box h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
 
-/* ---------- LIVE HOS TRACKER ---------- */
-.hos-engine{display:grid;gap:12px}
-.hos-mini-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px}
-.hos-mini-tab{border:0;background:transparent;padding:6px 9px;border-radius:6px;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer}
-.hos-mini-tab:hover{background:#f3f5f7;color:var(--text)}
-.hos-mini-tab.active{background:var(--accent-soft);color:var(--accent)}
-.hos-mini-panel{display:none}
-.hos-mini-panel.active{display:block}
-.hos-mini-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:2px}
-.hos-engine-status{padding:12px 14px;border:1px solid var(--line);border-left:5px solid var(--ok);
-  border-radius:8px;background:var(--ok-soft)}
-.hos-engine-status.watch{border-left-color:var(--warn);background:var(--warn-soft)}
-.hos-engine-status.critical{border-left-color:var(--bad);background:var(--bad-soft)}
-.hos-engine-status.offduty{border-left-color:var(--accent);background:var(--accent-soft)}
-.hos-engine-label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:800;color:var(--muted)}
-.hos-engine-main{margin-top:2px;font-size:17px;font-weight:800}
-.hos-engine-sub{margin-top:3px;font-size:12px;color:var(--muted)}
-.hos-clock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.hos-clock{border:1px solid var(--line);border-radius:8px;padding:10px 11px;background:#fbfcfd}
-.hos-clock .name{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800}
-.hos-clock .value{margin-top:3px;font-size:18px;font-weight:800}
-.hos-clock .meta{margin-top:3px;font-size:10.5px;color:var(--muted);line-height:1.35}
-.hos-event-strip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:2px}
-.hos-event-chip{font-size:11px;border:1px solid var(--line);background:#f7f8fa;border-radius:999px;padding:3px 8px}
-.hos-rule-note{border-top:1px solid var(--line);padding-top:9px;color:var(--muted);font-size:10.5px;line-height:1.45}
-@media (max-width:680px){.hos-clock-grid{grid-template-columns:1fr}}
-
 /* timeline */
 .tl{position:relative;padding-left:22px}
 .tl:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
@@ -218,7 +4271,7 @@ textarea{min-height:76px;resize:vertical}
 <link rel="stylesheet" href="theme.css">
   
 </head>
-<body data-workspace-version="2026-08-21-hos-mini-tabs">
+<body data-workspace-version="2026-08-21-tt-current-time">
 
 <header></header>
 
@@ -737,107 +4790,7 @@ textarea{min-height:76px;resize:vertical}
 </dialog>
 
   
-
-<!-- ============ HOS TRACKER DIALOG ============ -->
-<dialog id="dlgHosTracker">
-  <div class="dlg-head">
-    <h3 id="hos_evt_title">Update HOS</h3>
-  </div>
-
-  <div class="dlg-body">
-
-    <div class="fgrid">
-
-      <div class="field">
-        <label for="hos_evt_type">Event</label>
-        <select id="hos_evt_type">
-          <option value="baseline">Baseline HOS</option>
-          <option value="hours_update">Hours Update</option>
-          <option value="break_completed">Break Completed</option>
-          <option value="off_duty">Off Duty</option>
-          <option value="back_on_duty">Back On Duty</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="hos_evt_when">Occurred at</label>
-        <input type="datetime-local" id="hos_evt_when">
-      </div>
-
-    </div>
-
-
-    <fieldset class="fs" id="hosHoursFields">
-      <legend>Reported HOS</legend>
-
-      <div class="fgrid">
-
-        <div class="field">
-          <label for="hos_evt_drive">Drive remaining (hours)</label>
-          <input type="number" min="0" step="0.1" id="hos_evt_drive">
-        </div>
-
-        <div class="field">
-          <label for="hos_evt_window">14-hour window remaining</label>
-          <input type="number" min="0" step="0.1" id="hos_evt_window">
-        </div>
-
-        <div class="field">
-          <label for="hos_evt_cycle">Cycle remaining</label>
-          <input type="number" min="0" step="0.1" id="hos_evt_cycle">
-        </div>
-
-        <div class="field">
-          <label for="hos_evt_since_break">Driving since qualifying break</label>
-          <input type="number" min="0" step="0.1" id="hos_evt_since_break">
-        </div>
-
-      </div>
-    </fieldset>
-
-
-    <fieldset class="fs hide" id="hosBreakFields">
-      <legend>Break</legend>
-
-      <div class="fgrid">
-        <div class="field">
-          <label for="hos_evt_break_minutes">Break minutes</label>
-          <input type="number" min="0" step="1" id="hos_evt_break_minutes" value="30">
-        </div>
-      </div>
-    </fieldset>
-
-
-    <fieldset class="fs hide" id="hosOffDutyFields">
-      <legend>Off Duty / Rest</legend>
-
-      <div class="fgrid">
-        <div class="field">
-          <label for="hos_evt_off_minutes">Off-duty minutes</label>
-          <input type="number" min="0" step="1" id="hos_evt_off_minutes">
-        </div>
-      </div>
-    </fieldset>
-
-
-    <div class="field full" style="margin-top:12px">
-      <label for="hos_evt_note">Note</label>
-      <textarea id="hos_evt_note" placeholder="Driver reported updated ELD values, completed qualifying break, started off duty, etc."></textarea>
-    </div>
-
-    <div id="hos_evt_err" class="err"></div>
-
-  </div>
-
-  <div class="dlg-foot">
-    <button class="primary" id="hos_evt_save">Save HOS Event</button>
-    <button id="hos_evt_filltest" type="button">Fill TT Test Data</button>
-    <button onclick="dlgHosTracker.close()">Cancel</button>
-  </div>
-</dialog>
-
 <div id="toast"></div>
-
 
 <!-- ============ DRIVER TRIP PACKET (print-only) ============ -->
 <div id="tripPacket"></div>
@@ -937,7 +4890,6 @@ let ESCORTS = [];
 let EVENTS = [];
 let CHARGES = [];
 let CALCULATIONS = [];
-let HOS_EVENTS = [];
 let ACCESSORIALS = [];
 let MARGIN = null;
 let CHECKLIST = [];
@@ -1504,7 +5456,6 @@ async function refreshAll(){
     fetchEvents(),
     fetchCharges(),
     fetchCalculations(),
-    fetchHosEvents(),
     fetchAccessorials(),
     fetchMargin(),
     fetchChecklist(),
@@ -2658,314 +6609,6 @@ function drawActiveTab(){
 /* ============================================================
    OVERVIEW
    ============================================================ */
-
-async function fetchHosEvents(){
-
-  if(
-    !TENANT_ID ||
-    !LOAD_ID
-  ){
-    HOS_EVENTS = [];
-    return;
-  }
-
-  const result =
-    await db
-      .from('hos_events')
-      .select('*')
-      .eq('tenant_id', TENANT_ID)
-      .eq('load_id', LOAD_ID)
-      .order('occurred_at', { ascending:false })
-      .order('created_at', { ascending:false });
-
-  if(result.error){
-    console.warn(
-      'hos_events',
-      result.error
-    );
-
-    HOS_EVENTS = [];
-    return;
-  }
-
-  HOS_EVENTS =
-    result.data ||
-    [];
-}
-
-
-function latestHosEvent(type){
-
-  return (
-    HOS_EVENTS.find(
-      e =>
-        !type ||
-        e.event_type === type
-    ) ||
-    null
-  );
-}
-
-
-function firstHosEvent(){
-
-  return HOS_EVENTS.length
-    ? HOS_EVENTS[
-        HOS_EVENTS.length - 1
-      ]
-    : null;
-}
-
-
-function latestReportedHosEvent(){
-
-  return (
-    HOS_EVENTS.find(
-      e =>
-        e.event_type === 'baseline' ||
-        e.event_type === 'hours_update' ||
-        e.event_type === 'back_on_duty'
-    ) ||
-    null
-  );
-}
-
-
-function hosHoursLabel(value){
-  if(value === null || value === undefined || value === '') return '—';
-  const total = Number(value);
-  if(!Number.isFinite(total)) return '—';
-  const safe = Math.max(0,total);
-  const whole = Math.floor(safe);
-  const mins = Math.round((safe-whole)*60);
-  return whole+'h '+String(mins).padStart(2,'0')+'m';
-}
-
-function hosDurationLabel(minutes){
-  if(minutes === null || minutes === undefined || !Number.isFinite(Number(minutes))) return '—';
-  const safe = Math.max(0,Math.round(Number(minutes)));
-  return Math.floor(safe/60)+'h '+String(safe%60).padStart(2,'0')+'m';
-}
-
-function hosElapsedMinutes(iso){
-  if(!iso) return null;
-  const ms = new Date(iso).getTime();
-  if(!Number.isFinite(ms)) return null;
-  return Math.max(0,Math.floor((Date.now()-ms)/60000));
-}
-
-function hosLatestOf(types){
-  return HOS_EVENTS.find(e => types.includes(e.event_type)) || null;
-}
-
-function hosActiveOffDuty(){
-  const last = hosLatestOf(['off_duty','back_on_duty']);
-  return last && last.event_type === 'off_duty' ? last : null;
-}
-
-function buildHosTrackerState(){
-  const report = latestReportedHosEvent();
-  const baseline = HOS_EVENTS.find(e => e.event_type === 'baseline') || firstHosEvent();
-  const offDuty = hosActiveOffDuty();
-  const breakEvent = latestHosEvent('break_completed');
-
-  if(!report && !offDuty){
-    return {
-      report:null, baseline, tone:'watch',
-      status:'HOS tracker not started',
-      detail:'Enter a baseline HOS report from the driver ELD.',
-      nextLabel:'Baseline needed', nextAt:null,
-      windowRemaining:null, windowEndsAt:null,
-      driveRemaining:null, cycleRemaining:null,
-      breakDrivingRemaining:null, breakSatisfied:false,
-      breakEvent:null, offDuty:null, offDutyElapsed:null,
-      restTargetAt:null, restRemaining:null
-    };
-  }
-
-  if(offDuty){
-    const elapsed = hosElapsedMinutes(offDuty.occurred_at);
-    const targetMinutes = 600;
-    const restRemaining = elapsed === null ? null : Math.max(0,targetMinutes-elapsed);
-    const restTargetAt = new Date(
-      new Date(offDuty.occurred_at).getTime()+targetMinutes*60000
-    ).toISOString();
-
-    return {
-      report, baseline, tone:'offduty',
-      status:restRemaining === 0 ? 'Rest threshold reached — confirm ELD' : 'Driver off duty',
-      detail:elapsed === null ? 'Off-duty period is being tracked.'
-        : hosDurationLabel(elapsed)+' elapsed of 10h planning threshold.',
-      nextLabel:restRemaining === 0 ? 'Confirm new ELD hours before driving'
-        : '10-hour off-duty planning threshold',
-      nextAt:restTargetAt,
-      windowRemaining:null, windowEndsAt:null,
-      driveRemaining:report?.drive_remaining_hours ?? null,
-      cycleRemaining:report?.cycle_remaining_hours ?? null,
-      breakDrivingRemaining:null, breakSatisfied:false,
-      breakEvent, offDuty, offDutyElapsed:elapsed,
-      restTargetAt, restRemaining
-    };
-  }
-
-  if(!report){
-    return {
-      report:null, baseline, tone:'watch',
-      status:'HOS report needed',
-      detail:'The tracker has events but no current ELD hours report.',
-      nextLabel:'Update HOS', nextAt:null,
-      windowRemaining:null, windowEndsAt:null,
-      driveRemaining:null, cycleRemaining:null,
-      breakDrivingRemaining:null, breakSatisfied:false,
-      breakEvent, offDuty:null, offDutyElapsed:null,
-      restTargetAt:null, restRemaining:null
-    };
-  }
-
-  const observedAt = report.occurred_at;
-  const observedMs = new Date(observedAt).getTime();
-  const elapsedHours = Number.isFinite(observedMs)
-    ? Math.max(0,(Date.now()-observedMs)/3600000)
-    : 0;
-
-  const windowRemaining = report.window_remaining_hours != null
-    ? Math.max(0,Number(report.window_remaining_hours)-elapsedHours)
-    : null;
-
-  const driveRemaining = report.drive_remaining_hours != null
-    ? Number(report.drive_remaining_hours) : null;
-
-  const cycleRemaining = report.cycle_remaining_hours != null
-    ? Number(report.cycle_remaining_hours) : null;
-
-  const breakAfterReport =
-    breakEvent?.occurred_at &&
-    observedAt &&
-    new Date(breakEvent.occurred_at).getTime() > new Date(observedAt).getTime();
-
-  let breakDrivingRemaining = null;
-  let breakSatisfied = false;
-
-  if(breakAfterReport){
-    breakDrivingRemaining = 8;
-    breakSatisfied = true;
-  } else if(report.driving_since_break_hours != null){
-    breakDrivingRemaining = Math.max(0,8-Number(report.driving_since_break_hours));
-  }
-
-  const windowEndsAt =
-    report.window_remaining_hours != null && observedAt
-      ? new Date(new Date(observedAt).getTime()+Number(report.window_remaining_hours)*3600000).toISOString()
-      : null;
-
-  let tone='good';
-  let status='HOS on track';
-  let detail='Monitoring the latest reported ELD values.';
-  let nextLabel='14-hour window';
-  let nextAt=windowEndsAt;
-
-  if(windowRemaining !== null && windowRemaining <= 0){
-    tone='critical';
-    status='HOS update needed';
-    detail='The reported 14-hour driving window has reached its projected end. Confirm the driver ELD before further driving.';
-    nextLabel='14-hour window reached';
-  } else if(driveRemaining !== null && driveRemaining <= 0){
-    tone='critical';
-    status='Driving time reported exhausted';
-    detail='The latest ELD report showed no remaining drive time. Confirm a new ELD status before movement.';
-    nextLabel='Confirm driver ELD';
-    nextAt=null;
-  } else if(breakDrivingRemaining !== null && breakDrivingRemaining <= 0){
-    tone='critical';
-    status='Qualifying break needed';
-    detail='The latest report indicates 8 cumulative driving hours since the last qualifying interruption.';
-    nextLabel='Break required before more driving';
-    nextAt=null;
-  } else if(windowRemaining !== null && windowRemaining <= 1){
-    tone='critical';
-    status='HOS deadline approaching';
-    detail=hosHoursLabel(windowRemaining)+' remains on the reported 14-hour window.';
-  } else if(
-    (windowRemaining !== null && windowRemaining <= 3) ||
-    (breakDrivingRemaining !== null && breakDrivingRemaining <= 1) ||
-    (driveRemaining !== null && driveRemaining <= 1)
-  ){
-    tone='watch';
-    status='HOS watch';
-
-    if(breakDrivingRemaining !== null && breakDrivingRemaining <= 1){
-      detail=hosHoursLabel(breakDrivingRemaining)+' of cumulative driving remains before a qualifying break is required.';
-      nextLabel='Break driving allowance';
-      nextAt=null;
-    } else if(driveRemaining !== null && driveRemaining <= 1){
-      detail=hosHoursLabel(driveRemaining)+' drive time was reported remaining.';
-      nextLabel='Confirm drive clock';
-      nextAt=null;
-    } else {
-      detail=hosHoursLabel(windowRemaining)+' remains on the reported 14-hour window.';
-    }
-  }
-
-  return {
-    report, baseline, tone, status, detail, nextLabel, nextAt,
-    windowRemaining, windowEndsAt, driveRemaining, cycleRemaining,
-    breakDrivingRemaining, breakSatisfied, breakEvent,
-    offDuty:null, offDutyElapsed:null, restTargetAt:null, restRemaining:null
-  };
-}
-
-function setHosMiniTab(tabName){
-
-  document
-    .querySelectorAll('.hos-mini-tab')
-    .forEach(button => {
-      button.classList.toggle(
-        'active',
-        button.dataset.hosTab === tabName
-      );
-    });
-
-  document
-    .querySelectorAll('.hos-mini-panel')
-    .forEach(panel => {
-      panel.classList.toggle(
-        'active',
-        panel.dataset.hosPanel === tabName
-      );
-    });
-}
-
-
-function refreshHosEngineLive(){
-  const host=$('hosEngineLive');
-  if(!host) return;
-  const state=buildHosTrackerState();
-
-  if($('hosEngineStatus')) $('hosEngineStatus').textContent=state.status;
-  if($('hosEngineDetail')) $('hosEngineDetail').textContent=state.detail;
-  if($('hosEngineNext')){
-    $('hosEngineNext').textContent=state.nextAt
-      ? state.nextLabel+' · '+hosDeadlineText(state.nextAt)
-      : state.nextLabel;
-  }
-  if($('hosEngineWindow')){
-    $('hosEngineWindow').textContent=state.windowRemaining === null
-      ? '—' : hosHoursLabel(state.windowRemaining);
-  }
-  if($('hosEngineRest')){
-    $('hosEngineRest').textContent=state.offDuty
-      ? hosDurationLabel(state.offDutyElapsed) : '—';
-  }
-
-  host.classList.remove('watch','critical','offduty');
-  if(state.tone==='watch') host.classList.add('watch');
-  if(state.tone==='critical') host.classList.add('critical');
-  if(state.tone==='offduty') host.classList.add('offduty');
-}
-
-setInterval(refreshHosEngineLive,30000);
-
-
 function drawOverview(){
   if (!LOAD){
     $('tab-overview').innerHTML = '<div class="empty">No load.</div>';
@@ -3053,22 +6696,6 @@ const escortRequiredCount =
     null;
 
 
-  const hosEventBaseline =
-    HOS_EVENTS.find(
-      e =>
-        e.event_type === 'baseline'
-    ) ||
-    firstHosEvent();
-
-
-  const hosEventCurrent =
-    latestReportedHosEvent();
-
-
-  const hosTrackerState =
-    buildHosTrackerState();
-
-
   const hosInputs =
     latestHos?.inputs ||
     {};
@@ -3118,62 +6745,6 @@ const escortRequiredCount =
   const hosNextDeadlineLabel =
     hosResults.nextDeadlineLabel ||
     'Next HOS deadline';
-
-
-  const trackedObservedAt =
-    hosEventCurrent?.occurred_at ||
-    hosObservedAt;
-
-
-  const trackedDriveRemaining =
-    hosEventCurrent?.drive_remaining_hours ??
-    hosInputs.driveRemaining;
-
-
-  const trackedWindowRemaining =
-    hosEventCurrent?.window_remaining_hours ??
-    hosInputs.windowRemaining;
-
-
-  const trackedCycleRemaining =
-    hosEventCurrent?.cycle_remaining_hours ??
-    hosInputs.cycleRemaining;
-
-
-  const trackedSinceBreak =
-    hosEventCurrent?.driving_since_break_hours ??
-    hosInputs.driveSinceBreak;
-
-
-  const trackedTripStartAt =
-    hosEventBaseline?.occurred_at ||
-    latestHos?.created_at ||
-    hosObservedAt;
-
-
-  const trackedTripStartDrive =
-    hosEventBaseline?.drive_remaining_hours ??
-    hosInputs.driveRemaining;
-
-
-  const trackedTripStartWindow =
-    hosEventBaseline?.window_remaining_hours ??
-    hosInputs.windowRemaining;
-
-
-  const trackedTripStartCycle =
-    hosEventBaseline?.cycle_remaining_hours ??
-    hosInputs.cycleRemaining;
-
-
-  const trackedNextDeadlineAt =
-    hosTrackerState.nextAt ||
-    hosNextDeadlineAt;
-
-
-  const trackedNextDeadlineLabel =
-    hosTrackerState.nextLabel ||
-    hosNextDeadlineLabel;
 
 
   const latestCarrierProfit =
@@ -3493,303 +7064,102 @@ const escortRequiredCount =
       <h3>HOS</h3>
 
       ${
-        (HOS_EVENTS.length || latestHos)
+        latestHos
           ? `
-            <div class="hos-engine">
+            <dl class="kv">
 
-              <div class="hos-mini-tabs">
-                <button
-                  type="button"
-                  class="hos-mini-tab active"
-                  data-hos-tab="watch"
-                  onclick="setHosMiniTab('watch')"
-                >Watch</button>
+              <dt>Observed</dt>
+              <dd>
+                ${esc(fmtDT(hosObservedAt))}
+                <div class="small muted">Time these ELD clocks were recorded</div>
+              </dd>
 
-                <button
-                  type="button"
-                  class="hos-mini-tab"
-                  data-hos-tab="hours"
-                  onclick="setHosMiniTab('hours')"
-                >Hours</button>
-
-                <button
-                  type="button"
-                  class="hos-mini-tab"
-                  data-hos-tab="rest"
-                  onclick="setHosMiniTab('rest')"
-                >Break / Rest</button>
-
-                <button
-                  type="button"
-                  class="hos-mini-tab"
-                  data-hos-tab="history"
-                  onclick="setHosMiniTab('history')"
-                >History</button>
-              </div>
-
-
-              <div
-                class="hos-mini-panel active"
-                data-hos-panel="watch"
-              >
-                <div
-                  class="hos-engine-status ${
-                    hosTrackerState.tone === 'critical' ? 'critical' :
-                    hosTrackerState.tone === 'watch' ? 'watch' :
-                    hosTrackerState.tone === 'offduty' ? 'offduty' : ''
-                  }"
-                  id="hosEngineLive"
-                >
-                  <div class="hos-engine-label">
-                    Dispatcher HOS Watch
-                  </div>
-
-                  <div
-                    class="hos-engine-main"
-                    id="hosEngineStatus"
-                  >${esc(hosTrackerState.status)}</div>
-
-                  <div
-                    class="hos-engine-sub"
-                    id="hosEngineDetail"
-                  >${esc(hosTrackerState.detail)}</div>
-
-                  <div
-                    class="small"
-                    id="hosEngineNext"
-                    style="margin-top:6px;font-weight:700"
-                  >
-                    ${
-                      hosTrackerState.nextAt
-                        ? esc(
-                            hosTrackerState.nextLabel +
-                            ' · ' +
-                            hosDeadlineText(hosTrackerState.nextAt)
-                          )
-                        : esc(hosTrackerState.nextLabel)
-                    }
-                  </div>
+              <dt>Next deadline</dt>
+              <dd style="font-weight:700;color:${
+                hosNextDeadlineAt &&
+                new Date(hosNextDeadlineAt).getTime() < Date.now()
+                  ? 'var(--bad)'
+                  : 'var(--warn)'
+              }">
+                ${esc(hosNextDeadlineLabel)}
+                <div class="small">
+                  ${esc(hosDeadlineText(hosNextDeadlineAt))}
                 </div>
-              </div>
+              </dd>
 
+              <dt>Drive clock</dt>
+              <dd>${esc(hosDeadlineText(hosDriveClockEndsAt))}</dd>
 
-              <div
-                class="hos-mini-panel"
-                data-hos-panel="hours"
-              >
-                <div class="hos-clock-grid">
+              <dt>14-hour window</dt>
+              <dd>${esc(hosDeadlineText(hosWindowEndsAt))}</dd>
 
-                  <div class="hos-clock">
-                    <div class="name">14-hour window</div>
-                    <div class="value" id="hosEngineWindow">
-                      ${
-                        hosTrackerState.windowRemaining === null
-                          ? '—'
-                          : esc(
-                              hosHoursLabel(
-                                hosTrackerState.windowRemaining
-                              )
-                            )
-                      }
-                    </div>
-                    <div class="meta">
-                      Live estimate from latest reported ELD window.
-                      ${
-                        hosTrackerState.windowEndsAt
-                          ? '<br>Projected end: ' +
-                            esc(fmtDT(hosTrackerState.windowEndsAt))
-                          : ''
-                      }
-                    </div>
-                  </div>
+              <dt>Break due</dt>
+              <dd>${esc(hosDeadlineText(hosBreakDueAt))}</dd>
 
-                  <div class="hos-clock">
-                    <div class="name">Drive remaining</div>
-                    <div class="value">
-                      ${esc(hosHoursLabel(hosTrackerState.driveRemaining))}
-                    </div>
-                    <div class="meta">
-                      Last reported ELD value.
-                    </div>
-                  </div>
+              <dt>Planned break</dt>
+              <dd>${esc(hosDeadlineText(hosPlannedBreakAt))}</dd>
 
-                  <div class="hos-clock">
-                    <div class="name">Cycle remaining</div>
-                    <div class="value">
-                      ${esc(hosHoursLabel(hosTrackerState.cycleRemaining))}
-                    </div>
-                    <div class="meta">
-                      Last reported ELD cycle value.
-                    </div>
-                  </div>
-
-                  <div class="hos-clock">
-                    <div class="name">Last reported</div>
-                    <div class="value" style="font-size:14px">
-                      ${
-                        hosTrackerState.report
-                          ? esc(fmtDT(hosTrackerState.report.occurred_at))
-                          : esc(fmtDT(hosObservedAt))
-                      }
-                    </div>
-                    <div class="meta">
-                      ${
-                        hosTrackerState.report
-                          ? esc(titleize(hosTrackerState.report.event_type))
-                          : 'Saved calculator HOS snapshot'
-                      }
-                    </div>
-                  </div>
-
+              <dt>Cycle projection</dt>
+              <dd>
+                ${esc(hosDeadlineText(hosCycleEndsAt))}
+                <div class="small muted">
+                  Projection only if on-duty time continues continuously
                 </div>
-              </div>
+              </dd>
 
-
-              <div
-                class="hos-mini-panel"
-                data-hos-panel="rest"
-              >
-                <div class="hos-clock-grid">
-
-                  <div class="hos-clock">
-                    <div class="name">Break tracking</div>
-                    <div class="value">
-                      ${
-                        hosTrackerState.breakDrivingRemaining === null
-                          ? '—'
-                          : esc(
-                              hosHoursLabel(
-                                hosTrackerState.breakDrivingRemaining
-                              )
-                            )
-                      }
-                    </div>
-                    <div class="meta">
-                      ${
-                        hosTrackerState.breakSatisfied
-                          ? 'Latest qualifying break recorded.'
-                          : 'Cumulative driving remaining before a qualifying break is required.'
-                      }
-                    </div>
-                  </div>
-
-                  <div class="hos-clock">
-                    <div class="name">Off-duty elapsed</div>
-                    <div class="value" id="hosEngineRest">
-                      ${
-                        hosTrackerState.offDuty
-                          ? esc(
-                              hosDurationLabel(
-                                hosTrackerState.offDutyElapsed
-                              )
-                            )
-                          : '—'
-                      }
-                    </div>
-                    <div class="meta">
-                      ${
-                        hosTrackerState.offDuty
-                          ? 'Planning threshold: ' +
-                            esc(fmtDT(hosTrackerState.restTargetAt)) +
-                            '. Confirm new ELD hours before driving.'
-                          : 'Starts when Off Duty is recorded.'
-                      }
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-
-              <div
-                class="hos-mini-panel"
-                data-hos-panel="history"
-              >
-                <div class="hos-event-strip">
-                  <span class="hos-event-chip">
-                    Trip start:
-                    ${
-                      hosEventBaseline
-                        ? esc(fmtDT(hosEventBaseline.occurred_at))
-                        : esc(fmtDT(latestHos?.created_at))
-                    }
-                  </span>
-
-                  <span class="hos-event-chip">
-                    HOS events: ${HOS_EVENTS.length}
-                  </span>
-
-                  ${
-                    hosTrackerState.breakEvent
-                      ? '<span class="hos-event-chip">Last break: ' +
-                        esc(fmtDT(hosTrackerState.breakEvent.occurred_at)) +
-                        '</span>'
-                      : ''
-                  }
-                </div>
-
-                <div style="margin-top:10px">
-                  <button
-                    class="sm"
-                    onclick="document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()"
-                  >
-                    View Full HOS History
-                  </button>
-                </div>
-              </div>
-
-
-              <div class="hos-mini-actions">
+              <dt>Saved</dt>
+              <dd class="small muted">
+                ${esc(fmtDT(latestHos.created_at))}
                 ${
-                  HOS_EVENTS.length
-                    ? '<button class="primary sm" onclick="openHosTracker(&quot;hours_update&quot;)">Quick Update</button>'
-                    : '<button class="primary sm" onclick="openHosTracker(&quot;baseline&quot;)">Start Tracker</button>'
+                  latestHos.is_training
+                    ? ' · TT Training'
+                    : ''
                 }
+              </dd>
 
-                <button
-                  class="sm"
-                  onclick="openHosTracker('break_completed')"
-                >Break Completed</button>
+            </dl>
 
-                <button
-                  class="sm"
-                  onclick="openHosTracker('off_duty')"
-                >Off Duty</button>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
 
-                <button
-                  class="sm"
-                  onclick="openHosTracker('back_on_duty')"
-                >Back On Duty</button>
-
-                <button
-                  class="sm"
-                  onclick="
-                    location.href='calculators.html?load_id='+
-                    encodeURIComponent(LOAD_ID)+
+              <button
+                class="primary sm"
+                onclick="
+                  location.href =
+                    'calculators.html?load_id=' +
+                    encodeURIComponent(LOAD_ID) +
                     '&tab=hos'
-                  "
-                >Calculator</button>
-              </div>
+                "
+              >
+                Update HOS
+              </button>
 
-            </div>
+              <button
+                class="sm"
+                onclick="
+                  document.querySelector('[data-tab=&quot;calculations&quot;]')?.click()
+                "
+              >
+                HOS History
+              </button>
+
             </div>
           `
           : `
             <div class="empty" style="padding:8px 0">
-              No HOS information has been saved for this load yet.
+              No HOS check has been saved to this load yet.
             </div>
 
-            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-              <button class="primary sm" onclick="openHosTracker('baseline')">Start HOS Tracker</button>
+            <div style="margin-top:12px">
               <button
-                class="sm"
+                class="primary sm"
                 onclick="
-                  location.href='calculators.html?load_id='+
-                  encodeURIComponent(LOAD_ID)+
-                  '&tab=hos'
+                  location.href =
+                    'calculators.html?load_id=' +
+                    encodeURIComponent(LOAD_ID) +
+                    '&tab=hos'
                 "
               >
-                Full HOS Calculator
+                Add HOS Check
               </button>
             </div>
           `
@@ -3798,452 +7168,7 @@ const escortRequiredCount =
     </div>
 
   </div>`;
-
-  setTimeout(refreshHosEngineLive,0);
-
 }
-
-
-function setHosTrackerMode(){
-
-  const type =
-    $('hos_evt_type').value;
-
-  const showHours =
-    type === 'baseline' ||
-    type === 'hours_update' ||
-    type === 'back_on_duty';
-
-  const showBreak =
-    type === 'break_completed';
-
-  const showOffDuty =
-    type === 'off_duty';
-
-  $('hosHoursFields')
-    .classList
-    .toggle(
-      'hide',
-      !showHours
-    );
-
-  $('hosBreakFields')
-    .classList
-    .toggle(
-      'hide',
-      !showBreak
-    );
-
-  $('hosOffDutyFields')
-    .classList
-    .toggle(
-      'hide',
-      !showOffDuty
-    );
-
-  $('hos_evt_title').textContent =
-    type === 'baseline'
-      ? 'Start HOS Tracker'
-      : type === 'hours_update'
-        ? 'Update HOS'
-        : type === 'break_completed'
-          ? 'Break Completed'
-          : type === 'off_duty'
-            ? 'Driver Off Duty'
-            : 'Driver Back On Duty';
-}
-
-
-function clearHosTracker(){
-
-  [
-    'hos_evt_drive',
-    'hos_evt_window',
-    'hos_evt_cycle',
-    'hos_evt_since_break',
-    'hos_evt_off_minutes',
-    'hos_evt_note'
-  ]
-    .forEach(
-      id =>
-        $(id).value = ''
-    );
-
-  $('hos_evt_break_minutes').value =
-    '30';
-
-  $('hos_evt_when').value =
-    toLocalInput(
-      new Date()
-    );
-
-  clearErr(
-    'hos_evt_err'
-  );
-}
-
-
-function openHosTracker(type){
-
-  clearHosTracker();
-
-  $('hos_evt_type').value =
-    type ||
-    (
-      HOS_EVENTS.length
-        ? 'hours_update'
-        : 'baseline'
-    );
-
-  const current =
-    latestReportedHosEvent();
-
-  if(current){
-
-    if(
-      current.drive_remaining_hours != null
-    ){
-      $('hos_evt_drive').value =
-        current.drive_remaining_hours;
-    }
-
-    if(
-      current.window_remaining_hours != null
-    ){
-      $('hos_evt_window').value =
-        current.window_remaining_hours;
-    }
-
-    if(
-      current.cycle_remaining_hours != null
-    ){
-      $('hos_evt_cycle').value =
-        current.cycle_remaining_hours;
-    }
-
-    if(
-      current.driving_since_break_hours != null
-    ){
-      $('hos_evt_since_break').value =
-        current.driving_since_break_hours;
-    }
-  }
-
-  setHosTrackerMode();
-
-  dlgHosTracker.showModal();
-}
-
-
-async function saveHosTrackerEvent(){
-
-  clearErr(
-    'hos_evt_err'
-  );
-
-  if(
-    !TENANT_ID ||
-    !LOAD_ID
-  ){
-    showErr(
-      'hos_evt_err',
-      {
-        message:'Load context is not ready.'
-      }
-    );
-
-    return;
-  }
-
-  const type =
-    $('hos_evt_type').value;
-
-  const occurredAt =
-    fromLocalInput(
-      $('hos_evt_when').value
-    );
-
-  if(!occurredAt){
-    showErr(
-      'hos_evt_err',
-      {
-        message:'Enter the time this HOS event occurred.'
-      }
-    );
-
-    return;
-  }
-
-  const row = {
-    tenant_id:
-      TENANT_ID,
-
-    load_id:
-      LOAD_ID,
-
-    event_type:
-      type,
-
-    occurred_at:
-      occurredAt,
-
-    drive_remaining_hours:
-      (
-        type === 'baseline' ||
-        type === 'hours_update' ||
-        type === 'back_on_duty'
-      )
-        ? num(
-            $('hos_evt_drive').value
-          )
-        : null,
-
-    window_remaining_hours:
-      (
-        type === 'baseline' ||
-        type === 'hours_update' ||
-        type === 'back_on_duty'
-      )
-        ? num(
-            $('hos_evt_window').value
-          )
-        : null,
-
-    cycle_remaining_hours:
-      (
-        type === 'baseline' ||
-        type === 'hours_update' ||
-        type === 'back_on_duty'
-      )
-        ? num(
-            $('hos_evt_cycle').value
-          )
-        : null,
-
-    driving_since_break_hours:
-      (
-        type === 'baseline' ||
-        type === 'hours_update' ||
-        type === 'back_on_duty'
-      )
-        ? num(
-            $('hos_evt_since_break').value
-          )
-        : null,
-
-    break_minutes:
-      type === 'break_completed'
-        ? num(
-            $('hos_evt_break_minutes').value
-          )
-        : null,
-
-    off_duty_minutes:
-      type === 'off_duty'
-        ? num(
-            $('hos_evt_off_minutes').value
-          )
-        : null,
-
-    note:
-      txt(
-        $('hos_evt_note').value
-      )
-  };
-
-
-  const result =
-    await db
-      .from('hos_events')
-      .insert(row)
-      .select()
-      .single();
-
-
-  if(result.error){
-    showErr(
-      'hos_evt_err',
-      result.error
-    );
-
-    return;
-  }
-
-
-  if(
-    type === 'baseline' ||
-    type === 'hours_update' ||
-    type === 'back_on_duty'
-  ){
-
-    const minutes =
-      row.drive_remaining_hours != null
-        ? Math.round(
-            Number(
-              row.drive_remaining_hours
-            ) * 60
-          )
-        : null;
-
-    const patch = {
-
-      driver_hours_remaining_min:
-        minutes,
-
-      hours_updated_at:
-        occurredAt,
-
-      updated_at:
-        new Date().toISOString()
-
-    };
-
-    const updateResult =
-      await db
-        .from('loads')
-        .update(patch)
-        .eq(
-          'tenant_id',
-          TENANT_ID
-        )
-        .eq(
-          'id',
-          LOAD_ID
-        );
-
-    if(updateResult.error){
-      console.warn(
-        'HOS live load summary update:',
-        updateResult.error
-      );
-    }
-  }
-
-
-  await logEvent({
-    event_type:
-      'hos',
-
-    subject:
-      type === 'baseline'
-        ? 'HOS baseline'
-        : type === 'hours_update'
-          ? 'HOS hours updated'
-          : type === 'break_completed'
-            ? 'Qualifying break completed'
-            : type === 'off_duty'
-              ? 'Driver off duty'
-              : 'Driver back on duty',
-
-    body:
-      row.note ||
-      (
-        type === 'break_completed'
-          ? (
-              'Completed ' +
-              (
-                row.break_minutes ||
-                30
-              ) +
-              '-minute break.'
-            )
-          : ''
-      ),
-
-    occurred_at:
-      occurredAt,
-
-    is_milestone:
-      false
-  });
-
-
-  dlgHosTracker.close();
-
-  toast(
-    'HOS tracker updated'
-  );
-
-  await refreshAll();
-}
-
-
-function fillHosTrackerTestData(){
-
-  const type =
-    $('hos_evt_type').value;
-
-  $('hos_evt_when').value =
-    toLocalInput(
-      new Date()
-    );
-
-  if(
-    type === 'baseline'
-  ){
-    $('hos_evt_drive').value = '6.5';
-    $('hos_evt_window').value = '8';
-    $('hos_evt_cycle').value = '18';
-    $('hos_evt_since_break').value = '5';
-    $('hos_evt_note').value =
-      'TT TRAINING — Baseline HOS entered from driver ELD.';
-  }
-  else if(
-    type === 'hours_update'
-  ){
-    $('hos_evt_drive').value = '5';
-    $('hos_evt_window').value = '6.5';
-    $('hos_evt_cycle').value = '16.5';
-    $('hos_evt_since_break').value = '6.5';
-    $('hos_evt_note').value =
-      'TT TRAINING — Driver reported updated HOS during trip.';
-  }
-  else if(
-    type === 'break_completed'
-  ){
-    $('hos_evt_break_minutes').value = '30';
-    $('hos_evt_note').value =
-      'TT TRAINING — Driver completed qualifying 30-minute break.';
-  }
-  else if(
-    type === 'off_duty'
-  ){
-    $('hos_evt_off_minutes').value = '0';
-    $('hos_evt_note').value =
-      'TT TRAINING — Driver began off-duty rest period.';
-  }
-  else if(
-    type === 'back_on_duty'
-  ){
-    $('hos_evt_drive').value = '11';
-    $('hos_evt_window').value = '14';
-    $('hos_evt_cycle').value = '17';
-    $('hos_evt_since_break').value = '0';
-    $('hos_evt_note').value =
-      'TT TRAINING — Driver returned to duty; values confirmed from ELD.';
-  }
-}
-
-
-$('hos_evt_type')
-  ?.addEventListener(
-    'change',
-    setHosTrackerMode
-  );
-
-
-$('hos_evt_save')
-  ?.addEventListener(
-    'click',
-    saveHosTrackerEvent
-  );
-
-
-$('hos_evt_filltest')
-  ?.addEventListener(
-    'click',
-    fillHosTrackerTestData
-  );
 
 /* ============================================================
    TIMELINE
