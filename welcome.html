@@ -24,7 +24,3618 @@
        HEAVY HAUL COMMAND
        WELCOME / COMMAND CENTER
        ========================================================= */
-    @font-face {
+    @font-face {<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Welcome — Heavy Haul Command</title>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Shared application theme -->
+  <link rel="stylesheet" href="theme.css">
+
+  <!-- Welcome page styling -->
+  <style>
+
+    /* =========================================================
+       HEAVY HAUL COMMAND
+       WELCOME / COMMAND CENTER
+       ========================================================= */
+@font-face {
+  font-family: "cormorant garamond";
+  src: url("fonts/cormorant garamond.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+    :root {
+      --welcome-ink: #3C3A4B;
+
+      --welcome-blue: #7FA5B5;
+      --welcome-blue-soft: #EAF3F6;
+
+      --welcome-white: #FAFAFA;
+      --welcome-warm-white: #F6F6F3;
+
+      --welcome-lime: #B8C34A;
+      --welcome-lime-soft: #F1F4D8;
+
+      --welcome-pink: #D86A8E;
+      --welcome-pink-soft: #F8E5EC;
+
+      --welcome-stone: #A9B0B4;
+
+      --welcome-dark:
+        rgba(35, 27, 40, 0.88);
+
+      --welcome-glass:
+        rgba(250, 250, 250, 0.91);
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+
+    body {
+      min-height: 100vh;
+
+      font-family:
+        "Inter",
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        sans-serif;
+
+      color: var(--welcome-ink);
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(29, 20, 32, 0.30) 0%,
+          rgba(29, 20, 32, 0.18) 42%,
+          rgba(29, 20, 32, 0.42) 100%
+        ),
+       
+
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+
+    /* =========================================================
+       MAIN PAGE
+       ========================================================= */
+
+    .welcome-page {
+      min-height: calc(100vh - 102px);
+
+      padding:
+        42px 5vw 70px;
+    }
+
+
+    .welcome-shell {
+      width: min(1180px, 100%);
+
+      margin: 0 auto;
+    }
+
+
+    /* =========================================================
+       HERO
+       ========================================================= */
+
+    .welcome-hero {
+      width: 100vw;
+      max-width: none;
+      margin: -10px 0 34px calc(50% - 50vw);
+      padding: 24px max(5vw, calc((100vw - 1180px) / 2));
+      background: linear-gradient(
+        90deg,
+        rgba(250,250,250,.94),
+        rgba(246,246,243,.86),
+        rgba(234,243,246,.80)
+      );
+      border-top: 1px solid rgba(255,255,255,.75);
+      border-bottom: 1px solid rgba(127,165,181,.30);
+      box-shadow: 0 8px 26px rgba(36,44,52,.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+
+    .welcome-kicker {
+      margin-bottom: 8px;
+
+      color: #7C919A;
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 10px;
+
+      font-weight: 400;
+
+      letter-spacing: 2.4px;
+
+      text-transform: uppercase;
+    }
+
+
+   .welcome-greeting {
+  margin: 0;
+
+  color: #3E4B51;
+
+ font-family:
+    "Cormorant Garamond",
+    Georgia,
+    serif;
+
+  font-style: italic;
+
+  font-size:
+    clamp(34px, 4.5vw, 54px);
+
+  font-weight: 400;
+
+  line-height: 1.02;
+
+  letter-spacing: 0.2px;
+}
+
+
+    .welcome-subtitle {
+      margin:
+        10px 0 0;
+
+      color: #718087;
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 13px;
+
+      font-weight: 300;
+
+      font-style: normal;
+
+      letter-spacing: .2px;
+
+      line-height: 1.5;
+    }
+
+
+    .welcome-line {
+      width: min(360px, 38vw);
+      height: 1px;
+      margin-top: 18px;
+      background: linear-gradient(
+        90deg,
+        rgba(216,106,142,.70),
+        rgba(127,165,181,.55),
+        rgba(184,195,74,.55)
+      );
+    }
+
+
+    /* =========================================================
+       SECTION TITLES
+       ========================================================= */
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+
+      gap: 14px;
+
+      margin:
+        0 0 11px;
+    }
+
+
+    .section-heading h2 {
+      margin: 0;
+
+      color: #6B92A5;
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 12px;
+
+      font-weight: 500;
+
+      letter-spacing: 2px;
+
+      text-transform: uppercase;
+    }
+
+
+    .section-heading::after {
+      content: "";
+
+      flex: 1;
+
+      height: 1px;
+
+      background:
+        rgba(127, 165, 181, 0.28);
+    }
+
+
+
+    .priority-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .week-section .section-heading h2 {
+      color: #8D9A2F;
+    }
+
+    .continue-section .section-heading h2 {
+      color: #8A7358;
+    }
+
+    .sourcing-section .section-heading h2 {
+      color: #D86A8E;
+    }
+
+    .operations-section .section-heading h2 {
+      color: #6B92A5;
+    }
+
+    .section-heading::after {
+      background: rgba(107, 146, 165, 0.30);
+    }
+
+    /* =========================================================
+       TODAY'S PRIORITIES
+       ========================================================= */
+
+    .priority-section {
+      margin-bottom: 28px;
+    }
+
+
+    .priority-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap: 12px;
+    }
+
+
+    .priority-card {
+      position: relative;
+
+      min-height: 118px;
+
+      padding:
+        17px 18px;
+
+      overflow: hidden;
+
+      background:
+        var(--welcome-glass);
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.72);
+
+      box-shadow:
+        0 10px 28px
+        rgba(28, 22, 31, 0.13);
+
+      backdrop-filter:
+        blur(10px);
+
+      -webkit-backdrop-filter:
+        blur(10px);
+    }
+
+
+    .priority-card::before {
+      content: "";
+
+      position: absolute;
+
+      top: 0;
+      left: 0;
+      right: 0;
+
+      height: 4px;
+
+      background:
+        var(--welcome-blue);
+    }
+
+
+    .priority-card.active::before {
+      background:
+        var(--welcome-lime);
+    }
+
+
+    .priority-card.attention::before {
+      background:
+        var(--welcome-pink);
+    }
+
+
+    .priority-card.info::before {
+      background:
+        var(--welcome-blue);
+    }
+
+
+    .priority-value {
+      margin-top: 5px;
+
+      color:
+        var(--welcome-ink);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 34px;
+
+      font-weight: 600;
+
+      line-height: 1;
+    }
+
+
+    .priority-label {
+      margin-top: 11px;
+
+      color: #697177;
+
+      font-family:
+        "Inter",
+        sans-serif;
+
+      font-size: 11px;
+
+      font-weight: 600;
+
+      letter-spacing: 0.7px;
+
+      text-transform: uppercase;
+    }
+
+
+    /* =========================================================
+       CONTINUE WORKING
+       ========================================================= */
+
+    .continue-section {
+      margin-bottom: 28px;
+    }
+
+
+    .continue-grid {
+      display: grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap: 12px;
+    }
+
+
+    .continue-card {
+      position: relative;
+
+      display: block;
+
+      min-height: 135px;
+
+      padding:
+        19px 19px 18px;
+
+      background:
+        rgba(250, 250, 250, 0.93);
+
+      color:
+        var(--welcome-ink);
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.74);
+
+      text-decoration: none;
+
+      box-shadow:
+        0 10px 28px
+        rgba(28, 22, 31, 0.13);
+
+      backdrop-filter:
+        blur(10px);
+
+      -webkit-backdrop-filter:
+        blur(10px);
+
+      transition:
+        transform .16s ease,
+        border-color .16s ease,
+        background .16s ease;
+    }
+
+
+    .continue-card:hover {
+      transform:
+        translateY(-3px);
+
+      background:
+        #FFFFFF;
+
+      border-color:
+        var(--welcome-blue);
+    }
+
+
+    .continue-number {
+      margin-bottom: 17px;
+
+      color:
+        var(--welcome-blue);
+
+      font-family:
+        "Cinzel",
+        serif;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+      letter-spacing: 1px;
+    }
+
+
+    .continue-card:nth-child(2)
+    .continue-number {
+      color:
+        var(--welcome-lime);
+    }
+
+
+    .continue-card:nth-child(3)
+    .continue-number {
+      color:
+        var(--welcome-pink);
+    }
+
+
+    .continue-card-title {
+      color:
+        var(--welcome-ink);
+
+      font-family:
+        "Oswald",
+        sans-serif;
+
+      font-size: 16px;
+
+      font-weight: 500;
+
+      letter-spacing: 0.4px;
+    }
+
+
+    .continue-card-note {
+      margin-top: 5px;
+
+      color: #747B80;
+
+      font-size: 11.5px;
+
+      line-height: 1.45;
+    }
+
+
+    .continue-arrow {
+      position: absolute;
+
+      right: 17px;
+      bottom: 14px;
+
+      color:
+        var(--welcome-blue);
+
+      font-size: 17px;
+    }
+
+
+    /* =========================================================
+       RECENT ACTIVITY
+       ========================================================= */
+
+    .activity-panel {
+      background:
+        rgba(250, 250, 250, 0.94);
+
+      border:
+        1px solid
+        rgba(250, 250, 250, 0.74);
+
+      box-shadow:
+        0 12px 30px
+        rgba(28, 22, 31, 0.13);
+
+      backdrop-filter:
+        blur(10px);
+
+      -webkit-backdrop-filter:
+        blur(10px);
+    }
+
+
+    .activity-row {
+      display: grid;
+
+      grid-template-columns:
+        110px 14px 1fr;
+
+      gap: 12px;
+
+      align-items: start;
+
+      padding:
+        14px 18px;
+
+      border-bottom:
+        1px solid
+        #E8EBEC;
+    }
+
+
+    .activity-row:last-child {
+      border-bottom: 0;
+    }
+
+
+    .activity-time {
+      color: #90969A;
+
+      font-size: 10.5px;
+    }
+
+
+    .activity-marker {
+      width: 8px;
+      height: 8px;
+
+      margin-top: 4px;
+
+      background:
+        var(--welcome-blue);
+
+      border-radius: 50%;
+    }
+
+
+    .activity-row:nth-child(2)
+    .activity-marker {
+      background:
+        var(--welcome-lime);
+    }
+
+
+    .activity-row:nth-child(3)
+    .activity-marker {
+      background:
+        var(--welcome-pink);
+    }
+
+
+    .activity-text {
+      color:
+        var(--welcome-ink);
+
+      font-size: 12px;
+
+      line-height: 1.45;
+    }
+
+
+    .activity-empty {
+      padding:
+        24px 18px;
+
+      color: #7C8388;
+
+      font-size: 12px;
+    }
+
+
+
+    /* =========================================================
+       THIS WEEK
+       ========================================================= */
+
+    .week-section {
+      margin-bottom: 28px;
+    }
+
+    .week-panel {
+      padding: 14px;
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .week-day {
+      min-height: 116px;
+      padding: 10px;
+      background: #FFFFFF;
+      border: 1px solid #E5E9EA;
+      cursor: pointer;
+    }
+
+    .week-day:hover {
+      border-color: var(--welcome-blue);
+    }
+
+    .week-day.today {
+      background: var(--welcome-lime-soft);
+      border: 2px solid var(--welcome-lime);
+    }
+
+    .week-name {
+      color: #858D91;
+      font-family: "Oswald", sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .week-date {
+      margin: 3px 0 8px;
+      font-family: "Cinzel", serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .week-event {
+      display: block;
+      margin-top: 5px;
+      padding: 4px 5px;
+      overflow: hidden;
+      color: var(--welcome-ink);
+      background: var(--welcome-blue-soft);
+      font-size: 9.5px;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .week-event.delivery {
+      background: var(--welcome-lime-soft);
+    }
+
+    .week-event.permit,
+    .week-event.accessorial {
+      background: var(--welcome-pink-soft);
+    }
+
+    .week-more {
+      margin-top: 6px;
+      color: #7C8388;
+      font-size: 9.5px;
+    }
+
+
+
+    .timeline-shell {
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .timeline-panel-title {
+      padding: 13px 18px 11px;
+      color: #6B92A5;
+      background: rgba(255, 255, 255, 0.86);
+      border-bottom: 1px solid #E3E7E8;
+      font-family: "Oswald", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .sourcing-section .timeline-panel-title {
+      color: #D86A8E;
+    }
+
+    .operations-section .timeline-panel-title {
+      color: #6B92A5;
+    }
+
+    .timeline-body {
+      background: transparent;
+    }
+
+
+    /* =========================================================
+       NEXT CALLS
+       ========================================================= */
+
+    .call-queue-section {
+      margin-bottom: 28px;
+    }
+
+    .call-queue-section .section-heading h2 {
+      color: #8A7358;
+    }
+
+    .call-queue-panel {
+      background: rgba(250,250,250,.95);
+      border: 1px solid rgba(250,250,250,.76);
+      box-shadow: 0 12px 30px rgba(28,22,31,.11);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .call-queue-row {
+      display: grid;
+      grid-template-columns: 92px minmax(0,1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid #E8EBEC;
+    }
+
+    .call-queue-row:last-child {
+      border-bottom: 0;
+    }
+
+    .call-due {
+      color: #8A7358;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .call-company {
+      color: #3E4B51;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .call-contact {
+      margin-top: 2px;
+      color: #68757B;
+      font-size: 10.5px;
+    }
+
+    .call-phone {
+      margin-top: 4px;
+      color: #6B92A5;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .call-note {
+      margin-top: 5px;
+      color: #7B858A;
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .call-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 6px;
+      background: var(--welcome-blue-soft);
+      color: #5C7B89;
+      font-size: 9px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    .call-open {
+      color: #6B92A5;
+      font-size: 11px;
+      font-weight: 500;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 620px) {
+      .call-queue-row {
+        grid-template-columns: 1fr;
+      }
+
+      .call-open {
+        justify-self: start;
+      }
+    }
+
+
+    /* =========================================================
+       SOURCING TIMELINE
+       ========================================================= */
+
+    .sourcing-section {
+      margin-bottom: 28px;
+    }
+
+    .sourcing-panel {
+      background: rgba(250, 250, 250, 0.94);
+      border: 1px solid rgba(250, 250, 250, 0.74);
+      box-shadow: 0 12px 30px rgba(28, 22, 31, 0.13);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .sourcing-row {
+      display: grid;
+      grid-template-columns: 105px 14px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 18px;
+      border-bottom: 1px solid #E8EBEC;
+    }
+
+    .sourcing-row:last-child {
+      border-bottom: 0;
+    }
+
+    .sourcing-time {
+      color: #90969A;
+      font-size: 10.5px;
+    }
+
+    .sourcing-marker {
+      width: 8px;
+      height: 8px;
+      background: var(--welcome-pink);
+      border-radius: 50%;
+    }
+
+    .sourcing-title {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .sourcing-detail {
+      margin-top: 2px;
+      color: #7C8388;
+      font-size: 10.5px;
+    }
+
+    .sourcing-link {
+      color: var(--welcome-blue);
+      font-size: 11px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .sourcing-action-badge {
+      display: inline-block;
+      margin-bottom: 5px;
+      padding: 2px 7px;
+      border: 1px solid rgba(127,165,181,.35);
+      color: #607985;
+      background: #F7FAFB;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .sourcing-action-badge.overdue {
+      color: #9A4961;
+      background: var(--welcome-pink-soft);
+      border-color: rgba(216,106,142,.35);
+    }
+
+    .sourcing-action-badge.today {
+      color: #68731F;
+      background: var(--welcome-lime-soft);
+      border-color: rgba(184,195,74,.45);
+    }
+
+    .sourcing-identifiers {
+      margin-top: 4px;
+      color: #59676D;
+      font-size: 10.5px;
+      line-height: 1.45;
+    }
+
+    .sourcing-identifiers strong {
+      color: #3E4B51;
+      font-weight: 600;
+    }
+
+    .sourcing-followup {
+      margin-top: 5px;
+      color: #7A858A;
+      font-size: 10px;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media (max-width: 900px) {
+
+      .priority-grid,
+      .continue-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .week-grid {
+        grid-template-columns:
+          repeat(4, minmax(0, 1fr));
+      }
+
+    }
+
+
+    @media (max-width: 620px) {
+
+      body {
+        background-position:
+          40% center;
+      }
+
+
+      .welcome-page {
+        padding:
+          24px 14px 50px;
+      }
+
+
+      .welcome-hero {
+        padding:
+          22px 20px;
+      }
+
+
+      .priority-grid,
+      .continue-grid {
+        grid-template-columns:
+          1fr;
+      }
+
+
+      .activity-row {
+        grid-template-columns:
+          76px 12px 1fr;
+      }
+
+      .week-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .week-day {
+        min-height: auto;
+      }
+
+      .sourcing-row {
+        grid-template-columns:
+          76px 12px 1fr;
+      }
+
+      .sourcing-link {
+        display: none;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <!-- Shared Heavy Haul Command header -->
+  <header></header>
+
+
+  <main class="welcome-page">
+
+    <div class="welcome-shell">
+
+
+      <!-- =====================================================
+           HERO
+           ===================================================== -->
+
+      <section class="welcome-hero">
+
+        <div class="welcome-kicker">
+          Dispatch Management System
+        </div>
+
+
+        <h1
+          class="welcome-greeting"
+          id="welcomeGreeting"
+        >
+          Welcome Back
+        </h1>
+
+
+        <p class="welcome-subtitle">
+          Everything you need to keep the road moving.
+        </p>
+
+
+        <div class="welcome-line"></div>
+
+      </section>
+
+
+
+      <!-- =====================================================
+           TODAY'S PRIORITIES
+           ===================================================== -->
+
+      <section class="priority-section">
+
+        <div class="section-heading">
+          <h2>Today's Priorities</h2>
+        </div>
+
+
+        <div class="priority-grid">
+
+
+          <div class="priority-card active">
+
+            <div
+              class="priority-value"
+              id="activeLoads"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Active Loads
+            </div>
+
+          </div>
+
+
+          <div class="priority-card info">
+
+            <div
+              class="priority-value"
+              id="driverCheckins"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Driver Check-ins
+            </div>
+
+          </div>
+
+
+          <div class="priority-card attention">
+
+            <div
+              class="priority-value"
+              id="permitExpiring"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Permit Expiring
+            </div>
+
+          </div>
+
+
+          <div class="priority-card info">
+
+            <div
+              class="priority-value"
+              id="brokerEmails"
+            >
+              —
+            </div>
+
+            <div class="priority-label">
+              Broker Emails
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </section>
+
+
+
+
+      <!-- =====================================================
+           THIS WEEK
+           ===================================================== -->
+
+      <section class="week-section">
+
+        <div class="section-heading">
+          <h2>This Week</h2>
+        </div>
+
+        <div class="week-panel">
+          <div class="week-grid" id="weekGrid">
+            <div class="activity-empty">
+              Loading this week…
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =====================================================
+           CONTINUE WORKING
+           ===================================================== -->
+
+      <section class="continue-section">
+
+        <div class="section-heading">
+          <h2>Continue Working</h2>
+        </div>
+
+
+        <div class="continue-grid">
+
+
+          <a
+            class="continue-card"
+            href="opportunities.html"
+          >
+
+            <div class="continue-number">
+              01
+            </div>
+
+            <div class="continue-card-title">
+              Opportunities
+            </div>
+
+            <div class="continue-card-note">
+              Review and work broker freight before dispatch.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="fleet.html"
+          >
+
+            <div class="continue-number">
+              02
+            </div>
+
+            <div class="continue-card-title">
+              Fleet Setup
+            </div>
+
+            <div class="continue-card-note">
+              Manage carriers, drivers, trucks, and trailers.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="newload.html"
+          >
+
+            <div class="continue-number">
+              03
+            </div>
+
+            <div class="continue-card-title">
+              New Load
+            </div>
+
+            <div class="continue-card-note">
+              Assemble accepted freight with fleet and route information.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+          <a
+            class="continue-card"
+            href="board.html"
+          >
+
+            <div class="continue-number">
+              04
+            </div>
+
+            <div class="continue-card-title">
+              Fleet Board
+            </div>
+
+            <div class="continue-card-note">
+              Manage completed assignments and active freight.
+            </div>
+
+            <div class="continue-arrow">
+              →
+            </div>
+
+          </a>
+
+
+        </div>
+
+      </section>
+
+
+
+
+
+      <!-- =====================================================
+           NEXT CALLS
+           ===================================================== -->
+
+      <section class="call-queue-section">
+
+        <div class="section-heading">
+          <h2>Next Calls</h2>
+        </div>
+
+        <div
+          class="call-queue-panel"
+          id="nextCallsPanel"
+        >
+          <div class="activity-empty">
+            Loading call queue…
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =====================================================
+           SOURCING TIMELINE
+           ===================================================== -->
+
+      <section class="sourcing-section">
+
+        <div class="section-heading">
+          <h2>Sourcing Timeline</h2>
+        </div>
+
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+           Pipeline
+          </div>
+
+          <div
+            class="sourcing-panel timeline-body"
+            id="sourcingTimeline"
+          >
+            <div class="activity-empty">
+              Loading sourcing activity…
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =====================================================
+           RECENT ACTIVITY
+           ===================================================== -->
+
+      <section class="operations-section">
+
+        <div class="section-heading">
+          <h2>Operations Timeline</h2>
+        </div>
+
+
+        <div class="timeline-shell">
+          <div class="timeline-panel-title">
+            Movement
+          </div>
+
+          <div
+            class="activity-panel timeline-body"
+            id="recentActivity"
+          >
+            <div class="activity-empty">
+              Loading recent activity…
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+    </div>
+
+  </main>
+
+
+
+  <!-- ========================================================
+       SHARED NAVIGATION
+       ======================================================== -->
+
+ <script src="nav.js?v=20260810-1"></script>
+
+<script>
+  const navDb =
+    window.supabase.createClient(
+      'https://zyhdatteglxozsgnjhrm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJ6eWhkYXR0ZWdseG96c2duamhybSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzg1MjgxMzEwLCJleHAiOjIxMDA4NTczMTB9.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y'
+    );
+
+  if (
+    typeof window.buildNav ===
+    'function'
+  ) {
+    window.buildNav(
+      navDb,
+      'Welcome'
+    );
+  }
+</script>
+
+<script>
+
+    // =========================================================
+    // SUPABASE
+    // =========================================================
+
+    const SUPABASE_URL =
+      'https://zyhdatteglxozsgnjhrm.supabase.co';
+
+
+    const SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5aGRhdHRlZ2x4b3pzZ25qaHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyODEzMTAsImV4cCI6MjEwMDg1NzMxMH0.I4SlAWiqKk0oPv-0WRgVy_AAGnQ0NoT8-T8z62jIj7Y';
+
+
+    const db =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    let TENANT_ID =
+      null;
+
+
+
+    // =========================================================
+    // NAVIGATION FALLBACK
+    // =========================================================
+
+    async function buildWelcomeFallbackNav(dbClient) {
+
+      const header =
+        document.querySelector('header');
+
+      if (!header) {
+        console.error(
+          'Welcome: no <header> element found.'
+        );
+        return null;
+      }
+
+
+      header.innerHTML = `
+        <div style="
+          display:flex;
+          align-items:center;
+          min-height:54px;
+          padding:0 26px;
+          background:#ffffff;
+          border-bottom:1px solid #eeeeee;
+          box-sizing:border-box;
+        ">
+          <a
+            href="welcome.html"
+            style="
+              color:#222222;
+              font-size:16px;
+              font-weight:700;
+              letter-spacing:1.4px;
+              text-decoration:none;
+            "
+          >
+            HEAVY HAUL COMMAND
+          </a>
+        </div>
+
+        <div style="
+          display:flex;
+          align-items:center;
+          width:100%;
+          min-height:48px;
+          padding:0 26px;
+          gap:0;
+          background:#ffffff;
+          border-bottom:1px solid #dddddd;
+          box-sizing:border-box;
+          overflow-x:auto;
+        ">
+          <nav
+            aria-label="Main navigation"
+            style="
+              display:flex;
+              align-items:center;
+              flex-shrink:0;
+            "
+          >
+            <a class="welcome-fallback-nav active" href="welcome.html">
+              Welcome
+            </a>
+
+            <a class="welcome-fallback-nav" href="board.html">
+              Dispatch
+            </a>
+
+            <a class="welcome-fallback-nav" href="sourcing.html">
+              Sourcing
+            </a>
+
+            <a class="welcome-fallback-nav" href="fleet-command.html">
+              Fleet Command
+            </a>
+          </nav>
+
+          <div
+            style="
+              margin-left:auto;
+              display:flex;
+              align-items:center;
+              gap:9px;
+              white-space:nowrap;
+              padding-left:18px;
+            "
+          >
+            <span
+              id="welcomeFallbackUser"
+              style="
+                color:#666666;
+                font-size:12px;
+              "
+            >
+              …
+            </span>
+
+            <span
+              style="
+                color:#bbbbbb;
+                font-size:12px;
+              "
+            >
+              |
+            </span>
+
+            <button
+              id="welcomeFallbackSignOut"
+              type="button"
+              style="
+                padding:0;
+                margin:0;
+                background:transparent;
+                border:0;
+                color:#555555;
+                font-size:12px;
+                cursor:pointer;
+                font-family:inherit;
+              "
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      `;
+
+
+      header.style.width =
+        '100%';
+
+      header.style.display =
+        'block';
+
+      header.style.visibility =
+        'visible';
+
+      header.style.opacity =
+        '1';
+
+      header.style.position =
+        'relative';
+
+      header.style.zIndex =
+        '1000';
+
+
+      const fallbackStyle =
+        document.createElement(
+          'style'
+        );
+
+      fallbackStyle.textContent = `
+        .welcome-fallback-nav {
+          display:flex;
+          align-items:center;
+          min-height:48px;
+          padding:0 17px;
+          color:#666666;
+          text-decoration:none;
+          font-size:13px;
+          font-weight:600;
+          white-space:nowrap;
+          border-bottom:3px solid transparent;
+        }
+
+        .welcome-fallback-nav:hover {
+          color:#222222;
+        }
+
+        .welcome-fallback-nav.active {
+          color:#111111;
+          border-bottom-color:#6B92A5;
+        }
+      `;
+
+      document.head.appendChild(
+        fallbackStyle
+      );
+
+
+      document
+        .getElementById(
+          'welcomeFallbackSignOut'
+        )
+        .addEventListener(
+          'click',
+          async () => {
+
+            await dbClient.auth.signOut();
+
+            location.href =
+              'index.html';
+
+          }
+        );
+
+
+      const userResult =
+        await dbClient.auth.getUser();
+
+
+      const authId =
+        userResult &&
+        userResult.data &&
+        userResult.data.user
+          ? userResult.data.user.id
+          : null;
+
+
+      if (!authId) {
+
+        document
+          .getElementById(
+            'welcomeFallbackUser'
+          )
+          .textContent =
+            'Not signed in';
+
+        return null;
+
+      }
+
+
+      let profile =
+        await dbClient
+          .from('app_users')
+          .select(
+            'full_name, role, tenant_id'
+          )
+          .eq(
+            'auth_uid',
+            authId
+          )
+          .maybeSingle();
+
+
+      if (
+        !profile.error &&
+        !profile.data
+      ) {
+
+        profile =
+          await dbClient
+            .from('app_users')
+            .select(
+              'full_name, role, tenant_id'
+            )
+            .limit(1)
+            .maybeSingle();
+
+      }
+
+
+      if (
+        profile.error ||
+        !profile.data
+      ) {
+
+        document
+          .getElementById(
+            'welcomeFallbackUser'
+          )
+          .textContent =
+            'Profile unavailable';
+
+        if (profile.error) {
+          console.error(
+            'Welcome fallback profile:',
+            profile.error.message
+          );
+        }
+
+        return null;
+
+      }
+
+
+      const fullName =
+        profile.data.full_name ||
+        'User';
+
+
+      const role =
+        profile.data.role ||
+        'User';
+
+
+      const prettyRole =
+        role.charAt(0).toUpperCase() +
+        role.slice(1);
+
+
+      document
+        .getElementById(
+          'welcomeFallbackUser'
+        )
+        .textContent =
+          `${fullName} (${prettyRole})`;
+
+
+      return profile.data.tenant_id;
+
+    }
+
+
+    async function initializeWelcomeNavigation() {
+
+      if (
+        typeof window.buildNav ===
+        'function'
+      ) {
+
+        try {
+
+          const tenant =
+            await window.buildNav(
+              db,
+              'Welcome'
+            );
+
+          if (tenant) {
+            return tenant;
+          }
+
+        }
+
+        catch (error) {
+
+          console.error(
+            'Shared navigation failed:',
+            error
+          );
+
+        }
+
+      }
+
+      console.warn(
+        'Welcome: shared buildNav unavailable; using fallback navigation.'
+      );
+
+      return await buildWelcomeFallbackNav(
+        db
+      );
+
+    }
+
+    // =========================================================
+    // GREETING
+    // =========================================================
+
+    function setGreeting(fullName) {
+
+      const hour =
+        new Date().getHours();
+
+
+      let greeting =
+        'Good Evening';
+
+
+      if (hour < 12) {
+
+        greeting =
+          'Good Morning';
+
+      }
+
+      else if (hour < 17) {
+
+        greeting =
+          'Good Afternoon';
+
+      }
+
+
+      let firstName =
+        '';
+
+
+      if (fullName) {
+
+        firstName =
+          fullName
+            .trim()
+            .split(/\s+/)[0];
+
+      }
+
+
+      document
+        .getElementById(
+          'welcomeGreeting'
+        )
+        .textContent =
+          firstName
+            ? greeting + ', ' + firstName
+            : greeting;
+
+    }
+
+
+    // =========================================================
+    // SAFE COUNTER
+    // =========================================================
+
+    async function safeCount(
+      tableName,
+      configureQuery
+    ) {
+
+      try {
+
+        let query =
+          db
+            .from(tableName)
+            .select(
+              '*',
+              {
+                count: 'exact',
+                head: true
+              }
+            );
+
+
+        if (TENANT_ID) {
+
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
+
+        }
+
+
+        if (configureQuery) {
+
+          query =
+            configureQuery(
+              query
+            );
+
+        }
+
+
+        const result =
+          await query;
+
+
+        if (result.error) {
+
+          console.warn(
+            'Welcome count:',
+            tableName,
+            result.error.message
+          );
+
+          return null;
+
+        }
+
+
+        return result.count;
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome count:',
+          tableName,
+          error
+        );
+
+        return null;
+
+      }
+
+    }
+
+
+    // =========================================================
+    // PRIORITIES
+    // =========================================================
+async function loadPriorities() {
+  
+   const activeLoads =
+  await safeCount(
+    'loads',
+    function (query) {
+
+      return query
+        .is(
+          'archived_at',
+          null
+        )
+        .in(
+          'status',
+          [
+            'booked',
+            'dispatched',
+            'at_pickup',
+            'loaded',
+            'in_transit',
+            'at_delivery'
+          ]
+        );
+
+    }
+  );
+
+
+document
+  .getElementById(
+    'activeLoads'
+  )
+  .textContent =
+    activeLoads === null
+      ? '—'
+      : activeLoads;
+
+
+
+      // Driver check-ins:
+      // We keep this graceful if your current schema
+      // uses a different table/column name.
+
+      const startOfToday =
+        new Date();
+
+      startOfToday.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      const checkins =
+        await safeCount(
+          'check_ins',
+          function (query) {
+
+            return query.gte(
+              'occurred_at',
+              startOfToday.toISOString()
+            );
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          'driverCheckins'
+        )
+        .textContent =
+          checkins === null
+            ? '—'
+            : checkins;
+
+
+
+      // Permits expiring within seven days.
+
+      const now =
+        new Date();
+
+
+      const sevenDays =
+        new Date();
+
+
+      sevenDays.setDate(
+        sevenDays.getDate() + 7
+      );
+
+
+      const permits =
+        await safeCount(
+          'permits',
+          function (query) {
+
+            return query
+              .gte(
+                'valid_to',
+                now.toISOString()
+              )
+              .lte(
+                'valid_to',
+                sevenDays.toISOString()
+              );
+
+          }
+        );
+
+
+      document
+        .getElementById(
+          'permitExpiring'
+        )
+        .textContent =
+          permits === null
+            ? '—'
+            : permits;
+
+
+
+      // We have not confirmed your load-email table/schema yet,
+      // so do not invent a database query.
+
+      document
+        .getElementById(
+          'brokerEmails'
+        )
+        .textContent =
+          '—';
+
+    }
+
+
+    // =========================================================
+    // RECENT ACTIVITY
+    // =========================================================
+
+    async function loadRecentActivity() {
+
+      const panel =
+        document.getElementById(
+          'recentActivity'
+        );
+
+      try {
+
+        let query =
+          db
+            .from('events')
+            .select(
+              'created_at,event_type,subject,body,load_id'
+            )
+            .order(
+              'created_at',
+              {
+                ascending: false
+              }
+            )
+            .limit(4);
+
+        if (TENANT_ID) {
+          query =
+            query.eq(
+              'tenant_id',
+              TENANT_ID
+            );
+        }
+
+        const result =
+          await query;
+
+        if (
+          result.error ||
+          !result.data ||
+          result.data.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No recent operations activity yet.' +
+            '</div>';
+
+          return;
+        }
+
+        const loadIds =
+          [
+            ...new Set(
+              result.data
+                .map(item => item.load_id)
+                .filter(Boolean)
+            )
+          ];
+
+        let loadMap =
+          {};
+
+        if (loadIds.length) {
+
+          const loadResult =
+            await db
+              .from('loads')
+              .select(
+                'id,load_number,status,origin_city,origin_state,destination_city,destination_state,dest_city,dest_state'
+              )
+              .in(
+                'id',
+                loadIds
+              );
+
+          if (
+            !loadResult.error &&
+            loadResult.data
+          ) {
+
+            loadMap =
+              Object.fromEntries(
+                loadResult.data.map(
+                  item => [item.id, item]
+                )
+              );
+
+          }
+
+        }
+
+        panel.innerHTML =
+          result.data
+            .map(
+              function (item) {
+
+                const date =
+                  new Date(
+                    item.created_at
+                  );
+
+                const time =
+                  Number.isNaN(
+                    date.getTime()
+                  )
+                    ? ''
+                    : date.toLocaleString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        }
+                      );
+
+                const load =
+                  item.load_id
+                    ? loadMap[item.load_id]
+                    : null;
+
+                const loadNumber =
+                  load
+                    ? (
+                        load.load_number ||
+                        ('Load ' + String(load.id).slice(0,8))
+                      )
+                    : '';
+
+                const origin =
+                  load
+                    ? [
+                        load.origin_city,
+                        load.origin_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+
+                const destination =
+                  load
+                    ? [
+                        load.destination_city ||
+                        load.dest_city,
+                        load.destination_state ||
+                        load.dest_state
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+
+                const lane =
+                  origin && destination
+                    ? origin + ' → ' + destination
+                    : '';
+
+                const text =
+                  item.subject ||
+                  item.body ||
+                  item.event_type ||
+                  'Activity';
+
+                const details =
+                  [
+                    loadNumber
+                      ? '<strong>' + escapeHtml(loadNumber) + '</strong>'
+                      : '',
+                    load && load.status
+                      ? escapeHtml(
+                          String(load.status)
+                            .replaceAll('_',' ')
+                        )
+                      : '',
+                    lane
+                      ? escapeHtml(lane)
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
+
+                const target =
+                  item.load_id
+                    ? (
+                        'workspace.html?id=' +
+                        encodeURIComponent(
+                          item.load_id
+                        )
+                      )
+                    : '';
+
+                return (
+                  '<div class="activity-row">' +
+
+                    '<div class="activity-time">' +
+                      escapeHtml(time) +
+                    '</div>' +
+
+                    '<div class="activity-marker"></div>' +
+
+                    '<div class="activity-text">' +
+                      '<div>' +
+                        escapeHtml(text) +
+                      '</div>' +
+                      (
+                        details
+                          ? (
+                              '<div style="margin-top:4px;color:#68757B;font-size:10.5px">' +
+                              details +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                      (
+                        target
+                          ? (
+                              '<div style="margin-top:4px">' +
+                              '<a href="' +
+                              escapeHtml(target) +
+                              '" style="color:#6B92A5;text-decoration:none;font-size:10.5px">' +
+                              'Open Load →' +
+                              '</a>' +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+                    '</div>' +
+
+                  '</div>'
+                );
+
+              }
+            )
+            .join('');
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Operations timeline:',
+          error
+        );
+
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Operations activity unavailable.' +
+          '</div>';
+
+      }
+
+    }
+
+
+
+    // =========================================================
+    // THIS WEEK
+    // =========================================================
+
+    function dayKey(value) {
+
+      const date =
+        new Date(value);
+
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) return '';
+
+      return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+      ].join('-');
+
+    }
+
+
+    function startOfWeek(date) {
+
+      const result =
+        new Date(date);
+
+      result.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      result.setDate(
+        result.getDate() -
+        result.getDay()
+      );
+
+      return result;
+
+    }
+
+
+    async function loadThisWeek() {
+
+      const grid =
+        document.getElementById(
+          'weekGrid'
+        );
+
+      const today =
+        new Date();
+
+      const start =
+        startOfWeek(
+          today
+        );
+
+      const end =
+        new Date(start);
+
+      end.setDate(
+        end.getDate() + 7
+      );
+
+
+      const events =
+        [];
+
+
+      // Live pickup and delivery dates.
+      try {
+
+        const result =
+          await db
+            .from('loads')
+            .select('*')
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (load) {
+
+              const label =
+                load.load_number ||
+                'Load';
+
+              const pickup =
+                load.pickup_date ||
+                load.pickup_at;
+
+              const delivery =
+                load.delivery_date ||
+                load.delivery_at;
+
+
+              if (pickup) {
+
+                events.push({
+                  when: new Date(pickup),
+                  title: label + ' · Pickup',
+                  type: 'pickup',
+                  load_id: load.id
+                });
+
+              }
+
+
+              if (delivery) {
+
+                events.push({
+                  when: new Date(delivery),
+                  title: label + ' · Delivery',
+                  type: 'delivery',
+                  load_id: load.id
+                });
+
+              }
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week loads:',
+          error
+        );
+
+      }
+
+
+      // Permit expirations.
+      try {
+
+        const result =
+          await db
+            .from('permits')
+            .select(
+              'load_id,state,permit_number,valid_to'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .gte(
+              'valid_to',
+              start.toISOString()
+            )
+            .lt(
+              'valid_to',
+              end.toISOString()
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (permit) {
+
+              if (!permit.valid_to) return;
+
+              events.push({
+                when:
+                  new Date(
+                    permit.valid_to
+                  ),
+                title:
+                  (permit.state || '') +
+                  ' Permit',
+                type:
+                  'permit',
+                load_id:
+                  permit.load_id
+              });
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week permits:',
+          error
+        );
+
+      }
+
+
+      // Manual calendar events.
+      try {
+
+        const result =
+          await db
+            .from('calendar_events')
+            .select(
+              'id,load_id,title,event_type,starts_at,completed'
+            )
+            .eq(
+              'tenant_id',
+              TENANT_ID
+            )
+            .gte(
+              'starts_at',
+              start.toISOString()
+            )
+            .lt(
+              'starts_at',
+              end.toISOString()
+            )
+            .order(
+              'starts_at',
+              {
+                ascending: true
+              }
+            );
+
+
+        if (
+          !result.error &&
+          result.data
+        ) {
+
+          result.data.forEach(
+            function (item) {
+
+              events.push({
+                when:
+                  new Date(
+                    item.starts_at
+                  ),
+                title:
+                  item.title ||
+                  'Reminder',
+                type:
+                  item.event_type ||
+                  'custom',
+                load_id:
+                  item.load_id
+              });
+
+            }
+          );
+
+        }
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Welcome week reminders:',
+          error
+        );
+
+      }
+
+
+      const days =
+        [];
+
+
+      for (
+        let i = 0;
+        i < 7;
+        i++
+      ) {
+
+        const day =
+          new Date(start);
+
+        day.setDate(
+          start.getDate() + i
+        );
+
+
+        const key =
+          dayKey(day);
+
+
+        const dayEvents =
+          events
+            .filter(
+              function (event) {
+
+                return (
+                  event.when &&
+                  !Number.isNaN(
+                    event.when.getTime()
+                  ) &&
+                  dayKey(event.when) === key
+                );
+
+              }
+            )
+            .sort(
+              function (a, b) {
+
+                return (
+                  a.when -
+                  b.when
+                );
+
+              }
+            );
+
+
+        const eventHtml =
+          dayEvents
+            .slice(0, 3)
+            .map(
+              function (event) {
+
+                const target =
+                  event.load_id
+                    ? (
+                        'workspace.html?id=' +
+                        encodeURIComponent(
+                          event.load_id
+                        )
+                      )
+                    : 'calendar.html';
+
+                return (
+                  '<span class="week-event ' +
+                  escapeHtml(event.type) +
+                  '" data-href="' +
+                  escapeHtml(target) +
+                  '">' +
+                  escapeHtml(event.title) +
+                  '</span>'
+                );
+
+              }
+            )
+            .join('');
+
+
+        const more =
+          dayEvents.length > 3
+            ? (
+                '<div class="week-more">+' +
+                (dayEvents.length - 3) +
+                ' more</div>'
+              )
+            : '';
+
+
+        days.push(
+          '<div class="week-day ' +
+          (
+            key === dayKey(today)
+              ? 'today'
+              : ''
+          ) +
+          '" data-date="' +
+          key +
+          '">' +
+
+            '<div class="week-name">' +
+              day.toLocaleDateString(
+                'en-US',
+                {
+                  weekday: 'short'
+                }
+              ) +
+            '</div>' +
+
+            '<div class="week-date">' +
+              day.getDate() +
+            '</div>' +
+
+            eventHtml +
+            more +
+
+          '</div>'
+        );
+
+      }
+
+
+      grid.innerHTML =
+        days.join('');
+
+
+      grid
+        .querySelectorAll(
+          '.week-event[data-href]'
+        )
+        .forEach(
+          function (item) {
+
+            item.addEventListener(
+              'click',
+              function (event) {
+
+                event.stopPropagation();
+
+                location.href =
+                  item.dataset.href;
+
+              }
+            );
+
+          }
+        );
+
+
+      grid
+        .querySelectorAll(
+          '.week-day'
+        )
+        .forEach(
+          function (day) {
+
+            day.addEventListener(
+              'click',
+              function () {
+
+                location.href =
+                  'calendar.html';
+
+              }
+            );
+
+          }
+        );
+
+    }
+
+
+
+    // =========================================================
+    // NEXT CALLS
+    // =========================================================
+
+    async function loadNextCalls() {
+
+      const panel =
+        document.getElementById(
+          'nextCallsPanel'
+        );
+
+      try {
+
+        const queueResult =
+          await db
+            .from('v_call_queue')
+            .select('*')
+            .limit(12);
+
+        if (
+          queueResult.error ||
+          !queueResult.data ||
+          queueResult.data.length === 0
+        ) {
+
+          panel.innerHTML =
+            '<div class="activity-empty">' +
+            'No broker or carrier calls are currently due.' +
+            '</div>';
+
+          return;
+        }
+
+        const queue =
+          queueResult.data.slice();
+
+        queue.sort(
+          function (a, b) {
+
+            const ad =
+              a.next_touch_date
+                ? new Date(a.next_touch_date).getTime()
+                : 0;
+
+            const bd =
+              b.next_touch_date
+                ? new Date(b.next_touch_date).getTime()
+                : 0;
+
+            return ad - bd;
+
+          }
+        );
+
+        const companyIds =
+          [...new Set(
+            queue
+              .map(item => item.company_id)
+              .filter(Boolean)
+          )];
+
+        let companyTypeMap = {};
+        let noteMap = {};
+
+        if (companyIds.length) {
+
+          const companyResult =
+            await db
+              .from('companies')
+              .select('id,company_type')
+              .in('id', companyIds);
+
+          if (
+            !companyResult.error &&
+            companyResult.data
+          ) {
+
+            companyTypeMap =
+              Object.fromEntries(
+                companyResult.data.map(
+                  item => [
+                    item.id,
+                    item.company_type
+                  ]
+                )
+              );
+
+          }
+
+          const activityResult =
+            await db
+              .from('crm_activities')
+              .select(
+                'company_id,body,created_at,outcome'
+              )
+              .in('company_id', companyIds)
+              .order(
+                'created_at',
+                {
+                  ascending: false
+                }
+              );
+
+          if (
+            !activityResult.error &&
+            activityResult.data
+          ) {
+
+            activityResult.data.forEach(
+              function (item) {
+
+                if (
+                  !noteMap[item.company_id]
+                ) {
+
+                  noteMap[item.company_id] =
+                    item;
+
+                }
+
+              }
+            );
+
+          }
+
+        }
+
+        const today =
+          new Date();
+
+        today.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        panel.innerHTML =
+          queue
+            .slice(0, 5)
+            .map(
+              function (item) {
+
+                const due =
+                  item.next_touch_date
+                    ? new Date(
+                        item.next_touch_date +
+                        'T12:00:00'
+                      )
+                    : null;
+
+                let dueText =
+                  'Call now';
+
+                if (
+                  due &&
+                  !Number.isNaN(
+                    due.getTime()
+                  )
+                ) {
+
+                  const dueDay =
+                    new Date(due);
+
+                  dueDay.setHours(
+                    0,
+                    0,
+                    0,
+                    0
+                  );
+
+                  const diff =
+                    Math.round(
+                      (
+                        dueDay.getTime() -
+                        today.getTime()
+                      ) /
+                      86400000
+                    );
+
+                  if (diff < 0) {
+                    dueText =
+                      'Overdue · ' +
+                      due.toLocaleDateString(
+                        'en-US',
+                        {
+                          month:'short',
+                          day:'numeric'
+                        }
+                      );
+                  }
+                  else if (diff === 0) {
+                    dueText =
+                      'Due today';
+                  }
+                  else if (diff === 1) {
+                    dueText =
+                      'Tomorrow';
+                  }
+                  else {
+                    dueText =
+                      due.toLocaleDateString(
+                        'en-US',
+                        {
+                          month:'short',
+                          day:'numeric'
+                        }
+                      );
+                  }
+
+                }
+
+                const contact =
+                  [
+                    item.first_name,
+                    item.last_name
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                const phone =
+                  item.dial ||
+                  '';
+
+                const type =
+                  companyTypeMap[
+                    item.company_id
+                  ] ||
+                  '';
+
+                const latest =
+                  noteMap[
+                    item.company_id
+                  ];
+
+                const latestNote =
+                  latest
+                    ? (
+                        latest.body ||
+                        latest.outcome ||
+                        ''
+                      )
+                    : '';
+
+                const bestTime =
+                  item.best_time_to_call
+                    ? (
+                        'Best time: ' +
+                        item.best_time_to_call
+                      )
+                    : '';
+
+                return (
+                  '<div class="call-queue-row">' +
+
+                    '<div class="call-due">' +
+                      escapeHtml(dueText) +
+                    '</div>' +
+
+                    '<div>' +
+
+                      '<div class="call-company">' +
+                        escapeHtml(
+                          item.legal_name ||
+                          'Company'
+                        ) +
+                        (
+                          type
+                            ? (
+                                '<span class="call-badge">' +
+                                escapeHtml(type) +
+                                '</span>'
+                              )
+                            : ''
+                        ) +
+                      '</div>' +
+
+                      (
+                        contact
+                          ? (
+                              '<div class="call-contact">' +
+                              escapeHtml(contact) +
+                              (
+                                bestTime
+                                  ? (
+                                      ' · ' +
+                                      escapeHtml(bestTime)
+                                    )
+                                  : ''
+                              ) +
+                              '</div>'
+                            )
+                          : (
+                              bestTime
+                                ? (
+                                    '<div class="call-contact">' +
+                                    escapeHtml(bestTime) +
+                                    '</div>'
+                                  )
+                                : ''
+                            )
+                      ) +
+
+                      (
+                        phone
+                          ? (
+                              '<div class="call-phone">' +
+                              escapeHtml(phone) +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+
+                      (
+                        latestNote
+                          ? (
+                              '<div class="call-note">' +
+                              'Last note: ' +
+                              escapeHtml(latestNote) +
+                              '</div>'
+                            )
+                          : ''
+                      ) +
+
+                    '</div>' +
+
+                    '<a class="call-open" href="call-queue.html">' +
+                      'Open Queue →' +
+                    '</a>' +
+
+                  '</div>'
+                );
+
+              }
+            )
+            .join('');
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome next calls:',
+          error
+        );
+
+        panel.innerHTML =
+          '<div class="activity-empty">' +
+          'Call queue unavailable.' +
+          '</div>';
+
+      }
+
+    }
+
+
+    // =========================================================
+    // SOURCING TIMELINE
+    // =========================================================
+
+    async function loadSourcingTimeline() {
+
+      const panel =
+        document.getElementById('sourcingTimeline');
+
+      try {
+
+        const result =
+          await db
+            .from('sourcing_events')
+            .select(
+              'id,created_at,event_type,title,detail,broker_name,carrier_name,contact_name,lane_origin,lane_destination,rate_amount,follow_up_at,opportunity_id,load_id'
+            )
+            .eq('tenant_id', TENANT_ID)
+            .order('created_at', { ascending: false })
+            .limit(4);
+
+        if (result.error) {
+          panel.innerHTML =
+            '<div class="activity-empty">Sourcing timeline unavailable: ' +
+            escapeHtml(result.error.message) +
+            '</div>';
+          return;
+        }
+
+        const sourcing =
+          result.data || [];
+
+        if (!sourcing.length) {
+          panel.innerHTML =
+            '<div class="activity-empty">No sourcing activity recorded yet.</div>';
+          return;
+        }
+
+        const opportunityIds =
+          [...new Set(
+            sourcing
+              .map(item => item.opportunity_id)
+              .filter(Boolean)
+          )];
+
+        let opportunityMap = {};
+
+        if (opportunityIds.length) {
+          const opportunityResult =
+            await db
+              .from('load_opportunities')
+              .select(
+                'id,broker_name,external_ref,origin_city,origin_state,dest_city,dest_state,commodity,equipment_needed,status,posted_rate,quoted_rate,booked_rate,pickup_date'
+              )
+              .in('id', opportunityIds);
+
+          if (!opportunityResult.error && opportunityResult.data) {
+            opportunityMap =
+              Object.fromEntries(
+                opportunityResult.data.map(item => [item.id, item])
+              );
+          }
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0,0,0,0);
+
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+        function priority(item) {
+          if (!item.follow_up_at) return 3;
+          const due = new Date(item.follow_up_at);
+          if (Number.isNaN(due.getTime())) return 3;
+          if (due < todayStart) return 0;
+          if (due < tomorrowStart) return 1;
+          return 2;
+        }
+
+        const ordered =
+          sourcing
+            .slice()
+            .sort((a,b) => {
+              const pa = priority(a);
+              const pb = priority(b);
+              if (pa !== pb) return pa - pb;
+
+              if (pa <= 2) {
+                return new Date(a.follow_up_at) - new Date(b.follow_up_at);
+              }
+
+              return new Date(b.created_at) - new Date(a.created_at);
+            })
+            .slice(0,12);
+
+        panel.innerHTML =
+          ordered.map(item => {
+
+            const opportunity =
+              item.opportunity_id
+                ? opportunityMap[item.opportunity_id]
+                : null;
+
+            const company =
+              item.broker_name ||
+              item.carrier_name ||
+              (opportunity ? opportunity.broker_name : '') ||
+              'Sourcing';
+
+            const contact =
+              item.contact_name || '';
+
+            const origin =
+              item.lane_origin ||
+              (
+                opportunity
+                  ? [opportunity.origin_city, opportunity.origin_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const destination =
+              item.lane_destination ||
+              (
+                opportunity
+                  ? [opportunity.dest_city, opportunity.dest_state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : ''
+              );
+
+            const lane =
+              origin && destination
+                ? origin + ' → ' + destination
+                : origin || destination || '';
+
+            const freight =
+              opportunity
+                ? [opportunity.commodity, opportunity.equipment_needed]
+                    .filter(Boolean)
+                    .join(' · ')
+                : '';
+
+            const reference =
+              opportunity && opportunity.external_ref
+                ? 'Broker Load #' + opportunity.external_ref
+                : (
+                    item.opportunity_id
+                      ? 'Opportunity ' + String(item.opportunity_id).slice(0,8)
+                      : ''
+                  );
+
+            const rate =
+              item.rate_amount != null
+                ? Number(item.rate_amount)
+                : (
+                    opportunity
+                      ? (
+                          opportunity.booked_rate != null
+                            ? Number(opportunity.booked_rate)
+                            : opportunity.quoted_rate != null
+                              ? Number(opportunity.quoted_rate)
+                              : opportunity.posted_rate != null
+                                ? Number(opportunity.posted_rate)
+                                : null
+                        )
+                      : null
+                  );
+
+            const eventDate =
+              new Date(item.created_at);
+
+            const eventTime =
+              Number.isNaN(eventDate.getTime())
+                ? ''
+                : eventDate.toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  );
+
+            let actionLabel = 'Recent';
+            let actionClass = '';
+
+            if (item.follow_up_at) {
+              const due = new Date(item.follow_up_at);
+
+              if (!Number.isNaN(due.getTime())) {
+                if (due < todayStart) {
+                  actionLabel = 'Overdue';
+                  actionClass = ' overdue';
+                }
+                else if (due < tomorrowStart) {
+                  actionLabel = 'Due Today';
+                  actionClass = ' today';
+                }
+                else {
+                  actionLabel = 'Upcoming';
+                }
+              }
+            }
+
+            const followupText =
+              item.follow_up_at
+                ? 'Follow-up: ' +
+                  new Date(item.follow_up_at).toLocaleString(
+                    'en-US',
+                    {
+                      month:'short',
+                      day:'numeric',
+                      hour:'numeric',
+                      minute:'2-digit'
+                    }
+                  )
+                : '';
+
+            const identifiers =
+              [
+                contact
+                  ? '<strong>' + escapeHtml(contact) + '</strong>'
+                  : '',
+                lane
+                  ? escapeHtml(lane)
+                  : '',
+                reference
+                  ? escapeHtml(reference)
+                  : '',
+                freight
+                  ? escapeHtml(freight)
+                  : '',
+                opportunity && opportunity.status
+                  ? 'Status: ' + escapeHtml(
+                      String(opportunity.status)
+                        .replaceAll('_',' ')
+                    )
+                  : '',
+                rate != null && !Number.isNaN(rate)
+                  ? '<strong>' +
+                    rate.toLocaleString(
+                      'en-US',
+                      {
+                        style:'currency',
+                        currency:'USD',
+                        maximumFractionDigits:0
+                      }
+                    ) +
+                    '</strong>'
+                  : ''
+              ]
+                .filter(Boolean)
+                .join(' · ');
+
+            const title =
+              item.title ||
+              item.event_type ||
+              'Sourcing activity';
+
+            const detail =
+              item.detail || '';
+
+            const target =
+              item.load_id
+                ? 'workspace.html?id=' + encodeURIComponent(item.load_id)
+                : 'opportunities.html';
+
+            return (
+              '<div class="sourcing-row">' +
+                '<div class="sourcing-time">' +
+                  escapeHtml(eventTime) +
+                '</div>' +
+                '<div class="sourcing-marker"></div>' +
+                '<div>' +
+                  '<div class="sourcing-action-badge' +
+                    actionClass +
+                  '">' +
+                    escapeHtml(actionLabel) +
+                  '</div>' +
+                  '<div class="sourcing-title">' +
+                    escapeHtml(title) +
+                    ' — ' +
+                    escapeHtml(company) +
+                  '</div>' +
+                  (
+                    identifiers
+                      ? '<div class="sourcing-identifiers">' +
+                        identifiers +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    detail
+                      ? '<div class="sourcing-detail">' +
+                        escapeHtml(detail) +
+                        '</div>'
+                      : ''
+                  ) +
+                  (
+                    followupText
+                      ? '<div class="sourcing-followup">' +
+                        escapeHtml(followupText) +
+                        '</div>'
+                      : ''
+                  ) +
+                '</div>' +
+                '<a class="sourcing-link" href="' +
+                  escapeHtml(target) +
+                  '">' +
+                  (
+                    item.load_id
+                      ? 'Open Load →'
+                      : 'Open Opportunity →'
+                  ) +
+                '</a>' +
+              '</div>'
+            );
+
+          }).join('');
+
+      }
+      catch (error) {
+
+        console.warn(
+          'Sourcing timeline:',
+          error
+        );
+
+        panel.innerHTML =
+          '<div class="activity-empty">Sourcing activity unavailable.</div>';
+
+      }
+
+    }
+
+
+    // =========================================================
+    // SAFE HTML
+    // =========================================================
+
+    function escapeHtml(value) {
+
+      return String(
+        value || ''
+      )
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    }
+
+
+    // =========================================================
+    // START
+    // =========================================================
+
+    async function start() {
+
+      const session =
+        await db.auth.getSession();
+
+
+      if (
+        !session.data ||
+        !session.data.session
+      ) {
+
+        location.href =
+          'index.html';
+
+        return;
+
+      }
+
+
+      // Shared navigation with local fallback.
+      TENANT_ID =
+        await initializeWelcomeNavigation();
+
+
+      if (!TENANT_ID) {
+
+        console.error(
+          'Welcome: no tenant/profile available.'
+        );
+
+        return;
+
+      }
+
+
+      // Get profile for greeting.
+
+      try {
+
+        const user =
+          await db.auth.getUser();
+
+
+        const authId =
+          user.data &&
+          user.data.user
+            ? user.data.user.id
+            : null;
+
+
+        if (authId) {
+
+          const profile =
+            await db
+              .from('app_users')
+              .select('full_name')
+              .eq(
+                'auth_uid',
+                authId
+              )
+              .maybeSingle();
+
+
+          if (
+            !profile.error &&
+            profile.data
+          ) {
+
+            setGreeting(
+              profile.data.full_name
+            );
+
+          }
+
+          else {
+
+            setGreeting('');
+
+          }
+
+        }
+
+        else {
+
+          setGreeting('');
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.warn(
+          'Welcome profile:',
+          error
+        );
+
+        setGreeting('');
+
+      }
+
+
+      await Promise.all([
+        loadPriorities(),
+        loadThisWeek(),
+        loadNextCalls(),
+        loadSourcingTimeline(),
+        loadRecentActivity()
+      ]);
+
+    }
+
+
+    start();
+
+  </script>
+
+</body>
+
+</html>
   font-family: "Sugarcoat";
   src: url("fonts/Sugarcoat.woff2") format("woff2");
   font-weight: 400;
